@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+    postgres_db:
+        image: postgres:16
+        container_name: multi-tenant_shipping_management_platform_db
+        restart: always
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: multi-tenant_shipping_management_platform
+        ports:
+            - "51214:5432"  # المنفذ الخارجي 51214 ➜ الداخلي 5432 (PostgreSQL)
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+
+volumes:
+    postgres_data:
+        driver: local
