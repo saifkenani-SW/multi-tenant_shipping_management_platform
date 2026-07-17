@@ -1,0 +1,19 @@
+meta {
+  name: Deactivate Subscription Plan
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{url}}/subscription-plans/{{subscriptionPlanId}}/deactivate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+vars:pre-request {
+  subscriptionPlanId: 019f7183-da9b-720d-a707-8c11346ca833
+}

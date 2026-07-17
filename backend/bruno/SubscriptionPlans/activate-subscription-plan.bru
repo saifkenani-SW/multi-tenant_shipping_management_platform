@@ -1,0 +1,19 @@
+meta {
+  name: Activate Subscription Plan
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/subscription-plans/{{subscriptionPlanId}}/activate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+vars:pre-request {
+  subscriptionPlanId: 019f7183-da9b-720d-a707-8c11346ca833
+}

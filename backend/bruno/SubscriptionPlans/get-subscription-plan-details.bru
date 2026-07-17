@@ -1,0 +1,19 @@
+meta {
+  name: Get Subscription Plan Details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/subscription-plans/{{subscriptionPlanId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+vars:pre-request {
+  subscriptionPlanId: 019f7183-da9b-720d-a707-8c11346ca833
+}

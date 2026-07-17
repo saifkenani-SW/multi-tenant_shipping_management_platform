@@ -1,0 +1,41 @@
+meta {
+  name: Create Subscription Plan
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/subscription-plans
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Enterprise Plan",
+    "description": "Unlimited features for large businesses",
+    "max_branches": 50,
+    "max_warehouses": 20,
+    "max_employees": 500,
+    "max_vehicles": 200,
+    "max_zones": 50,
+    "max_monthly_shipments": 100000,
+    "max_monthly_parcels": 500000,
+    "price_monthly": 499.99,
+    "price_yearly": 4999.99,
+    "is_active": true
+  }
+}
+
+docs {
+  # Create Subscription Plan
+  Creates a new subscription plan on the platform. Restricted to `PLATFORM_ADMIN` users only.
+  
+  ## Usage
+  - `{{url}}` resolves to the base API path.
+  - `{{token}}` is injected automatically.
+}

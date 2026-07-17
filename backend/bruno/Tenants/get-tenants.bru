@@ -5,16 +5,16 @@ meta {
 }
 
 get {
-  url: {{url}}/tenants?page=1&limit=10&search=Global&searchType=name
+  url: {{url}}/tenants
   body: none
   auth: bearer
 }
 
 params:query {
-  page: 1
-  limit: 10
-  search: Global
-  searchType: name
+  ~page: 1
+  ~limit: 10
+  ~search: TAX-987654
+  ~searchType: tax_number
 }
 
 auth:bearer {

@@ -10,10 +10,15 @@ post {
   auth: none
 }
 
+headers {
+  ~client-type: MOBILE
+}
+
 body:json {
   {
     "email": "owner@logisticsplatform.com",
-    "password": "password123"
+    "password": "password123",
+    "clientType":"WEB"
   }
 }
 
