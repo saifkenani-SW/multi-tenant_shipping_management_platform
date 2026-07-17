@@ -229,7 +229,7 @@ enum CollectionMethod {
 // =========================================================================
 
 model assignment_role {
-  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                  String              @id @default(uuid(7)) @db.Uuid
   assignment_id       String              @db.Uuid
   role_id             String              @db.Uuid
   granted_at          DateTime            @default(now()) @db.Timestamp(6)
@@ -240,7 +240,7 @@ model assignment_role {
 }
 
 model audit_log {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String   @id @default(uuid(7)) @db.Uuid
   tenant_id        String?  @db.Uuid
   actor_user_id    String?  @db.Uuid
   actor_ip         String?  @db.Inet
@@ -257,7 +257,7 @@ model audit_log {
 }
 
 model customer_address {
-  id               String                                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String                                @id @default(uuid(7)) @db.Uuid
   customer_id      String                                @db.Uuid
   label            String?                               @db.VarChar(100)
   address_line     String                                @db.VarChar(500)
@@ -270,12 +270,12 @@ model customer_address {
 }
 
 model customer_profile {
-  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                String              @id @default(uuid(7)) @db.Uuid
   user_id           String              @unique @db.Uuid
   full_name         String              @db.VarChar(255)
   phone             String              @db.VarChar(50)
   created_at        DateTime            @default(now()) @db.Timestamp(6)
-  updated_at        DateTime            @default(now()) @db.Timestamp(6)
+  updated_at        DateTime            @updatedAt
   customer_address  customer_address[]
   users             users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   customer_shipment customer_shipment[]
@@ -285,7 +285,7 @@ model customer_profile {
 }
 
 model customer_shipment {
-  id                         String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                         String                @id @default(uuid(7)) @db.Uuid
   tenant_id                  String                @db.Uuid
   customer_profile_id        String                @db.Uuid
   shipment_request_id        String?               @db.Uuid
@@ -297,7 +297,7 @@ model customer_shipment {
   total_chargeable_weight_kg Decimal?              @default(0) @db.Decimal(10, 2)
   status                     ShipmentStatus        @default(PROCESSING)
   created_at                 DateTime              @default(now()) @db.Timestamp(6)
-  updated_at                 DateTime              @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime              @updatedAt
   quotation                  quotation?            @relation(fields: [approved_quotation_id], references: [id], onUpdate: NoAction)
   customer_profile           customer_profile      @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
   shipment_request           shipment_request?     @relation(fields: [shipment_request_id], references: [id], onUpdate: NoAction)
@@ -311,7 +311,7 @@ model customer_shipment {
 }
 
 model customer_tenant {
-  id                   String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                   String           @id @default(uuid(7)) @db.Uuid
   tenant_id            String           @db.Uuid
   customer_profile_id  String           @db.Uuid
   first_interaction_at DateTime         @default(now()) @db.Timestamp(6)
@@ -322,7 +322,7 @@ model customer_tenant {
 }
 
 model employee {
-  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                  String                @id @default(uuid(7)) @db.Uuid
   tenant_id           String                @db.Uuid
   user_id             String                @db.Uuid
   employee_code       String                @db.VarChar(50)
@@ -331,7 +331,7 @@ model employee {
   is_active           Boolean               @default(true)
   deactivated_at      DateTime?             @db.Timestamp(6)
   created_at          DateTime              @default(now()) @db.Timestamp(6)
-  updated_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime              @updatedAt
   tenant              tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   employee_assignment employee_assignment[]
@@ -348,7 +348,7 @@ model employee {
 }
 
 model employee_assignment {
-  id                   String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                   String            @id @default(uuid(7)) @db.Uuid
   tenant_id            String            @db.Uuid
   employee_id          String            @db.Uuid
   organization_unit_id String            @db.Uuid
@@ -363,7 +363,7 @@ model employee_assignment {
 }
 
 model global_location {
-  id                        String                                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                        String                                @id @default(uuid(7)) @db.Uuid
   parent_id                 String?                               @db.Uuid
   name                      String                                @db.VarChar(255)
   type                      LocationType
@@ -376,7 +376,7 @@ model global_location {
 }
 
 model invoice {
-  id                     String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                     String                @id @default(uuid(7)) @db.Uuid
   tenant_id              String                @db.Uuid
   customer_profile_id    String                @db.Uuid
   customer_shipment_id   String?               @db.Uuid
@@ -390,7 +390,7 @@ model invoice {
   status                 InvoiceStatus         @default(UNPAID)
   due_date               DateTime?             @db.Timestamp(6)
   created_at             DateTime              @default(now()) @db.Timestamp(6)
-  updated_at             DateTime              @default(now()) @db.Timestamp(6)
+  updated_at             DateTime              @updatedAt
   customer_profile       customer_profile      @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
   customer_shipment      customer_shipment?    @relation(fields: [customer_shipment_id], references: [id], onUpdate: NoAction)
   tenant                 tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -400,7 +400,7 @@ model invoice {
 }
 
 model manifest_item {
-  id                 String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                 String             @id @default(uuid(7)) @db.Uuid
   manifest_id        String             @db.Uuid
   parcel_id          String             @db.Uuid
   status             ManifestItemStatus @default(PENDING_LOAD)
@@ -413,7 +413,7 @@ model manifest_item {
 }
 
 model notification {
-  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                String              @id @default(uuid(7)) @db.Uuid
   tenant_id         String?             @db.Uuid
   recipient_user_id String              @db.Uuid
   notification_type NotificationType
@@ -431,7 +431,7 @@ model notification {
 }
 
 model organization_unit {
-  id           String                                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String                                @id @default(uuid(7)) @db.Uuid
   tenant_id    String                                @db.Uuid
   parent_id    String?                               @db.Uuid
   zone_id      String?                               @db.Uuid
@@ -442,7 +442,7 @@ model organization_unit {
   location     Unsupported("geometry(Point, 4326)")?
   is_active    Boolean                               @default(true)
   created_at   DateTime                              @default(now()) @db.Timestamp(6)
-  updated_at   DateTime                              @default(now()) @db.Timestamp(6)
+  updated_at   DateTime                              @updatedAt
 
   employee_assignment                                                              employee_assignment[]
   org_unit_location_mapping                                                        org_unit_location_mapping[]
@@ -462,7 +462,7 @@ model organization_unit {
 }
 
 model parcel {
-  id                                                              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                                                              String             @id @default(uuid(7)) @db.Uuid
   tenant_id                                                       String             @db.Uuid
   customer_shipment_id                                            String             @db.Uuid
   tracking_number                                                 String             @db.VarChar(50)
@@ -476,7 +476,7 @@ model parcel {
   current_org_unit_id                                             String?            @db.Uuid
   qr_code_url                                                     String?            @db.VarChar(500)
   created_at                                                      DateTime           @default(now()) @db.Timestamp(6)
-  updated_at                                                      DateTime           @default(now()) @db.Timestamp(6)
+  updated_at                                                      DateTime           @updatedAt
   manifest_item                                                   manifest_item[]
   organization_unit_parcel_current_org_unit_idToorganization_unit organization_unit? @relation("parcel_current_org_unit_idToorganization_unit", fields: [current_org_unit_id], references: [id], onUpdate: NoAction)
   customer_shipment                                               customer_shipment  @relation(fields: [customer_shipment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -489,7 +489,7 @@ model parcel {
 }
 
 model parcel_movement {
-  id                        String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                        String             @id @default(uuid(7)) @db.Uuid
   tenant_id                 String             @db.Uuid
   parcel_id                 String             @db.Uuid
   organization_unit_id      String?            @db.Uuid
@@ -508,7 +508,7 @@ model parcel_movement {
 }
 
 model payment {
-  id                       String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                       String             @id @default(uuid(7)) @db.Uuid
   tenant_id                String             @db.Uuid
   invoice_id               String             @db.Uuid
   collected_by_employee_id String?            @db.Uuid
@@ -526,7 +526,7 @@ model payment {
 }
 
 model permission {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String            @id @default(uuid(7)) @db.Uuid
   name            String            @unique @db.VarChar(150)
   resource        String            @db.VarChar(100)
   action          String            @db.VarChar(50)
@@ -535,7 +535,7 @@ model permission {
 }
 
 model proof_of_delivery {
-  id                       String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                       String           @id @default(uuid(7)) @db.Uuid
   tenant_id                String           @db.Uuid
   parcel_id                String           @unique(map: "uq_parcel_pod") @db.Uuid
   delivered_by_employee_id String           @db.Uuid
@@ -557,7 +557,7 @@ model proof_of_delivery {
 }
 
 model quotation {
-  id                       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                       String              @id @default(uuid(7)) @db.Uuid
   tenant_id                String              @db.Uuid
   shipment_request_id      String              @unique @db.Uuid
   quotation_type           QuotationType       @default(AUTOMATIC)
@@ -571,7 +571,7 @@ model quotation {
   status                   QuotationStatus     @default(PENDING)
   submitted_by_employee_id String?             @db.Uuid
   created_at               DateTime            @default(now()) @db.Timestamp(6)
-  updated_at               DateTime            @default(now()) @db.Timestamp(6)
+  updated_at               DateTime            @updatedAt
   customer_shipment        customer_shipment[]
   shipment_request         shipment_request    @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   employee                 employee?           @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
@@ -579,7 +579,7 @@ model quotation {
 }
 
 model role {
-  id              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String            @id @default(uuid(7)) @db.Uuid
   tenant_id       String            @db.Uuid
   name            String            @db.VarChar(100)
   description     String?           @db.VarChar(255)
@@ -593,7 +593,7 @@ model role {
 }
 
 model role_permission {
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id            String     @id @default(uuid(7)) @db.Uuid
   role_id       String     @db.Uuid
   permission_id String     @db.Uuid
   permission    permission @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -603,7 +603,7 @@ model role_permission {
 }
 
 model shipment_request {
-  id                       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                       String              @id @default(uuid(7)) @db.Uuid
   customer_profile_id      String              @db.Uuid
   target_tenant_id         String?             @db.Uuid
   sender_name              String              @db.VarChar(255)
@@ -625,7 +625,7 @@ model shipment_request {
   expires_at               DateTime?           @db.Timestamp(6)
   created_by_employee_id   String?             @db.Uuid
   created_at               DateTime            @default(now()) @db.Timestamp(6)
-  updated_at               DateTime            @default(now()) @db.Timestamp(6)
+  updated_at               DateTime            @updatedAt
   customer_shipment        customer_shipment[]
   quotation                quotation?
   employee                 employee?           @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
@@ -634,7 +634,7 @@ model shipment_request {
 }
 
 model subscription_plan {
-  id                    String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                    String                        @id @default(uuid(7)) @db.Uuid
   name                  String                        @db.VarChar(100)
   description           String?
   max_branches          Int                           @default(5)
@@ -648,14 +648,14 @@ model subscription_plan {
   price_yearly          Decimal?                      @db.Decimal(10, 2)
   is_active             Boolean                       @default(true)
   created_at            DateTime                      @default(now()) @db.Timestamp(6)
-  updated_at            DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at            DateTime                      @updatedAt
   tenant_subscription   tenant_subscription[]
   history_as_plan       tenant_subscription_history[] @relation("tenant_subscription_history_plan_idTosubscription_plan")
   history_as_prev_plan  tenant_subscription_history[] @relation("tenant_subscription_history_previous_plan_idTosubscription_plan")
 }
 
 model support_ticket {
-  id                      String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                      String                   @id @default(uuid(7)) @db.Uuid
   tenant_id               String?                  @db.Uuid
   submitted_by_user_id    String                   @db.Uuid
   assigned_to_employee_id String?                  @db.Uuid
@@ -667,7 +667,7 @@ model support_ticket {
   status                  TicketStatus             @default(OPEN)
   closed_at               DateTime?                @db.Timestamp(6)
   created_at              DateTime                 @default(now()) @db.Timestamp(6)
-  updated_at              DateTime                 @default(now()) @db.Timestamp(6)
+  updated_at              DateTime                 @updatedAt
   employee                employee?                @relation(fields: [assigned_to_employee_id], references: [id], onUpdate: NoAction)
   parcel                  parcel?                  @relation(fields: [parcel_id], references: [id], onUpdate: NoAction)
   customer_shipment       customer_shipment?       @relation(fields: [shipment_id], references: [id], onUpdate: NoAction)
@@ -677,7 +677,7 @@ model support_ticket {
 }
 
 model support_ticket_message {
-  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id             String         @id @default(uuid(7)) @db.Uuid
   ticket_id      String         @db.Uuid
   sender_user_id String         @db.Uuid
   message        String
@@ -688,7 +688,7 @@ model support_ticket_message {
 }
 
 model org_unit_location_mapping {
-  id                   String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                   String @id @default(uuid(7)) @db.Uuid
   tenant_id            String @db.Uuid
   organization_unit_id String @db.Uuid
   global_location_id   String @db.Uuid
@@ -704,7 +704,7 @@ model org_unit_location_mapping {
 }
 
 model tenant {
-  id                          String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                          String                        @id @default(uuid(7)) @db.Uuid
   name                        String                        @db.VarChar(255)
   email                       String?                       @db.VarChar(255)
   phone                       String?                       @db.VarChar(50)
@@ -714,7 +714,7 @@ model tenant {
   suspended_at                DateTime?                     @db.Timestamp(6)
   suspended_reason            String?
   created_at                  DateTime                      @default(now()) @db.Timestamp(6)
-  updated_at                  DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at                  DateTime                      @updatedAt
   audit_log                   audit_log[]
   customer_shipment           customer_shipment[]
   customer_tenant             customer_tenant[]
@@ -773,7 +773,7 @@ model tenant_pricing_settings {
 }
 
 model tenant_subscription {
-  id                             String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                             String                        @id @default(uuid(7)) @db.Uuid
   tenant_id                      String                        @db.Uuid
   plan_id                        String                        @db.Uuid
   status                         SubscriptionStatus            @default(ACTIVE)
@@ -790,14 +790,14 @@ model tenant_subscription {
   snapshot_max_monthly_parcels   Int?
   snapshot_features              Json                          @default("{}")
   created_at                     DateTime                      @default(now()) @db.Timestamp(6)
-  updated_at                     DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime                      @updatedAt
   subscription_plan              subscription_plan             @relation(fields: [plan_id], references: [id], onUpdate: NoAction)
   tenant                         tenant                        @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   tenant_subscription_history    tenant_subscription_history[]
 }
 
 model tenant_subscription_history {
-  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id               String   @id @default(uuid(7)) @db.Uuid
   tenant_id        String   @db.Uuid
   subscription_id  String   @db.Uuid
   plan_id          String   @db.Uuid
@@ -814,7 +814,7 @@ model tenant_subscription_history {
 }
 
 model tenant_zone {
-  id                                                                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                                                                       String                @id @default(uuid(7)) @db.Uuid
   tenant_id                                                                String                @db.Uuid
   name                                                                     String                @db.VarChar(255)
   description                                                              String?
@@ -827,14 +827,14 @@ model tenant_zone {
 }
 
 model transport_manifest {
-  id                                                                              String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                                                                              String            @id @default(uuid(7)) @db.Uuid
   tenant_id                                                                       String            @db.Uuid
   trip_id                                                                         String            @db.Uuid
   origin_org_unit_id                                                              String            @db.Uuid
   destination_org_unit_id                                                         String            @db.Uuid
   status                                                                          ManifestStatus    @default(PENDING)
   created_at                                                                      DateTime          @default(now()) @db.Timestamp(6)
-  updated_at                                                                      DateTime          @default(now()) @db.Timestamp(6)
+  updated_at                                                                      DateTime          @updatedAt
   manifest_item                                                                   manifest_item[]
   organization_unit_transport_manifest_destination_org_unit_idToorganization_unit organization_unit @relation("transport_manifest_destination_org_unit_idToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
   organization_unit_transport_manifest_origin_org_unit_idToorganization_unit      organization_unit @relation("transport_manifest_origin_org_unit_idToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
@@ -843,7 +843,7 @@ model transport_manifest {
 }
 
 model trip {
-  id                                                                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                                                                String               @id @default(uuid(7)) @db.Uuid
   tenant_id                                                         String               @db.Uuid
   driver_id                                                         String               @db.Uuid
   vehicle_id                                                        String?              @db.Uuid
@@ -855,7 +855,7 @@ model trip {
   ended_at                                                          DateTime?            @db.Timestamp(6)
   notes                                                             String?
   created_at                                                        DateTime             @default(now()) @db.Timestamp(6)
-  updated_at                                                        DateTime             @default(now()) @db.Timestamp(6)
+  updated_at                                                        DateTime             @updatedAt
   parcel_movement                                                   parcel_movement[]
   transport_manifest                                                transport_manifest[]
   organization_unit_trip_destination_org_unit_idToorganization_unit organization_unit    @relation("trip_destination_org_unit_idToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
@@ -866,12 +866,12 @@ model trip {
 }
 
 model users {
-  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                     String                   @id @default(uuid(7)) @db.Uuid
   email                  String                   @unique @db.VarChar(255)
   phone                  String?                  @unique @db.VarChar(50)
   password_hash          String                   @db.VarChar(255)
   created_at             DateTime                 @default(now()) @db.Timestamp(6)
-  updated_at             DateTime                 @default(now()) @db.Timestamp(6)
+  updated_at             DateTime                 @updatedAt
   audit_log              audit_log[]
   customer_profile       customer_profile?
   employee               employee[]
@@ -883,7 +883,7 @@ model users {
 }
 
 model user_session {
-  id                   String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                   String   @id @default(uuid(7)) @db.Uuid
   user_id              String   @db.Uuid
   hashed_refresh_token String   @db.VarChar(255)
   device_info          String?  @db.VarChar(255) // مثلاً: Chrome on Windows أو iPhone 14
@@ -897,25 +897,25 @@ model user_session {
 }
 
 model platform_admin {
-  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id         String       @id @default(uuid(7)) @db.Uuid
   user_id    String       @unique @db.Uuid
   full_name  String       @db.VarChar(255)
   role       PlatformRole @default(SUPER_ADMIN)
   is_active  Boolean      @default(true)
   created_at DateTime     @default(now()) @db.Timestamp(6)
-  updated_at DateTime     @default(now()) @db.Timestamp(6)
+  updated_at DateTime     @updatedAt
   users      users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model vehicle {
-  id           String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id           String        @id @default(uuid(7)) @db.Uuid
   tenant_id    String        @db.Uuid
   plate_number String        @db.VarChar(50)
   type         VehicleType?
   capacity_kg  Decimal?      @db.Decimal(10, 2)
   status       VehicleStatus @default(ACTIVE)
   created_at   DateTime      @default(now()) @db.Timestamp(6)
-  updated_at   DateTime      @default(now()) @db.Timestamp(6)
+  updated_at   DateTime      @updatedAt
   trip         trip[]
   tenant       tenant        @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -923,7 +923,7 @@ model vehicle {
 }
 
 model zone_pricing_matrix {
-  id                                                               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id                                                               String      @id @default(uuid(7)) @db.Uuid
   tenant_id                                                        String      @db.Uuid
   origin_zone_id                                                   String      @db.Uuid
   destination_zone_id                                              String      @db.Uuid
@@ -932,7 +932,7 @@ model zone_pricing_matrix {
   price_per_extra_kg                                               Decimal     @default(0) @db.Decimal(10, 2)
   is_active                                                        Boolean     @default(true)
   created_at                                                       DateTime    @default(now()) @db.Timestamp(6)
-  updated_at                                                       DateTime    @default(now()) @db.Timestamp(6)
+  updated_at                                                       DateTime    @updatedAt
   tenant_zone_zone_pricing_matrix_destination_zone_idTotenant_zone tenant_zone @relation("zone_pricing_matrix_destination_zone_idTotenant_zone", fields: [destination_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   tenant_zone_zone_pricing_matrix_origin_zone_idTotenant_zone      tenant_zone @relation("zone_pricing_matrix_origin_zone_idTotenant_zone", fields: [origin_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   tenant                                                           tenant      @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
