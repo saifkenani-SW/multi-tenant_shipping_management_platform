@@ -12,7 +12,7 @@ export const envValidationSchema = Joi.object({
   SHADOW_DATABASE_URL: Joi.string().optional(), // اختياري
 
   // أمان
-  JWT_SECRET: Joi.string().required().min(32), // 32 حرف على الأقل
+  JWT_ACCESS_SECRET: Joi.string().required().min(32), // 32 حرف على الأقل
   JWT_EXPIRATION: Joi.string().default('7d'),
 
   // ريديس
