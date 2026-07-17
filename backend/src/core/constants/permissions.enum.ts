@@ -1,0 +1,17 @@
+export enum Permission {
+  // Parcels & Shipments
+  CREATE_PARCEL = 'CREATE_PARCEL',
+  READ_PARCEL = 'READ_PARCEL',
+  UPDATE_PARCEL = 'UPDATE_PARCEL',
+  DELETE_PARCEL = 'DELETE_PARCEL',
+
+  // Users & Roles
+  MANAGE_USERS = 'MANAGE_USERS',
+  MANAGE_ROLES = 'MANAGE_ROLES',
+
+  // Reports
+  VIEW_REPORTS = 'VIEW_REPORTS',
+
+  // Billing
+  MANAGE_BILLING = 'MANAGE_BILLING',
+}
