@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { TenantQueryService } from './tenant.query.service';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { TenantStatus } from '../enums/tenant-status.enum';
+import { Tenant } from '../domain/tenant.entity';
 
 describe('TenantQueryService', () => {
   let service: TenantQueryService;
@@ -28,15 +29,18 @@ describe('TenantQueryService', () => {
 
   describe('findTenants', () => {
     it('should fetch from repository and return mapped list', async () => {
-      const dbItems = [
-        {
-          id: '1',
-          name: 'Tenant A',
-          is_active: true,
-          created_at: new Date('2023-01-01'),
-        },
+      const mockTenants = [
+        new Tenant(
+          '1',
+          'Tenant A',
+          TenantStatus.ACTIVE,
+          '',
+          '',
+          new Date('2023-01-01'),
+          new Date('2023-01-01'),
+        ),
       ];
-      tenantQueryRepository.findMany.mockResolvedValue([dbItems, 1]);
+      tenantQueryRepository.findMany.mockResolvedValue([mockTenants, 1]);
 
       const result = await service.findTenants(1, 10);
 
@@ -68,16 +72,16 @@ describe('TenantQueryService', () => {
     });
 
     it('should return mapped details if found in repository', async () => {
-      const dbTenant = {
-        id: '2',
-        name: 'Tenant B',
-        is_active: false,
-        tax_number: 'TX1',
-        email: 'b@b.com',
-        created_at: new Date('2023-01-01'),
-        updated_at: new Date('2023-01-02'),
-      };
-      tenantQueryRepository.findById.mockResolvedValue(dbTenant);
+      const mockTenant = new Tenant(
+        '2',
+        'Tenant B',
+        TenantStatus.SUSPENDED,
+        'TX1',
+        'b@b.com',
+        new Date('2023-01-01'),
+        new Date('2023-01-02'),
+      );
+      tenantQueryRepository.findById.mockResolvedValue(mockTenant);
 
       const result = await service.getTenantDetails('2');
 

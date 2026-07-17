@@ -1,19 +1,12 @@
 import { TenantStatus } from '../enums/tenant-status.enum';
-
-export interface TenantData {
-  id: string;
-  name: string;
-  status: TenantStatus;
-  taxNumber: string;
-  contactEmail: string;
-}
+import { Tenant } from '../domain/tenant.entity';
 
 export interface ITenantCommandRepository {
-  create(data: Omit<TenantData, 'id' | 'status'>): Promise<string>;
-  findById(id: string): Promise<TenantData | null>;
+  create(data: { name: string; taxNumber: string; contactEmail: string }): Promise<Tenant>;
+  findById(id: string): Promise<Tenant | null>;
   update(
     id: string,
-    data: Partial<Omit<TenantData, 'id' | 'status'>>,
+    data: { name?: string; taxNumber?: string; contactEmail?: string },
   ): Promise<void>;
   updateStatus(
     id: string,

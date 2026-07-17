@@ -1,7 +1,7 @@
-import { PaginatedTenantListDto } from '../dtos/tenant-list.dto';
-import { TenantDetailsDto } from '../dtos/tenant-details.dto';
+import { PaginatedTenantListDto } from '../dtos/responses/tenant-list.dto';
+import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
 
-import { TenantSearchField } from '../dtos/tenant-query.dto';
+import { TenantSearchField } from '../enums/tenant-search-field.enum';
 
 export interface ITenantQueryService {
   findTenants(

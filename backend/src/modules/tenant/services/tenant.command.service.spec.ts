@@ -45,7 +45,7 @@ describe('TenantCommandService', () => {
         taxNumber: '123',
         contactEmail: 'test@example.com',
       };
-      tenantRepository.create.mockResolvedValue('tenant-uuid-1');
+      tenantRepository.create.mockResolvedValue({ id: 'tenant-uuid-1' });
 
       const result = await service.createTenant(dto);
 

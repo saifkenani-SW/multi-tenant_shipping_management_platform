@@ -1,9 +1,9 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ITenantQueryService } from '../interfaces/tenant.query.service.interface';
 import type { ITenantQueryRepository } from '../interfaces/tenant.query.repository.interface';
-import { PaginatedTenantListDto, TenantListDto } from '../dtos/tenant-list.dto';
-import { TenantDetailsDto } from '../dtos/tenant-details.dto';
-import { TenantSearchField } from '../dtos/tenant-query.dto';
+import { PaginatedTenantListDto, TenantListDto } from '../dtos/responses/tenant-list.dto';
+import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
+import { TenantSearchField } from '../enums/tenant-search-field.enum';
 
 @Injectable()
 export class TenantQueryService implements ITenantQueryService {
@@ -28,12 +28,12 @@ export class TenantQueryService implements ITenantQueryService {
     );
 
     const result = new PaginatedTenantListDto();
-    result.data = items.map((tenant: any) => {
+    result.data = items.map((tenant) => {
       const dto = new TenantListDto();
       dto.id = tenant.id;
       dto.name = tenant.name;
-      dto.status = tenant.is_active ? 'ACTIVE' : 'SUSPENDED';
-      dto.createdAt = tenant.created_at;
+      dto.status = tenant.status;
+      dto.createdAt = tenant.createdAt;
       return dto;
     });
     result.meta = {
@@ -53,11 +53,11 @@ export class TenantQueryService implements ITenantQueryService {
     const result = new TenantDetailsDto();
     result.id = tenant.id;
     result.name = tenant.name;
-    result.status = tenant.is_active ? 'ACTIVE' : 'SUSPENDED';
-    result.taxNumber = tenant.tax_number || '';
-    result.contactEmail = tenant.email || '';
-    result.createdAt = tenant.created_at;
-    result.updatedAt = tenant.updated_at;
+    result.status = tenant.status;
+    result.taxNumber = tenant.taxNumber;
+    result.contactEmail = tenant.contactEmail;
+    result.createdAt = tenant.createdAt;
+    result.updatedAt = tenant.updatedAt;
 
     return result;
   }

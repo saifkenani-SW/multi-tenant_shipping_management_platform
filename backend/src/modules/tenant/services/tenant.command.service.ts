@@ -1,8 +1,8 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import type { ITenantCommandRepository } from '../interfaces/tenant.command.repository.interface';
 import { ITenantCommandService } from '../interfaces/tenant.command.service.interface';
-import { CreateTenantDto } from '../dtos/create-tenant.dto';
-import { UpdateTenantDto } from '../dtos/update-tenant.dto';
+import { CreateTenantDto } from '../dtos/requests/create-tenant.dto';
+import { UpdateTenantDto } from '../dtos/requests/update-tenant.dto';
 import { TenantStatus } from '../enums/tenant-status.enum';
 import { CacheEvict } from '../../../core/cache/decorators/CacheEvict';
 import type { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
@@ -19,11 +19,12 @@ export class TenantCommandService implements ITenantCommandService {
 
   @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true }) // Clears lists
   async createTenant(dto: CreateTenantDto): Promise<string> {
-    return await this.tenantRepository.create({
+    const tenant = await this.tenantRepository.create({
       name: dto.name,
       taxNumber: dto.taxNumber,
       contactEmail: dto.contactEmail,
     });
+    return tenant.id;
   }
 
   @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true })

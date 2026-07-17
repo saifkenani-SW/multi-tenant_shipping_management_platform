@@ -1,4 +1,5 @@
-import { TenantSearchField } from '../dtos/tenant-query.dto';
+import { TenantSearchField } from '../enums/tenant-search-field.enum';
+import { Tenant } from '../domain/tenant.entity';
 
 export interface ITenantQueryRepository {
   findMany(
@@ -6,6 +7,6 @@ export interface ITenantQueryRepository {
     take: number,
     search?: string,
     searchType?: TenantSearchField,
-  ): Promise<[any[], number]>;
-  findById(id: string): Promise<any | null>;
+  ): Promise<[Tenant[], number]>;
+  findById(id: string): Promise<Tenant | null>;
 }

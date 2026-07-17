@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  DefaultValuePipe,
   ForbiddenException,
   Get,
   HttpCode,
@@ -9,7 +8,6 @@ import {
   Inject,
   NotFoundException,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
   Query,
@@ -18,22 +16,22 @@ import {
 import {
   ApiBearerAuth,
   ApiOperation,
-  ApiQuery,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import type { ITenantCommandService } from './interfaces/tenant.command.service.interface';
-import { CreateTenantDto } from './dtos/create-tenant.dto';
-import { UpdateTenantDto } from './dtos/update-tenant.dto';
+import { CreateTenantDto } from './dtos/requests/create-tenant.dto';
+import { UpdateTenantDto } from './dtos/requests/update-tenant.dto';
 import type { ITenantQueryService } from './interfaces/tenant.query.service.interface';
-import { PaginatedTenantListDto } from './dtos/tenant-list.dto';
-import { TenantDetailsDto } from './dtos/tenant-details.dto';
+import { PaginatedTenantListDto } from './dtos/responses/tenant-list.dto';
+import { TenantDetailsDto } from './dtos/responses/tenant-details.dto';
 import type { JwtPayload } from '../auth/types/auth.types';
 import { UserLoginType } from '../auth/types/auth.types';
 import { RequireTypes } from '../auth/authorization/decorators/require-types.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserTypeGuard } from '../auth/authorization/guards/user-type.guard';
-import { TenantQueryDto } from './dtos/tenant-query.dto';
+import { TenantQueryDto } from './dtos/requests/tenant-query.dto';
+import { BaseUuidParamDto } from '../../core/dtos/base-uuid-param.dto';
 
 @ApiTags('Tenants')
 @ApiBearerAuth()
@@ -88,9 +86,10 @@ export class TenantController {
     type: TenantDetailsDto,
   })
   async getTenantDetails(
-    @Param('id') id: string,
+    @Param() params: BaseUuidParamDto,
     @CurrentUser() user: JwtPayload,
   ): Promise<TenantDetailsDto> {
+    const id = params.id;
     if (user.type === UserLoginType.EMPLOYEE && user.tenantId !== id) {
       throw new ForbiddenException(
         'Tenant isolation violation: Unauthorized access',
@@ -110,10 +109,11 @@ export class TenantController {
     description: 'Tenant updated successfully',
   })
   async updateTenant(
-    @Param('id') id: string,
+    @Param() params: BaseUuidParamDto,
     @Body() dto: UpdateTenantDto,
     @CurrentUser() user: JwtPayload,
   ): Promise<void> {
+    const id = params.id;
     if (user.type === UserLoginType.EMPLOYEE && user.tenantId !== id) {
       throw new ForbiddenException(
         'Tenant isolation violation: Unauthorized access',
@@ -131,9 +131,10 @@ export class TenantController {
     description: 'Tenant suspended successfully',
   })
   async suspendTenant(
-    @Param('id') id: string,
+    @Param() params: BaseUuidParamDto,
     @Body('reason') reason?: string,
   ): Promise<void> {
+    const id = params.id;
     await this.tenantCommandService.suspendTenant(id, reason);
   }
 
@@ -145,7 +146,8 @@ export class TenantController {
     status: HttpStatus.OK,
     description: 'Tenant activated successfully',
   })
-  async activateTenant(@Param('id') id: string): Promise<void> {
+  async activateTenant(@Param() params: BaseUuidParamDto): Promise<void> {
+    const id = params.id;
     await this.tenantCommandService.activateTenant(id);
   }
 }

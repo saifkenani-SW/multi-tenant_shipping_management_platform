@@ -1,5 +1,5 @@
-import { CreateTenantDto } from '../dtos/create-tenant.dto';
-import { UpdateTenantDto } from '../dtos/update-tenant.dto';
+import { CreateTenantDto } from '../dtos/requests/create-tenant.dto';
+import { UpdateTenantDto } from '../dtos/requests/update-tenant.dto';
 
 export interface ITenantCommandService {
   createTenant(dto: CreateTenantDto): Promise<string>;
