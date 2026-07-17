@@ -5,5 +5,5 @@ export function generateOtp(): string {
     return '123456';
   }
 
-  return '123456';
+  return randomInt(100000, 1000000).toString();
 }
