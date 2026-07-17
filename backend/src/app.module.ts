@@ -6,7 +6,7 @@ import { DatabaseModule } from './infrastructure/database/database.module';
 import { AppConfigModule } from './infrastructure/config/app-config.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { TenantModule } from './modules/tenant/tenant.module';
-import { SubscriptionModule } from './modules/subscription/subscription.module';
+import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
 import { LoggerModule } from 'nestjs-pino';
 
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -33,7 +33,7 @@ import { CacheModule } from './infrastructure/cache/cache.module';
 
     AuthModule,
     TenantModule,
-    SubscriptionModule,
+    SubscriptionPlanModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
