@@ -1,0 +1,43 @@
+meta {
+  name: Create Tenant
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/tenants
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Global Logistics Inc.",
+    "taxNumber": "TAX-987654321",
+    "contactEmail": "admin@globallogistics.com"
+  }
+}
+
+docs {
+  # Create Tenant
+  Creates a new tenant on the platform. Restricted to `PLATFORM_ADMIN` users only.
+  
+  ## Usage
+  - `{{url}}` resolves to the base API path.
+  - `{{token}}` is injected automatically from the Bruno environment variables. Be sure to run Login first and copy the accessToken into your local environment.
+  
+  ## Expected JSON Response
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": "123e4567-e89b-12d3-a456-426614174000"
+    },
+    "timestamp": "2026-07-16T12:00:00.000Z"
+  }
+  ```
+}

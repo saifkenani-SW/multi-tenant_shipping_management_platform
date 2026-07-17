@@ -1,0 +1,21 @@
+meta {
+  name: Suspend Tenant
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{url}}/tenants/46e80d25-d835-4b27-911b-91468cb30820/suspend
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "reason": "Violation of terms of service"
+  }
+}
