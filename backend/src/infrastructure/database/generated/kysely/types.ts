@@ -208,13 +208,13 @@ export const CollectionMethod = {
 } as const;
 export type CollectionMethod = (typeof CollectionMethod)[keyof typeof CollectionMethod];
 export type assignment_role = {
-    id: Generated<string>;
+    id: string;
     assignment_id: string;
     role_id: string;
     granted_at: Generated<Timestamp>;
 };
 export type audit_log = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string | null;
     actor_user_id: string | null;
     actor_ip: string | null;
@@ -228,7 +228,7 @@ export type audit_log = {
     created_at: Generated<Timestamp>;
 };
 export type customer_address = {
-    id: Generated<string>;
+    id: string;
     customer_id: string;
     label: string | null;
     address_line: string;
@@ -236,15 +236,15 @@ export type customer_address = {
     created_at: Generated<Timestamp>;
 };
 export type customer_profile = {
-    id: Generated<string>;
+    id: string;
     user_id: string;
     full_name: string;
     phone: string;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type customer_shipment = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     customer_profile_id: string;
     shipment_request_id: string | null;
@@ -256,16 +256,16 @@ export type customer_shipment = {
     total_chargeable_weight_kg: Generated<string | null>;
     status: Generated<ShipmentStatus>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type customer_tenant = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     customer_profile_id: string;
     first_interaction_at: Generated<Timestamp>;
 };
 export type employee = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     user_id: string;
     employee_code: string;
@@ -274,10 +274,10 @@ export type employee = {
     is_active: Generated<boolean>;
     deactivated_at: Timestamp | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type employee_assignment = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     employee_id: string;
     organization_unit_id: string;
@@ -285,13 +285,13 @@ export type employee_assignment = {
     created_at: Generated<Timestamp>;
 };
 export type global_location = {
-    id: Generated<string>;
+    id: string;
     parent_id: string | null;
     name: string;
     type: LocationType;
 };
 export type invoice = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     customer_profile_id: string;
     customer_shipment_id: string | null;
@@ -305,10 +305,10 @@ export type invoice = {
     status: Generated<InvoiceStatus>;
     due_date: Timestamp | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type manifest_item = {
-    id: Generated<string>;
+    id: string;
     manifest_id: string;
     parcel_id: string;
     status: Generated<ManifestItemStatus>;
@@ -316,7 +316,7 @@ export type manifest_item = {
     unloaded_at: Timestamp | null;
 };
 export type notification = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string | null;
     recipient_user_id: string;
     notification_type: NotificationType;
@@ -331,14 +331,14 @@ export type notification = {
     created_at: Generated<Timestamp>;
 };
 export type org_unit_location_mapping = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     organization_unit_id: string;
     global_location_id: string;
     coverage_type: Generated<string>;
 };
 export type organization_unit = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     parent_id: string | null;
     zone_id: string | null;
@@ -347,10 +347,10 @@ export type organization_unit = {
     address_line: string | null;
     is_active: Generated<boolean>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type parcel = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     customer_shipment_id: string;
     tracking_number: string;
@@ -364,10 +364,10 @@ export type parcel = {
     current_org_unit_id: string | null;
     qr_code_url: string | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type parcel_movement = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     parcel_id: string;
     organization_unit_id: string | null;
@@ -380,7 +380,7 @@ export type parcel_movement = {
     created_at: Generated<Timestamp>;
 };
 export type payment = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     invoice_id: string;
     collected_by_employee_id: string | null;
@@ -393,23 +393,23 @@ export type payment = {
     created_at: Generated<Timestamp>;
 };
 export type permission = {
-    id: Generated<string>;
+    id: string;
     name: string;
     resource: string;
     action: string;
     description: string | null;
 };
 export type platform_admin = {
-    id: Generated<string>;
+    id: string;
     user_id: string;
     full_name: string;
     role: Generated<PlatformRole>;
     is_active: Generated<boolean>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type proof_of_delivery = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     parcel_id: string;
     delivered_by_employee_id: string;
@@ -427,7 +427,7 @@ export type proof_of_delivery = {
     created_at: Generated<Timestamp>;
 };
 export type quotation = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     shipment_request_id: string;
     quotation_type: Generated<QuotationType>;
@@ -441,10 +441,10 @@ export type quotation = {
     status: Generated<QuotationStatus>;
     submitted_by_employee_id: string | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type role = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     name: string;
     description: string | null;
@@ -452,12 +452,12 @@ export type role = {
     created_at: Generated<Timestamp>;
 };
 export type role_permission = {
-    id: Generated<string>;
+    id: string;
     role_id: string;
     permission_id: string;
 };
 export type shipment_request = {
-    id: Generated<string>;
+    id: string;
     customer_profile_id: string;
     target_tenant_id: string | null;
     sender_name: string;
@@ -479,10 +479,10 @@ export type shipment_request = {
     expires_at: Timestamp | null;
     created_by_employee_id: string | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type subscription_plan = {
-    id: Generated<string>;
+    id: string;
     name: string;
     description: string | null;
     max_branches: Generated<number>;
@@ -496,10 +496,10 @@ export type subscription_plan = {
     price_yearly: string | null;
     is_active: Generated<boolean>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type support_ticket = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string | null;
     submitted_by_user_id: string;
     assigned_to_employee_id: string | null;
@@ -511,10 +511,10 @@ export type support_ticket = {
     status: Generated<TicketStatus>;
     closed_at: Timestamp | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type support_ticket_message = {
-    id: Generated<string>;
+    id: string;
     ticket_id: string;
     sender_user_id: string;
     message: string;
@@ -522,7 +522,7 @@ export type support_ticket_message = {
     created_at: Generated<Timestamp>;
 };
 export type tenant = {
-    id: Generated<string>;
+    id: string;
     name: string;
     email: string | null;
     phone: string | null;
@@ -532,7 +532,7 @@ export type tenant = {
     suspended_at: Timestamp | null;
     suspended_reason: string | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type tenant_delivery_settings = {
     tenant_id: string;
@@ -557,7 +557,7 @@ export type tenant_pricing_settings = {
     default_currency: Generated<string>;
 };
 export type tenant_subscription = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     plan_id: string;
     status: Generated<SubscriptionStatus>;
@@ -574,10 +574,10 @@ export type tenant_subscription = {
     snapshot_max_monthly_parcels: number | null;
     snapshot_features: Generated<unknown>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type tenant_subscription_history = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     subscription_id: string;
     plan_id: string;
@@ -588,7 +588,7 @@ export type tenant_subscription_history = {
     performed_at: Generated<Timestamp>;
 };
 export type tenant_zone = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     name: string;
     description: string | null;
@@ -596,17 +596,17 @@ export type tenant_zone = {
     created_at: Generated<Timestamp>;
 };
 export type transport_manifest = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     trip_id: string;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
     status: Generated<ManifestStatus>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type trip = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     driver_id: string;
     vehicle_id: string | null;
@@ -618,10 +618,10 @@ export type trip = {
     ended_at: Timestamp | null;
     notes: string | null;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type user_session = {
-    id: Generated<string>;
+    id: string;
     user_id: string;
     hashed_refresh_token: string;
     device_info: string | null;
@@ -630,25 +630,25 @@ export type user_session = {
     created_at: Generated<Timestamp>;
 };
 export type users = {
-    id: Generated<string>;
+    id: string;
     email: string;
     phone: string | null;
     password_hash: string;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type vehicle = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     plate_number: string;
     type: VehicleType | null;
     capacity_kg: string | null;
     status: Generated<VehicleStatus>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type zone_pricing_matrix = {
-    id: Generated<string>;
+    id: string;
     tenant_id: string;
     origin_zone_id: string;
     destination_zone_id: string;
@@ -657,7 +657,7 @@ export type zone_pricing_matrix = {
     price_per_extra_kg: Generated<string>;
     is_active: Generated<boolean>;
     created_at: Generated<Timestamp>;
-    updated_at: Generated<Timestamp>;
+    updated_at: Timestamp;
 };
 export type DB = {
     assignment_role: assignment_role;
