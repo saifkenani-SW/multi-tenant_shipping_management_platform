@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { AppConfigModule } from './infrastructure/config/app-config.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CustomerModule } from './modules/customer/customer.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
 import { LoggerModule } from 'nestjs-pino';
@@ -32,6 +33,7 @@ import { CacheModule } from './infrastructure/cache/cache.module';
     }),
 
     AuthModule,
+    CustomerModule,
     TenantModule,
     SubscriptionPlanModule,
   ],

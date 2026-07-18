@@ -25,6 +25,17 @@ export const envValidationSchema = Joi.object({
     then: Joi.required(), // مطلوب فقط في الإنتاج
     otherwise: Joi.optional(),
   }),
+  SMTP_PORT: Joi.number().default(587),
+  SMTP_USER: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  SMTP_PASS: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
 
   // حدود
   RATE_LIMIT_TTL: Joi.number().default(60),
