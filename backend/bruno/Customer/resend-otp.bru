@@ -1,0 +1,29 @@
+meta {
+  name: Resend OTP
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{url}}/customer/resend-otp
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "sara@example.com"
+  }
+}
+
+docs {
+  # Resend OTP Endpoint
+  Escalating cooldown: 3 minutes must pass before the 2nd request, 5 minutes
+  before the 3rd. A 4th request is rejected — the user must call
+  `/customer/register` again from scratch.
+
+  ## Expected JSON Response
+  ```json
+  { "message": "A new OTP has been sent to your email, valid for 10 minutes" }
+  ```
+}

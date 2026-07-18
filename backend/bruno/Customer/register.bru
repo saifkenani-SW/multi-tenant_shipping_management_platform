@@ -1,0 +1,32 @@
+meta {
+  name: Register
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/customer/register
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "sara@example.com",
+    "password": "password123",
+    "fullName": "Sara Ahmad",
+    "phone": "0991234567"
+  }
+}
+
+docs {
+  # Register Endpoint (Step 1 of 2)
+  Validates the email/phone are not already taken, generates a 6-digit OTP,
+  stores the pending registration in the cache (Redis) for 10 minutes, and
+  emails the OTP to the user. No row is written to the database yet.
+
+  ## Expected JSON Response
+  ```json
+  { "message": "OTP sent to your email, valid for 10 minutes" }
+  ```
+}
