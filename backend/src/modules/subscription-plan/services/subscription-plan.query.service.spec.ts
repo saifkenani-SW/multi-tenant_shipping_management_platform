@@ -24,7 +24,9 @@ describe('SubscriptionPlanQueryService', () => {
       ],
     }).compile();
 
-    service = module.get<SubscriptionPlanQueryService>(SubscriptionPlanQueryService);
+    service = module.get<SubscriptionPlanQueryService>(
+      SubscriptionPlanQueryService,
+    );
     repository = module.get('ISubscriptionPlanQueryRepository');
   });
 
@@ -57,11 +59,21 @@ describe('SubscriptionPlanQueryService', () => {
 
       repository.findMany.mockResolvedValue([mockRows, 100]);
 
-      const result = await service.findPlans(2, 10, 'search-term', SubscriptionPlanSearchField.NAME);
+      const result = await service.findPlans(
+        2,
+        10,
+        'search-term',
+        SubscriptionPlanSearchField.NAME,
+      );
 
       expect(repository.findMany).toHaveBeenCalledTimes(1);
-      expect(repository.findMany).toHaveBeenCalledWith(10, 10, 'search-term', SubscriptionPlanSearchField.NAME);
-      
+      expect(repository.findMany).toHaveBeenCalledWith(
+        10,
+        10,
+        'search-term',
+        SubscriptionPlanSearchField.NAME,
+      );
+
       expect(result.data).toHaveLength(1);
       expect(result.data[0].id).toEqual(mockRows[0].id);
       expect(result.meta).toEqual({

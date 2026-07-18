@@ -1,4 +1,7 @@
-import { PaginatedSubscriptionPlanListDto, SubscriptionPlanDetailsDto } from '../dtos/responses/subscription-plan-list.dto';
+import {
+  PaginatedSubscriptionPlanListDto,
+  SubscriptionPlanDetailsDto,
+} from '../dtos/responses/subscription-plan-list.dto';
 import { SubscriptionPlanSearchField } from '../enums/subscription-plan-search.enum';
 
 export interface ISubscriptionPlanQueryService {

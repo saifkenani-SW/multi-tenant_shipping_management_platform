@@ -45,7 +45,9 @@ describe('SubscriptionPlanQueryRepository', () => {
       ],
     }).compile();
 
-    repository = module.get<SubscriptionPlanQueryRepository>(SubscriptionPlanQueryRepository);
+    repository = module.get<SubscriptionPlanQueryRepository>(
+      SubscriptionPlanQueryRepository,
+    );
     cacheProvider = module.get('ICacheProvider');
   });
 
@@ -56,23 +58,25 @@ describe('SubscriptionPlanQueryRepository', () => {
   describe('findMany', () => {
     it('should query kysely with explicit selects, pagination, and return mapped Entity', async () => {
       const now = new Date();
-      const mockRows = [{ 
-        id: '1',
-        name: 'Basic',
-        description: null,
-        max_branches: 1,
-        max_warehouses: 1,
-        max_employees: 1,
-        max_vehicles: 1,
-        max_zones: 1,
-        max_monthly_shipments: 1,
-        max_monthly_parcels: 1,
-        price_monthly: '10.0',
-        price_yearly: '100.0',
-        is_active: true,
-        created_at: now,
-        updated_at: now,
-      }];
+      const mockRows = [
+        {
+          id: '1',
+          name: 'Basic',
+          description: null,
+          max_branches: 1,
+          max_warehouses: 1,
+          max_employees: 1,
+          max_vehicles: 1,
+          max_zones: 1,
+          max_monthly_shipments: 1,
+          max_monthly_parcels: 1,
+          price_monthly: '10.0',
+          price_yearly: '100.0',
+          is_active: true,
+          created_at: now,
+          updated_at: now,
+        },
+      ];
       mockQueryBuilder.execute.mockResolvedValueOnce(mockRows);
       mockQueryBuilder.executeTakeFirst.mockResolvedValueOnce({ count: '100' });
 
@@ -80,11 +84,14 @@ describe('SubscriptionPlanQueryRepository', () => {
 
       expect(mockKysely.selectFrom).toHaveBeenCalledWith('subscription_plan');
       expect(mockQueryBuilder.select).toHaveBeenCalled();
-      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith('created_at', 'desc');
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'created_at',
+        'desc',
+      );
       expect(mockQueryBuilder.offset).toHaveBeenCalledWith(0);
       expect(mockQueryBuilder.limit).toHaveBeenCalledWith(10);
       expect(mockQueryBuilder.execute).toHaveBeenCalled();
-      
+
       expect(items).toHaveLength(1);
       expect(items[0]).toBeInstanceOf(SubscriptionPlan);
       expect(items[0].id).toBe('1');
@@ -97,7 +104,11 @@ describe('SubscriptionPlanQueryRepository', () => {
 
       await repository.findMany(0, 10, 'pro', SubscriptionPlanSearchField.NAME);
 
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('name', 'ilike', '%pro%');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'name',
+        'ilike',
+        '%pro%',
+      );
     });
   });
 
@@ -109,14 +120,18 @@ describe('SubscriptionPlanQueryRepository', () => {
 
       expect(mockKysely.selectFrom).toHaveBeenCalledWith('subscription_plan');
       expect(mockQueryBuilder.select).toHaveBeenCalled();
-      expect(mockQueryBuilder.where).toHaveBeenCalledWith('id', '=', 'non-existent');
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'id',
+        '=',
+        'non-existent',
+      );
       expect(mockQueryBuilder.executeTakeFirst).toHaveBeenCalled();
       expect(result).toBeNull();
     });
 
     it('should return the mapped plan Entity if found', async () => {
       const now = new Date();
-      const mockRow = { 
+      const mockRow = {
         id: '1',
         name: 'Basic',
         description: null,

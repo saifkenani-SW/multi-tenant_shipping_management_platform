@@ -8,7 +8,11 @@ import { Tenant } from '../domain/tenant.entity';
 export class TenantCommandRepository implements ITenantCommandRepository {
   constructor(private readonly prisma: TransactionalPrismaService) {}
 
-  async create(data: { name: string; taxNumber: string; contactEmail: string }): Promise<Tenant> {
+  async create(data: {
+    name: string;
+    taxNumber: string;
+    contactEmail: string;
+  }): Promise<Tenant> {
     const tenant = await this.prisma.client.tenant.create({
       data: {
         name: data.name,
@@ -17,7 +21,7 @@ export class TenantCommandRepository implements ITenantCommandRepository {
         is_active: true,
       },
     });
-    
+
     return new Tenant(
       tenant.id,
       tenant.name,

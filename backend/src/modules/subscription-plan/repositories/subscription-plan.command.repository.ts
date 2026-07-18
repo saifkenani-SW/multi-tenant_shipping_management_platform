@@ -38,7 +38,7 @@ export class SubscriptionPlanCommandRepository implements ISubscriptionPlanComma
         is_active: data.is_active,
       },
     });
-    
+
     return new SubscriptionPlan(
       result.id,
       result.name,
@@ -51,7 +51,7 @@ export class SubscriptionPlanCommandRepository implements ISubscriptionPlanComma
       result.max_monthly_shipments,
       result.max_monthly_parcels,
       Number(result.price_monthly),
-      Number(result.price_yearly),
+      result.price_yearly !== null ? Number(result.price_yearly) : null,
       result.is_active,
       result.created_at,
       result.updated_at,
@@ -63,7 +63,7 @@ export class SubscriptionPlanCommandRepository implements ISubscriptionPlanComma
       where: { id },
     });
     if (!plan) return null;
-    
+
     return new SubscriptionPlan(
       plan.id,
       plan.name,
@@ -76,7 +76,7 @@ export class SubscriptionPlanCommandRepository implements ISubscriptionPlanComma
       plan.max_monthly_shipments,
       plan.max_monthly_parcels,
       Number(plan.price_monthly),
-      Number(plan.price_yearly),
+      plan.price_yearly !== null ? Number(plan.price_yearly) : null,
       plan.is_active,
       plan.created_at,
       plan.updated_at,

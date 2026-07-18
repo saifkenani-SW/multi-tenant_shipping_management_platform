@@ -1,7 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import type { ISubscriptionPlanQueryRepository } from '../interfaces/subscription-plan.query.repository.interface';
 import { ISubscriptionPlanQueryService } from '../interfaces/subscription-plan.query.service.interface';
-import { PaginatedSubscriptionPlanListDto, SubscriptionPlanDetailsDto } from '../dtos/responses/subscription-plan-list.dto';
+import {
+  PaginatedSubscriptionPlanListDto,
+  SubscriptionPlanDetailsDto,
+} from '../dtos/responses/subscription-plan-list.dto';
 import { SubscriptionPlanSearchField } from '../enums/subscription-plan-search.enum';
 import { SubscriptionPlan } from '../domain/subscription-plan.entity';
 

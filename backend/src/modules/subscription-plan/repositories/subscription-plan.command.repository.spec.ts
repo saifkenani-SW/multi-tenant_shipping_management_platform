@@ -29,7 +29,9 @@ describe('SubscriptionPlanCommandRepository', () => {
       ],
     }).compile();
 
-    repository = module.get<SubscriptionPlanCommandRepository>(SubscriptionPlanCommandRepository);
+    repository = module.get<SubscriptionPlanCommandRepository>(
+      SubscriptionPlanCommandRepository,
+    );
     prisma = module.get(TransactionalPrismaService) as any;
   });
 
@@ -104,13 +106,18 @@ describe('SubscriptionPlanCommandRepository', () => {
     });
 
     it('should throw NotFoundException if Prisma throws P2025 error', async () => {
-      const p2025Error = new Prisma.PrismaClientKnownRequestError('Record to update not found.', {
-        code: 'P2025',
-        clientVersion: '5.x',
-      });
+      const p2025Error = new Prisma.PrismaClientKnownRequestError(
+        'Record to update not found.',
+        {
+          code: 'P2025',
+          clientVersion: '5.x',
+        },
+      );
       prisma.client.subscription_plan.update.mockRejectedValue(p2025Error);
 
-      await expect(repository.update('non-existent', {})).rejects.toThrow(NotFoundException);
+      await expect(repository.update('non-existent', {})).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 

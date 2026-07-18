@@ -41,7 +41,9 @@ describe('SubscriptionPlanCommandService', () => {
       ],
     }).compile();
 
-    service = module.get<SubscriptionPlanCommandService>(SubscriptionPlanCommandService);
+    service = module.get<SubscriptionPlanCommandService>(
+      SubscriptionPlanCommandService,
+    );
     repository = module.get('ISubscriptionPlanCommandRepository');
     cacheProvider = module.get('ICacheProvider');
   });
@@ -53,8 +55,10 @@ describe('SubscriptionPlanCommandService', () => {
   describe('createPlan', () => {
     it('should map the DTO, call the repository, and return the generated id', async () => {
       const dto: CreateSubscriptionPlanDto = { name: 'Test Plan' };
-      
-      repository.create.mockResolvedValue({ id: 'plan-123' } as SubscriptionPlan);
+
+      repository.create.mockResolvedValue({
+        id: 'plan-123',
+      } as SubscriptionPlan);
 
       const result = await service.createPlan(dto);
 

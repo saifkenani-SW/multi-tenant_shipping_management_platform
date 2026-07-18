@@ -34,24 +34,26 @@ export class SubscriptionPlanQueryRepository implements ISubscriptionPlanQueryRe
     search?: string,
     searchType?: SubscriptionPlanSearchField,
   ): Promise<[SubscriptionPlan[], number]> {
-    let query = this.kysely.selectFrom('subscription_plan').select([
-      'id',
-      'name',
-      'description',
-      'max_branches',
-      'max_warehouses',
-      'max_employees',
-      'max_vehicles',
-      'max_zones',
-      'max_monthly_shipments',
-      'max_monthly_parcels',
-      'price_monthly',
-      'price_yearly',
-      'is_active',
-      'created_at',
-      'updated_at',
-    ]);
-    
+    let query = this.kysely
+      .selectFrom('subscription_plan')
+      .select([
+        'id',
+        'name',
+        'description',
+        'max_branches',
+        'max_warehouses',
+        'max_employees',
+        'max_vehicles',
+        'max_zones',
+        'max_monthly_shipments',
+        'max_monthly_parcels',
+        'price_monthly',
+        'price_yearly',
+        'is_active',
+        'created_at',
+        'updated_at',
+      ]);
+
     let countQuery = this.kysely
       .selectFrom('subscription_plan')
       .select((eb) => eb.fn.count('id').as('count'));
@@ -86,7 +88,7 @@ export class SubscriptionPlanQueryRepository implements ISubscriptionPlanQueryRe
           plan.max_monthly_shipments,
           plan.max_monthly_parcels,
           Number(plan.price_monthly),
-          Number(plan.price_yearly),
+          plan.price_yearly !== null ? Number(plan.price_yearly) : null,
           plan.is_active,
           plan.created_at,
           plan.updated_at,
@@ -137,7 +139,7 @@ export class SubscriptionPlanQueryRepository implements ISubscriptionPlanQueryRe
       plan.max_monthly_shipments,
       plan.max_monthly_parcels,
       Number(plan.price_monthly),
-      Number(plan.price_yearly),
+      plan.price_yearly !== null ? Number(plan.price_yearly) : null,
       plan.is_active,
       plan.created_at,
       plan.updated_at,
