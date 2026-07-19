@@ -1,11 +1,12 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { PrismaService } from '../../../../infrastructure/database/prisma.service';
 import type { ICacheProvider } from '../../../../core/cache/interfaces/ICacheProvider';
+import { CACHE_PROVIDER } from '../../../../core/cache/tokens/cache.tokens';
 
 @Injectable()
 export class PermissionCacheService {
   constructor(
-    @Inject('ICacheProvider') private readonly cacheProvider: ICacheProvider,
+    @Inject(CACHE_PROVIDER) private readonly cacheProvider: ICacheProvider,
     private readonly prisma: PrismaService,
   ) {}
 

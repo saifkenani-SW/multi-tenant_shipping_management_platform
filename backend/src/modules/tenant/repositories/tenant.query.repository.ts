@@ -2,8 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
 import { DB } from '../../../infrastructure/database/generated/kysely/types';
 import { ITenantQueryRepository } from '../interfaces/tenant.query.repository.interface';
-import { Cacheable } from '../../../core/cache/decorators/Cacheable';
-import type { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
+import { Cacheable } from '../../../infrastructure/cache/decorators/Cacheable';
 import {
   TENANT_CACHE_KEYS,
   TENANT_CACHE_TTL,
@@ -17,8 +16,6 @@ export class TenantQueryRepository implements ITenantQueryRepository {
   constructor(
     @Inject('KYSELY_INSTANCE')
     private readonly kysely: Kysely<DB>,
-    @Inject('ICacheProvider')
-    public readonly cacheProvider: ICacheProvider,
   ) {}
 
   @Cacheable({
@@ -28,8 +25,13 @@ export class TenantQueryRepository implements ITenantQueryRepository {
       take: number,
       search?: string,
       searchType?: TenantSearchField,
-    ) =>
-      `${TENANT_CACHE_KEYS.LIST}:${skip}:${take}:${searchType || 'any'}:${search || 'all'}`,
+    ) => [
+      TENANT_CACHE_KEYS.LIST,
+      skip,
+      take,
+      searchType ?? 'any',
+      search ?? 'all',
+    ],
   })
   async findMany(
     skip: number,
@@ -90,7 +92,7 @@ export class TenantQueryRepository implements ITenantQueryRepository {
 
   @Cacheable({
     ttl: TENANT_CACHE_TTL.DETAILS,
-    keyBuilder: (id: string) => `${TENANT_CACHE_KEYS.DETAILS}:${id}`,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
   })
   async findById(id: string): Promise<Tenant | null> {
     const tenant = await this.kysely

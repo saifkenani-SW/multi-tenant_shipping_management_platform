@@ -4,8 +4,7 @@ import { ITenantCommandService } from '../interfaces/tenant.command.service.inte
 import { CreateTenantDto } from '../dtos/requests/create-tenant.dto';
 import { UpdateTenantDto } from '../dtos/requests/update-tenant.dto';
 import { TenantStatus } from '../enums/tenant-status.enum';
-import { CacheEvict } from '../../../core/cache/decorators/CacheEvict';
-import type { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
+import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
 import { TENANT_CACHE_KEYS } from '../constants/tenant.cache.constants';
 
 @Injectable()
@@ -13,21 +12,30 @@ export class TenantCommandService implements ITenantCommandService {
   constructor(
     @Inject('ITenantCommandRepository')
     private readonly tenantRepository: ITenantCommandRepository,
-    @Inject('ICacheProvider')
-    public readonly cacheProvider: ICacheProvider,
   ) {}
 
-  @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true }) // Clears lists
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.LIST,
+    allEntries: true,
+  })
   async createTenant(dto: CreateTenantDto): Promise<string> {
     const tenant = await this.tenantRepository.create({
       name: dto.name,
       taxNumber: dto.taxNumber,
       contactEmail: dto.contactEmail,
     });
+
     return tenant.id;
   }
 
-  @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.LIST,
+    allEntries: true,
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
+  })
   async updateTenant(id: string, dto: UpdateTenantDto): Promise<void> {
     const tenant = await this.tenantRepository.findById(id);
     if (!tenant) {
@@ -41,7 +49,14 @@ export class TenantCommandService implements ITenantCommandService {
     });
   }
 
-  @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true }) // Clears specific tenant and lists
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.LIST,
+    allEntries: true,
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
+  })
   async suspendTenant(id: string, reason?: string): Promise<void> {
     const tenant = await this.tenantRepository.findById(id);
     if (!tenant) {
@@ -54,7 +69,14 @@ export class TenantCommandService implements ITenantCommandService {
     );
   }
 
-  @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.LIST,
+    allEntries: true,
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
+  })
   async activateTenant(id: string): Promise<void> {
     const tenant = await this.tenantRepository.findById(id);
     if (!tenant) {
