@@ -2,6 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TenantCommandService } from './tenant.command.service';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { TenantStatus } from '../enums/tenant-status.enum';
+import { CACHE_PROVIDER } from '../../../core/cache/tokens/cache.tokens';
+import { CacheContainer } from '../../../infrastructure/cache/container/CacheContainer';
+import { CacheFacade } from '../../../infrastructure/cache/facade/CacheFacade';
+import { CacheKeyBuilder } from '../../../infrastructure/cache/builders/CacheKeyBuilder';
 
 describe('TenantCommandService', () => {
   let service: TenantCommandService;
@@ -23,11 +27,14 @@ describe('TenantCommandService', () => {
       delByPattern: jest.fn(),
     };
 
+    const cacheFacade = new CacheFacade(cacheProvider, new CacheKeyBuilder());
+    jest.spyOn(CacheContainer, 'get').mockReturnValue(cacheFacade);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantCommandService,
         { provide: 'ITenantCommandRepository', useValue: tenantRepository },
-        { provide: 'ICacheProvider', useValue: cacheProvider },
+        { provide: CACHE_PROVIDER, useValue: cacheProvider },
       ],
     }).compile();
 
@@ -36,6 +43,7 @@ describe('TenantCommandService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('createTenant', () => {
@@ -55,7 +63,7 @@ describe('TenantCommandService', () => {
         contactEmail: dto.contactEmail,
       });
       expect(result).toEqual('tenant-uuid-1');
-      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:*');
+      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:list:*');
     });
 
     it('should bubble up repository errors (e.g., P2002)', async () => {
@@ -103,7 +111,8 @@ describe('TenantCommandService', () => {
       expect(tenantRepository.update).toHaveBeenCalledWith('valid-id', {
         name: 'New Name',
       });
-      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:*');
+      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:list:*');
+      expect(cacheProvider.del).toHaveBeenCalledWith('tenant:details:valid-id');
     });
   });
 
@@ -132,7 +141,8 @@ describe('TenantCommandService', () => {
         TenantStatus.SUSPENDED,
         'Fraud',
       );
-      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:*');
+      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:list:*');
+      expect(cacheProvider.del).toHaveBeenCalledWith('tenant:details:valid-id');
     });
   });
 
@@ -160,7 +170,8 @@ describe('TenantCommandService', () => {
         'valid-id',
         TenantStatus.ACTIVE,
       );
-      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:*');
+      expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:list:*');
+      expect(cacheProvider.del).toHaveBeenCalledWith('tenant:details:valid-id');
     });
   });
 });

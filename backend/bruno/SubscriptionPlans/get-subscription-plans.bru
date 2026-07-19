@@ -5,14 +5,14 @@ meta {
 }
 
 get {
-  url: {{url}}/subscription-plans?page=1&limit=10
+  url: {{url}}/subscription-plans?page=3
   body: none
   auth: bearer
 }
 
-query {
-  page: 1
-  limit: 10
+params:query {
+  page: 3
+  ~limit: 10
   ~search: Enterprise
   ~searchType: NAME
 }

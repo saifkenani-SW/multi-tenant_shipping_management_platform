@@ -57,7 +57,7 @@ describe('SubscriptionPlanCommandRepository', () => {
       };
 
       const now = new Date();
-      prisma.client.subscription_plan.create.mockResolvedValue({
+      (prisma.client.subscription_plan.create as jest.Mock).mockResolvedValue({
         id: 'gen-id-123',
         ...data,
         created_at: now,
@@ -94,7 +94,7 @@ describe('SubscriptionPlanCommandRepository', () => {
         name: 'Updated Basic',
       };
 
-      prisma.client.subscription_plan.update.mockResolvedValue({} as any);
+      (prisma.client.subscription_plan.update as jest.Mock).mockResolvedValue({} as any);
 
       await repository.update('plan-123', data);
 
@@ -113,7 +113,7 @@ describe('SubscriptionPlanCommandRepository', () => {
           clientVersion: '5.x',
         },
       );
-      prisma.client.subscription_plan.update.mockRejectedValue(p2025Error);
+      (prisma.client.subscription_plan.update as jest.Mock).mockRejectedValue(p2025Error);
 
       await expect(repository.update('non-existent', {})).rejects.toThrow(
         NotFoundException,
@@ -123,7 +123,7 @@ describe('SubscriptionPlanCommandRepository', () => {
 
   describe('updateStatus', () => {
     it('should update only the is_active status', async () => {
-      prisma.client.subscription_plan.update.mockResolvedValue({} as any);
+      (prisma.client.subscription_plan.update as jest.Mock).mockResolvedValue({} as any);
 
       await repository.updateStatus('plan-123', false);
 

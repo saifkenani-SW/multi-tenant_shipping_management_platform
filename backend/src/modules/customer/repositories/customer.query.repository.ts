@@ -2,8 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
 import { DB } from '../../../infrastructure/database/generated/kysely/types';
 import { ICustomerQueryRepository } from '../interfaces/customer.query.repository.interface';
-import { Cacheable } from '../../../core/cache/decorators/Cacheable';
-import type { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
+import { Cacheable } from '../../../infrastructure/cache/decorators/Cacheable';
 import {
   CUSTOMER_CACHE_KEYS,
   CUSTOMER_CACHE_TTL,
@@ -15,13 +14,11 @@ export class CustomerQueryRepository implements ICustomerQueryRepository {
   constructor(
     @Inject('KYSELY_INSTANCE')
     private readonly kysely: Kysely<DB>,
-    @Inject('ICacheProvider')
-    public readonly cacheProvider: ICacheProvider,
   ) {}
 
   @Cacheable({
     ttl: CUSTOMER_CACHE_TTL.PROFILE,
-    keyBuilder: (userId: string) => `${CUSTOMER_CACHE_KEYS.PROFILE}:${userId}`,
+    keyBuilder: (userId: string) => [CUSTOMER_CACHE_KEYS.PROFILE, userId],
   })
   async findProfileByUserId(userId: string): Promise<Customer | null> {
     const row = await this.kysely
