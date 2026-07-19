@@ -5,6 +5,10 @@ import { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
 import { CreateSubscriptionPlanDto } from '../dtos/requests/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from '../dtos/requests/update-subscription-plan.dto';
 import { SubscriptionPlan } from '../domain/subscription-plan.entity';
+import { CACHE_PROVIDER } from '../../../core/cache/tokens/cache.tokens';
+import { CacheContainer } from '../../../infrastructure/cache/container/CacheContainer';
+import { CacheFacade } from '../../../infrastructure/cache/facade/CacheFacade';
+import { CacheKeyBuilder } from '../../../infrastructure/cache/builders/CacheKeyBuilder';
 
 describe('SubscriptionPlanCommandService', () => {
   let service: SubscriptionPlanCommandService;
@@ -27,6 +31,9 @@ describe('SubscriptionPlanCommandService', () => {
       clearByPrefix: jest.fn(),
     } as any;
 
+    const cacheFacade = new CacheFacade(mockCacheProvider, new CacheKeyBuilder());
+    jest.spyOn(CacheContainer, 'get').mockReturnValue(cacheFacade);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         SubscriptionPlanCommandService,
@@ -35,7 +42,7 @@ describe('SubscriptionPlanCommandService', () => {
           useValue: mockRepository,
         },
         {
-          provide: 'ICacheProvider',
+          provide: CACHE_PROVIDER,
           useValue: mockCacheProvider,
         },
       ],
@@ -45,11 +52,12 @@ describe('SubscriptionPlanCommandService', () => {
       SubscriptionPlanCommandService,
     );
     repository = module.get('ISubscriptionPlanCommandRepository');
-    cacheProvider = module.get('ICacheProvider');
+    cacheProvider = module.get(CACHE_PROVIDER);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('createPlan', () => {

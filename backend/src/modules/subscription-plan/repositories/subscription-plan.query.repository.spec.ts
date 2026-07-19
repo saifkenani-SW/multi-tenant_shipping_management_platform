@@ -1,12 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionPlanQueryRepository } from './subscription-plan.query.repository';
-import { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
 import { SubscriptionPlanSearchField } from '../enums/subscription-plan-search.enum';
 import { SubscriptionPlan } from '../domain/subscription-plan.entity';
+import { CacheContainer } from '../../../infrastructure/cache/container/CacheContainer';
 
 describe('SubscriptionPlanQueryRepository', () => {
   let repository: SubscriptionPlanQueryRepository;
-  let cacheProvider: jest.Mocked<ICacheProvider>;
 
   const mockQueryBuilder = {
     select: jest.fn().mockReturnThis(),
@@ -23,13 +22,12 @@ describe('SubscriptionPlanQueryRepository', () => {
   };
 
   beforeEach(async () => {
-    const mockCacheProvider: jest.Mocked<ICacheProvider> = {
-      get: jest.fn().mockResolvedValue(null),
-      set: jest.fn(),
-      del: jest.fn(),
-      delByPattern: jest.fn(),
-      clearByPrefix: jest.fn(),
-    } as any;
+    jest.spyOn(CacheContainer, 'get').mockReturnValue({
+      remember: jest.fn((key, loader) => loader()),
+      rememberMany: jest.fn((prefix, ids, loader) => loader(ids)),
+      evict: jest.fn(),
+      evictByPrefix: jest.fn(),
+    } as any);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -38,21 +36,18 @@ describe('SubscriptionPlanQueryRepository', () => {
           provide: 'KYSELY_INSTANCE',
           useValue: mockKysely,
         },
-        {
-          provide: 'ICacheProvider',
-          useValue: mockCacheProvider,
-        },
+
       ],
     }).compile();
 
     repository = module.get<SubscriptionPlanQueryRepository>(
       SubscriptionPlanQueryRepository,
     );
-    cacheProvider = module.get('ICacheProvider');
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('findMany', () => {
