@@ -1,75 +1,64 @@
 import { Logger } from '@nestjs/common';
-import { ICacheProvider } from '../interfaces/ICacheProvider';
 
-const logger = new Logger('CacheEvict');
+import { CacheContainer } from '../container/CacheContainer';
+
+import { ICacheFacade } from '../../../core/cache/interfaces/ICacheFacade';
+
+import { CACHE_FACADE } from '../../../core/cache/tokens/cache.tokens';
+
+const logger = new Logger(CacheEvict.name);
 
 export interface CacheEvictOptions {
   /**
-   * الـ prefix المستخدم للـ key أو الـ pattern.
+   * Prefix المستخدم عند حذف جميع الـ entries.
    */
   keyPrefix: string;
 
   /**
-   * دالة مخصصة لبناء الـ key من الـ arguments.
+   * يبني أجزاء المفتاح.
    */
-  keyBuilder?: (...args: any[]) => string;
+  keyBuilder?: (...args: unknown[]) => readonly unknown[];
 
   /**
-   * إذا true → يمسح كل الـ keys التي تبدأ بـ keyPrefix:*
-   * مفيد بعد حذف أو bulk update.
-   * @default false
+   * حذف جميع الـ entries التابعة للـ prefix.
    */
   allEntries?: boolean;
 }
 
-function buildDefaultKey(prefix: string, args: any[]): string {
-  return `${prefix}:${args.map((a) => JSON.stringify(a)).join(':')}`;
-}
-
 /**
- * @CacheEvict — يمسح الـ cache بعد اكتمال الـ Command.
+ * يحذف الكاش بعد نجاح العملية.
  *
- * ⚠️  ينفذ الـ Command أولاً ثم يمسح الـ cache.
- *     لو فشل المسح → الـ Command مكتمل، فقط log.
- *
- * @example
- * // مسح key محدد
- * @CacheEvict({ keyPrefix: 'shipment', keyBuilder: (dto) => `shipment:${dto.tenantId}:${dto.id}` })
- *
- * // مسح كل shipments لـ tenant
- * @CacheEvict({ keyPrefix: 'shipment', allEntries: true })
+ * إذا فشل حذف الكاش فلن يفشل الـ Command.
  */
 export function CacheEvict(options: CacheEvictOptions): MethodDecorator {
-  return function (
-    _target: any,
+  return (
+    _target: object,
     _propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
-  ) {
+  ) => {
     const originalMethod = descriptor.value;
 
-    descriptor.value = async function (...args: any[]) {
-      // ① نفذ الـ Command أولاً — الـ Write يكتمل دائماً
+    descriptor.value = async function (...args: unknown[]) {
       const result = await originalMethod.apply(this, args);
 
-      // ② امسح الـ cache
-      const cacheProvider: ICacheProvider | undefined = this.cacheProvider;
-      if (!cacheProvider) return result;
+      const cacheFacade = CacheContainer.get<ICacheFacade>(CACHE_FACADE);
 
       try {
         if (options.allEntries) {
-          const pattern = `${options.keyPrefix}:*`;
-          await cacheProvider.delByPattern(pattern);
-          logger.debug(`EVICT pattern="${pattern}"`);
+          await cacheFacade.evictByPrefix(options.keyPrefix);
         } else {
-          const key = options.keyBuilder
+          const keyParts = options.keyBuilder
             ? options.keyBuilder(...args)
-            : buildDefaultKey(options.keyPrefix, args);
-          await cacheProvider.del(key);
-          logger.debug(`EVICT key="${key}"`);
+            : [options.keyPrefix, ...args];
+
+          await cacheFacade.evict(keyParts);
         }
-      } catch (err: any) {
-        // الـ Write مكتمل — لا تكسره بسبب فشل الـ cache eviction
-        logger.warn(`EVICT failed: ${err.message}`);
+      } catch (err) {
+        logger.warn(
+          `Cache eviction failed: ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
       }
 
       return result;

@@ -1,96 +1,64 @@
 import { Logger } from '@nestjs/common';
-import { ICacheProvider } from '../interfaces/ICacheProvider';
+import { CacheContainer } from '../container/CacheContainer';
+import { ICacheFacade } from '../../../core/cache/interfaces/ICacheFacade';
+import { CACHE_FACADE } from '../../../core/cache/tokens/cache.tokens';
+import { CacheableOptions } from './cacheable-options.type';
+import { CacheStrategy } from './cache-strategy.enum';
 
-const logger = new Logger('Cacheable');
-
-export interface CacheableOptions {
-  /**
-   * مدة الـ cache بالثواني.
-   * @default 300 (5 دقائق)
-   */
-  ttl?: number;
-
-  /**
-   * prefix للـ cache key إذا لم تستخدم keyBuilder.
-   * إذا لم يُحدد → يستخدم اسم الـ method.
-   */
-  keyPrefix?: string;
-
-  /**
-   * دالة مخصصة لبناء الـ cache key من الـ arguments.
-   * @example keyBuilder: (id, tenantId) => `shipment:${tenantId}:${id}`
-   */
-  keyBuilder?: (...args: any[]) => string;
-}
-
-function buildDefaultKey(prefix: string, args: any[]): string {
-  return `${prefix}:${args.map((a) => JSON.stringify(a)).join(':')}`;
-}
+const logger = new Logger(Cacheable.name);
 
 /**
- * @Cacheable — يكاش نتيجة الـ method في الـ Cache Provider.
+ * يطبق Cache-Aside Pattern على نتائج الدوال.
  *
- * يقرأ `this.cacheProvider` من الـ instance (يجب أن يكون public).
+ * عند استدعاء الدالة، يحاول قراءة النتيجة من الـ Cache أولاً،
+ * وفي حال عدم وجودها يتم تنفيذ الدالة الأصلية ثم تخزين النتيجة
+ * وإعادتها للمستدعي.
  *
- * سلوك الـ Fail-Safe (ثلاثة مستويات):
- *  1. ما في provider       → يشتغل مباشرة بدون cache
- *  2. فشل GET (أو OPEN)    → يشتغل مباشرة بدون cache
- *  3. فشل SET              → يرجع البيانات، يتجاهل فشل الـ cache
+ * يدعم استراتيجيتين:
+ * - SINGLE: لتخزين نتيجة عنصر واحد.
+ * - MANY: لتخزين واسترجاع عدة عناصر دفعة واحدة.
  *
- * @example
- * @Cacheable({ ttl: 300, keyBuilder: (id, tid) => `shipment:${tid}:${id}` })
- * async findById(id: string, tenantId: string) { ... }
+ * يعتمد هذا الـ Decorator على CacheFacade، لذلك لا يحتوي
+ * أي منطق خاص ببناء المفاتيح أو بمزود الـ Cache.
+ *
+ * @param options خيارات التحكم بسلوك التخزين المؤقت.
  */
 export function Cacheable(options: CacheableOptions = {}): MethodDecorator {
-  return function (
-    _target: any,
+  return (
+    _target: object,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor,
-  ) {
+  ) => {
     const originalMethod = descriptor.value;
     const methodName = String(propertyKey);
 
-    descriptor.value = async function (...args: any[]) {
-      const cacheProvider: ICacheProvider | undefined = this.cacheProvider;
+    descriptor.value = async function (...args: unknown[]) {
+      const cacheFacade = CacheContainer.get<ICacheFacade>(CACHE_FACADE);
 
-      // Fail-Safe #1: ما في provider
-      if (!cacheProvider) {
-        return originalMethod.apply(this, args);
-      }
+      logger.debug(`Intercept "${methodName}"`);
 
-      const key = options.keyBuilder
-        ? options.keyBuilder(...args)
-        : buildDefaultKey(options.keyPrefix ?? methodName, args);
+      if (options.strategy === CacheStrategy.MANY) {
+        return cacheFacade.rememberMany(
+          options.keyPrefix ?? methodName,
+          options.ids(...args),
+          async (missingIds) => {
+            const loaderArgs = options.loader(args, missingIds);
 
-      // Fail-Safe #2: فشل GET أو Circuit OPEN
-      try {
-        const cached = await cacheProvider.get(key);
-        if (cached !== null) {
-          logger.debug(`HIT  key="${key}"`);
-          return cached;
-        }
-        logger.debug(`MISS key="${key}"`);
-      } catch (err: any) {
-        logger.warn(
-          `GET failed key="${key}" → fallback to DB. Reason: ${err.message}`,
+            return originalMethod.apply(this, loaderArgs);
+          },
+          options.ttl,
         );
-        return originalMethod.apply(this, args);
       }
 
-      // Cache Miss → اذهب للـ DB
-      const result = await originalMethod.apply(this, args);
+      const keyParts = options.keyBuilder
+        ? options.keyBuilder(...args)
+        : [options.keyPrefix ?? methodName, ...args];
 
-      // Fail-Safe #3: فشل SET لا يكسر الـ request
-      try {
-        if (result !== null && result !== undefined) {
-          await cacheProvider.set(key, result, options.ttl ?? 300);
-          logger.debug(`SET  key="${key}" ttl=${options.ttl ?? 300}s`);
-        }
-      } catch (err: any) {
-        logger.warn(`SET failed key="${key}": ${err.message}`);
-      }
-
-      return result;
+      return cacheFacade.remember(
+        keyParts,
+        () => originalMethod.apply(this, args),
+        options.ttl,
+      );
     };
 
     return descriptor;
