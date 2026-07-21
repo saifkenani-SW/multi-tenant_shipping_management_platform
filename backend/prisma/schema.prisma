@@ -458,6 +458,8 @@ model organization_unit {
   transport_manifest_transport_manifest_origin_org_unit_idToorganization_unit      transport_manifest[]        @relation("transport_manifest_origin_org_unit_idToorganization_unit")
   trip_trip_destination_org_unit_idToorganization_unit                             trip[]                      @relation("trip_destination_org_unit_idToorganization_unit")
   trip_trip_origin_org_unit_idToorganization_unit                                  trip[]                      @relation("trip_origin_org_unit_idToorganization_unit")
+  shipment_request_shipment_request_origin_org_unit_idToorganization_unit         shipment_request[]          @relation("shipment_request_origin_org_unit_idToorganization_unit")
+  shipment_request_shipment_request_destination_org_unit_idToorganization_unit    shipment_request[]          @relation("shipment_request_destination_org_unit_idToorganization_unit")
 
   @@index([location], map: "idx_org_unit_location", type: Gist)
 }
@@ -607,6 +609,8 @@ model shipment_request {
   id                       String              @id @default(uuid(7)) @db.Uuid
   customer_profile_id      String              @db.Uuid
   target_tenant_id         String?             @db.Uuid
+  origin_org_unit_id       String?             @db.Uuid
+  destination_org_unit_id  String?             @db.Uuid
   sender_name              String              @db.VarChar(255)
   sender_phone             String              @db.VarChar(50)
   sender_address           String              @db.VarChar(500)
@@ -632,6 +636,8 @@ model shipment_request {
   employee                 employee?           @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
   customer_profile         customer_profile    @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
   tenant                   tenant?             @relation(fields: [target_tenant_id], references: [id], onUpdate: NoAction)
+  organization_unit_shipment_request_origin_org_unit_idToorganization_unit      organization_unit? @relation("shipment_request_origin_org_unit_idToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  organization_unit_shipment_request_destination_org_unit_idToorganization_unit organization_unit? @relation("shipment_request_destination_org_unit_idToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
 }
 
 model subscription_plan {

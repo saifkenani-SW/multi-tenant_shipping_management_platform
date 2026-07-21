@@ -24,5 +24,7 @@ export class ShipmentRequest {
     public readonly updatedAt: Date,
     public readonly cancelledAt: Date | null = null,
     public readonly cancellationReason: string | null = null,
+    public readonly originOrgUnitId: string | null = null,
+    public readonly destinationOrgUnitId: string | null = null,
   ) {}
 }

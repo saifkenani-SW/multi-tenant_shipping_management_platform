@@ -12,6 +12,9 @@ import {
   Min,
 } from 'class-validator';
 
+// إحداثيات المُرسِل والمُستلِم إجبارية — النظام بيحدد أقرب فرع (origin/destination)
+// اعتماداً عليها، فبدونها ما فيه يحسب لأي فرع يوجّه الطلب.
+
 export class CreateShipmentRequestDto {
   @ApiProperty({ example: 'Sara Ahmad' })
   @IsString()
@@ -28,15 +31,13 @@ export class CreateShipmentRequestDto {
   @IsNotEmpty()
   senderAddress!: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsLatitude()
-  @IsOptional()
-  senderLat?: number;
+  senderLat!: number;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsLongitude()
-  @IsOptional()
-  senderLng?: number;
+  senderLng!: number;
 
   @ApiProperty({ example: 'Khaled Omar' })
   @IsString()
@@ -53,15 +54,13 @@ export class CreateShipmentRequestDto {
   @IsNotEmpty()
   receiverAddress!: string;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsLatitude()
-  @IsOptional()
-  receiverLat?: number;
+  receiverLat!: number;
 
-  @ApiPropertyOptional()
+  @ApiProperty()
   @IsLongitude()
-  @IsOptional()
-  receiverLng?: number;
+  receiverLng!: number;
 
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsInt()

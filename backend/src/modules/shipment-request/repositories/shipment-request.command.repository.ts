@@ -1,5 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Kysely, sql } from 'kysely';
 import { TransactionalPrismaService } from '../../../core/transaction';
+import { DB } from '../../../infrastructure/database/generated/kysely/types';
 import {
   CreateShipmentRequestData,
   IShipmentRequestCommandRepository,
@@ -11,7 +13,12 @@ import { RequestStatus, QuotationStatus, PaymentResponsibility, ShipmentStatus }
 export class ShipmentRequestCommandRepository
   implements IShipmentRequestCommandRepository
 {
-  constructor(private readonly prisma: TransactionalPrismaService) {}
+  constructor(
+    private readonly prisma: TransactionalPrismaService,
+    // مطلوبة بالتحديد لاستعلام PostGIS (نوع "location" مش مدعوم من Prisma)
+    @Inject('KYSELY_INSTANCE')
+    private readonly kysely: Kysely<DB>,
+  ) {}
 
   private toDomain(row: any): ShipmentRequest {
     return new ShipmentRequest(
@@ -34,14 +41,55 @@ export class ShipmentRequestCommandRepository
       row.updated_at,
       row.cancelled_at,
       row.cancellation_reason,
+      row.origin_org_unit_id,
+      row.destination_org_unit_id,
     );
   }
 
+  async findNearestOrgUnit(
+    tenantId: string,
+    lat: number,
+    lng: number,
+  ): Promise<string | null> {
+    const result = await sql<{ id: string }>`
+      SELECT id FROM organization_unit
+      WHERE tenant_id = ${tenantId}
+        AND is_active = true
+        AND org_type = 'BRANCH'
+        AND location IS NOT NULL
+      ORDER BY location <-> ST_SetSRID(ST_MakePoint(${lng}, ${lat}), 4326)
+      LIMIT 1
+    `.execute(this.kysely);
+
+    return result.rows[0]?.id ?? null;
+  }
+
   async create(data: CreateShipmentRequestData): Promise<ShipmentRequest> {
+    let originOrgUnitId: string | null = null;
+    let destinationOrgUnitId: string | null = null;
+
+    // لو الزبون حدد شركة مباشرة، منقدر نحسب أقرب فرع فوراً
+    if (data.targetTenantId) {
+      [originOrgUnitId, destinationOrgUnitId] = await Promise.all([
+        this.findNearestOrgUnit(
+          data.targetTenantId,
+          data.senderLat,
+          data.senderLng,
+        ),
+        this.findNearestOrgUnit(
+          data.targetTenantId,
+          data.receiverLat,
+          data.receiverLng,
+        ),
+      ]);
+    }
+
     const row = await this.prisma.client.shipment_request.create({
       data: {
         customer_profile_id: data.customerProfileId,
         target_tenant_id: data.targetTenantId,
+        origin_org_unit_id: originOrgUnitId,
+        destination_org_unit_id: destinationOrgUnitId,
         sender_name: data.senderName,
         sender_phone: data.senderPhone,
         sender_address: data.senderAddress,
@@ -81,6 +129,13 @@ export class ShipmentRequestCommandRepository
       throw new NotFoundException('Quotation not found for this request');
     }
 
+    const request = await this.prisma.client.shipment_request.findUnique({
+      where: { id: shipmentRequestId },
+    });
+    if (!request) {
+      throw new NotFoundException('Shipment request not found');
+    }
+
     await this.prisma.client.quotation.update({
       where: { id: quotationId },
       data: { status: QuotationStatus.APPROVED },
@@ -94,11 +149,32 @@ export class ShipmentRequestCommandRepository
       data: { status: QuotationStatus.REJECTED },
     });
 
+    // بهاي اللحظة بس بنعرف الشركة الفايزة، فمنحسب أقرب فرع لعنوان
+    // المُرسِل (origin) وأقرب فرع لعنوان المُستلِم (destination) جوا هاي الشركة
+    const [originOrgUnitId, destinationOrgUnitId] = await Promise.all([
+      request.sender_lat && request.sender_lng
+        ? this.findNearestOrgUnit(
+            quotation.tenant_id,
+            Number(request.sender_lat),
+            Number(request.sender_lng),
+          )
+        : Promise.resolve(null),
+      request.receiver_lat && request.receiver_lng
+        ? this.findNearestOrgUnit(
+            quotation.tenant_id,
+            Number(request.receiver_lat),
+            Number(request.receiver_lng),
+          )
+        : Promise.resolve(null),
+    ]);
+
     await this.prisma.client.shipment_request.update({
       where: { id: shipmentRequestId },
       data: {
         status: RequestStatus.CUSTOMER_APPROVED,
         target_tenant_id: quotation.tenant_id,
+        origin_org_unit_id: originOrgUnitId,
+        destination_org_unit_id: destinationOrgUnitId,
       },
     });
   }

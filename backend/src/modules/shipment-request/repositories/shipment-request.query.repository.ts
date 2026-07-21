@@ -15,6 +15,8 @@ const SHIPMENT_REQUEST_COLUMNS = [
   'id',
   'customer_profile_id',
   'target_tenant_id',
+  'origin_org_unit_id',
+  'destination_org_unit_id',
   'sender_name',
   'sender_phone',
   'sender_address',
@@ -61,6 +63,8 @@ export class ShipmentRequestQueryRepository
       row.updated_at,
       row.cancelled_at,
       row.cancellation_reason,
+      row.origin_org_unit_id,
+      row.destination_org_unit_id,
     );
   }
 
@@ -116,33 +120,45 @@ export class ShipmentRequestQueryRepository
   @Cacheable({
     ttl: SHIPMENT_REQUEST_CACHE_TTL.LIST,
     keyBuilder: (
-      tenantId: string,
+      orgUnitIds: string[],
       skip: number,
       take: number,
       status?: RequestStatus,
     ) => [
       SHIPMENT_REQUEST_CACHE_KEYS.LIST,
       'employee',
-      tenantId,
+      [...orgUnitIds].sort().join(','),
       skip,
       take,
       status ?? 'any',
     ],
   })
   async findManyForEmployee(
-    tenantId: string,
+    orgUnitIds: string[],
     skip: number,
     take: number,
     status?: RequestStatus,
   ): Promise<[ShipmentRequest[], number]> {
+    if (orgUnitIds.length === 0) return [[], 0];
+
     let query = this.kysely
       .selectFrom('shipment_request')
       .select(SHIPMENT_REQUEST_COLUMNS)
-      .where('target_tenant_id', '=', tenantId);
+      .where((eb) =>
+        eb.or([
+          eb('origin_org_unit_id', 'in', orgUnitIds),
+          eb('destination_org_unit_id', 'in', orgUnitIds),
+        ]),
+      );
     let countQuery = this.kysely
       .selectFrom('shipment_request')
       .select((eb) => eb.fn.count('id').as('count'))
-      .where('target_tenant_id', '=', tenantId);
+      .where((eb) =>
+        eb.or([
+          eb('origin_org_unit_id', 'in', orgUnitIds),
+          eb('destination_org_unit_id', 'in', orgUnitIds),
+        ]),
+      );
 
     if (status) {
       query = query.where('status', '=', status);

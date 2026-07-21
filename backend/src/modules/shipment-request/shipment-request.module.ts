@@ -8,11 +8,13 @@ import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { AuthModule } from '../auth/auth.module';
 import { CustomerModule } from '../customer/customer.module';
+import { ShipmentRequestAccessPolicy } from './policies/shipment-request-access.policy';
 
 @Module({
   imports: [CacheModule, DatabaseModule, AuthModule, CustomerModule],
   controllers: [ShipmentRequestController],
   providers: [
+    ShipmentRequestAccessPolicy,
     {
       provide: 'IShipmentRequestCommandRepository',
       useClass: ShipmentRequestCommandRepository,

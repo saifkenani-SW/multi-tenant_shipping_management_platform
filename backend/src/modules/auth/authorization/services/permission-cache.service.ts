@@ -45,6 +45,63 @@ export class PermissionCacheService {
     return roleIds;
   }
 
+  /** الفروع (organization_unit) يلي الموظف معيّن عليها فعلياً */
+  async getUserOrgUnitIds(userId: string): Promise<string[]> {
+    const cacheKey = `employee:${userId}:org-units`;
+    let orgUnitIds = await this.cacheProvider.get<string[]>(cacheKey);
+
+    if (!orgUnitIds) {
+      const employee = await this.prisma.employee.findFirst({
+        where: { user_id: userId, is_active: true },
+        include: {
+          employee_assignment: { where: { is_active: true } },
+        },
+      });
+
+      orgUnitIds = (employee?.employee_assignment ?? []).map(
+        (a) => a.organization_unit_id,
+      );
+
+      await this.cacheProvider.set(cacheKey, orgUnitIds, 3600);
+    }
+
+    return orgUnitIds;
+  }
+
+  /** أدوار الموظف بس بالتعيين (assignment) يلي على هاد الفرع بالتحديد — مش كل أدواره بالشركة */
+  async getUserRoleIdsForOrgUnit(
+    userId: string,
+    organizationUnitId: string,
+  ): Promise<string[]> {
+    const cacheKey = `employee:${userId}:org:${organizationUnitId}:roles`;
+    let roleIds = await this.cacheProvider.get<string[]>(cacheKey);
+
+    if (!roleIds) {
+      const employee = await this.prisma.employee.findFirst({
+        where: { user_id: userId, is_active: true },
+        include: {
+          employee_assignment: {
+            where: { organization_unit_id: organizationUnitId, is_active: true },
+            include: { assignment_role: true },
+          },
+        },
+      });
+
+      roleIds = [];
+      for (const assignment of employee?.employee_assignment ?? []) {
+        for (const ar of assignment.assignment_role) {
+          if (!roleIds.includes(ar.role_id)) {
+            roleIds.push(ar.role_id);
+          }
+        }
+      }
+
+      await this.cacheProvider.set(cacheKey, roleIds, 3600);
+    }
+
+    return roleIds;
+  }
+
   async getRolePermissions(roleId: string): Promise<string[]> {
     const cacheKey = `role:${roleId}:permissions`;
     let permissions = await this.cacheProvider.get<string[]>(cacheKey);

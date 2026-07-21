@@ -11,7 +11,6 @@ import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict'
 import { Transactional } from '../../../core/transaction';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { Permission } from '../../../core/constants/permissions.enum';
-import { PermissionCacheService } from '../../auth/authorization/services/permission-cache.service';
 import type { ICustomerQueryService } from '../../customer/interfaces/customer.query.service.interface';
 import { CreateShipmentRequestDto } from '../dtos/requests/create-shipment-request.dto';
 import { RejectShipmentRequestDto } from '../dtos/requests/reject-shipment-request.dto';
@@ -19,6 +18,7 @@ import { CancelShipmentRequestDto } from '../dtos/requests/cancel-shipment-reque
 import type { IShipmentRequestCommandRepository } from '../interfaces/shipment-request.command.repository.interface';
 import { IShipmentRequestCommandService } from '../interfaces/shipment-request.command.service.interface';
 import { SHIPMENT_REQUEST_CACHE_KEYS } from '../constants/shipment-request.cache.constants';
+import { ShipmentRequestAccessPolicy } from '../policies/shipment-request-access.policy';
 
 const CANCELLABLE_STATUSES: RequestStatus[] = [
   RequestStatus.PENDING,
@@ -35,7 +35,7 @@ export class ShipmentRequestCommandService
     private readonly shipmentRequestRepository: IShipmentRequestCommandRepository,
     @Inject('ICustomerQueryService')
     private readonly customerQueryService: ICustomerQueryService,
-    private readonly permissionCacheService: PermissionCacheService,
+    private readonly accessPolicy: ShipmentRequestAccessPolicy,
     // مطلوبة اسمها "prisma" بالتحديد حتى يشتغل معها @Transactional()
     private readonly prisma: PrismaService,
   ) {}
@@ -46,25 +46,6 @@ export class ShipmentRequestCommandService
       throw new NotFoundException('Customer profile not found');
     }
     return profile.id;
-  }
-
-  private async assertEmployeePermission(
-    employeeUserId: string,
-    permission: Permission,
-  ): Promise<void> {
-    const roleIds =
-      await this.permissionCacheService.getUserRoleIds(employeeUserId);
-    const permissions = new Set<string>();
-    for (const roleId of roleIds) {
-      const rolePermissions =
-        await this.permissionCacheService.getRolePermissions(roleId);
-      rolePermissions.forEach((p) => permissions.add(p));
-    }
-    if (!permissions.has(permission)) {
-      throw new ForbiddenException(
-        'You do not have the necessary permissions',
-      );
-    }
   }
 
   @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.LIST, allEntries: true })
@@ -129,25 +110,19 @@ export class ShipmentRequestCommandService
   @Transactional()
   async acceptByEmployee(
     employeeUserId: string,
-    tenantId: string,
     shipmentRequestId: string,
   ): Promise<void> {
-    await this.assertEmployeePermission(
-      employeeUserId,
-      Permission.MANAGE_SHIPMENT_REQUEST,
-    );
-
     const request =
       await this.shipmentRequestRepository.findById(shipmentRequestId);
     if (!request) {
       throw new NotFoundException('Shipment request not found');
     }
 
-    if (request.targetTenantId !== tenantId) {
-      throw new ForbiddenException(
-        'This request was not assigned to your company',
-      );
-    }
+    await this.accessPolicy.assertCanAct(
+      employeeUserId,
+      request,
+      Permission.MANAGE_SHIPMENT_REQUEST,
+    );
 
     if (request.status !== RequestStatus.CUSTOMER_APPROVED) {
       throw new BadRequestException(
@@ -161,26 +136,20 @@ export class ShipmentRequestCommandService
   @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX, allEntries: true })
   async reject(
     employeeUserId: string,
-    tenantId: string,
     shipmentRequestId: string,
     dto: RejectShipmentRequestDto,
   ): Promise<void> {
-    await this.assertEmployeePermission(
-      employeeUserId,
-      Permission.MANAGE_SHIPMENT_REQUEST,
-    );
-
     const request =
       await this.shipmentRequestRepository.findById(shipmentRequestId);
     if (!request) {
       throw new NotFoundException('Shipment request not found');
     }
 
-    if (request.targetTenantId !== tenantId) {
-      throw new ForbiddenException(
-        'This request was not assigned to your company',
-      );
-    }
+    await this.accessPolicy.assertCanAct(
+      employeeUserId,
+      request,
+      Permission.MANAGE_SHIPMENT_REQUEST,
+    );
 
     if (request.status !== RequestStatus.CUSTOMER_APPROVED) {
       throw new BadRequestException(

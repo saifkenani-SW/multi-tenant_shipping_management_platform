@@ -38,6 +38,12 @@ export class ShipmentRequestDetailsDto {
   @ApiProperty({ nullable: true })
   targetTenantId!: string | null;
 
+  @ApiProperty({ nullable: true, description: 'أقرب فرع لعنوان المُرسِل' })
+  originOrgUnitId!: string | null;
+
+  @ApiProperty({ nullable: true, description: 'أقرب فرع لعنوان المُستلِم' })
+  destinationOrgUnitId!: string | null;
+
   @ApiProperty()
   createdAt!: Date;
 

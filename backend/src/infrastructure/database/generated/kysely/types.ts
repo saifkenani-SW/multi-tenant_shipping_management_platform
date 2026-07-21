@@ -461,6 +461,8 @@ export type shipment_request = {
     id: string;
     customer_profile_id: string;
     target_tenant_id: string | null;
+    origin_org_unit_id: string | null;
+    destination_org_unit_id: string | null;
     sender_name: string;
     sender_phone: string;
     sender_address: string;

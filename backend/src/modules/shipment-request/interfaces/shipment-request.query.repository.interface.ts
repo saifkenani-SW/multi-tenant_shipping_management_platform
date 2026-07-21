@@ -10,8 +10,9 @@ export interface IShipmentRequestQueryRepository {
     status?: RequestStatus,
   ): Promise<[ShipmentRequest[], number]>;
 
+  /** بترجع بس الطلبات يلي فرعها الأساسي أو الوجهة من ضمن orgUnitIds */
   findManyForEmployee(
-    tenantId: string,
+    orgUnitIds: string[],
     skip: number,
     take: number,
     status?: RequestStatus,

@@ -64,11 +64,7 @@ export class ShipmentRequestController {
     @Query() query: ShipmentRequestQueryDto,
   ): Promise<PaginatedShipmentRequestListDto> {
     if (user.type === UserLoginType.EMPLOYEE) {
-      return this.queryService.findRequestsForEmployee(
-        user.sub,
-        user.tenantId as string,
-        query,
-      );
+      return this.queryService.findRequestsForEmployee(user.sub, query);
     }
     return this.queryService.findRequestsForCustomer(user.sub, query);
   }
@@ -84,7 +80,6 @@ export class ShipmentRequestController {
     if (user.type === UserLoginType.EMPLOYEE) {
       return this.queryService.getRequestDetailsForEmployee(
         user.sub,
-        user.tenantId as string,
         params.id,
       );
     }
@@ -131,11 +126,7 @@ export class ShipmentRequestController {
     @CurrentUser() user: JwtPayload,
     @Param() params: BaseUuidParamDto,
   ): Promise<void> {
-    await this.commandService.acceptByEmployee(
-      user.sub,
-      user.tenantId as string,
-      params.id,
-    );
+    await this.commandService.acceptByEmployee(user.sub, params.id);
   }
 
   @Post(':id/reject')
@@ -148,12 +139,7 @@ export class ShipmentRequestController {
     @Param() params: BaseUuidParamDto,
     @Body() dto: RejectShipmentRequestDto,
   ): Promise<void> {
-    await this.commandService.reject(
-      user.sub,
-      user.tenantId as string,
-      params.id,
-      dto,
-    );
+    await this.commandService.reject(user.sub, params.id, dto);
   }
 
   @Post(':id/cancel')
