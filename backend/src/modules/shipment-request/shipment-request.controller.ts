@@ -65,6 +65,7 @@ export class ShipmentRequestController {
   ): Promise<PaginatedShipmentRequestListDto> {
     if (user.type === UserLoginType.EMPLOYEE) {
       return this.queryService.findRequestsForEmployee(
+        user.sub,
         user.tenantId as string,
         query,
       );
@@ -82,6 +83,7 @@ export class ShipmentRequestController {
   ): Promise<ShipmentRequestDetailsDto> {
     if (user.type === UserLoginType.EMPLOYEE) {
       return this.queryService.getRequestDetailsForEmployee(
+        user.sub,
         user.tenantId as string,
         params.id,
       );
@@ -130,6 +132,7 @@ export class ShipmentRequestController {
     @Param() params: BaseUuidParamDto,
   ): Promise<void> {
     await this.commandService.acceptByEmployee(
+      user.sub,
       user.tenantId as string,
       params.id,
     );
@@ -146,6 +149,7 @@ export class ShipmentRequestController {
     @Body() dto: RejectShipmentRequestDto,
   ): Promise<void> {
     await this.commandService.reject(
+      user.sub,
       user.tenantId as string,
       params.id,
       dto,

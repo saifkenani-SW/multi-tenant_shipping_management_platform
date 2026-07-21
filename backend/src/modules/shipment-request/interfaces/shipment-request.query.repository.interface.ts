@@ -3,8 +3,6 @@ import { ShipmentRequest } from '../domain/shipment-request.entity';
 import { Quotation } from '../domain/quotation.entity';
 
 export interface IShipmentRequestQueryRepository {
-  findCustomerProfileIdByUserId(userId: string): Promise<string | null>;
-
   findManyForCustomer(
     customerProfileId: string,
     skip: number,

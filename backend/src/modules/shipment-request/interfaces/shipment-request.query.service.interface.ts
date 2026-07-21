@@ -10,6 +10,7 @@ export interface IShipmentRequestQueryService {
   ): Promise<PaginatedShipmentRequestListDto>;
 
   findRequestsForEmployee(
+    employeeUserId: string,
     tenantId: string,
     query: ShipmentRequestQueryDto,
   ): Promise<PaginatedShipmentRequestListDto>;
@@ -20,6 +21,7 @@ export interface IShipmentRequestQueryService {
   ): Promise<ShipmentRequestDetailsDto>;
 
   getRequestDetailsForEmployee(
+    employeeUserId: string,
     tenantId: string,
     shipmentRequestId: string,
   ): Promise<ShipmentRequestDetailsDto>;

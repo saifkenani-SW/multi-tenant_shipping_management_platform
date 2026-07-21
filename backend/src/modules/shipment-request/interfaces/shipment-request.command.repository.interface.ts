@@ -21,7 +21,6 @@ export interface CreateShipmentRequestData {
 export interface IShipmentRequestCommandRepository {
   create(data: CreateShipmentRequestData): Promise<ShipmentRequest>;
   findById(id: string): Promise<ShipmentRequest | null>;
-  findCustomerProfileIdByUserId(userId: string): Promise<string | null>;
 
   /** يوافق على عرض سعر واحد، يرفض الباقي تلقائياً، ويحدد target_tenant_id */
   approveQuotation(shipmentRequestId: string, quotationId: string): Promise<void>;

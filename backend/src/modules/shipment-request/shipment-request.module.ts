@@ -7,9 +7,10 @@ import { ShipmentRequestQueryRepository } from './repositories/shipment-request.
 import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { AuthModule } from '../auth/auth.module';
+import { CustomerModule } from '../customer/customer.module';
 
 @Module({
-  imports: [CacheModule, DatabaseModule, AuthModule],
+  imports: [CacheModule, DatabaseModule, AuthModule, CustomerModule],
   controllers: [ShipmentRequestController],
   providers: [
     {

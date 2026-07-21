@@ -10,6 +10,9 @@ import { RequestStatus } from '@prisma/client';
 import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
 import { Transactional } from '../../../core/transaction';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Permission } from '../../../core/constants/permissions.enum';
+import { PermissionCacheService } from '../../auth/authorization/services/permission-cache.service';
+import type { ICustomerQueryService } from '../../customer/interfaces/customer.query.service.interface';
 import { CreateShipmentRequestDto } from '../dtos/requests/create-shipment-request.dto';
 import { RejectShipmentRequestDto } from '../dtos/requests/reject-shipment-request.dto';
 import { CancelShipmentRequestDto } from '../dtos/requests/cancel-shipment-request.dto';
@@ -30,22 +33,46 @@ export class ShipmentRequestCommandService
   constructor(
     @Inject('IShipmentRequestCommandRepository')
     private readonly shipmentRequestRepository: IShipmentRequestCommandRepository,
+    @Inject('ICustomerQueryService')
+    private readonly customerQueryService: ICustomerQueryService,
+    private readonly permissionCacheService: PermissionCacheService,
     // مطلوبة اسمها "prisma" بالتحديد حتى يشتغل معها @Transactional()
     private readonly prisma: PrismaService,
   ) {}
+
+  private async resolveCustomerProfileId(userId: string): Promise<string> {
+    const profile = await this.customerQueryService.getProfile(userId);
+    if (!profile) {
+      throw new NotFoundException('Customer profile not found');
+    }
+    return profile.id;
+  }
+
+  private async assertEmployeePermission(
+    employeeUserId: string,
+    permission: Permission,
+  ): Promise<void> {
+    const roleIds =
+      await this.permissionCacheService.getUserRoleIds(employeeUserId);
+    const permissions = new Set<string>();
+    for (const roleId of roleIds) {
+      const rolePermissions =
+        await this.permissionCacheService.getRolePermissions(roleId);
+      rolePermissions.forEach((p) => permissions.add(p));
+    }
+    if (!permissions.has(permission)) {
+      throw new ForbiddenException(
+        'You do not have the necessary permissions',
+      );
+    }
+  }
 
   @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.LIST, allEntries: true })
   async createRequest(
     userId: string,
     dto: CreateShipmentRequestDto,
   ): Promise<{ id: string }> {
-    const customerProfileId =
-      await this.shipmentRequestRepository.findCustomerProfileIdByUserId(
-        userId,
-      );
-    if (!customerProfileId) {
-      throw new NotFoundException('Customer profile not found');
-    }
+    const customerProfileId = await this.resolveCustomerProfileId(userId);
 
     const request = await this.shipmentRequestRepository.create({
       customerProfileId,
@@ -81,10 +108,7 @@ export class ShipmentRequestCommandService
       throw new NotFoundException('Shipment request not found');
     }
 
-    const customerProfileId =
-      await this.shipmentRequestRepository.findCustomerProfileIdByUserId(
-        userId,
-      );
+    const customerProfileId = await this.resolveCustomerProfileId(userId);
     if (customerProfileId !== request.customerProfileId) {
       throw new ForbiddenException('You do not own this shipment request');
     }
@@ -104,9 +128,15 @@ export class ShipmentRequestCommandService
   @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX, allEntries: true })
   @Transactional()
   async acceptByEmployee(
+    employeeUserId: string,
     tenantId: string,
     shipmentRequestId: string,
   ): Promise<void> {
+    await this.assertEmployeePermission(
+      employeeUserId,
+      Permission.MANAGE_SHIPMENT_REQUEST,
+    );
+
     const request =
       await this.shipmentRequestRepository.findById(shipmentRequestId);
     if (!request) {
@@ -130,10 +160,16 @@ export class ShipmentRequestCommandService
 
   @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX, allEntries: true })
   async reject(
+    employeeUserId: string,
     tenantId: string,
     shipmentRequestId: string,
     dto: RejectShipmentRequestDto,
   ): Promise<void> {
+    await this.assertEmployeePermission(
+      employeeUserId,
+      Permission.MANAGE_SHIPMENT_REQUEST,
+    );
+
     const request =
       await this.shipmentRequestRepository.findById(shipmentRequestId);
     if (!request) {
@@ -167,10 +203,7 @@ export class ShipmentRequestCommandService
       throw new NotFoundException('Shipment request not found');
     }
 
-    const customerProfileId =
-      await this.shipmentRequestRepository.findCustomerProfileIdByUserId(
-        userId,
-      );
+    const customerProfileId = await this.resolveCustomerProfileId(userId);
     if (customerProfileId !== request.customerProfileId) {
       throw new ForbiddenException('You do not own this shipment request');
     }

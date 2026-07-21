@@ -69,15 +69,6 @@ export class ShipmentRequestCommandRepository
     return this.toDomain(row);
   }
 
-  async findCustomerProfileIdByUserId(
-    userId: string,
-  ): Promise<string | null> {
-    const profile = await this.prisma.client.customer_profile.findUnique({
-      where: { user_id: userId },
-    });
-    return profile?.id ?? null;
-  }
-
   async approveQuotation(
     shipmentRequestId: string,
     quotationId: string,

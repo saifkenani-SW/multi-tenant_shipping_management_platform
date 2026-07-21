@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
 import { RequestStatus } from '@prisma/client';
 import { DB } from '../../../infrastructure/database/generated/kysely/types';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { IShipmentRequestQueryRepository } from '../interfaces/shipment-request.query.repository.interface';
 import { Cacheable } from '../../../infrastructure/cache/decorators/Cacheable';
 import {
@@ -39,7 +38,6 @@ export class ShipmentRequestQueryRepository
   constructor(
     @Inject('KYSELY_INSTANCE')
     private readonly kysely: Kysely<DB>,
-    private readonly prisma: PrismaService,
   ) {}
 
   private toDomain(row: any): ShipmentRequest {
@@ -64,16 +62,6 @@ export class ShipmentRequestQueryRepository
       row.cancelled_at,
       row.cancellation_reason,
     );
-  }
-
-  async findCustomerProfileIdByUserId(
-    userId: string,
-  ): Promise<string | null> {
-    // بس للـ read side — ما محتاجة transaction، فبتستخدم PrismaService مباشرة
-    const profile = await this.prisma.customer_profile.findUnique({
-      where: { user_id: userId },
-    });
-    return profile?.id ?? null;
   }
 
   @Cacheable({

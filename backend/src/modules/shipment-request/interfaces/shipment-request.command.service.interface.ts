@@ -12,8 +12,13 @@ export interface IShipmentRequestCommandService {
     shipmentRequestId: string,
     quotationId: string,
   ): Promise<void>;
-  acceptByEmployee(tenantId: string, shipmentRequestId: string): Promise<void>;
+  acceptByEmployee(
+    employeeUserId: string,
+    tenantId: string,
+    shipmentRequestId: string,
+  ): Promise<void>;
   reject(
+    employeeUserId: string,
     tenantId: string,
     shipmentRequestId: string,
     dto: RejectShipmentRequestDto,

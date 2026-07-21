@@ -1,4 +1,7 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Permission } from '../../../core/constants/permissions.enum';
+import { PermissionCacheService } from '../../auth/authorization/services/permission-cache.service';
+import type { ICustomerQueryService } from '../../customer/interfaces/customer.query.service.interface';
 import type { IShipmentRequestQueryRepository } from '../interfaces/shipment-request.query.repository.interface';
 import { IShipmentRequestQueryService } from '../interfaces/shipment-request.query.service.interface';
 import { ShipmentRequestQueryDto } from '../dtos/requests/shipment-request-query.dto';
@@ -17,7 +20,37 @@ export class ShipmentRequestQueryService
   constructor(
     @Inject('IShipmentRequestQueryRepository')
     private readonly shipmentRequestQueryRepository: IShipmentRequestQueryRepository,
+    @Inject('ICustomerQueryService')
+    private readonly customerQueryService: ICustomerQueryService,
+    private readonly permissionCacheService: PermissionCacheService,
   ) {}
+
+  private async resolveCustomerProfileId(userId: string): Promise<string> {
+    const profile = await this.customerQueryService.getProfile(userId);
+    if (!profile) {
+      throw new NotFoundException('Customer profile not found');
+    }
+    return profile.id;
+  }
+
+  private async assertEmployeePermission(
+    employeeUserId: string,
+    permission: Permission,
+  ): Promise<void> {
+    const roleIds =
+      await this.permissionCacheService.getUserRoleIds(employeeUserId);
+    const permissions = new Set<string>();
+    for (const roleId of roleIds) {
+      const rolePermissions =
+        await this.permissionCacheService.getRolePermissions(roleId);
+      rolePermissions.forEach((p) => permissions.add(p));
+    }
+    if (!permissions.has(permission)) {
+      throw new ForbiddenException(
+        'You do not have the necessary permissions',
+      );
+    }
+  }
 
   private toListItem(entity: ShipmentRequest): ShipmentRequestListItemDto {
     const dto = new ShipmentRequestListItemDto();
@@ -55,13 +88,7 @@ export class ShipmentRequestQueryService
     userId: string,
     query: ShipmentRequestQueryDto,
   ): Promise<PaginatedShipmentRequestListDto> {
-    const customerProfileId =
-      await this.shipmentRequestQueryRepository.findCustomerProfileIdByUserId(
-        userId,
-      );
-    if (!customerProfileId) {
-      throw new NotFoundException('Customer profile not found');
-    }
+    const customerProfileId = await this.resolveCustomerProfileId(userId);
 
     const skip = (query.page - 1) * query.limit;
     const [items, total] =
@@ -79,9 +106,15 @@ export class ShipmentRequestQueryService
   }
 
   async findRequestsForEmployee(
+    employeeUserId: string,
     tenantId: string,
     query: ShipmentRequestQueryDto,
   ): Promise<PaginatedShipmentRequestListDto> {
+    await this.assertEmployeePermission(
+      employeeUserId,
+      Permission.READ_SHIPMENT_REQUEST,
+    );
+
     const skip = (query.page - 1) * query.limit;
     const [items, total] =
       await this.shipmentRequestQueryRepository.findManyForEmployee(
@@ -101,10 +134,7 @@ export class ShipmentRequestQueryService
     userId: string,
     shipmentRequestId: string,
   ): Promise<ShipmentRequestDetailsDto> {
-    const customerProfileId =
-      await this.shipmentRequestQueryRepository.findCustomerProfileIdByUserId(
-        userId,
-      );
+    const customerProfileId = await this.resolveCustomerProfileId(userId);
     const request =
       await this.shipmentRequestQueryRepository.findById(shipmentRequestId);
 
@@ -119,9 +149,15 @@ export class ShipmentRequestQueryService
   }
 
   async getRequestDetailsForEmployee(
+    employeeUserId: string,
     tenantId: string,
     shipmentRequestId: string,
   ): Promise<ShipmentRequestDetailsDto> {
+    await this.assertEmployeePermission(
+      employeeUserId,
+      Permission.READ_SHIPMENT_REQUEST,
+    );
+
     const request =
       await this.shipmentRequestQueryRepository.findById(shipmentRequestId);
 
@@ -141,10 +177,7 @@ export class ShipmentRequestQueryService
     userId: string,
     shipmentRequestId: string,
   ): Promise<QuotationListItemDto[]> {
-    const customerProfileId =
-      await this.shipmentRequestQueryRepository.findCustomerProfileIdByUserId(
-        userId,
-      );
+    const customerProfileId = await this.resolveCustomerProfileId(userId);
     const request =
       await this.shipmentRequestQueryRepository.findById(shipmentRequestId);
 
