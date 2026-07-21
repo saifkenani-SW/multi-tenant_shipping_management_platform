@@ -1,0 +1,27 @@
+meta {
+  name: Approve Quotation
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{url}}/shipment-requests/:id/quotations/:quotationId/approve
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id:
+  quotationId:
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Approve One Quotation (Customer only)
+  Marks this quotation APPROVED, all other quotations for the same request
+  REJECTED, and moves the request to CUSTOMER_APPROVED with
+  `targetTenantId` set to the winning company.
+}

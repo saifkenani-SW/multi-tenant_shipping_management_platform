@@ -22,6 +22,7 @@ enum RequestStatus {
   PENDING
   CUSTOMER_APPROVED
   COMPANY_ACCEPTED
+  REJECTED
   CONVERTED
   CANCELLED
   EXPIRED
@@ -559,7 +560,7 @@ model proof_of_delivery {
 model quotation {
   id                       String              @id @default(uuid(7)) @db.Uuid
   tenant_id                String              @db.Uuid
-  shipment_request_id      String              @unique @db.Uuid
+  shipment_request_id      String              @db.Uuid
   quotation_type           QuotationType       @default(AUTOMATIC)
   base_price               Decimal?            @db.Decimal(10, 2)
   weight_charge            Decimal?            @db.Decimal(10, 2)
@@ -627,7 +628,7 @@ model shipment_request {
   created_at               DateTime            @default(now()) @db.Timestamp(6)
   updated_at               DateTime            @updatedAt
   customer_shipment        customer_shipment[]
-  quotation                quotation?
+  quotation                quotation[]
   employee                 employee?           @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
   customer_profile         customer_profile    @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
   tenant                   tenant?             @relation(fields: [target_tenant_id], references: [id], onUpdate: NoAction)
