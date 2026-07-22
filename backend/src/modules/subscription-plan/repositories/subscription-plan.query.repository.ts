@@ -1,7 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ISubscriptionPlanQueryRepository } from '../interfaces/subscription-plan.query.repository.interface';
-import { Cacheable } from '../../../core/cache/decorators/Cacheable';
-import type { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
+import { Cacheable } from '../../../infrastructure/cache/decorators/Cacheable';
 import {
   SUBSCRIPTION_PLAN_CACHE_KEYS,
   SUBSCRIPTION_PLAN_CACHE_TTL,
@@ -13,10 +12,7 @@ import { SubscriptionPlan } from '../domain/subscription-plan.entity';
 
 @Injectable()
 export class SubscriptionPlanQueryRepository implements ISubscriptionPlanQueryRepository {
-  constructor(
-    @Inject('KYSELY_INSTANCE') public readonly kysely: Kysely<DB>,
-    @Inject('ICacheProvider') public readonly cacheProvider: ICacheProvider,
-  ) {}
+  constructor(@Inject('KYSELY_INSTANCE') public readonly kysely: Kysely<DB>) {}
 
   @Cacheable({
     ttl: SUBSCRIPTION_PLAN_CACHE_TTL.LIST,
@@ -25,8 +21,13 @@ export class SubscriptionPlanQueryRepository implements ISubscriptionPlanQueryRe
       take: number,
       search?: string,
       searchType?: SubscriptionPlanSearchField,
-    ) =>
-      `${SUBSCRIPTION_PLAN_CACHE_KEYS.LIST}:${skip}:${take}:${searchType || 'any'}:${search || 'all'}`,
+    ) => [
+      SUBSCRIPTION_PLAN_CACHE_KEYS.LIST,
+      skip,
+      take,
+      searchType ?? 'any',
+      search ?? 'all',
+    ],
   })
   async findMany(
     skip: number,
@@ -100,7 +101,7 @@ export class SubscriptionPlanQueryRepository implements ISubscriptionPlanQueryRe
 
   @Cacheable({
     ttl: SUBSCRIPTION_PLAN_CACHE_TTL.DETAILS,
-    keyBuilder: (id: string) => `${SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS}:${id}`,
+    keyBuilder: (id: string) => [SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS, id],
   })
   async findById(id: string): Promise<SubscriptionPlan | null> {
     const plan = await this.kysely

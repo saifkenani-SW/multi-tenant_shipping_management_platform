@@ -4,8 +4,7 @@ import { ISubscriptionPlanCommandService } from '../interfaces/subscription-plan
 import { CreateSubscriptionPlanDto } from '../dtos/requests/create-subscription-plan.dto';
 import { UpdateSubscriptionPlanDto } from '../dtos/requests/update-subscription-plan.dto';
 
-import { CacheEvict } from '../../../core/cache/decorators/CacheEvict';
-import type { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
+import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
 import { SUBSCRIPTION_PLAN_CACHE_KEYS } from '../constants/subscription-plan.cache.constants';
 
 @Injectable()
@@ -13,8 +12,6 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
   constructor(
     @Inject('ISubscriptionPlanCommandRepository')
     private readonly planRepository: ISubscriptionPlanCommandRepository,
-    @Inject('ICacheProvider')
-    public readonly cacheProvider: ICacheProvider,
   ) {}
 
   @CacheEvict({
@@ -45,7 +42,7 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
   })
   @CacheEvict({
     keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => `${SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS}:${id}`,
+    keyBuilder: (id: string) => [SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS, id],
   })
   async updatePlan(id: string, dto: UpdateSubscriptionPlanDto): Promise<void> {
     await this.planRepository.update(id, {
@@ -69,7 +66,7 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
   })
   @CacheEvict({
     keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => `${SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS}:${id}`,
+    keyBuilder: (id: string) => [SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS, id],
   })
   async deactivatePlan(id: string): Promise<void> {
     await this.planRepository.updateStatus(id, false);
@@ -81,7 +78,7 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
   })
   @CacheEvict({
     keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => `${SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS}:${id}`,
+    keyBuilder: (id: string) => [SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS, id],
   })
   async activatePlan(id: string): Promise<void> {
     await this.planRepository.updateStatus(id, true);

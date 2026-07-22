@@ -22,6 +22,7 @@ import {
   CUSTOMER_OTP_CONFIG,
   CUSTOMER_RESEND_CONFIG,
 } from '../constants/customer.cache.constants';
+import { CACHE_PROVIDER } from '../../../core/cache/tokens/cache.tokens';
 
 interface PendingRegistration {
   fullName: string;
@@ -39,7 +40,7 @@ export class CustomerCommandService implements ICustomerCommandService {
   constructor(
     @Inject('ICustomerCommandRepository')
     private readonly customerCommandRepository: ICustomerCommandRepository,
-    @Inject('ICacheProvider')
+    @Inject(CACHE_PROVIDER)
     private readonly cacheProvider: ICacheProvider,
     private readonly mailService: MailService,
     // مطلوبة اسمها "prisma" بالتحديد حتى يشتغل معها @Transactional()
@@ -94,8 +95,7 @@ export class CustomerCommandService implements ICustomerCommandService {
 
   async resendOtp(dto: ResendOtpDto): Promise<{ message: string }> {
     const cacheKey = `${CUSTOMER_CACHE_KEYS.REGISTER_OTP_PREFIX}:${dto.email}`;
-    const pending =
-      await this.cacheProvider.get<PendingRegistration>(cacheKey);
+    const pending = await this.cacheProvider.get<PendingRegistration>(cacheKey);
 
     if (!pending) {
       throw new BadRequestException(
@@ -154,8 +154,7 @@ export class CustomerCommandService implements ICustomerCommandService {
   @Transactional()
   async verifyOtp(dto: VerifyOtpDto): Promise<{ message: string }> {
     const cacheKey = `${CUSTOMER_CACHE_KEYS.REGISTER_OTP_PREFIX}:${dto.email}`;
-    const pending =
-      await this.cacheProvider.get<PendingRegistration>(cacheKey);
+    const pending = await this.cacheProvider.get<PendingRegistration>(cacheKey);
 
     if (!pending) {
       throw new BadRequestException(
