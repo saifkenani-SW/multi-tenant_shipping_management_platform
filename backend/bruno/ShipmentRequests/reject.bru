@@ -1,0 +1,30 @@
+meta {
+  name: Reject (Employee)
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{url}}/shipment-requests/:id/reject
+  body: json
+  auth: bearer
+}
+
+params:path {
+  id:
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "reason": "Outside our delivery zone"
+  }
+}
+
+docs {
+  # Reject Request (Employee only)
+  Final state — cannot be undone.
+}

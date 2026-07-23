@@ -1,0 +1,35 @@
+meta {
+  name: Create Shipment Request
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/shipment-requests
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "senderName": "Sara Ahmad",
+    "senderPhone": "0991234567",
+    "senderAddress": "Damascus, Al-Mazzeh, Street 12",
+    "receiverName": "Khaled Omar",
+    "receiverPhone": "0999876543",
+    "receiverAddress": "Aleppo, Al-Furqan, Street 5",
+    "expectedPiecesCount": 1,
+    "expectedTotalWeightKg": 2.5,
+    "notes": "Fragile"
+  }
+}
+
+docs {
+  # Create Shipment Request (Customer only)
+  Creates a shipment request with status PENDING. Left open (no
+  `targetTenantId`), any company can submit a quotation for it.
+}
