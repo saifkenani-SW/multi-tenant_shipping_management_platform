@@ -9,6 +9,8 @@ import {
 } from '../constants/tenant.cache.constants';
 import { TenantSearchField } from '../enums/tenant-search-field.enum';
 import { Tenant } from '../domain/tenant.entity';
+import { TenantQueryCriteria } from '../builders/query/tenant-query-criteria';
+import { TenantPersistenceMapper } from '../mappers/persistence/tenant.persistence.mapper';
 import { TenantStatus } from '../enums/tenant-status.enum';
 
 @Injectable()
@@ -16,29 +18,22 @@ export class TenantQueryRepository implements ITenantQueryRepository {
   constructor(
     @Inject('KYSELY_INSTANCE')
     private readonly kysely: Kysely<DB>,
+    private readonly tenantPersistenceMapper: TenantPersistenceMapper,
   ) {}
 
   @Cacheable({
     ttl: TENANT_CACHE_TTL.LIST,
-    keyBuilder: (
-      skip: number,
-      take: number,
-      search?: string,
-      searchType?: TenantSearchField,
-    ) => [
+    keyBuilder: (criteria: TenantQueryCriteria) => [
       TENANT_CACHE_KEYS.LIST,
-      skip,
-      take,
-      searchType ?? 'any',
-      search ?? 'all',
+      criteria.pagination.skip,
+      criteria.pagination.take,
+      criteria.search?.field ?? 'any',
+      criteria.search?.keyword ?? 'all',
+      criteria.tenantId ?? 'all',
+      criteria.status ?? 'all',
     ],
   })
-  async findMany(
-    skip: number,
-    take: number,
-    search?: string,
-    searchType?: TenantSearchField,
-  ): Promise<[Tenant[], number]> {
+  async findMany(criteria: TenantQueryCriteria): Promise<[Tenant[], number]> {
     let query = this.kysely
       .selectFrom('tenant')
       .select([
@@ -47,6 +42,8 @@ export class TenantQueryRepository implements ITenantQueryRepository {
         'is_active',
         'tax_number',
         'email',
+        'phone',
+        'logo_url',
         'created_at',
         'updated_at',
         'suspended_at',
@@ -56,14 +53,34 @@ export class TenantQueryRepository implements ITenantQueryRepository {
       .selectFrom('tenant')
       .select((eb) => eb.fn.count('id').as('count'));
 
-    if (search) {
+    if (criteria.search) {
       const field =
-        searchType === TenantSearchField.TAX_NUMBER ? 'tax_number' : 'name';
-      query = query.where(field, 'ilike', `%${search}%`);
-      countQuery = countQuery.where(field, 'ilike', `%${search}%`);
+        criteria.search.field === TenantSearchField.TAX_NUMBER
+          ? 'tax_number'
+          : 'name';
+      query = query.where(field, 'ilike', `%${criteria.search.keyword}%`);
+      countQuery = countQuery.where(
+        field,
+        'ilike',
+        `%${criteria.search.keyword}%`,
+      );
     }
 
-    query = query.orderBy('created_at', 'desc').offset(skip).limit(take);
+    if (criteria.status) {
+      const isActive = criteria.status === TenantStatus.ACTIVE;
+      query = query.where('is_active', '=', isActive);
+      countQuery = countQuery.where('is_active', '=', isActive);
+    }
+
+    if (criteria.tenantId) {
+      query = query.where('id', '=', criteria.tenantId);
+      countQuery = countQuery.where('id', '=', criteria.tenantId);
+    }
+
+    query = query
+      .orderBy('created_at', 'desc')
+      .offset(criteria.pagination.skip)
+      .limit(criteria.pagination.take);
 
     const [items, totalCountResult] = await Promise.all([
       query.execute(),
@@ -72,19 +89,8 @@ export class TenantQueryRepository implements ITenantQueryRepository {
 
     const total = Number(totalCountResult?.count || 0);
 
-    const mappedItems = items.map(
-      (tenant) =>
-        new Tenant(
-          tenant.id,
-          tenant.name,
-          tenant.is_active ? TenantStatus.ACTIVE : TenantStatus.SUSPENDED,
-          tenant.tax_number || '',
-          tenant.email || '',
-          tenant.created_at,
-          tenant.updated_at,
-          tenant.suspended_at,
-          tenant.suspended_reason,
-        ),
+    const mappedItems = items.map((tenant) =>
+      this.tenantPersistenceMapper.toDomain(tenant),
     );
 
     return [mappedItems, total];
@@ -103,6 +109,8 @@ export class TenantQueryRepository implements ITenantQueryRepository {
         'is_active',
         'tax_number',
         'email',
+        'phone',
+        'logo_url',
         'created_at',
         'updated_at',
         'suspended_at',
@@ -113,16 +121,6 @@ export class TenantQueryRepository implements ITenantQueryRepository {
 
     if (!tenant) return null;
 
-    return new Tenant(
-      tenant.id,
-      tenant.name,
-      tenant.is_active ? TenantStatus.ACTIVE : TenantStatus.SUSPENDED,
-      tenant.tax_number || '',
-      tenant.email || '',
-      tenant.created_at,
-      tenant.updated_at,
-      tenant.suspended_at,
-      tenant.suspended_reason,
-    );
+    return this.tenantPersistenceMapper.toDomain(tenant);
   }
 }

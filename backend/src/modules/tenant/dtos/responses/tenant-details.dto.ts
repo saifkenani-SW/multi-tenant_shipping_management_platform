@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import type { TenantCapabilities } from '../../authorization/capabilities/tenant.capabilities.interface';
 
 export class TenantDetailsDto {
   @ApiProperty({
@@ -16,14 +17,30 @@ export class TenantDetailsDto {
   @ApiProperty({
     description: 'Tax registration number',
     example: 'TAX-123456789',
+    nullable: true,
   })
-  taxNumber: string;
+  taxNumber: string | null;
 
   @ApiProperty({
-    description: 'Primary contact email',
+    description: 'Primary email address',
     example: 'contact@globallogistics.com',
+    nullable: true,
   })
-  contactEmail: string;
+  email: string | null;
+
+  @ApiProperty({
+    description: 'Tenant phone number',
+    example: '+963123456789',
+    nullable: true,
+  })
+  phone: string | null;
+
+  @ApiProperty({
+    description: 'Tenant logo URL',
+    example: 'https://cdn.example.com/tenant-logo.png',
+    nullable: true,
+  })
+  logoUrl: string | null;
 
   @ApiProperty({ description: 'Tenant current status', example: 'ACTIVE' })
   status: string;
@@ -39,4 +56,24 @@ export class TenantDetailsDto {
     example: '2023-02-01T15:30:00Z',
   })
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'Date when the tenant was suspended',
+    example: '2023-03-01T10:00:00Z',
+    nullable: true,
+  })
+  suspendedAt: Date | null;
+
+  @ApiProperty({
+    description: 'Reason for suspension',
+    example: 'Fraud review',
+    nullable: true,
+  })
+  suspendedReason: string | null;
+
+  @ApiProperty({
+    description: 'Operations available to the current principal',
+    example: { canUpdate: true, canDelete: false },
+  })
+  capabilities: TenantCapabilities;
 }

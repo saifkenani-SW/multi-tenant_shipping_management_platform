@@ -2,10 +2,19 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TenantQueryService } from './tenant.query.service';
 import { TenantStatus } from '../enums/tenant-status.enum';
 import { Tenant } from '../domain/tenant.entity';
+import { TENANT_QUERY_REPOSITORY_TOKEN } from '../tokens/tenant-repository.tokens';
+import { AuthorizationFacade } from '../../../packages/authorization';
+import { AuthorizationContainer } from '../../../packages/authorization/authorization.container';
+import { TenantQueryCriteriaBuilder } from '../builders/query/tenant-query-criteria.builder';
+import { TenantResponseMapper } from '../mappers/response/tenant.response.mapper';
+import { TenantQueryCriteria } from '../builders/query/tenant-query-criteria';
+import { TenantNotFoundException } from '../exceptions/tenant-not-found.exception';
+import { Pagination } from '../../../common/pagination';
 
 describe('TenantQueryService', () => {
   let service: TenantQueryService;
   let tenantQueryRepository: any;
+  let authorizationFacade: any;
 
   beforeEach(async () => {
     tenantQueryRepository = {
@@ -13,10 +22,31 @@ describe('TenantQueryService', () => {
       findById: jest.fn(),
     };
 
+    authorizationFacade = {
+      authorize: jest.fn().mockResolvedValue(undefined),
+      buildScope: jest.fn().mockReturnValue({
+        tenantId: 'scope-tenant-id',
+      }),
+      buildCapabilities: jest.fn().mockResolvedValue({
+        canUpdate: false,
+        canDelete: false,
+      }),
+    };
+
+    jest
+      .spyOn(AuthorizationContainer, 'get')
+      .mockReturnValue(authorizationFacade);
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantQueryService,
-        { provide: 'ITenantQueryRepository', useValue: tenantQueryRepository },
+        {
+          provide: TENANT_QUERY_REPOSITORY_TOKEN,
+          useValue: tenantQueryRepository,
+        },
+        { provide: AuthorizationFacade, useValue: authorizationFacade },
+        TenantQueryCriteriaBuilder,
+        TenantResponseMapper,
       ],
     }).compile();
 
@@ -25,6 +55,7 @@ describe('TenantQueryService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.restoreAllMocks();
   });
 
   describe('findTenants', () => {
@@ -42,14 +73,19 @@ describe('TenantQueryService', () => {
       ];
       tenantQueryRepository.findMany.mockResolvedValue([mockTenants, 1]);
 
-      const result = await service.findTenants(1, 10);
+      const result = await service.findTenants({
+        page: 1,
+        limit: 10,
+      } as any);
 
-      expect(tenantQueryRepository.findMany).toHaveBeenCalledWith(
-        0,
-        10,
-        undefined,
-        undefined,
-      );
+      const criteria = tenantQueryRepository.findMany.mock
+        .calls[0][0] as TenantQueryCriteria;
+
+      expect(criteria).toBeInstanceOf(TenantQueryCriteria);
+      expect(criteria.pagination).toBeInstanceOf(Pagination);
+      expect(criteria.pagination.skip).toBe(0);
+      expect(criteria.pagination.take).toBe(10);
+      expect(criteria.tenantId).toBe('scope-tenant-id');
 
       // Ensure mapping is correct
       expect(result.data).toHaveLength(1);
@@ -62,12 +98,12 @@ describe('TenantQueryService', () => {
   });
 
   describe('getTenantDetails', () => {
-    it('should return null if tenant not found in repository', async () => {
+    it('should throw TenantNotFoundException if tenant not found in repository', async () => {
       tenantQueryRepository.findById.mockResolvedValue(null);
 
-      const result = await service.getTenantDetails('missing-id');
-
-      expect(result).toBeNull();
+      await expect(service.getTenantDetails('missing-id')).rejects.toThrow(
+        TenantNotFoundException,
+      );
       expect(tenantQueryRepository.findById).toHaveBeenCalledWith('missing-id');
     });
 
@@ -89,6 +125,15 @@ describe('TenantQueryService', () => {
       expect(result?.id).toBe('2');
       expect(result?.status).toBe('SUSPENDED');
       expect(result?.taxNumber).toBe('TX1');
+      expect(result?.email).toBe('b@b.com');
+      expect(result?.phone).toBeNull();
+      expect(result?.logoUrl).toBeNull();
+      expect(result?.suspendedAt).toBeNull();
+      expect(result?.suspendedReason).toBeNull();
+      expect(result?.capabilities).toEqual({
+        canUpdate: false,
+        canDelete: false,
+      });
       expect(tenantQueryRepository.findById).toHaveBeenCalledWith('2');
     });
   });

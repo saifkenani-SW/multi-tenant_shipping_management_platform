@@ -6,7 +6,6 @@ import {
   HttpCode,
   HttpStatus,
   Inject,
-  NotFoundException,
   Param,
   Patch,
   Post,
@@ -69,12 +68,7 @@ export class TenantController {
   async getTenants(
     @Query() query: TenantQueryDto,
   ): Promise<PaginatedTenantListDto> {
-    return this.tenantQueryService.findTenants(
-      query.page,
-      query.limit,
-      query.search,
-      query.searchType,
-    );
+    return this.tenantQueryService.findTenants(query);
   }
 
   @Get(':id')
@@ -87,17 +81,9 @@ export class TenantController {
   })
   async getTenantDetails(
     @Param() params: BaseUuidParamDto,
-    @CurrentUser() user: JwtPayload,
   ): Promise<TenantDetailsDto> {
     const id = params.id;
-    if (user.type === UserLoginType.EMPLOYEE && user.tenantId !== id) {
-      throw new ForbiddenException(
-        'Tenant isolation violation: Unauthorized access',
-      );
-    }
-    const details = await this.tenantQueryService.getTenantDetails(id);
-    if (!details) throw new NotFoundException('Tenant not found');
-    return details;
+    return this.tenantQueryService.getTenantDetails(id);
   }
 
   @Patch(':id')
@@ -111,14 +97,8 @@ export class TenantController {
   async updateTenant(
     @Param() params: BaseUuidParamDto,
     @Body() dto: UpdateTenantDto,
-    @CurrentUser() user: JwtPayload,
   ): Promise<void> {
     const id = params.id;
-    if (user.type === UserLoginType.EMPLOYEE && user.tenantId !== id) {
-      throw new ForbiddenException(
-        'Tenant isolation violation: Unauthorized access',
-      );
-    }
     await this.tenantCommandService.updateTenant(id, dto);
   }
 

@@ -19,10 +19,10 @@ export class CreateTenantDto {
   taxNumber: string;
 
   @ApiProperty({
-    description: 'Primary contact email for the tenant admin',
+    description: 'Primary email address for the tenant admin',
     example: 'admin@globallogistics.com',
   })
   @IsEmail()
   @IsNotEmpty()
-  contactEmail: string;
+  email: string;
 }

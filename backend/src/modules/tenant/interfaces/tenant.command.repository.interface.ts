@@ -1,16 +1,16 @@
 import { TenantStatus } from '../enums/tenant-status.enum';
 import { Tenant } from '../domain/tenant.entity';
+import {
+  CreateTenantRepositoryData,
+  UpdateTenantRepositoryData,
+} from '../contracts/persistence/tenant-repository-data.types';
 
 export interface ITenantCommandRepository {
-  create(data: {
-    name: string;
-    taxNumber: string;
-    contactEmail: string;
-  }): Promise<Tenant>;
+  create(data: CreateTenantRepositoryData): Promise<Tenant>;
   findById(id: string): Promise<Tenant | null>;
   update(
     id: string,
-    data: { name?: string; taxNumber?: string; contactEmail?: string },
+    data: UpdateTenantRepositoryData,
   ): Promise<void>;
   updateStatus(
     id: string,
