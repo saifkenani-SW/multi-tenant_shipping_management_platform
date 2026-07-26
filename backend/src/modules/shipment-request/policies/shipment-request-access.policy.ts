@@ -1,8 +1,7 @@
 import { ForbiddenException, Injectable } from '@nestjs/common';
-import { Permission } from '../../../core/constants/permissions.enum';
 import { PermissionCacheService } from '../../auth/authorization/services/permission-cache.service';
 import { ShipmentRequest } from '../domain/shipment-request.entity';
-
+import { Permission } from '../../../core/security/Permission';
 /**
  * طبقة السياسات (Policy) لطلبات الشحنة.
  *
