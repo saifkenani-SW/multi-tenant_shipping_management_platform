@@ -1,5 +1,5 @@
 import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { Permission } from '../../../core/constants/permissions.enum';
+import { Permission } from '../../../core/security/Permission';
 import type { ICustomerQueryService } from '../../customer/interfaces/customer.query.service.interface';
 import type { IShipmentRequestQueryRepository } from '../interfaces/shipment-request.query.repository.interface';
 import { IShipmentRequestQueryService } from '../interfaces/shipment-request.query.service.interface';

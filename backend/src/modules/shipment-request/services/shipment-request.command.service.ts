@@ -10,7 +10,6 @@ import { RequestStatus } from '@prisma/client';
 import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
 import { Transactional } from '../../../core/transaction';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
-import { Permission } from '../../../core/constants/permissions.enum';
 import type { ICustomerQueryService } from '../../customer/interfaces/customer.query.service.interface';
 import { CreateShipmentRequestDto } from '../dtos/requests/create-shipment-request.dto';
 import { RejectShipmentRequestDto } from '../dtos/requests/reject-shipment-request.dto';
@@ -19,6 +18,7 @@ import type { IShipmentRequestCommandRepository } from '../interfaces/shipment-r
 import { IShipmentRequestCommandService } from '../interfaces/shipment-request.command.service.interface';
 import { SHIPMENT_REQUEST_CACHE_KEYS } from '../constants/shipment-request.cache.constants';
 import { ShipmentRequestAccessPolicy } from '../policies/shipment-request-access.policy';
+import { Permission } from '../../../core/security/Permission';
 
 const CANCELLABLE_STATUSES: RequestStatus[] = [
   RequestStatus.PENDING,
