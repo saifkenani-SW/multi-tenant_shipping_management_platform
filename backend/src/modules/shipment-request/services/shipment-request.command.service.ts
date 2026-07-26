@@ -27,9 +27,7 @@ const CANCELLABLE_STATUSES: RequestStatus[] = [
 ];
 
 @Injectable()
-export class ShipmentRequestCommandService
-  implements IShipmentRequestCommandService
-{
+export class ShipmentRequestCommandService implements IShipmentRequestCommandService {
   constructor(
     @Inject('IShipmentRequestCommandRepository')
     private readonly shipmentRequestRepository: IShipmentRequestCommandRepository,
@@ -76,7 +74,10 @@ export class ShipmentRequestCommandService
     return { id: request.id };
   }
 
-  @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async approveQuotation(
     userId: string,
@@ -106,7 +107,10 @@ export class ShipmentRequestCommandService
     );
   }
 
-  @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async acceptByEmployee(
     employeeUserId: string,
@@ -133,7 +137,10 @@ export class ShipmentRequestCommandService
     await this.shipmentRequestRepository.acceptByEmployee(shipmentRequestId);
   }
 
-  @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async reject(
     employeeUserId: string,
     shipmentRequestId: string,
@@ -160,7 +167,10 @@ export class ShipmentRequestCommandService
     await this.shipmentRequestRepository.reject(shipmentRequestId, dto.reason);
   }
 
-  @CacheEvict({ keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: SHIPMENT_REQUEST_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async cancel(
     userId: string,
     shipmentRequestId: string,
@@ -178,9 +188,7 @@ export class ShipmentRequestCommandService
     }
 
     if (!CANCELLABLE_STATUSES.includes(request.status)) {
-      throw new BadRequestException(
-        'This request can no longer be cancelled',
-      );
+      throw new BadRequestException('This request can no longer be cancelled');
     }
 
     const hasCollectedParcel =

@@ -19,9 +19,7 @@ import { ActivateTenantPayload } from '../payloads';
 import { TenantSubject } from '../../subjects/tenant.subject';
 
 @Injectable()
-export class ActivateTenantStrategy
-  implements TenantAuthorizationStrategy<ActivateTenantPayload>
-{
+export class ActivateTenantStrategy implements TenantAuthorizationStrategy<ActivateTenantPayload> {
   readonly action = TenantAction.Activate;
 
   constructor(

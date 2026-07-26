@@ -7,12 +7,15 @@ import {
   IShipmentRequestCommandRepository,
 } from '../interfaces/shipment-request.command.repository.interface';
 import { ShipmentRequest } from '../domain/shipment-request.entity';
-import { RequestStatus, QuotationStatus, PaymentResponsibility, ShipmentStatus } from '@prisma/client';
+import {
+  RequestStatus,
+  QuotationStatus,
+  PaymentResponsibility,
+  ShipmentStatus,
+} from '@prisma/client';
 
 @Injectable()
-export class ShipmentRequestCommandRepository
-  implements IShipmentRequestCommandRepository
-{
+export class ShipmentRequestCommandRepository implements IShipmentRequestCommandRepository {
   constructor(
     private readonly prisma: TransactionalPrismaService,
     // مطلوبة بالتحديد لاستعلام PostGIS (نوع "location" مش مدعوم من Prisma)

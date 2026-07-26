@@ -81,7 +81,10 @@ export class PermissionCacheService {
         where: { user_id: userId, is_active: true },
         include: {
           employee_assignment: {
-            where: { organization_unit_id: organizationUnitId, is_active: true },
+            where: {
+              organization_unit_id: organizationUnitId,
+              is_active: true,
+            },
             include: { assignment_role: true },
           },
         },

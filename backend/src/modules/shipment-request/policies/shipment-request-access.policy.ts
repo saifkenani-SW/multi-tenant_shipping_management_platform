@@ -12,7 +12,9 @@ import { Permission } from '../../../core/security/Permission';
  */
 @Injectable()
 export class ShipmentRequestAccessPolicy {
-  constructor(private readonly permissionCacheService: PermissionCacheService) {}
+  constructor(
+    private readonly permissionCacheService: PermissionCacheService,
+  ) {}
 
   private relevantOrgUnitIds(request: ShipmentRequest): string[] {
     return [request.originOrgUnitId, request.destinationOrgUnitId].filter(
@@ -29,10 +31,11 @@ export class ShipmentRequestAccessPolicy {
     if (orgUnitIds.length === 0) return false;
 
     for (const orgUnitId of orgUnitIds) {
-      const roleIds = await this.permissionCacheService.getUserRoleIdsForOrgUnit(
-        employeeUserId,
-        orgUnitId,
-      );
+      const roleIds =
+        await this.permissionCacheService.getUserRoleIdsForOrgUnit(
+          employeeUserId,
+          orgUnitId,
+        );
       for (const roleId of roleIds) {
         const permissions =
           await this.permissionCacheService.getRolePermissions(roleId);
@@ -66,10 +69,11 @@ export class ShipmentRequestAccessPolicy {
 
     const authorized: string[] = [];
     for (const orgUnitId of orgUnitIds) {
-      const roleIds = await this.permissionCacheService.getUserRoleIdsForOrgUnit(
-        employeeUserId,
-        orgUnitId,
-      );
+      const roleIds =
+        await this.permissionCacheService.getUserRoleIdsForOrgUnit(
+          employeeUserId,
+          orgUnitId,
+        );
       for (const roleId of roleIds) {
         const permissions =
           await this.permissionCacheService.getRolePermissions(roleId);

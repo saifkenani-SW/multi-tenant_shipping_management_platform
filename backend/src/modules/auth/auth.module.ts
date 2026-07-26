@@ -38,6 +38,6 @@ import { PermissionsGuard } from './authorization/guards/permissions.guard';
     UserTypeGuard,
     PermissionsGuard,
   ],
-  exports: [UserTypeGuard, PermissionsGuard, PermissionCacheService],
+  exports: [UserTypeGuard, PermissionsGuard],
 })
 export class AuthModule {}

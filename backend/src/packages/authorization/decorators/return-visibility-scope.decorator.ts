@@ -1,8 +1,5 @@
 import { AuthorizationContainer } from '../authorization.container';
-import {
-  AuthorizationFacade,
-  ScopeOptions,
-} from '../index';
+import { AuthorizationFacade, ScopeOptions } from '../index';
 
 export function ReturnVisibilityScope<TScope>(
   options: ScopeOptions<TScope>,

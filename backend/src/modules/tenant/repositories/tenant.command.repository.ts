@@ -38,10 +38,7 @@ export class TenantCommandRepository implements ITenantCommandRepository {
     return this.tenantPersistenceMapper.toDomain(tenant);
   }
 
-  async update(
-    id: string,
-    data: UpdateTenantRepositoryData,
-  ): Promise<void> {
+  async update(id: string, data: UpdateTenantRepositoryData): Promise<void> {
     await this.prisma.client.tenant.update({
       where: { id },
       data: {

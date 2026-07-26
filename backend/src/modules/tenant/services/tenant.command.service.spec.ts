@@ -37,12 +37,17 @@ describe('TenantCommandService', () => {
 
     const cacheFacade = new CacheFacade(cacheProvider, new CacheKeyBuilder());
     jest.spyOn(CacheContainer, 'get').mockReturnValue(cacheFacade);
-    jest.spyOn(AuthorizationContainer, 'get').mockReturnValue(authorizationFacade);
+    jest
+      .spyOn(AuthorizationContainer, 'get')
+      .mockReturnValue(authorizationFacade);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TenantCommandService,
-        { provide: TENANT_COMMAND_REPOSITORY_TOKEN, useValue: tenantRepository },
+        {
+          provide: TENANT_COMMAND_REPOSITORY_TOKEN,
+          useValue: tenantRepository,
+        },
         { provide: CACHE_PROVIDER, useValue: cacheProvider },
       ],
     }).compile();

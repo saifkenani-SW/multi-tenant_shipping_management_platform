@@ -31,7 +31,10 @@ describe('SubscriptionPlanCommandService', () => {
       clearByPrefix: jest.fn(),
     } as any;
 
-    const cacheFacade = new CacheFacade(mockCacheProvider, new CacheKeyBuilder());
+    const cacheFacade = new CacheFacade(
+      mockCacheProvider,
+      new CacheKeyBuilder(),
+    );
     jest.spyOn(CacheContainer, 'get').mockReturnValue(cacheFacade);
 
     const module: TestingModule = await Test.createTestingModule({
