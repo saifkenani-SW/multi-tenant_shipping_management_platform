@@ -1,9 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional } from 'class-validator';
-import { BasePaginationDto } from '../../../../core/dtos/base-pagination.dto';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { PaginationQueryDto } from '../../../../common/pagination';
 import { TenantSearchField } from '../../enums/tenant-search-field.enum';
 
-export class TenantQueryDto extends BasePaginationDto {
+export class TenantQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    description: 'Generic search query',
+  })
+  @IsString()
+  @IsOptional()
+  search?: string;
+
   @ApiPropertyOptional({
     description: 'Field to search by. Defaults to name.',
     enum: TenantSearchField,
