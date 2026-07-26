@@ -389,7 +389,7 @@ export class RedisCacheProvider implements ICacheProvider, OnModuleDestroy {
    */
   async del(key: string): Promise<void> {
     try {
-      await this.breaker.fire(() => this.redis.del(key));
+      await this.breaker.fire(() => this.redis.unlink(key));
     } catch (err: any) {
       this._logError('DEL', key, err);
     }
@@ -439,7 +439,7 @@ export class RedisCacheProvider implements ICacheProvider, OnModuleDestroy {
         const pipeline = this.redis.pipeline();
 
         for (const key of keysToDelete) {
-          pipeline.del(key);
+          pipeline.unlink(key);
         }
 
         await pipeline.exec();
@@ -542,6 +542,4 @@ export class RedisCacheProvider implements ICacheProvider, OnModuleDestroy {
 
     this.logger.error(`[${operation}] Failed for "${target}": ${message}`);
   }
-
-
 }

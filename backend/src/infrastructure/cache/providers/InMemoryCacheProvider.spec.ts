@@ -11,27 +11,27 @@ describe('InMemoryCacheProvider', () => {
     it('should handle Cache Miss and call loader once', async () => {
       const loader = jest.fn().mockResolvedValue('value');
       const result = await provider.remember('key1', loader, 10);
-      
+
       expect(result).toBe('value');
       expect(loader).toHaveBeenCalledTimes(1);
     });
 
     it('should handle Cache Hit and not call loader', async () => {
       await provider.set('key1', 'cached-value', 10);
-      
+
       const loader = jest.fn();
       const result = await provider.remember('key1', loader, 10);
-      
+
       expect(result).toBe('cached-value');
       expect(loader).not.toHaveBeenCalled();
     });
 
     it('should expire ttl and act as miss', async () => {
       await provider.set('key1', 'value', -1); // expired
-      
+
       const loader = jest.fn().mockResolvedValue('new-value');
       const result = await provider.remember('key1', loader, 10);
-      
+
       expect(result).toBe('new-value');
       expect(loader).toHaveBeenCalledTimes(1);
     });
@@ -48,16 +48,16 @@ describe('InMemoryCacheProvider', () => {
     it('should handle all hit', async () => {
       await provider.set('key:1', { id: '1' });
       await provider.set('key:2', { id: '2' });
-      
+
       const loader = jest.fn();
       const result = await provider.rememberMany(
         [
           { id: '1', key: 'key:1' },
-          { id: '2', key: 'key:2' }
+          { id: '2', key: 'key:2' },
         ],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(2);
       expect(result.get('1')).toEqual({ id: '1' });
       expect(result.get('2')).toEqual({ id: '2' });
@@ -66,58 +66,58 @@ describe('InMemoryCacheProvider', () => {
 
     it('should handle all miss', async () => {
       const loader = jest.fn().mockResolvedValue([{ id: '1' }, { id: '2' }]);
-      
+
       const result = await provider.rememberMany(
         [
           { id: '1', key: 'key:1' },
-          { id: '2', key: 'key:2' }
+          { id: '2', key: 'key:2' },
         ],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(2);
       expect(loader).toHaveBeenCalledWith(['1', '2']);
     });
 
     it('should handle partial hit', async () => {
       await provider.set('key:1', { id: '1' });
-      
+
       const loader = jest.fn().mockResolvedValue([{ id: '2' }]);
-      
+
       const result = await provider.rememberMany(
         [
           { id: '1', key: 'key:1' },
-          { id: '2', key: 'key:2' }
+          { id: '2', key: 'key:2' },
         ],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(2);
       expect(loader).toHaveBeenCalledWith(['2']);
     });
 
     it('should handle duplicate ids gracefully', async () => {
       const loader = jest.fn().mockResolvedValue([{ id: '1' }]);
-      
+
       const result = await provider.rememberMany(
         [
           { id: '1', key: 'key:1' },
-          { id: '1', key: 'key:1' }
+          { id: '1', key: 'key:1' },
         ],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(1);
     });
 
     it('should handle loader returning unexpected id', async () => {
       const loader = jest.fn().mockResolvedValue([{ id: 'unexpected' }]);
-      
+
       const result = await provider.rememberMany(
         [{ id: '1', key: 'key:1' }],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(0);
     });
   });
@@ -144,9 +144,9 @@ describe('InMemoryCacheProvider', () => {
     it('setMany should set multiple keys', async () => {
       await provider.setMany([
         { key: 'a', value: 1 },
-        { key: 'b', value: 2 }
+        { key: 'b', value: 2 },
       ]);
-      
+
       expect(await provider.get('a')).toBe(1);
       expect(await provider.get('b')).toBe(2);
     });
@@ -163,9 +163,9 @@ describe('InMemoryCacheProvider', () => {
       await provider.set('user:1', 'a');
       await provider.set('user:2', 'b');
       await provider.set('post:1', 'c');
-      
+
       await provider.delByPattern('user:*');
-      
+
       expect(await provider.get('user:1')).toBeNull();
       expect(await provider.get('user:2')).toBeNull();
       expect(await provider.get('post:1')).toBe('c');

@@ -31,7 +31,11 @@ describe('CacheFacade', () => {
       const result = await facade.remember(['part1', 'part2'], loader, 100);
 
       expect(keyBuilder.build).toHaveBeenCalledWith(['part1', 'part2']);
-      expect(cacheProvider.remember).toHaveBeenCalledWith('built:key', loader, 100);
+      expect(cacheProvider.remember).toHaveBeenCalledWith(
+        'built:key',
+        loader,
+        100,
+      );
       expect(result).toBe('cached-value');
     });
   });
@@ -47,7 +51,7 @@ describe('CacheFacade', () => {
         'prefix',
         ['1', '2', '1'],
         loader,
-        200
+        200,
       );
 
       expect(keyBuilder.build).toHaveBeenCalledWith(['prefix', '1']);
@@ -58,7 +62,7 @@ describe('CacheFacade', () => {
           { id: '2', key: 'prefix:2' },
         ],
         loader,
-        200
+        200,
       );
       expect(result).toBe(mockMap);
     });
@@ -67,7 +71,7 @@ describe('CacheFacade', () => {
   describe('evict', () => {
     it('should build the key and call provider.del', async () => {
       keyBuilder.build.mockReturnValue('evict:key');
-      
+
       await facade.evict(['part1']);
 
       expect(keyBuilder.build).toHaveBeenCalledWith(['part1']);
