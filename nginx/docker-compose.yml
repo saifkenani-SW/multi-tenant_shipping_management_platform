@@ -1,0 +1,38 @@
+services:
+  nginx:
+    build: .
+
+    container_name: nginx
+
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./conf.d:/etc/nginx/conf.d:ro
+
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+
+    networks:
+      - app-network
+
+  certbot:
+    image: certbot/certbot:latest
+
+    container_name: certbot
+
+    profiles:
+      - tools
+
+    volumes:
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
+
+networks:
+  app-network:
+    external: true
+    name: app-network

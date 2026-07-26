@@ -1,19 +1,68 @@
-FROM node:20-slim
+############################################
+# Base
+############################################
+FROM node:24-alpine AS base
+
+RUN apk add --no-cache \
+    openssl \
+    libc6-compat
 
 WORKDIR /app
 
-# openssl مطلوب لمحركات Prisma على Debian
-RUN apt-get update -y && apt-get install -y --no-install-recommends openssl \
-    && rm -rf /var/lib/apt/lists/*
+############################################
+# Dependencies
+############################################
+FROM base AS dependencies
 
-COPY package.json package-lock.json ./
+COPY package*.json ./
+
 RUN npm ci
+
+############################################
+# Builder
+############################################
+FROM dependencies AS builder
 
 COPY . .
 
 RUN npx prisma generate
+
 RUN npm run build
 
-EXPOSE 3000
+############################################
+# Production Dependencies
+############################################
+FROM base AS production-dependencies
 
-CMD ["node", "dist/main"]
+COPY package*.json ./
+
+RUN npm ci --omit=dev
+
+############################################
+# Runtime
+############################################
+FROM node:24-alpine AS runtime
+
+RUN apk add --no-cache \
+    dumb-init \
+    openssl \
+    libc6-compat \
+    wget
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=production-dependencies /app/node_modules ./node_modules
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/prisma ./prisma
+
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+USER node
+
+ENTRYPOINT ["dumb-init", "--", "docker-entrypoint.sh"]
+
+CMD ["node", "dist/main.js"]
