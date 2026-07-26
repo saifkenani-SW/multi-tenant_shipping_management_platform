@@ -37,7 +37,10 @@ describe('CacheEvict Decorator', () => {
 
   it('should evict using keyBuilder', async () => {
     class TestService {
-      @CacheEvict({ keyPrefix: 'prefix', keyBuilder: (id: string) => ['custom', id] })
+      @CacheEvict({
+        keyPrefix: 'prefix',
+        keyBuilder: (id: string) => ['custom', id],
+      })
       async updateData(id: string) {
         return 'success';
       }

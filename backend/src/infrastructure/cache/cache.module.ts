@@ -4,7 +4,6 @@ import { Redis, RedisOptions } from 'ioredis';
 import { RedisCacheProvider } from './providers/RedisCacheProvider';
 import { InMemoryCacheProvider } from './providers/InMemoryCacheProvider';
 
-
 import { CacheContainerInitializer } from './container/CacheContainerInitializer';
 
 import {

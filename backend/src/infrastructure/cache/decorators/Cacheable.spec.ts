@@ -41,7 +41,7 @@ describe('Cacheable Decorator', () => {
     expect(cacheFacade.remember).toHaveBeenCalledWith(
       ['getData', '123'],
       expect.any(Function),
-      60
+      60,
     );
   });
 
@@ -58,7 +58,7 @@ describe('Cacheable Decorator', () => {
     expect(cacheFacade.remember).toHaveBeenCalledWith(
       ['custom', '1'],
       expect.any(Function),
-      undefined
+      undefined,
     );
   });
 
@@ -71,19 +71,21 @@ describe('Cacheable Decorator', () => {
         loader: (args: unknown[], missingIds: string[]) => [missingIds],
       })
       async getManyData(ids: string[]) {
-        return ids.map(id => ({ id, val: `data-${id}` }));
+        return ids.map((id) => ({ id, val: `data-${id}` }));
       }
     }
 
     const service = new TestService();
-    cacheFacade.rememberMany.mockImplementation(async (prefix, ids, loader, ttl) => {
-      const loaded = await loader(['2']); // simulate '2' is missing
-      const map = new Map<string, any>();
-      for (const item of loaded) {
-        map.set(item.id, item);
-      }
-      return map;
-    });
+    cacheFacade.rememberMany.mockImplementation(
+      async (prefix, ids, loader, ttl) => {
+        const loaded = await loader(['2']); // simulate '2' is missing
+        const map = new Map<string, any>();
+        for (const item of loaded) {
+          map.set(item.id, item);
+        }
+        return map;
+      },
+    );
 
     const result = await service.getManyData(['1', '2']);
 
@@ -91,7 +93,7 @@ describe('Cacheable Decorator', () => {
       'bulk',
       ['1', '2'],
       expect.any(Function),
-      undefined
+      undefined,
     );
     const mapResult = result as unknown as Map<string, any>;
     expect(mapResult.get('2')).toEqual({ id: '2', val: 'data-2' });
