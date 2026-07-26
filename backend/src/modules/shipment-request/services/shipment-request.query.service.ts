@@ -1,4 +1,9 @@
-import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Permission } from '../../../core/security/Permission';
 import type { ICustomerQueryService } from '../../customer/interfaces/customer.query.service.interface';
 import type { IShipmentRequestQueryRepository } from '../interfaces/shipment-request.query.repository.interface';
@@ -14,9 +19,7 @@ import { ShipmentRequest } from '../domain/shipment-request.entity';
 import { ShipmentRequestAccessPolicy } from '../policies/shipment-request-access.policy';
 
 @Injectable()
-export class ShipmentRequestQueryService
-  implements IShipmentRequestQueryService
-{
+export class ShipmentRequestQueryService implements IShipmentRequestQueryService {
   constructor(
     @Inject('IShipmentRequestQueryRepository')
     private readonly shipmentRequestQueryRepository: IShipmentRequestQueryRepository,

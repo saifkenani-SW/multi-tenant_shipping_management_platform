@@ -30,7 +30,10 @@ export interface IShipmentRequestCommandRepository {
   ): Promise<string | null>;
 
   /** يوافق على عرض سعر واحد، يرفض الباقي تلقائياً، ويحدد target_tenant_id + الفروع */
-  approveQuotation(shipmentRequestId: string, quotationId: string): Promise<void>;
+  approveQuotation(
+    shipmentRequestId: string,
+    quotationId: string,
+  ): Promise<void>;
 
   /** موافقة الموظف: بضربة وحدة بينشئ customer_shipment وبيحول الحالة لـ CONVERTED */
   acceptByEmployee(shipmentRequestId: string): Promise<void>;

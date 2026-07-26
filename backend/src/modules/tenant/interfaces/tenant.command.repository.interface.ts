@@ -8,10 +8,7 @@ import {
 export interface ITenantCommandRepository {
   create(data: CreateTenantRepositoryData): Promise<Tenant>;
   findById(id: string): Promise<Tenant | null>;
-  update(
-    id: string,
-    data: UpdateTenantRepositoryData,
-  ): Promise<void>;
+  update(id: string, data: UpdateTenantRepositoryData): Promise<void>;
   updateStatus(
     id: string,
     status: TenantStatus,

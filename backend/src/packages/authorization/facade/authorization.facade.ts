@@ -4,7 +4,7 @@ import {
   CapabilitiesOptions,
   ScopeOptions,
 } from '../contracts';
-import  { VisibilityScopeExecutor } from '../executors/visibility-scope.executor';
+import { VisibilityScopeExecutor } from '../executors/visibility-scope.executor';
 import { AuthorizationExecutor } from '../executors/authorization.executor';
 import { CapabilityExecutor } from '../executors/capability.executor';
 

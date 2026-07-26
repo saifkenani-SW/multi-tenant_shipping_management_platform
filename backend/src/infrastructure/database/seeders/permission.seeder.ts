@@ -1,7 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { Permission } from '../../../core/constants/permissions.enum';
-
+import { Permission } from '../../../core/security/Permission';
 @Injectable()
 export class PermissionSeeder {
   private readonly logger = new Logger(PermissionSeeder.name);

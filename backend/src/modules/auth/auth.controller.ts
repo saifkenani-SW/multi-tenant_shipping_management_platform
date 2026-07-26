@@ -59,9 +59,9 @@ export class AuthController {
     return result;
   }
 
-  @ApiOperation({ summary: 'Refresh access token' })
+  @ApiOperation({ summary: 'Refresh access tokens' })
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
-  @ApiResponse({ status: 401, description: 'Invalid refresh token' })
+  @ApiResponse({ status: 401, description: 'Invalid refresh tokens' })
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
@@ -88,7 +88,7 @@ export class AuthController {
     if (!token) {
       return res
         .status(HttpStatus.UNAUTHORIZED)
-        .json({ message: 'Refresh token missing' });
+        .json({ message: 'Refresh tokens missing' });
     }
 
     const result = await this.authService.refreshToken({ refreshToken: token });

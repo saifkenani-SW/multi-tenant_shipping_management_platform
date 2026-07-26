@@ -3,7 +3,7 @@
 // biome-ignore-all lint: generated file
 // @ts-nocheck
 /*
- * WARNING: This is an internal file that is subject to change!
+ * WARNING: This is an internal file that is subjects to change!
  *
  * 🛑 Under no circumstances should you import this file directly! 🛑
  *

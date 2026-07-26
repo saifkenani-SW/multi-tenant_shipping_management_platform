@@ -8,14 +8,20 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
-import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
 import { LoggerModule } from 'nestjs-pino';
 
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { CacheModule } from './infrastructure/cache/cache.module';
+import { CaslModule } from './packages/authorization-casl';
+import { AuthorizationModule } from './packages/authorization';
+import { ContextModule } from './packages/context/context.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
+    ContextModule,
+    CaslModule.forRoot(),
+    AuthorizationModule,
     LoggerModule.forRoot(),
     AppConfigModule,
     DatabaseModule,
@@ -33,11 +39,11 @@ import { CacheModule } from './infrastructure/cache/cache.module';
       }),
     }),
 
+    HealthModule,
     AuthModule,
     CustomerModule,
     TenantModule,
     SubscriptionPlanModule,
-    ShipmentRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

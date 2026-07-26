@@ -68,7 +68,7 @@ export class AuthService {
         secret: process.env.JWT_REFRESH_SECRET || 'super-refresh-secret',
       });
     } catch (e) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException('Invalid or expired refresh tokens');
     }
 
     // 2. من هنا تبدأ العمليات الخاصة بقاعدة البيانات
@@ -90,7 +90,7 @@ export class AuthService {
       // يجب تدمير الجلسة فوراً لحماية المستخدم
       await this.prisma.user_session.delete({ where: { id: session.id } });
       throw new UnauthorizedException(
-        'Security alert: Invalid token signature',
+        'Security alert: Invalid tokens signature',
       );
     }
 

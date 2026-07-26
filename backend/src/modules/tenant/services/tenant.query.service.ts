@@ -1,9 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ITenantQueryService } from '../interfaces/tenant.query.service.interface';
 import type { ITenantQueryRepository } from '../interfaces/tenant.query.repository.interface';
-import {
-  PaginatedTenantListDto,
-} from '../dtos/responses/tenant-list.dto';
+import { PaginatedTenantListDto } from '../dtos/responses/tenant-list.dto';
 import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
 import {
   AuthorizationFacade,
