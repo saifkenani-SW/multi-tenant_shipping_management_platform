@@ -1,0 +1,16 @@
+meta {
+  name: Deactivate Subscription Plan
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{url}}/subscription-plans/{{subscriptionPlanId}}/deactivate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+

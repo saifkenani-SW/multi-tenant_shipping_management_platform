@@ -1,0 +1,26 @@
+meta {
+  name: Update Tenant
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/tenants/{{tenantId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Global Logisasdsadasdtics Updated Inc.",
+    "contactEmail": "newadmin@globallogistics.com"
+  }
+}
+
+vars:pre-request {
+  tenantId: 019f7531-9d38-71f9-aa59-0f1d937ea931
+}

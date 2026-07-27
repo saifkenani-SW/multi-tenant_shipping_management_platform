@@ -1,0 +1,33 @@
+meta {
+  name: Activate Tenant
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/tenants/{{tenantId}}/activate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Activate Tenant
+  Re-activates a suspended tenant. Restricted to `PLATFORM_ADMIN` users only.
+  
+  ## Usage
+  - `{{url}}` resolves to the base API path.
+  - `{{token}}` is the bearer token for a platform admin.
+  
+  ## Expected JSON Response
+  ```json
+  {
+    "success": true,
+    "data": null,
+    "timestamp": "2026-07-16T12:00:00.000Z"
+  }
+  ```
+}

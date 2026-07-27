@@ -1,0 +1,32 @@
+meta {
+  name: Verify OTP
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{url}}/customer/verify-otp
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "sara@example.com",
+    "otp": "123456"
+  }
+}
+
+docs {
+  # Verify OTP Endpoint (Step 2 of 2)
+  Compares the submitted OTP against the pending registration stored in the
+  cache. On success, creates the `users` + `customer_profile` rows.
+
+  Does NOT log the user in — call `/auth/login` afterwards with the same
+  email/password to obtain tokens.
+
+  ## Expected JSON Response
+  ```json
+  { "message": "Account created successfully, please log in" }
+  ```
+}

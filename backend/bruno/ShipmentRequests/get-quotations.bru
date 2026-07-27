@@ -1,0 +1,25 @@
+meta {
+  name: Get Quotations
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{url}}/shipment-requests/:id/quotations
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id:
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # List Quotations (Customer only)
+  Quotation creation is out of scope for this module — this only lists
+  whatever quotations already exist for the request.
+}

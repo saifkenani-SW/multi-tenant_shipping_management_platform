@@ -1,0 +1,43 @@
+meta {
+  name: Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  ~client-type: MOBILE
+}
+
+body:json {
+  {
+    "email": "owner@logisticsplatform.com",
+    "password": "password123",
+    "clientType":"WEB"
+  }
+}
+
+docs {
+  # Login Endpoint
+  This endpoint authenticates a user and returns a JWT token.
+  
+  ## Usage
+  The `{{url}}` variable resolves to the base API path (e.g., `http://localhost:3000/api/v1`).
+  
+  ## Expected JSON Response
+  ```json
+  {
+    "success": true,
+    "data": {
+      "accessToken": "ey...",
+      "refreshToken": "ey..."
+    },
+    "timestamp": "2026-07-16T12:00:00.000Z"
+  }
+  ```
+}

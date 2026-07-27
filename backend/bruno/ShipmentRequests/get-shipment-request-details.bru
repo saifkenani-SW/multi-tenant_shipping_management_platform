@@ -1,0 +1,19 @@
+meta {
+  name: Get Shipment Request Details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/shipment-requests/:id
+  body: none
+  auth: bearer
+}
+
+params:path {
+  id:
+}
+
+auth:bearer {
+  token: {{token}}
+}

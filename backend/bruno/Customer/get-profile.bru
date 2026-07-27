@@ -1,0 +1,32 @@
+meta {
+  name: Get Profile
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{url}}/customer/profile
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Get Customer Profile
+  Returns the profile of the currently logged-in customer. Requires a valid
+  access token from `/auth/login` (user type must be CUSTOMER).
+
+  ## Expected JSON Response
+  ```json
+  {
+    "id": "...",
+    "email": "sara@example.com",
+    "fullName": "Sara Ahmad",
+    "phone": "0991234567",
+    "createdAt": "2026-07-18T..."
+  }
+  ```
+}

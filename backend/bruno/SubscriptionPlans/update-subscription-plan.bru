@@ -1,0 +1,23 @@
+meta {
+  name: Update Subscription Plan
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/subscription-plans/{{subscriptionPlanId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Enterprise سيبسيبسيبسيب يسبسيبسيبسيب",
+    "is_active": true
+  }
+}
+

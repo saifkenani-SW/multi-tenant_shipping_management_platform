@@ -12,7 +12,7 @@ export const envValidationSchema = Joi.object({
   SHADOW_DATABASE_URL: Joi.string().optional(), // اختياري
 
   // أمان
-  JWT_SECRET: Joi.string().required().min(32), // 32 حرف على الأقل
+  JWT_ACCESS_SECRET: Joi.string().required().min(32), // 32 حرف على الأقل
   JWT_EXPIRATION: Joi.string().default('7d'),
 
   // ريديس
@@ -23,6 +23,17 @@ export const envValidationSchema = Joi.object({
   SMTP_HOST: Joi.string().when('NODE_ENV', {
     is: 'production',
     then: Joi.required(), // مطلوب فقط في الإنتاج
+    otherwise: Joi.optional(),
+  }),
+  SMTP_PORT: Joi.number().default(587),
+  SMTP_USER: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.optional(),
+  }),
+  SMTP_PASS: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
     otherwise: Joi.optional(),
   }),
 
