@@ -1,7 +1,6 @@
 services:
   postgres:
     image: postgis/postgis:16-3.4
-
     restart: unless-stopped
 
     environment:
@@ -24,7 +23,6 @@ services:
 
   redis:
     image: redis:7-alpine
-
     restart: unless-stopped
 
     volumes:
@@ -40,6 +38,8 @@ services:
       retries: 10
 
   backend:
+    image: multi-tenant-backend:latest
+
     build:
       context: ./backend
 
@@ -66,6 +66,26 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+
+  migration:
+    image: multi-tenant-backend:latest
+
+    profiles:
+      - migration
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    env_file:
+      - ./backend/.env.production
+
+    command: ["npm", "run", "db:migrate"]
+
+    networks:
+      - app-network
 
 volumes:
   postgres_data:

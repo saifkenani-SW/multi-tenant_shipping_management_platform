@@ -1,14 +1,16 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { PrismaService } from '../prisma.service';
-import { Permission } from '../../../core/security/Permission';
+import { Permission } from '../../../../core/security/Permission';
+import { PrismaService } from '../../prisma.service';
+import { Seeder } from '../seeder.interface';
+
 @Injectable()
-export class PermissionSeeder {
+export class PermissionSeeder implements Seeder {
   private readonly logger = new Logger(PermissionSeeder.name);
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async seed() {
-    this.logger.log('Starting Permission Seed...');
+  async seed(): Promise<void> {
+    this.logger.log('Starting...');
 
     const permissions = Object.values(Permission);
     let syncedCount = 0;
@@ -31,6 +33,7 @@ export class PermissionSeeder {
       syncedCount++;
     }
 
-    this.logger.log(`Successfully synced ${syncedCount} permissions.`);
+    this.logger.log('Completed.');
+    this.logger.log(`Number of processed records: ${syncedCount}.`);
   }
 }

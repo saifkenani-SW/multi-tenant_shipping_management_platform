@@ -54,10 +54,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY --from=production-dependencies /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
@@ -65,4 +67,4 @@ USER node
 
 ENTRYPOINT ["dumb-init", "--", "docker-entrypoint.sh"]
 
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
