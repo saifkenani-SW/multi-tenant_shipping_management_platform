@@ -1,22 +1,24 @@
-import { NestFactory } from '@nestjs/core';
-import { SeederModule } from './seed.module';
-import { PermissionSeeder } from './permission.seeder';
 import { Logger } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
+import { SeedRunner } from './seed-runner.service';
+import { SeederModule } from './seed.module';
 
 async function bootstrap() {
   const logger = new Logger('Seeder');
+  let app:
+    | Awaited<ReturnType<typeof NestFactory.createApplicationContext>>
+    | undefined;
+
   try {
-    const appContext = await NestFactory.createApplicationContext(SeederModule);
-    const permissionSeeder = appContext.get(PermissionSeeder);
+    app = await NestFactory.createApplicationContext(SeederModule);
+    const runner = app.get(SeedRunner);
 
-    await permissionSeeder.seed();
-
-    await appContext.close();
-    logger.log('Seeding completed successfully');
-    process.exit(0);
+    await runner.run();
   } catch (error) {
     logger.error('Seeding failed', error);
-    process.exit(1);
+    process.exitCode = 1;
+  } finally {
+    await app?.close();
   }
 }
 
