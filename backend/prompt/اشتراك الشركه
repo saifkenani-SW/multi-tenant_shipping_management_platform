@@ -1,0 +1,589 @@
+# Role
+
+You are a Senior Software Architect working on this project.
+
+Before implementing anything, carefully study the existing architecture inside:
+
+backend/src/modules/subscription-plan
+
+This module is the architectural reference.
+
+Follow its structure, naming conventions, CQRS separation, repository pattern, mapper style, DTO conventions, Kysely Query layer, Prisma Command layer, folder organization, dependency injection, validation, exceptions, and coding style.
+
+Do NOT invent a different architecture.
+
+The new module must look like it was written by the same developer.
+
+--------------------------------------------------
+Objective
+--------------------------------------------------
+
+Create a new module:
+
+backend/src/modules/tenant-subscription
+
+This module manages the lifecycle of a tenant subscription.
+
+This is NOT a CRUD module.
+
+It represents business workflows.
+
+--------------------------------------------------
+Architecture
+--------------------------------------------------
+
+Use exactly the same architecture as subscription-plan.
+
+Additionally, introduce a lightweight Domain layer because this module contains business rules and state transitions.
+
+The Domain layer is responsible ONLY for business rules.
+
+The Application Services orchestrate repositories and transactions.
+
+Repositories never contain business logic.
+
+--------------------------------------------------
+Folder Structure
+--------------------------------------------------
+
+The module should contain something similar to:
+
+tenant-subscription/
+
+    commands/
+    controllers/
+    domain/
+    dtos/
+    interfaces/
+    mappers/
+    repositories/
+    services/
+    types/
+    constants/
+
+Inside domain create classes such as:
+
+TenantSubscriptionDomain
+
+and supporting exceptions/types if needed.
+
+Keep the Domain layer small and focused.
+
+--------------------------------------------------
+Business Rules
+--------------------------------------------------
+
+All state transition rules must live inside the Domain layer.
+
+Never duplicate transition logic inside Services.
+
+The Domain should expose methods such as:
+
+subscription.subscribe(...)
+
+subscription.changePlan(...)
+
+subscription.suspend()
+
+subscription.resume()
+
+subscription.cancel()
+
+Each method validates whether the transition is allowed.
+
+If not allowed,
+throw a Domain Exception.
+
+--------------------------------------------------
+Allowed State Transitions
+--------------------------------------------------
+
+Current statuses:
+
+TRIAL
+ACTIVE
+SUSPENDED
+CANCELLED
+EXPIRED
+
+Allowed transitions:
+
+Subscribe
+
+No current subscription
+→ TRIAL or ACTIVE
+
+Change Plan
+
+Allowed from:
+
+TRIAL
+ACTIVE
+SUSPENDED
+
+Not allowed from:
+
+CANCELLED
+EXPIRED
+
+Suspend
+
+Allowed from:
+
+TRIAL
+ACTIVE
+
+Not allowed from:
+
+SUSPENDED
+CANCELLED
+EXPIRED
+
+Resume
+
+Allowed only from:
+
+SUSPENDED
+
+Cancel
+
+Allowed from:
+
+TRIAL
+ACTIVE
+SUSPENDED
+
+Expire
+
+Allowed from:
+
+TRIAL
+ACTIVE
+
+This operation will usually be executed by scheduled jobs.
+
+--------------------------------------------------
+History
+--------------------------------------------------
+
+Every successful state-changing operation must create a record inside:
+
+tenant_subscription_history
+
+Including:
+
+- action
+- previous_plan_id
+- new plan
+- performed_by
+- notes
+- timestamp
+
+No state transition should occur without History.
+
+--------------------------------------------------
+Snapshot
+--------------------------------------------------
+
+When subscribing or changing plans,
+refresh all snapshot fields from subscription_plan.
+
+Never rely on reading subscription_plan later to know historical limits.
+
+--------------------------------------------------
+CQRS
+--------------------------------------------------
+
+Follow the project's CQRS architecture.
+
+Commands:
+
+Prisma
+
+Queries:
+
+Kysely
+
+Never use Prisma inside Query repositories.
+
+--------------------------------------------------
+Application Services
+--------------------------------------------------
+
+Application Services should only:
+
+- load entities
+- call Domain methods
+- persist changes
+- create History
+- return DTOs
+
+Business decisions belong only inside Domain.
+
+--------------------------------------------------
+Code Quality
+--------------------------------------------------
+
+Do not over-engineer.
+
+Do not introduce Aggregates, Factories, Specifications, Event Sourcing, or unnecessary DDD patterns.
+
+Keep the Domain layer lightweight.
+
+The goal is:
+
+Rich business rules,
+simple architecture.
+
+--------------------------------------------------
+Before Coding
+--------------------------------------------------
+
+First inspect the existing subscription-plan module completely.
+
+Reuse its style consistently.
+
+The new module should feel like a natural extension of the existing codebase rather than a completely different implementation.
+
+2222222
+
+# Role
+
+You are a Senior Software Architect working on this project.
+
+Before writing any code, carefully inspect the existing module:
+
+backend/src/modules/subscription-plan
+
+It is the architectural reference.
+
+Study:
+
+- folder structure
+- naming conventions
+- CQRS separation
+- repositories
+- services
+- DTOs
+- mappers
+- validation
+- dependency injection
+- Kysely Query layer
+- Prisma Command layer
+
+The new module must look like it was written by the same developer.
+
+Do NOT invent a different architecture.
+
+────────────────────────────────────────
+Objective
+────────────────────────────────────────
+
+Create a new module:
+
+backend/src/modules/tenant-subscription
+
+This module manages the lifecycle of tenant subscriptions.
+
+This is NOT a CRUD module.
+
+It is a business workflow module.
+
+────────────────────────────────────────
+Architecture
+────────────────────────────────────────
+
+Reuse the existing architecture of subscription-plan.
+
+Additionally introduce a lightweight Domain layer.
+
+The Domain layer exists ONLY because this module contains business rules and state transitions.
+
+Do NOT introduce heavy DDD.
+
+Do NOT introduce:
+
+- Aggregate Roots
+- Factories
+- Specifications
+- Event Sourcing
+- Unit Of Work
+- Rich inheritance hierarchies
+
+Keep everything lightweight.
+
+────────────────────────────────────────
+Folder Structure
+────────────────────────────────────────
+
+Follow the same structure as subscription-plan.
+
+Additionally create:
+
+domain/
+
+containing:
+
+- TenantSubscription
+- Domain Exceptions
+- supporting types if needed
+
+Nothing more.
+
+────────────────────────────────────────
+Domain Responsibilities
+────────────────────────────────────────
+
+The Domain owns ONLY business rules.
+
+The Domain:
+
+✓ validates transitions
+
+✓ changes state
+
+✓ updates its own properties
+
+The Domain NEVER:
+
+- accesses Prisma
+- accesses Kysely
+- loads entities
+- saves entities
+- creates History
+- performs queries
+- knows about repositories
+
+────────────────────────────────────────
+Application Service Responsibilities
+────────────────────────────────────────
+
+Application Services orchestrate the workflow.
+
+Responsibilities:
+
+- load subscription
+- load plan
+- validate existence
+- instantiate Domain object
+- execute domain operation
+- refresh snapshot
+- save subscription
+- create history
+- return DTO
+
+Business rules must never be duplicated here.
+
+────────────────────────────────────────
+Creation
+────────────────────────────────────────
+
+Subscribe is NOT a method on an existing subscription.
+
+Instead:
+
+The Application Service creates a new Domain object.
+
+The Domain represents an existing subscription.
+
+Therefore expose methods only for existing subscriptions:
+
+changePlan()
+
+suspend()
+
+resume()
+
+cancel()
+
+expire()
+
+Creation happens outside those methods.
+
+────────────────────────────────────────
+Business Rules
+────────────────────────────────────────
+
+Statuses:
+
+TRIAL
+
+ACTIVE
+
+SUSPENDED
+
+CANCELLED
+
+EXPIRED
+
+Allowed transitions:
+
+Create Subscription
+
+No existing subscription
+
+↓
+
+TRIAL or ACTIVE
+
+--------------------------------
+
+Change Plan
+
+Allowed:
+
+TRIAL
+
+ACTIVE
+
+SUSPENDED
+
+Forbidden:
+
+CANCELLED
+
+EXPIRED
+
+--------------------------------
+
+Suspend
+
+Allowed:
+
+TRIAL
+
+ACTIVE
+
+--------------------------------
+
+Resume
+
+Allowed only from:
+
+SUSPENDED
+
+--------------------------------
+
+Cancel
+
+Allowed:
+
+TRIAL
+
+ACTIVE
+
+SUSPENDED
+
+--------------------------------
+
+Expire
+
+Allowed:
+
+TRIAL
+
+ACTIVE
+
+Usually executed by scheduled jobs.
+
+────────────────────────────────────────
+Domain Invariants
+────────────────────────────────────────
+
+The Domain must enforce important invariants.
+
+Examples:
+
+A Tenant cannot have more than one ACTIVE subscription.
+
+Cannot Resume a CANCELLED subscription.
+
+Cannot Resume an EXPIRED subscription.
+
+Cannot Suspend an already SUSPENDED subscription.
+
+Cannot Change Plan if there is no subscription.
+
+Cannot Create a subscription if another ACTIVE subscription already exists.
+
+Throw Domain Exceptions whenever invariants are violated.
+
+────────────────────────────────────────
+History
+────────────────────────────────────────
+
+History is NOT part of the Domain.
+
+The Domain never creates history records.
+
+After a successful Domain operation,
+
+the Application Service must create:
+
+tenant_subscription_history
+
+inside the same Prisma transaction.
+
+────────────────────────────────────────
+Snapshots
+────────────────────────────────────────
+
+Whenever subscribing or changing plans,
+
+refresh every snapshot field from subscription_plan.
+
+Never depend on subscription_plan later to know historical limits.
+
+────────────────────────────────────────
+Transactions
+────────────────────────────────────────
+
+Use Prisma transactions.
+
+Do NOT introduce a Unit Of Work abstraction.
+
+Use prisma.$transaction() directly inside the Command Repository whenever multiple writes must succeed atomically.
+
+────────────────────────────────────────
+CQRS
+────────────────────────────────────────
+
+Commands
+
+↓
+
+Prisma
+
+Queries
+
+↓
+
+Kysely
+
+Never inject Prisma into Query Repositories.
+
+Never inject Kysely into Command Repositories.
+
+────────────────────────────────────────
+Code Quality
+────────────────────────────────────────
+
+Keep the implementation simple.
+
+Prefer readability over abstraction.
+
+Avoid unnecessary classes.
+
+The result should feel like a natural extension of the existing codebase.
+
+────────────────────────────────────────
+Before Coding
+────────────────────────────────────────
+
+Do NOT start implementation immediately.
+
+First inspect the existing subscription-plan module completely.
+
+Reuse its coding style consistently.
+
+Only after understanding the existing module should you implement tenant-subscription.
