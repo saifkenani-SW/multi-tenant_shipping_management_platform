@@ -25,6 +25,10 @@ import {
   ApiBearerAuth,
   ApiHeader,
 } from '@nestjs/swagger';
+import {
+  clearAuthCookies,
+  setAuthCookies,
+} from '../../common/helpers/set-auth-cookies';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -52,7 +56,7 @@ export class AuthController {
   ) {
     const result = await this.authService.login(loginDto);
     if (clientType === ClientType.WEB) {
-      this.setCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, result.accessToken, result.refreshToken);
       return { message: 'Logged in successfully', user: result.user };
     }
 
@@ -94,7 +98,7 @@ export class AuthController {
     const result = await this.authService.refreshToken({ refreshToken: token });
 
     if (clientType === ClientType.WEB) {
-      this.setCookies(res, result.accessToken, result.refreshToken);
+      setAuthCookies(res, result.accessToken, result.refreshToken);
       return { message: 'Token refreshed successfully' };
     }
 
@@ -114,28 +118,9 @@ export class AuthController {
     await this.authService.logout(user.sessionId);
 
     if (clientType === ClientType.WEB) {
-      res.clearCookie('access_token', { path: '/' });
-      res.clearCookie('refresh_token', { path: '/auth/refresh' });
+      clearAuthCookies(res);
     }
 
     return { message: 'Logged out successfully' };
-  }
-
-  private setCookies(res: Response, accessToken: string, refreshToken: string) {
-    res.cookie('access_token', accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
-      path: '/', // 👈 متاح لجميع مسارات الـ API
-    });
-
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/auth/refresh', // 👈 الحماية: المتصفح لن يرسله إلا إذا كان الطلب موجهاً لهذا المسار فقط!
-    });
   }
 }

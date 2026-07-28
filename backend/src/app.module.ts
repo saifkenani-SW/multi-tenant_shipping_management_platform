@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config'; // استدعاء ConfigService
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './infrastructure/database/database.module';
@@ -11,6 +12,7 @@ import { SubscriptionPlanModule } from './modules/subscription-plan/subscription
 import { LoggerModule } from 'nestjs-pino';
 
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { CsrfGuard } from './common/guards/csrf.guard';
 import { CacheModule } from './infrastructure/cache/cache.module';
 import { CaslModule } from './packages/authorization-casl';
 import { AuthorizationModule } from './packages/authorization';
@@ -46,6 +48,13 @@ import { HealthModule } from './health/health.module';
     SubscriptionPlanModule,
   ],
   controllers: [AppController],
-  providers: [AppService, GlobalExceptionFilter],
+  providers: [
+    AppService,
+    GlobalExceptionFilter,
+    {
+      provide: APP_GUARD,
+      useClass: CsrfGuard,
+    },
+  ],
 })
 export class AppModule {}
