@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
+import { PermissionModule } from './modules/permission/permission.module';
 import { LoggerModule } from 'nestjs-pino';
 
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -44,6 +45,7 @@ import { HealthModule } from './health/health.module';
     CustomerModule,
     TenantModule,
     SubscriptionPlanModule,
+    PermissionModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
