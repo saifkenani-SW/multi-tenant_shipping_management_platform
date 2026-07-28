@@ -14,8 +14,8 @@ async function bootstrap() {
   // 1. أمن أساسي
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://your-frontend.com'], // ضع روابط الفرونت إند هنا
-    credentials: true, // ⚠️ ضروري جداً لكي يسمح المتصفح بإرسال واستقبال الـ Cookies
+    origin: ['https://localhost:4200'],
+    credentials: true,
   });
   app.use(helmet());
   app.use(cookieParser());
