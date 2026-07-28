@@ -10,6 +10,7 @@ import { TenantModule } from './modules/tenant/tenant.module';
 import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
 import { PermissionModule } from './modules/permission/permission.module';
 import { RoleModule } from './modules/role/role.module';
+import { GlobalLocationModule } from './modules/global-location/global-location.module';
 import { LoggerModule } from 'nestjs-pino';
 
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
@@ -48,6 +49,7 @@ import { HealthModule } from './health/health.module';
     SubscriptionPlanModule,
     PermissionModule,
     RoleModule,
+    GlobalLocationModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
