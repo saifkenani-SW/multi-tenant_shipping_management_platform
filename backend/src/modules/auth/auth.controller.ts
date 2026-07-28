@@ -1,12 +1,12 @@
 import {
-  Controller,
-  Post,
   Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
   Req,
   Res,
   UseGuards,
-  HttpCode,
-  HttpStatus,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dtos/login.dto';
@@ -14,16 +14,16 @@ import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { Public } from './decorators/public.decorator';
 import { GetClientType } from './decorators/client-type.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
-import { ClientType } from './types/auth.types';
 import type { JwtPayload } from './types/auth.types';
-import type { Request, Response, CookieOptions } from 'express';
+import { ClientType } from './types/auth.types';
+import type { CookieOptions, Request, Response } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
   ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 
 @ApiTags('Authentication')
@@ -114,14 +114,10 @@ export class AuthController {
     await this.authService.logout(user.sessionId);
 
     if (clientType === ClientType.WEB) {
-      const isSecuredEnv =
-        process.env.NODE_ENV === 'production' ||
-        process.env.NODE_ENV === 'staging';
-
       const commonOptions: CookieOptions = {
         httpOnly: true,
-        secure: isSecuredEnv,
-        sameSite: isSecuredEnv ? 'none' : 'lax',
+        secure: true,
+        sameSite: 'none',
       };
 
       res.clearCookie('access_token', { ...commonOptions, path: '/' });
@@ -135,18 +131,13 @@ export class AuthController {
   }
 
   private setCookies(res: Response, accessToken: string, refreshToken: string) {
-    // تعتبر البيئة مشفرة ومحميّة بـ HTTPS في حالتي staging و production
-    const isSecuredEnv =
-      process.env.NODE_ENV === 'production' ||
-      process.env.NODE_ENV === 'staging';
-
+    // ثابتة دائمًا: secure + sameSite=none، ضرورية لأن الفرونت (localhost)
+    // والباك (saifkenani.me عبر HTTPS) على origins مختلفة
     const baseCookieOptions: CookieOptions = {
       httpOnly: true,
-      secure: isSecuredEnv,
-      // يسمح بإرسال الـ Cookie من localhost:4200 إلى السيرفر saifkenani.me إذا كان HTTPS
-      sameSite: isSecuredEnv ? 'none' : 'lax',
+      secure: true,
+      sameSite: 'none',
     };
-
     res.cookie('access_token', accessToken, {
       ...baseCookieOptions,
       maxAge: 15 * 60 * 1000, // 15 دقيقة
