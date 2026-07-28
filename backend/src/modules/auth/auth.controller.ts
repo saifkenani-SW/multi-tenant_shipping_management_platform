@@ -16,7 +16,7 @@ import { GetClientType } from './decorators/client-type.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import { ClientType } from './types/auth.types';
 import type { JwtPayload } from './types/auth.types';
-import type { Request, Response } from 'express';
+import type { Request, Response, CookieOptions } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   ApiTags,
@@ -114,28 +114,49 @@ export class AuthController {
     await this.authService.logout(user.sessionId);
 
     if (clientType === ClientType.WEB) {
-      res.clearCookie('access_token', { path: '/' });
-      res.clearCookie('refresh_token', { path: '/auth/refresh' });
+      const isSecuredEnv =
+        process.env.NODE_ENV === 'production' ||
+        process.env.NODE_ENV === 'staging';
+
+      const commonOptions: CookieOptions = {
+        httpOnly: true,
+        secure: isSecuredEnv,
+        sameSite: isSecuredEnv ? 'none' : 'lax',
+      };
+
+      res.clearCookie('access_token', { ...commonOptions, path: '/' });
+      res.clearCookie('refresh_token', {
+        ...commonOptions,
+        path: '/auth/refresh',
+      });
     }
 
     return { message: 'Logged out successfully' };
   }
 
   private setCookies(res: Response, accessToken: string, refreshToken: string) {
-    res.cookie('access_token', accessToken, {
+    // تعتبر البيئة مشفرة ومحميّة بـ HTTPS في حالتي staging و production
+    const isSecuredEnv =
+      process.env.NODE_ENV === 'production' ||
+      process.env.NODE_ENV === 'staging';
+
+    const baseCookieOptions: CookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000,
-      path: '/', // 👈 متاح لجميع مسارات الـ API
+      secure: isSecuredEnv,
+      // يسمح بإرسال الـ Cookie من localhost:4200 إلى السيرفر saifkenani.me إذا كان HTTPS
+      sameSite: isSecuredEnv ? 'none' : 'lax',
+    };
+
+    res.cookie('access_token', accessToken, {
+      ...baseCookieOptions,
+      maxAge: 15 * 60 * 1000, // 15 دقيقة
+      path: '/',
     });
 
     res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/auth/refresh', // 👈 الحماية: المتصفح لن يرسله إلا إذا كان الطلب موجهاً لهذا المسار فقط!
+      ...baseCookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 أيام
+      path: '/auth/refresh',
     });
   }
 }
