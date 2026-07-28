@@ -1,4 +1,5 @@
 import { PermissionAction } from '../modules/permission/authorization';
+import { RoleAction } from '../modules/role/authorization/actions/role.action';
 import { TenantAction } from '../modules/tenant/authorization';
 
-export type ApplicationActions = TenantAction | PermissionAction;
+export type ApplicationActions = TenantAction | PermissionAction | RoleAction;
