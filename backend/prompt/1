@@ -1,0 +1,39 @@
+System Role & Objective:
+You are a Lead Backend Engineer. We need to standardize our API pagination and filtering across the entire platform. We will implement an Enterprise-grade Inheritance pattern: a generic Base Pagination DTO in the `core`, and a specific Query DTO in the `Tenant` module that extends it.
+
+Task Requirements:
+
+1. Create Core Pagination DTO:
+   - Create a new file: `src/core/dtos/base-pagination.dto.ts`.
+   - Export a class `BasePaginationDto`.
+   - Add `@ApiPropertyOptional` and validation decorators for:
+     - `page`: number (default 1, @Min(1), @IsInt, @Type(() => Number))
+     - `limit`: number (default 10, @Min(1), @Max(100), @IsInt, @Type(() => Number))
+     - `search`: string (optional, @IsString)
+
+2. Create Tenant-Specific Query DTO (Inheritance):
+   - Create `src/modules/tenant/dtos/tenant-query.dto.ts`.
+   - Export an enum `TenantSearchField` with values `NAME = 'name'` and `TAX_NUMBER = 'tax_number'`.
+   - Export class `TenantQueryDto` that `extends BasePaginationDto`.
+   - Add a new property `searchType?: TenantSearchField` with `@ApiPropertyOptional({ enum: TenantSearchField })` and `@IsEnum(TenantSearchField)`.
+
+3. Refactor `TenantController`:
+   - In `getTenants`, replace the inline `@Query` parameters with `@Query() query: TenantQueryDto`.
+   - Remove the redundant `@ApiQuery` decorators.
+   - Update the method call to pass `query` properties to the `TenantQueryService`.
+
+4. Update Interfaces & Query Layer:
+   - Update `ITenantQueryService.findTenants` and `ITenantQueryRepository.findMany` to accept `searchType?: TenantSearchField`.
+   - In `TenantQueryRepository`, update the Prisma `where` clause: dynamically filter by the chosen `searchType`. If `searchType` is not provided but `search` exists, default to searching by `name`.
+
+5. Cache Key Consistency (CRITICAL):
+   - Update the `@Cacheable` keyBuilder in `TenantQueryRepository` to include `searchType`.
+   - Format: \`\${TENANT_CACHE_KEYS.LIST}:\${skip}:\${take}:\${searchType || 'any'}:\${search || 'all'}\`.
+
+6. Documentation & Tests:
+   - Update the Bruno collection `get-tenants.bru` to show usage with `&search=Global&searchType=name`.
+   - Update unit tests (`tenant.query.service.spec.ts` and `tenant.controller.spec.ts`) to mock the new DTO and `searchType`.
+   - Run `npm run build` and `npm run test` to guarantee zero regressions.
+
+Execution Protocol:
+Implement the Core DTO, extend it in the Tenant module, update the query/cache logic securely, and confirm all tests and builds pass.
