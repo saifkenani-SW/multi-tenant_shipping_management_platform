@@ -13,8 +13,14 @@ async function bootstrap() {
 
   // 1. أمن أساسي
 
+  // الأصول المسموح لها مفصولة بفاصلة في CORS_ORIGIN
+  const corsOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:4200')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://your-frontend.com'], // ضع روابط الفرونت إند هنا
+    origin: corsOrigins,
     credentials: true, // ⚠️ ضروري جداً لكي يسمح المتصفح بإرسال واستقبال الـ Cookies
   });
   app.use(helmet());
