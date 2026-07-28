@@ -14,7 +14,7 @@ async function bootstrap() {
   // 1. أمن أساسي
 
   app.enableCors({
-    origin: ['https://localhost:4200'],
+    origin: ['http://localhost:4200', 'http://localhost:4000'],
     credentials: true,
   });
   app.use(helmet());
