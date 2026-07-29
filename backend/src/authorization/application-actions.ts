@@ -1,3 +1,4 @@
+import { EmployeeAction } from '../modules/employee/authorization/actions/employee.action';
 import { GlobalLocationAction } from '../modules/global-location/authorization/actions/global-location.action';
 import { OrganizationUnitAction } from '../modules/organization-unit/authorization/actions/organization-unit.action';
 import { PermissionAction } from '../modules/permission/authorization';
@@ -9,4 +10,5 @@ export type ApplicationActions =
   | PermissionAction
   | RoleAction
   | GlobalLocationAction
-  | OrganizationUnitAction;
+  | OrganizationUnitAction
+  | EmployeeAction;

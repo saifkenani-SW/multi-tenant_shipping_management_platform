@@ -1,3 +1,4 @@
+import { EmployeeSubject } from '../modules/employee/authorization/subjects/employee.subject';
 import { GlobalLocationSubject } from '../modules/global-location/authorization/subjects/global-location.subject';
 import { OrganizationUnitSubject } from '../modules/organization-unit/authorization/subjects/organization-unit.subject';
 import { PermissionSubject } from '../modules/permission/authorization/subjects/permission.subject';
@@ -9,4 +10,5 @@ export type ApplicationSubjects =
   | typeof PermissionSubject
   | typeof RoleSubject
   | typeof GlobalLocationSubject
-  | typeof OrganizationUnitSubject;
+  | typeof OrganizationUnitSubject
+  | typeof EmployeeSubject;
