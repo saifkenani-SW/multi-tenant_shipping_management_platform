@@ -6,9 +6,11 @@ describe('RedisCacheProvider', () => {
   let redis: jest.Mocked<Redis>;
 
   beforeEach(() => {
+    // المزوّد يحذف بـ UNLINK لا DEL: الأول غير حاجز ويحرّر الذاكرة في
+    // خيط منفصل، وهو ما يمنع توقف Redis عند حذف دفعة كبيرة.
     const mockPipeline = {
       set: jest.fn().mockReturnThis(),
-      del: jest.fn().mockReturnThis(),
+      unlink: jest.fn().mockReturnThis(),
       exec: jest.fn().mockResolvedValue([]),
     };
 
@@ -16,7 +18,7 @@ describe('RedisCacheProvider', () => {
       get: jest.fn(),
       mget: jest.fn(),
       set: jest.fn(),
-      del: jest.fn(),
+      unlink: jest.fn(),
       scan: jest.fn(),
       ping: jest.fn(),
       quit: jest.fn(),
@@ -284,13 +286,13 @@ describe('RedisCacheProvider', () => {
   });
 
   describe('del', () => {
-    it('should call redis del', async () => {
+    it('should unlink the key instead of blocking on DEL', async () => {
       await provider.del('key1');
-      expect(redis.del).toHaveBeenCalledWith('key1');
+      expect(redis.unlink).toHaveBeenCalledWith('key1');
     });
 
     it('should fail-safe on error', async () => {
-      redis.del.mockRejectedValue(new Error('fail'));
+      redis.unlink.mockRejectedValue(new Error('fail'));
       await expect(provider.del('key1')).resolves.not.toThrow();
     });
   });
@@ -306,9 +308,9 @@ describe('RedisCacheProvider', () => {
       expect(redis.scan).toHaveBeenCalledTimes(2);
 
       const pipeline = redis.pipeline();
-      expect(pipeline.del).toHaveBeenCalledWith('key:1');
-      expect(pipeline.del).toHaveBeenCalledWith('key:2');
-      expect(pipeline.del).toHaveBeenCalledWith('key:3');
+      expect(pipeline.unlink).toHaveBeenCalledWith('key:1');
+      expect(pipeline.unlink).toHaveBeenCalledWith('key:2');
+      expect(pipeline.unlink).toHaveBeenCalledWith('key:3');
       expect(pipeline.exec).toHaveBeenCalled();
     });
 
