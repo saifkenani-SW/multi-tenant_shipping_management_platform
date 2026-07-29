@@ -5,11 +5,7 @@ import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { CaslModule } from '../../packages/authorization-casl';
 import { AuthModule } from '../auth/auth.module';
 import { PermissionModule } from '../permission/permission.module';
-import {
-  RoleAbility,
-  RolePolicy,
-  RoleVisibilityScope,
-} from './authorization';
+import { RoleAbility, RolePolicy, RoleVisibilityScope } from './authorization';
 import { RoleCapabilityBuilder } from './authorization/capabilities/role-capability.builder';
 import { CreateRoleStrategy } from './authorization/policies/strategies/create-role.strategy';
 import { DeleteRoleStrategy } from './authorization/policies/strategies/delete-role.strategy';
@@ -32,12 +28,11 @@ import {
 
 @Module({
   imports: [
+    PermissionModule,
     CacheModule,
     DatabaseModule,
     // مطلوب لـ PermissionCacheService: تعديل صلاحيات دور يبطل كاش الحُرّاس
     AuthModule,
-    // مطلوب لمحوّل استجابة الصلاحيات ولمحوّل الثبات المشترك
-    PermissionModule,
     CaslModule.forFeature([RoleAbility]),
   ],
   controllers: [RoleController],

@@ -73,6 +73,8 @@ import {
     PERMISSION_QUERY_REPOSITORY_TOKEN,
     PermissionPolicy,
     PermissionCapabilityBuilder,
+    PermissionPersistenceMapper,
+    PermissionResponseMapper,
   ],
 })
 export class PermissionModule {}

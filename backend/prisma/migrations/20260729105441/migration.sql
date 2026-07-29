@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS "ltree";
 CREATE EXTENSION IF NOT EXISTS "postgis";
 
 -- CreateEnum
-CREATE TYPE "RequestStatus" AS ENUM ('PENDING', 'CUSTOMER_APPROVED', 'COMPANY_ACCEPTED', 'CONVERTED', 'CANCELLED', 'EXPIRED');
+CREATE TYPE "RequestStatus" AS ENUM ('PENDING', 'CUSTOMER_APPROVED', 'COMPANY_ACCEPTED', 'REJECTED', 'CONVERTED', 'CANCELLED', 'EXPIRED');
 
 -- CreateEnum
 CREATE TYPE "ParcelStatus" AS ENUM ('CREATED', 'READY_FOR_TRANSPORT', 'IN_TRANSIT', 'READY_FOR_COLLECTION', 'COLLECTED', 'RETURNED', 'CANCELLED');
@@ -411,6 +411,8 @@ CREATE TABLE "shipment_request" (
     "id" UUID NOT NULL,
     "customer_profile_id" UUID NOT NULL,
     "target_tenant_id" UUID,
+    "origin_org_unit_id" UUID,
+    "destination_org_unit_id" UUID,
     "sender_name" VARCHAR(255) NOT NULL,
     "sender_phone" VARCHAR(50) NOT NULL,
     "sender_address" VARCHAR(500) NOT NULL,
@@ -750,9 +752,6 @@ CREATE UNIQUE INDEX "permission_name_key" ON "permission"("name");
 CREATE UNIQUE INDEX "uq_parcel_pod" ON "proof_of_delivery"("parcel_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "quotation_shipment_request_id_key" ON "quotation"("shipment_request_id");
-
--- CreateIndex
 CREATE UNIQUE INDEX "uq_tenant_role_name" ON "role"("tenant_id", "name");
 
 -- CreateIndex
@@ -934,6 +933,12 @@ ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_customer_profile
 
 -- AddForeignKey
 ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_target_tenant_id_fkey" FOREIGN KEY ("target_tenant_id") REFERENCES "tenant"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "support_ticket" ADD CONSTRAINT "support_ticket_assigned_to_employee_id_fkey" FOREIGN KEY ("assigned_to_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
