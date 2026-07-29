@@ -21,6 +21,7 @@ import { CaslModule } from './packages/authorization-casl';
 import { AuthorizationModule } from './packages/authorization';
 import { ContextModule } from './packages/context/context.module';
 import { HealthModule } from './health/health.module';
+import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { HealthModule } from './health/health.module';
     CustomerModule,
     TenantModule,
     SubscriptionPlanModule,
+    ShipmentRequestModule,
     PermissionModule,
     RoleModule,
     GlobalLocationModule,
