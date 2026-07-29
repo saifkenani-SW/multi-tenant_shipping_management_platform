@@ -105,6 +105,27 @@ export class PermissionCacheService {
     return roleIds;
   }
 
+  /**
+   * تُستدعى عند تغيير صلاحيات دور.
+   *
+   * بدونها تبقى القوائم أعلاه صالحة ساعة كاملة، أي أن سحب صلاحية من
+   * دور لا يسري إلا بعد انتهاء الـ TTL.
+   */
+  async invalidateRolePermissions(roleId: string): Promise<void> {
+    await this.cacheProvider.del(`role:${roleId}:permissions`);
+  }
+
+  /**
+   * تُستدعى عند تغيير تعيينات موظف أو أدواره أو تعطيله.
+   */
+  async invalidateUserAccess(userId: string): Promise<void> {
+    await Promise.all([
+      this.cacheProvider.del(`employee:${userId}:roles`),
+      this.cacheProvider.del(`employee:${userId}:org-units`),
+      this.cacheProvider.delByPattern(`employee:${userId}:org:*:roles`),
+    ]);
+  }
+
   async getRolePermissions(roleId: string): Promise<string[]> {
     const cacheKey = `role:${roleId}:permissions`;
     let permissions = await this.cacheProvider.get<string[]>(cacheKey);
