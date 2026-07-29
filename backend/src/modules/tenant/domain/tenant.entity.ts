@@ -10,12 +10,15 @@ export class Tenant {
     public readonly id: string,
     public readonly name: string,
     public readonly status: TenantStatus,
-    public readonly taxNumber: string,
-    public readonly contactEmail: string,
+    public readonly taxNumber: string | null,
+    public readonly email: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly suspendedAt: Date | null = null,
     public readonly suspendedReason: string | null = null,
+    public readonly phone: string | null = null,
+    public readonly logoUrl: string | null = null,
+    public readonly isActive: boolean = status === TenantStatus.ACTIVE,
   ) {}
 
   /**

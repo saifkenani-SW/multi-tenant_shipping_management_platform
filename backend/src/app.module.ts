@@ -8,14 +8,25 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
-import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
+import { PermissionModule } from './modules/permission/permission.module';
+import { RoleModule } from './modules/role/role.module';
+import { GlobalLocationModule } from './modules/global-location/global-location.module';
+import { OrganizationUnitModule } from './modules/organization-unit/organization-unit.module';
+import { EmployeeModule } from './modules/employee/employee.module';
 import { LoggerModule } from 'nestjs-pino';
 
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { CacheModule } from './infrastructure/cache/cache.module';
+import { CaslModule } from './packages/authorization-casl';
+import { AuthorizationModule } from './packages/authorization';
+import { ContextModule } from './packages/context/context.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
+    ContextModule,
+    CaslModule.forRoot(),
+    AuthorizationModule,
     LoggerModule.forRoot(),
     AppConfigModule,
     DatabaseModule,
@@ -33,11 +44,16 @@ import { CacheModule } from './infrastructure/cache/cache.module';
       }),
     }),
 
+    HealthModule,
     AuthModule,
     CustomerModule,
     TenantModule,
     SubscriptionPlanModule,
-    ShipmentRequestModule,
+    PermissionModule,
+    RoleModule,
+    GlobalLocationModule,
+    OrganizationUnitModule,
+    EmployeeModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

@@ -1,67 +1,71 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { ITenantQueryService } from '../interfaces/tenant.query.service.interface';
 import type { ITenantQueryRepository } from '../interfaces/tenant.query.repository.interface';
-import {
-  PaginatedTenantListDto,
-  TenantListDto,
-} from '../dtos/responses/tenant-list.dto';
+import { PaginatedTenantListDto } from '../dtos/responses/tenant-list.dto';
 import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
-import { TenantSearchField } from '../enums/tenant-search-field.enum';
+import {
+  AuthorizationFacade,
+  Authorize,
+  ReturnCapabilities,
+} from '../../../packages/authorization';
+import {
+  TenantAction,
+  TenantCapabilityBuilder,
+  TenantPolicy,
+  TenantVisibilityScope,
+} from '../authorization';
+import { TENANT_QUERY_REPOSITORY_TOKEN } from '../tokens/tenant-repository.tokens';
+import { ReturnVisibilityScope } from '../../../packages/authorization/decorators/return-visibility-scope.decorator';
+import { TenantQueryDto } from '../dtos/requests/tenant-query.dto';
+import { Policy } from '../../../packages/authorization/policy';
+import { TenantQueryCriteriaBuilder } from '../builders/query/tenant-query-criteria.builder';
+import { TenantResponseMapper } from '../mappers/response/tenant.response.mapper';
+import { TenantNotFoundException } from '../exceptions/tenant-not-found.exception';
 
 @Injectable()
 export class TenantQueryService implements ITenantQueryService {
   constructor(
-    @Inject('ITenantQueryRepository')
+    @Inject(TENANT_QUERY_REPOSITORY_TOKEN)
     private readonly tenantQueryRepository: ITenantQueryRepository,
+    private readonly authorizationFacade: AuthorizationFacade,
+    private readonly tenantQueryCriteriaBuilder: TenantQueryCriteriaBuilder,
+    private readonly tenantResponseMapper: TenantResponseMapper,
   ) {}
 
-  async findTenants(
-    page: number,
-    limit: number,
-    search?: string,
-    searchType?: TenantSearchField,
-  ): Promise<PaginatedTenantListDto> {
-    const skip = (page - 1) * limit;
-
-    const [items, total] = await this.tenantQueryRepository.findMany(
-      skip,
-      limit,
-      search,
-      searchType,
-    );
-
-    const result = new PaginatedTenantListDto();
-    result.data = items.map((tenant) => {
-      const dto = new TenantListDto();
-      dto.id = tenant.id;
-      dto.name = tenant.name;
-      dto.status = tenant.status;
-      dto.createdAt = tenant.createdAt;
-      return dto;
+  @ReturnVisibilityScope({
+    builder: TenantVisibilityScope,
+  })
+  async findTenants(query: TenantQueryDto): Promise<PaginatedTenantListDto> {
+    const scope = this.authorizationFacade.buildScope({
+      builder: TenantVisibilityScope,
     });
-    result.meta = {
-      page,
-      limit,
+
+    const criteria = this.tenantQueryCriteriaBuilder.build(query, scope);
+
+    const [items, total] = await this.tenantQueryRepository.findMany(criteria);
+
+    return this.tenantResponseMapper.toPaginatedListDto(
+      items,
       total,
-    };
-
-    return result;
+      criteria.pagination,
+    );
   }
-
-  async getTenantDetails(id: string): Promise<TenantDetailsDto | null> {
+  @ReturnCapabilities({
+    policy: TenantCapabilityBuilder,
+  })
+  @Authorize({
+    policy: Policy(TenantPolicy, TenantAction.View),
+    payloadResolver: (tenantId: string) => ({
+      tenantId,
+    }),
+  })
+  async getTenantDetails(id: string): Promise<TenantDetailsDto> {
     const tenant = await this.tenantQueryRepository.findById(id);
 
-    if (!tenant) return null;
+    if (!tenant) {
+      throw new TenantNotFoundException();
+    }
 
-    const result = new TenantDetailsDto();
-    result.id = tenant.id;
-    result.name = tenant.name;
-    result.status = tenant.status;
-    result.taxNumber = tenant.taxNumber;
-    result.contactEmail = tenant.contactEmail;
-    result.createdAt = tenant.createdAt;
-    result.updatedAt = tenant.updatedAt;
-
-    return result;
+    return this.tenantResponseMapper.toDetailsDto(tenant);
   }
 }

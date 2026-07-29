@@ -3,36 +3,30 @@ import { TransactionalPrismaService } from '../../../core/transaction';
 import { ITenantCommandRepository } from '../interfaces/tenant.command.repository.interface';
 import { TenantStatus } from '../enums/tenant-status.enum';
 import { Tenant } from '../domain/tenant.entity';
+import { TenantPersistenceMapper } from '../mappers/persistence/tenant.persistence.mapper';
+import {
+  CreateTenantRepositoryData,
+  UpdateTenantRepositoryData,
+} from '../contracts/persistence/tenant-repository-data.types';
 
 @Injectable()
 export class TenantCommandRepository implements ITenantCommandRepository {
-  constructor(private readonly prisma: TransactionalPrismaService) {}
+  constructor(
+    private readonly prisma: TransactionalPrismaService,
+    private readonly tenantPersistenceMapper: TenantPersistenceMapper,
+  ) {}
 
-  async create(data: {
-    name: string;
-    taxNumber: string;
-    contactEmail: string;
-  }): Promise<Tenant> {
+  async create(data: CreateTenantRepositoryData): Promise<Tenant> {
     const tenant = await this.prisma.client.tenant.create({
       data: {
         name: data.name,
         tax_number: data.taxNumber,
-        email: data.contactEmail,
+        email: data.email,
         is_active: true,
       },
     });
 
-    return new Tenant(
-      tenant.id,
-      tenant.name,
-      tenant.is_active ? TenantStatus.ACTIVE : TenantStatus.SUSPENDED,
-      tenant.tax_number || '',
-      tenant.email || '',
-      tenant.created_at,
-      tenant.updated_at,
-      tenant.suspended_at,
-      tenant.suspended_reason,
-    );
+    return this.tenantPersistenceMapper.toDomain(tenant);
   }
 
   async findById(id: string): Promise<Tenant | null> {
@@ -41,29 +35,16 @@ export class TenantCommandRepository implements ITenantCommandRepository {
     });
     if (!tenant) return null;
 
-    return new Tenant(
-      tenant.id,
-      tenant.name,
-      tenant.is_active ? TenantStatus.ACTIVE : TenantStatus.SUSPENDED,
-      tenant.tax_number || '',
-      tenant.email || '',
-      tenant.created_at,
-      tenant.updated_at,
-      tenant.suspended_at,
-      tenant.suspended_reason,
-    );
+    return this.tenantPersistenceMapper.toDomain(tenant);
   }
 
-  async update(
-    id: string,
-    data: { name?: string; taxNumber?: string; contactEmail?: string },
-  ): Promise<void> {
+  async update(id: string, data: UpdateTenantRepositoryData): Promise<void> {
     await this.prisma.client.tenant.update({
       where: { id },
       data: {
         name: data.name,
         tax_number: data.taxNumber,
-        email: data.contactEmail,
+        email: data.email,
       },
     });
   }

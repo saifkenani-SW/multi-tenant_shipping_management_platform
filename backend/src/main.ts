@@ -6,13 +6,18 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { AuthorizationContainer } from './packages/authorization/authorization.container';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // 1. أمن أساسي
+
+  app.enableCors({
+    origin: ['http://localhost:4200', 'http://localhost:4000'],
+    credentials: true,
+  });
   app.use(helmet());
-  app.enableCors({ credentials: true });
   app.use(cookieParser());
 
   // 2. إصدار الـ API (مهم جداً للمنصات الكبيرة)
@@ -53,14 +58,9 @@ async function bootstrap() {
     .addSecurityRequirements('x-role')
     .build();
 
-  app.enableCors({
-    origin: ['http://localhost:3000', 'https://your-frontend.com'], // ضع روابط الفرونت إند هنا
-    credentials: true, // ⚠️ ضروري جداً لكي يسمح المتصفح بإرسال واستقبال الـ Cookies
-  });
-
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
-
+  AuthorizationContainer.setApp(app);
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

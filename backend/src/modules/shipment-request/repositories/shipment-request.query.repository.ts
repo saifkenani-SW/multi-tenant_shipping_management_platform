@@ -34,9 +34,7 @@ const SHIPMENT_REQUEST_COLUMNS = [
 ] as const;
 
 @Injectable()
-export class ShipmentRequestQueryRepository
-  implements IShipmentRequestQueryRepository
-{
+export class ShipmentRequestQueryRepository implements IShipmentRequestQueryRepository {
   constructor(
     @Inject('KYSELY_INSTANCE')
     private readonly kysely: Kysely<DB>,

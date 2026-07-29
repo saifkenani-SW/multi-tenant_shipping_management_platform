@@ -6,9 +6,11 @@ describe('RedisCacheProvider', () => {
   let redis: jest.Mocked<Redis>;
 
   beforeEach(() => {
+    // المزوّد يحذف بـ UNLINK لا DEL: الأول غير حاجز ويحرّر الذاكرة في
+    // خيط منفصل، وهو ما يمنع توقف Redis عند حذف دفعة كبيرة.
     const mockPipeline = {
       set: jest.fn().mockReturnThis(),
-      del: jest.fn().mockReturnThis(),
+      unlink: jest.fn().mockReturnThis(),
       exec: jest.fn().mockResolvedValue([]),
     };
 
@@ -16,7 +18,7 @@ describe('RedisCacheProvider', () => {
       get: jest.fn(),
       mget: jest.fn(),
       set: jest.fn(),
-      del: jest.fn(),
+      unlink: jest.fn(),
       scan: jest.fn(),
       ping: jest.fn(),
       quit: jest.fn(),
@@ -28,7 +30,7 @@ describe('RedisCacheProvider', () => {
         errorThresholdPercentage: 1,
         volumeThreshold: 1,
         resetTimeout: 10,
-      }
+      },
     });
   });
 
@@ -38,7 +40,7 @@ describe('RedisCacheProvider', () => {
       const loader = jest.fn();
 
       const result = await provider.remember('key1', loader);
-      
+
       expect(result).toBe('cached-val');
       expect(loader).not.toHaveBeenCalled();
     });
@@ -49,18 +51,23 @@ describe('RedisCacheProvider', () => {
       const loader = jest.fn().mockResolvedValue('new-val');
 
       const result = await provider.remember('key1', loader, 50);
-      
+
       expect(result).toBe('new-val');
       expect(loader).toHaveBeenCalledTimes(1);
-      expect(redis.set).toHaveBeenCalledWith('key1', JSON.stringify('new-val'), 'EX', 50);
+      expect(redis.set).toHaveBeenCalledWith(
+        'key1',
+        JSON.stringify('new-val'),
+        'EX',
+        50,
+      );
     });
-    
+
     it('should fail-safe and return loader value if redis get fails', async () => {
       redis.get.mockRejectedValue(new Error('Redis Error'));
       const loader = jest.fn().mockResolvedValue('fallback-val');
 
       const result = await provider.remember('key1', loader);
-      
+
       expect(result).toBe('fallback-val');
       expect(redis.set).not.toHaveBeenCalled();
     });
@@ -75,17 +82,20 @@ describe('RedisCacheProvider', () => {
     });
 
     it('should handle all hit using MGET', async () => {
-      redis.mget.mockResolvedValue([JSON.stringify({ id: '1' }), JSON.stringify({ id: '2' })]);
+      redis.mget.mockResolvedValue([
+        JSON.stringify({ id: '1' }),
+        JSON.stringify({ id: '2' }),
+      ]);
       const loader = jest.fn();
 
       const result = await provider.rememberMany(
         [
           { id: '1', key: 'k:1' },
-          { id: '2', key: 'k:2' }
+          { id: '2', key: 'k:2' },
         ],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(2);
       expect(loader).not.toHaveBeenCalled();
       expect(redis.mget).toHaveBeenCalledWith('k:1', 'k:2');
@@ -98,18 +108,28 @@ describe('RedisCacheProvider', () => {
       const result = await provider.rememberMany(
         [
           { id: '1', key: 'k:1' },
-          { id: '2', key: 'k:2' }
+          { id: '2', key: 'k:2' },
         ],
         loader,
-        100
+        100,
       );
-      
+
       expect(result.size).toBe(2);
       expect(loader).toHaveBeenCalledWith(['1', '2']);
-      
+
       const pipeline = redis.pipeline();
-      expect(pipeline.set).toHaveBeenCalledWith('k:1', JSON.stringify({ id: '1' }), 'EX', 100);
-      expect(pipeline.set).toHaveBeenCalledWith('k:2', JSON.stringify({ id: '2' }), 'EX', 100);
+      expect(pipeline.set).toHaveBeenCalledWith(
+        'k:1',
+        JSON.stringify({ id: '1' }),
+        'EX',
+        100,
+      );
+      expect(pipeline.set).toHaveBeenCalledWith(
+        'k:2',
+        JSON.stringify({ id: '2' }),
+        'EX',
+        100,
+      );
       expect(pipeline.exec).toHaveBeenCalled();
     });
 
@@ -120,24 +140,24 @@ describe('RedisCacheProvider', () => {
       const result = await provider.rememberMany(
         [
           { id: '1', key: 'k:1' },
-          { id: '2', key: 'k:2' }
+          { id: '2', key: 'k:2' },
         ],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(2);
       expect(loader).toHaveBeenCalledWith(['2']);
     });
-    
+
     it('should ignore unexpected loader ids', async () => {
       redis.mget.mockResolvedValue([null]);
       const loader = jest.fn().mockResolvedValue([{ id: 'unexpected' }]);
 
       const result = await provider.rememberMany(
         [{ id: '1', key: 'k:1' }],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(0);
     });
 
@@ -147,9 +167,9 @@ describe('RedisCacheProvider', () => {
 
       const result = await provider.rememberMany(
         [{ id: '1', key: 'k:1' }],
-        loader
+        loader,
       );
-      
+
       expect(result.size).toBe(1);
     });
   });
@@ -183,7 +203,11 @@ describe('RedisCacheProvider', () => {
     });
 
     it('should return parsed values for existing keys', async () => {
-      redis.mget.mockResolvedValue([JSON.stringify({ v: 1 }), null, JSON.stringify({ v: 3 })]);
+      redis.mget.mockResolvedValue([
+        JSON.stringify({ v: 1 }),
+        null,
+        JSON.stringify({ v: 3 }),
+      ]);
       const result = await provider.getMany(['k1', 'k2', 'k3']);
       expect(result.size).toBe(2);
       expect(result.get('k1')).toEqual({ v: 1 });
@@ -201,12 +225,22 @@ describe('RedisCacheProvider', () => {
   describe('set', () => {
     it('should call redis set with JSON stringified value and default ttl', async () => {
       await provider.set('key1', { val: 123 });
-      expect(redis.set).toHaveBeenCalledWith('key1', JSON.stringify({ val: 123 }), 'EX', 300);
+      expect(redis.set).toHaveBeenCalledWith(
+        'key1',
+        JSON.stringify({ val: 123 }),
+        'EX',
+        300,
+      );
     });
 
     it('should call redis set with custom ttl', async () => {
       await provider.set('key1', { val: 123 }, 50);
-      expect(redis.set).toHaveBeenCalledWith('key1', JSON.stringify({ val: 123 }), 'EX', 50);
+      expect(redis.set).toHaveBeenCalledWith(
+        'key1',
+        JSON.stringify({ val: 123 }),
+        'EX',
+        50,
+      );
     });
 
     it('should fail-safe on redis error', async () => {
@@ -227,26 +261,38 @@ describe('RedisCacheProvider', () => {
         { key: 'k2', value: { v: 2 }, ttl: 50 },
       ]);
       const pipeline = redis.pipeline();
-      expect(pipeline.set).toHaveBeenCalledWith('k1', JSON.stringify({ v: 1 }), 'EX', 300);
-      expect(pipeline.set).toHaveBeenCalledWith('k2', JSON.stringify({ v: 2 }), 'EX', 50);
+      expect(pipeline.set).toHaveBeenCalledWith(
+        'k1',
+        JSON.stringify({ v: 1 }),
+        'EX',
+        300,
+      );
+      expect(pipeline.set).toHaveBeenCalledWith(
+        'k2',
+        JSON.stringify({ v: 2 }),
+        'EX',
+        50,
+      );
       expect(pipeline.exec).toHaveBeenCalled();
     });
 
     it('should fail-safe on redis pipeline error', async () => {
       const pipeline = redis.pipeline();
       (pipeline.exec as jest.Mock).mockRejectedValue(new Error('fail'));
-      await expect(provider.setMany([{ key: 'k1', value: { v: 1 } }])).resolves.not.toThrow();
+      await expect(
+        provider.setMany([{ key: 'k1', value: { v: 1 } }]),
+      ).resolves.not.toThrow();
     });
   });
 
   describe('del', () => {
-    it('should call redis del', async () => {
+    it('should unlink the key instead of blocking on DEL', async () => {
       await provider.del('key1');
-      expect(redis.del).toHaveBeenCalledWith('key1');
+      expect(redis.unlink).toHaveBeenCalledWith('key1');
     });
 
     it('should fail-safe on error', async () => {
-      redis.del.mockRejectedValue(new Error('fail'));
+      redis.unlink.mockRejectedValue(new Error('fail'));
       await expect(provider.del('key1')).resolves.not.toThrow();
     });
   });
@@ -260,11 +306,11 @@ describe('RedisCacheProvider', () => {
       await provider.delByPattern('key:*');
 
       expect(redis.scan).toHaveBeenCalledTimes(2);
-      
+
       const pipeline = redis.pipeline();
-      expect(pipeline.del).toHaveBeenCalledWith('key:1');
-      expect(pipeline.del).toHaveBeenCalledWith('key:2');
-      expect(pipeline.del).toHaveBeenCalledWith('key:3');
+      expect(pipeline.unlink).toHaveBeenCalledWith('key:1');
+      expect(pipeline.unlink).toHaveBeenCalledWith('key:2');
+      expect(pipeline.unlink).toHaveBeenCalledWith('key:3');
       expect(pipeline.exec).toHaveBeenCalled();
     });
 
@@ -300,14 +346,14 @@ describe('RedisCacheProvider', () => {
   describe('Circuit Breaker', () => {
     it('should open circuit breaker on consecutive failures', async () => {
       redis.get.mockRejectedValue(new Error('Fail'));
-      
+
       await provider.get('key');
       await provider.get('key');
-      
+
       redis.get.mockClear();
-      
+
       await provider.get('key');
-      
+
       expect(redis.get).not.toHaveBeenCalled();
     });
   });

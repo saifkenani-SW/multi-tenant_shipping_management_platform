@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CacheKeyEntry, ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
+import {
+  CacheKeyEntry,
+  ICacheProvider,
+} from '../../../core/cache/interfaces/ICacheProvider';
 
 interface CacheEntry<T> {
   value: T;

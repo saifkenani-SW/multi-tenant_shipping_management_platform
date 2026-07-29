@@ -29,6 +29,8 @@ describe('CacheKeyBuilder', () => {
   });
 
   it('should handle mixed values', () => {
-    expect(builder.build(['test', 1, null, { x: 'y' }])).toBe('test:1:null:{"x":"y"}');
+    expect(builder.build(['test', 1, null, { x: 'y' }])).toBe(
+      'test:1:null:{"x":"y"}',
+    );
   });
 });

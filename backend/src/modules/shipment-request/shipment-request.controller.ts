@@ -83,15 +83,14 @@ export class ShipmentRequestController {
         params.id,
       );
     }
-    return this.queryService.getRequestDetailsForCustomer(
-      user.sub,
-      params.id,
-    );
+    return this.queryService.getRequestDetailsForCustomer(user.sub, params.id);
   }
 
   @Get(':id/quotations')
   @RequireTypes(UserLoginType.CUSTOMER)
-  @ApiOperation({ summary: 'List quotations for a shipment request (Customer only)' })
+  @ApiOperation({
+    summary: 'List quotations for a shipment request (Customer only)',
+  })
   @ApiResponse({ status: HttpStatus.OK, type: [QuotationListItemDto] })
   async getQuotations(
     @CurrentUser() user: JwtPayload,
@@ -120,7 +119,9 @@ export class ShipmentRequestController {
   @Post(':id/accept')
   @RequireTypes(UserLoginType.EMPLOYEE)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Accept a customer-approved request (Employee only)' })
+  @ApiOperation({
+    summary: 'Accept a customer-approved request (Employee only)',
+  })
   @ApiResponse({ status: HttpStatus.OK, description: 'Request converted' })
   async accept(
     @CurrentUser() user: JwtPayload,
@@ -132,7 +133,9 @@ export class ShipmentRequestController {
   @Post(':id/reject')
   @RequireTypes(UserLoginType.EMPLOYEE)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Reject a customer-approved request (Employee only)' })
+  @ApiOperation({
+    summary: 'Reject a customer-approved request (Employee only)',
+  })
   @ApiResponse({ status: HttpStatus.OK, description: 'Request rejected' })
   async reject(
     @CurrentUser() user: JwtPayload,

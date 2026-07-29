@@ -13,6 +13,13 @@ export class TenantListDto {
   })
   name: string;
 
+  @ApiProperty({
+    description: 'Tenant logo URL',
+    example: 'https://cdn.example.com/tenant-logo.png',
+    nullable: true,
+  })
+  logoUrl: string | null;
+
   @ApiProperty({ description: 'Tenant current status', example: 'ACTIVE' })
   status: string;
 

@@ -1,0 +1,41 @@
+Refactor the subscription-plan module.
+
+Follow AGENT.md exactly.
+
+Use the Tenant module as the project's reference implementation.
+
+Your goal is to make <ModuleName> follow the same architecture and implementation patterns as the Tenant module.
+
+Preserve the existing business behavior.
+
+Do not redesign the architecture.
+
+Do not introduce new abstractions.
+
+Do not copy code.
+
+Before making any change:
+
+- Analyze the current module.
+- Compare it with the Tenant module.
+- Produce an implementation plan.
+- Wait for approval.
+
+
+Before making any change:
+
+- Analyze the current module.
+- Compare the current implementation with the Tenant module.
+- Identify every architectural difference.
+- Produce an implementation plan describing how each difference will be resolved while following AGENT.md.
+- Wait for approval.
+
+After approval:
+
+- Refactor incrementally.
+- Preserve existing behavior.
+- Build the project.
+- Run the module tests.
+- Do not continue to the next module until the current one is complete and verified.
+
+

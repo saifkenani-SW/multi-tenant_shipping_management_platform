@@ -36,7 +36,6 @@ describe('SubscriptionPlanQueryRepository', () => {
           provide: 'KYSELY_INSTANCE',
           useValue: mockKysely,
         },
-
       ],
     }).compile();
 
