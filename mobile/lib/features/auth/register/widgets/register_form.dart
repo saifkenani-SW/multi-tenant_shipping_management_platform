@@ -1,10 +1,10 @@
-// ب) نموذج الإدخال (Form Fields & Actions)
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/routing/app_routes.dart';
 import 'package:mobile/features/auth/providers/password_visibility_provider.dart';
+import 'package:mobile/features/auth/register/providers/register_controller.dart';
 import 'package:mobile/features/auth/register/providers/terms_check_box_provider.dart';
 
 class RegisterForm extends ConsumerWidget {
@@ -16,10 +16,14 @@ class RegisterForm extends ConsumerWidget {
     final isPasswordHidden = ref.watch(passwordVisibilityProvider);
     final isTermsAccepted = ref.watch(termsCheckboxProvider);
 
+    // الوصول للـ Notifier والحالة
+    final formNotifier = ref.read(registerFormProvider.notifier);
+    final formState = ref.watch(registerFormProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // الاسم الأول والاسم الأخير في صف واحد للتجاوب
+        // الاسم الأول والاسم الأخير
         Row(
           children: [
             Expanded(
@@ -28,10 +32,11 @@ class RegisterForm extends ConsumerWidget {
                 children: [
                   Text('First Name', style: theme.textTheme.labelMedium),
                   SizedBox(height: 6.h),
-                  const TextField(
+                  TextField(
+                    controller: formNotifier.firstNameController,
                     keyboardType: TextInputType.name,
                     textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(hintText: 'John'),
+                    decoration: const InputDecoration(hintText: 'John'),
                   ),
                 ],
               ),
@@ -43,10 +48,11 @@ class RegisterForm extends ConsumerWidget {
                 children: [
                   Text('Last Name', style: theme.textTheme.labelMedium),
                   SizedBox(height: 6.h),
-                  const TextField(
+                  TextField(
+                    controller: formNotifier.lastNameController,
                     keyboardType: TextInputType.name,
                     textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(hintText: 'Doe'),
+                    decoration: const InputDecoration(hintText: 'Doe'),
                   ),
                 ],
               ),
@@ -59,6 +65,7 @@ class RegisterForm extends ConsumerWidget {
         Text('Work Email', style: theme.textTheme.labelMedium),
         SizedBox(height: 6.h),
         TextField(
+          controller: formNotifier.emailController,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
@@ -76,10 +83,11 @@ class RegisterForm extends ConsumerWidget {
         Text('Phone Number', style: theme.textTheme.labelMedium),
         SizedBox(height: 6.h),
         TextField(
+          controller: formNotifier.phoneController,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            hintText: '+1 (555) 000-0000',
+            hintText: '',
             prefixIcon: Icon(
               Icons.phone_outlined,
               size: 20.sp,
@@ -93,6 +101,7 @@ class RegisterForm extends ConsumerWidget {
         Text('Password', style: theme.textTheme.labelMedium),
         SizedBox(height: 6.h),
         TextField(
+          controller: formNotifier.passwordController,
           obscureText: isPasswordHidden,
           keyboardType: TextInputType.visiblePassword,
           textInputAction: TextInputAction.done,
@@ -201,17 +210,46 @@ class RegisterForm extends ConsumerWidget {
 
         // زر إتمام التسجيل
         ElevatedButton(
-          onPressed: () {
-            GoRouter.of(context).pushNamed(AppRoutes.otpScreen);
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Complete Registration'),
-              SizedBox(width: 8.w),
-              Icon(Icons.arrow_forward, size: 20.sp),
-            ],
-          ),
+          onPressed: formState.isLoading
+              ? null
+              : () {
+                  if (!isTermsAccepted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please accept terms and conditions'),
+                      ),
+                    );
+                    return;
+                  }
+
+                  formNotifier.submit(
+                    onSuccess: () {
+                      context.pushNamed(AppRoutes.otpScreen);
+                    },
+                    onError: (errorMsg) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(errorMsg)),
+                      );
+                    },
+                  );
+                },
+          child: formState.isLoading
+              ? SizedBox(
+                  height: 20.h,
+                  width: 20.w,
+                  child: const CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text('Complete Registration'),
+                    SizedBox(width: 8.w),
+                    Icon(Icons.arrow_forward, size: 20.sp),
+                  ],
+                ),
         ),
         SizedBox(height: 24.h),
 
@@ -229,7 +267,7 @@ class RegisterForm extends ConsumerWidget {
               ),
               GestureDetector(
                 onTap: () {
-                  GoRouter.of(context).pushNamed(AppRoutes.loginScreen);
+                  context.pushNamed(AppRoutes.loginScreen);
                 },
                 child: Text(
                   'Log in here',

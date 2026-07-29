@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:go_router/go_router.dart';
+import 'package:mobile/core/routing/app_routes.dart';
 import 'package:mobile/features/offer_details/providers/offer_provider.dart';
 
 class OfferDetailsScreen extends ConsumerWidget {
@@ -334,7 +336,9 @@ class OfferDetailsScreen extends ConsumerWidget {
                 width: double.infinity,
                 height: 50.h,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    GoRouter.of(context).pushNamed(AppRoutes.bookingConfirmedScreen);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1867D2),
                     foregroundColor: Colors.white,
