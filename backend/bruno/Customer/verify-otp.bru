@@ -1,5 +1,5 @@
 meta {
-  name: Verify OTP
+  name: Verify OTP & Create Account (Step 2)
   type: http
   seq: 3
 }
@@ -12,21 +12,13 @@ post {
 
 body:json {
   {
-    "email": "sara@example.com",
+    "email": "john.doe@example.com",
     "otp": "123456"
   }
 }
 
 docs {
-  # Verify OTP Endpoint (Step 2 of 2)
-  Compares the submitted OTP against the pending registration stored in the
-  cache. On success, creates the `users` + `customer_profile` rows.
-
-  Does NOT log the user in — call `/auth/login` afterwards with the same
-  email/password to obtain tokens.
-
-  ## Expected JSON Response
-  ```json
-  { "message": "Account created successfully, please log in" }
-  ```
+  # Verify OTP & Complete Account Creation
+  Verifies the received 6-digit OTP code and creates the customer account.
+  Does not log the user in automatically — call `/auth/login` afterwards.
 }

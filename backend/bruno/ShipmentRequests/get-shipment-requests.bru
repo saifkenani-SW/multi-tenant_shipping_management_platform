@@ -1,13 +1,20 @@
 meta {
-  name: Get Shipment Requests
+  name: List Shipment Requests
   type: http
   seq: 2
 }
 
 get {
-  url: {{url}}/shipment-requests?page=1&limit=10
+  url: {{url}}/shipment-requests
   body: none
   auth: bearer
+}
+
+query {
+  page: 1
+  limit: 10
+  search: 
+  status: 
 }
 
 auth:bearer {
@@ -16,7 +23,5 @@ auth:bearer {
 
 docs {
   # List Shipment Requests
-  Customer: sees their own requests.
-  Employee: sees requests assigned to their tenant (`targetTenantId` = their
-  tenant, i.e. after the customer approved a quotation from their company).
+  Returns paginated list of shipment requests relevant to the authenticated caller (Customer or Employee).
 }

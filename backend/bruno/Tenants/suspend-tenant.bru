@@ -16,6 +16,11 @@ auth:bearer {
 
 body:json {
   {
-    "reason": "Violation of terms of service"
+    "reason": "Payment default or compliance verification required"
   }
+}
+
+docs {
+  # Suspend Tenant
+  Suspends a tenant account and revokes active user sessions for the tenant.
 }

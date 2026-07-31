@@ -1,0 +1,20 @@
+meta {
+  name: Get Subscription History
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{url}}/tenants/{{tenantId}}/subscriptions/history
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Get Subscription History
+  Returns complete historical record of subscriptions for a tenant.
+}

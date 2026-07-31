@@ -1,0 +1,20 @@
+meta {
+  name: Deactivate Employee
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{url}}/employees/{{employeeId}}/deactivate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Deactivate Employee
+  Deactivates an employee account and revokes access immediately by evicting permission cache.
+}

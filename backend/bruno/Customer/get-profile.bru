@@ -1,5 +1,5 @@
 meta {
-  name: Get Profile
+  name: Get Customer Profile
   type: http
   seq: 4
 }
@@ -15,18 +15,6 @@ auth:bearer {
 }
 
 docs {
-  # Get Customer Profile
-  Returns the profile of the currently logged-in customer. Requires a valid
-  access token from `/auth/login` (user type must be CUSTOMER).
-
-  ## Expected JSON Response
-  ```json
-  {
-    "id": "...",
-    "email": "sara@example.com",
-    "fullName": "Sara Ahmad",
-    "phone": "0991234567",
-    "createdAt": "2026-07-18T..."
-  }
-  ```
+  # Get Logged-in Customer Profile
+  Returns full profile details for the authenticated customer. Restricted to `CUSTOMER` type users.
 }

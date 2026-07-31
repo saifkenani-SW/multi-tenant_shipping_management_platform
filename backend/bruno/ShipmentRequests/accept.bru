@@ -1,17 +1,13 @@
 meta {
-  name: Accept (Employee)
+  name: Accept Shipment Request (Employee)
   type: http
   seq: 6
 }
 
 post {
-  url: {{url}}/shipment-requests/:id/accept
+  url: {{url}}/shipment-requests/{{shipmentRequestId}}/accept
   body: none
   auth: bearer
-}
-
-params:path {
-  id:
 }
 
 auth:bearer {
@@ -19,7 +15,6 @@ auth:bearer {
 }
 
 docs {
-  # Accept Request (Employee only)
-  Only the employee of the winning company (targetTenantId) can call this.
-  Creates the real `customer_shipment` and moves the request to CONVERTED.
+  # Accept Shipment Request
+  Employee accepts a customer-approved shipment request and converts it to active processing.
 }

@@ -1,0 +1,28 @@
+meta {
+  name: Update Global Location
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/global-locations/{{locationId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Updated District Name",
+    "latitude": 24.7136,
+    "longitude": 46.6753
+  }
+}
+
+docs {
+  # Update Global Location
+  Updates name and geographic coordinates of a location. Type and parentId are immutable to preserve tree integrity.
+}

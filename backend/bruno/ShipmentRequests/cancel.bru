@@ -1,17 +1,13 @@
 meta {
-  name: Cancel (Customer)
+  name: Cancel Shipment Request (Customer)
   type: http
   seq: 8
 }
 
 post {
-  url: {{url}}/shipment-requests/:id/cancel
+  url: {{url}}/shipment-requests/{{shipmentRequestId}}/cancel
   body: json
   auth: bearer
-}
-
-params:path {
-  id:
 }
 
 auth:bearer {
@@ -20,12 +16,11 @@ auth:bearer {
 
 body:json {
   {
-    "reason": "Changed my mind"
+    "reason": "Shipment no longer required"
   }
 }
 
 docs {
-  # Cancel Request (Customer only)
-  Allowed while PENDING, CUSTOMER_APPROVED, or CONVERTED — blocked once any
-  linked parcel reaches COLLECTED.
+  # Cancel Shipment Request
+  Customer cancels their pending shipment request.
 }

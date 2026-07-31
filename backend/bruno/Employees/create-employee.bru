@@ -1,0 +1,38 @@
+meta {
+  name: Create Employee
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/employees
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "email": "employee@logisticsplatform.com",
+    "password": "Password123!",
+    "employeeCode": "EMP-0142",
+    "fullName": "Sarah Jenkins",
+    "phone": "+966512345678",
+    "nationalId": "1098765432",
+    "organizationUnitId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d1e",
+    "roleIds": [
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d1f"
+    ]
+  }
+}
+
+docs {
+  # Create Employee
+  Creates both the login user account and employee record in a single transaction.
+
+  ## Required Permissions
+  `PLATFORM_ADMIN` or `EMPLOYEE` with `ManageEmployee` capability.
+}

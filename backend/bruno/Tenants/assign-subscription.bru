@@ -1,0 +1,26 @@
+meta {
+  name: Assign Subscription to Tenant
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{url}}/tenants/{{tenantId}}/subscriptions/assign
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "planId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d80"
+  }
+}
+
+docs {
+  # Assign Subscription
+  Assigns a subscription plan to a tenant.
+}

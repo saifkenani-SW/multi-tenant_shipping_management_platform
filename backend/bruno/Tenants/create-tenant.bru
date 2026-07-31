@@ -16,28 +16,14 @@ auth:bearer {
 
 body:json {
   {
-    "name": "Global Logistئشبسيبics Inc.",
-    "taxNumber": "TAX-987654شسيبسيب321",
-    "contactEmail": "adسيبسيبmin@globallogistics.com"
+    "name": "Global Express Logistics Inc.",
+    "taxNumber": "TAX-987654321",
+    "email": "admin@globalexpress.com",
+    "phone": "+971501234567"
   }
 }
 
 docs {
   # Create Tenant
-  Creates a new tenant on the platform. Restricted to `PLATFORM_ADMIN` users only.
-  
-  ## Usage
-  - `{{url}}` resolves to the base API path.
-  - `{{token}}` is injected automatically from the Bruno environment variables. Be sure to run Login first and copy the accessToken into your local environment.
-  
-  ## Expected JSON Response
-  ```json
-  {
-    "success": true,
-    "data": {
-      "id": "123e4567-e89b-12d3-a456-426614174000"
-    },
-    "timestamp": "2026-07-16T12:00:00.000Z"
-  }
-  ```
+  Creates a new tenant on the platform. Restricted to `PLATFORM_ADMIN`.
 }

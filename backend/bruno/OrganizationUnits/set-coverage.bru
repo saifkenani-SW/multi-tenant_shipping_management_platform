@@ -1,0 +1,29 @@
+meta {
+  name: Set Unit Geographic Coverage
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{url}}/organization-units/{{orgUnitId}}/coverage
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "locationIds": [
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d30",
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d31"
+    ]
+  }
+}
+
+docs {
+  # Replace Unit Coverage
+  Replaces the complete list of global locations covered by this organization unit.
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Delete Global Location
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{url}}/global-locations/{{locationId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Delete Global Location
+  Deletes a location. Will fail if the location has child locations or active organization unit mappings.
+}

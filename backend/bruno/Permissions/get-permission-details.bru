@@ -1,0 +1,20 @@
+meta {
+  name: Get Permission Details
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/permissions/{{permissionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Get Permission Details
+  Returns details for a specific catalog permission by ID.
+}

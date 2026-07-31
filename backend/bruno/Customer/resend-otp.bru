@@ -1,5 +1,5 @@
 meta {
-  name: Resend OTP
+  name: Resend Registration OTP
   type: http
   seq: 2
 }
@@ -12,18 +12,11 @@ post {
 
 body:json {
   {
-    "email": "sara@example.com"
+    "email": "john.doe@example.com"
   }
 }
 
 docs {
-  # Resend OTP Endpoint
-  Escalating cooldown: 3 minutes must pass before the 2nd request, 5 minutes
-  before the 3rd. A 4th request is rejected — the user must call
-  `/customer/register` again from scratch.
-
-  ## Expected JSON Response
-  ```json
-  { "message": "A new OTP has been sent to your email, valid for 10 minutes" }
-  ```
+  # Resend OTP
+  Resends verification OTP for pending registration. Subject to cooldown and rate limiting.
 }

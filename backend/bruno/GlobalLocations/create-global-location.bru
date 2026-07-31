@@ -1,0 +1,30 @@
+meta {
+  name: Create Global Location
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/global-locations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Central District",
+    "type": "DISTRICT",
+    "parentId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d30",
+    "latitude": 24.7136,
+    "longitude": 46.6753
+  }
+}
+
+docs {
+  # Create Global Location
+  Creates a location entry in the global geographic hierarchy (Country, Region, City, District). Restricted to `PLATFORM_ADMIN`.
+}

@@ -1,0 +1,20 @@
+meta {
+  name: Remove Assignment
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{url}}/employees/{{employeeId}}/assignments/{{assignmentId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Remove Assignment
+  Removes an organization unit assignment from an employee.
+}

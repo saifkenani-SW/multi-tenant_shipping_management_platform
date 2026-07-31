@@ -5,14 +5,9 @@ meta {
 }
 
 post {
-  url: {{url}}/shipment-requests/:id/quotations/:quotationId/approve
+  url: {{url}}/shipment-requests/{{shipmentRequestId}}/quotations/{{quotationId}}/approve
   body: none
   auth: bearer
-}
-
-params:path {
-  id:
-  quotationId:
 }
 
 auth:bearer {
@@ -20,8 +15,6 @@ auth:bearer {
 }
 
 docs {
-  # Approve One Quotation (Customer only)
-  Marks this quotation APPROVED, all other quotations for the same request
-  REJECTED, and moves the request to CUSTOMER_APPROVED with
-  `targetTenantId` set to the winning company.
+  # Approve Quotation
+  Customer approves a specific quotation for their shipment request.
 }

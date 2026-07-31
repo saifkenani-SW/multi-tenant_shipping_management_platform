@@ -1,0 +1,20 @@
+meta {
+  name: Activate Employee
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{url}}/employees/{{employeeId}}/activate
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Activate Employee
+  Re-activates a previously deactivated employee account.
+}

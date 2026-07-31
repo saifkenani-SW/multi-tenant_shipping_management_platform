@@ -1,0 +1,20 @@
+meta {
+  name: Get Global Location Details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/global-locations/{{locationId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Get Global Location Details
+  Returns location details along with its complete ancestor chain up to the root country.
+}

@@ -19,17 +19,20 @@ body:json {
     "senderName": "Sara Ahmad",
     "senderPhone": "0991234567",
     "senderAddress": "Damascus, Al-Mazzeh, Street 12",
+    "senderLat": 33.5138,
+    "senderLng": 36.2765,
     "receiverName": "Khaled Omar",
     "receiverPhone": "0999876543",
     "receiverAddress": "Aleppo, Al-Furqan, Street 5",
+    "receiverLat": 36.2021,
+    "receiverLng": 37.1343,
     "expectedPiecesCount": 1,
-    "expectedTotalWeightKg": 2.5,
-    "notes": "Fragile"
+    "expectedTotalWeightKg": 15.5,
+    "notes": "Handle with care, urgent delivery requested"
   }
 }
 
 docs {
-  # Create Shipment Request (Customer only)
-  Creates a shipment request with status PENDING. Left open (no
-  `targetTenantId`), any company can submit a quotation for it.
+  # Create Shipment Request
+  Creates a new shipping request from a customer account.
 }

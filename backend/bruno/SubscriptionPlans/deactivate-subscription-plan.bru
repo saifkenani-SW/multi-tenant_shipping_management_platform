@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{url}}/subscription-plans/{{subscriptionPlanId}}/deactivate
+  url: {{url}}/subscription-plans/{{planId}}/deactivate
   body: none
   auth: bearer
 }
@@ -14,3 +14,7 @@ auth:bearer {
   token: {{token}}
 }
 
+docs {
+  # Deactivate Subscription Plan
+  Deactivates a subscription plan from being assigned to new tenants.
+}

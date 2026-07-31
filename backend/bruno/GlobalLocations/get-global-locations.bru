@@ -1,0 +1,30 @@
+meta {
+  name: List Global Locations
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/global-locations
+  body: none
+  auth: bearer
+}
+
+query {
+  page: 1
+  limit: 10
+  search: 
+  searchType: 
+  type: 
+  parentId: 
+  rootsOnly: 
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # List Global Locations
+  Returns paginated list of locations. Use `rootsOnly=true` to retrieve root countries or `parentId` to walk down the location tree.
+}

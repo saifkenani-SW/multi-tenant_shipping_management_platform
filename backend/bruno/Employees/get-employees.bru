@@ -1,0 +1,29 @@
+meta {
+  name: List Employees
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/employees
+  body: none
+  auth: bearer
+}
+
+query {
+  page: 1
+  limit: 10
+  search: 
+  searchType: 
+  organizationUnitId: 
+  isActive: 
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # List Employees
+  Returns paginated list of employees matching query criteria.
+}

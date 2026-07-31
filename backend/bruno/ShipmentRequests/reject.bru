@@ -1,17 +1,13 @@
 meta {
-  name: Reject (Employee)
+  name: Reject Shipment Request (Employee)
   type: http
   seq: 7
 }
 
 post {
-  url: {{url}}/shipment-requests/:id/reject
+  url: {{url}}/shipment-requests/{{shipmentRequestId}}/reject
   body: json
   auth: bearer
-}
-
-params:path {
-  id:
 }
 
 auth:bearer {
@@ -20,11 +16,11 @@ auth:bearer {
 
 body:json {
   {
-    "reason": "Outside our delivery zone"
+    "reason": "Destination address currently outside operational coverage"
   }
 }
 
 docs {
-  # Reject Request (Employee only)
-  Final state — cannot be undone.
+  # Reject Shipment Request
+  Employee rejects a customer shipment request with a specified reason.
 }

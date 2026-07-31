@@ -5,7 +5,7 @@ meta {
 }
 
 patch {
-  url: {{url}}/subscription-plans/{{subscriptionPlanId}}
+  url: {{url}}/subscription-plans/{{planId}}
   body: json
   auth: bearer
 }
@@ -16,8 +16,15 @@ auth:bearer {
 
 body:json {
   {
-    "name": "Enterprise سيبسيبسيبسيب يسبسيبسيبسيب",
-    "is_active": true
+    "name": "Enterprise Logistics Tier v2",
+    "description": "Updated enterprise features and limits",
+    "priceMonthly": 549.99,
+    "priceYearly": 5499.99,
+    "isActive": true
   }
 }
 
+docs {
+  # Update Subscription Plan
+  Updates configuration for an existing plan.
+}
