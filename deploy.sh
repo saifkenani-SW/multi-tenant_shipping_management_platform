@@ -6,8 +6,7 @@ set -e
 echo "🚀 Starting Deployment Process..."
 
 # 1. جلب أحدث كود من Git مع خيار rebase لتفادي تعارض الفروع
-echo "📥 Pulling latest code from Git..."
-git pull --rebase origin staging
+git pull origin staging
 
 # 2. إعادة بناء الصورة بدون كاش وتغليف الحاوية في الخلفية
 echo "🏗️ Rebuilding Docker containers (No Cache)..."

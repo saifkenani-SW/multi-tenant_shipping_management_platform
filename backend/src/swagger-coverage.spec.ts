@@ -136,7 +136,13 @@ describe('تغطية Swagger للموديولات الجديدة', () => {
     )?.properties?.orgType;
 
     expect(orgType?.enum).toEqual(
-      expect.arrayContaining(['REGION', 'HUB', 'WAREHOUSE', 'BRANCH', 'LOCKER']),
+      expect.arrayContaining([
+        'REGION',
+        'HUB',
+        'WAREHOUSE',
+        'BRANCH',
+        'LOCKER',
+      ]),
     );
   });
 

@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AuthorizationContainer } from './packages/authorization/authorization.container';
+import { TransactionContainer } from './packages/transaction/container/transaction.container';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -61,6 +62,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
   AuthorizationContainer.setApp(app);
+  TransactionContainer.setApp(app);
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
