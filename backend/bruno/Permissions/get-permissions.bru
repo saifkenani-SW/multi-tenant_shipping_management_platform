@@ -1,0 +1,28 @@
+meta {
+  name: List Permission Catalog
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/permissions
+  body: none
+  auth: bearer
+}
+
+query {
+  page: 1
+  limit: 20
+  search: 
+  searchType: 
+  resource: 
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # List Permission Catalog
+  Returns read-only catalog of system permissions defined in `PERMISSION_CATALOG`.
+}

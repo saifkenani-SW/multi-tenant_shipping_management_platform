@@ -1,9 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
-import { Transactional } from '../../../core/transaction';
+import { Transactional } from '../../../packages/transaction';
 import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+
 import { Authorize } from '../../../packages/authorization';
 import { Policy } from '../../../packages/authorization/policy';
 import { RequestContextService } from '../../../packages/context/services/request-context.service';
@@ -41,7 +41,6 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     private readonly permissionCacheService: PermissionCacheService,
     private readonly requestContext: RequestContextService,
     // مطلوب بهذا الاسم تحديداً لأن @Transactional() يبحث عن this.prisma
-    private readonly prisma: PrismaService,
   ) {}
 
   @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.LIST, allEntries: true })
@@ -187,10 +186,7 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     payloadResolver: (employeeId: string) => ({ employeeId }),
   })
   @Transactional()
-  async assignEmployee(
-    id: string,
-    dto: AssignEmployeeDto,
-  ): Promise<string> {
+  async assignEmployee(id: string, dto: AssignEmployeeDto): Promise<string> {
     const employee = await this.requireEmployee(id);
 
     await this.assertUnitBelongsToTenant(
@@ -257,10 +253,7 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     await this.requireAssignmentOf(assignmentId, id);
     await this.assertRolesBelongToTenant(dto.roleIds, employee.tenantId);
 
-    await this.commandRepository.setAssignmentRoles(
-      assignmentId,
-      dto.roleIds,
-    );
+    await this.commandRepository.setAssignmentRoles(assignmentId, dto.roleIds);
 
     await this.permissionCacheService.invalidateUserAccess(employee.userId);
   }
@@ -283,8 +276,7 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     assignmentId: string,
     employeeId: string,
   ): Promise<void> {
-    const assignment =
-      await this.queryRepository.findAssignment(assignmentId);
+    const assignment = await this.queryRepository.findAssignment(assignmentId);
 
     if (!assignment || assignment.employeeId !== employeeId) {
       throw new AssignmentNotFoundException();

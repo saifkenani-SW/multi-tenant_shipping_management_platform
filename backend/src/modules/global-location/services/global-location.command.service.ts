@@ -3,17 +3,11 @@ import { Inject, Injectable } from '@nestjs/common';
 import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
 import { Authorize } from '../../../packages/authorization';
 import { Policy } from '../../../packages/authorization/policy';
-import {
-  GlobalLocationAction,
-  GlobalLocationPolicy,
-} from '../authorization';
+import { GlobalLocationAction, GlobalLocationPolicy } from '../authorization';
 import { GLOBAL_LOCATION_CACHE_KEYS } from '../constants/global-location.cache.constants';
 import { CreateGlobalLocationDto } from '../dtos/requests/create-global-location.dto';
 import { UpdateGlobalLocationDto } from '../dtos/requests/update-global-location.dto';
-import {
-  LOCATION_TYPE_LEVEL,
-  LocationType,
-} from '../enums/location-type.enum';
+import { LOCATION_TYPE_LEVEL, LocationType } from '../enums/location-type.enum';
 import { GlobalLocationNotFoundException } from '../exceptions/global-location-not-found.exception';
 import { InvalidLocationHierarchyException } from '../exceptions/invalid-location-hierarchy.exception';
 import { LocationHasChildrenException } from '../exceptions/location-has-children.exception';

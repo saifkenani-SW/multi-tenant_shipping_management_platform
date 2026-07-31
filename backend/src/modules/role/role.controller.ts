@@ -65,9 +65,7 @@ export class RoleController {
     description: 'List of roles',
     type: PaginatedRoleListDto,
   })
-  async getRoles(
-    @Query() query: RoleQueryDto,
-  ): Promise<PaginatedRoleListDto> {
+  async getRoles(@Query() query: RoleQueryDto): Promise<PaginatedRoleListDto> {
     return this.roleQueryService.findRoles(query);
   }
 

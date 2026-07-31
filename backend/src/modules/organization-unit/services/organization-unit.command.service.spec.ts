@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CacheContainer } from '../../../infrastructure/cache/container/CacheContainer';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { AuthorizationContainer } from '../../../packages/authorization/authorization.container';
+import { TransactionContainer } from '../../../packages/transaction';
 import { RequestContextService } from '../../../packages/context/services/request-context.service';
 import { OrganizationUnit } from '../domain/organization-unit.entity';
 import { OrgType } from '../enums/org-type.enum';
@@ -67,6 +68,9 @@ describe('OrganizationUnitCommandService', () => {
       authorize: jest.fn().mockResolvedValue(undefined),
       buildScope: jest.fn().mockReturnValue({}),
       buildCapabilities: jest.fn().mockResolvedValue({}),
+    } as never);
+    jest.spyOn(TransactionContainer, 'get').mockReturnValue({
+      execute: jest.fn(async (fn) => fn({})),
     } as never);
 
     jest.spyOn(CacheContainer, 'get').mockReturnValue({

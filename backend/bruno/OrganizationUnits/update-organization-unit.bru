@@ -1,0 +1,31 @@
+meta {
+  name: Update Organization Unit
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/organization-units/{{orgUnitId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Riyadh Main Hub - Expanded",
+    "addressLine": "King Fahd Road, Suite 500",
+    "zoneId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d41",
+    "isActive": true,
+    "latitude": 24.7136,
+    "longitude": 46.6753
+  }
+}
+
+docs {
+  # Update Organization Unit
+  Updates editable fields of an organization unit. Type and parent are immutable.
+}

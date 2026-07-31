@@ -1,0 +1,28 @@
+meta {
+  name: Update Role
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/roles/{{roleId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Senior Branch Manager",
+    "description": "Updated role description",
+    "isActive": true
+  }
+}
+
+docs {
+  # Update Role
+  Updates name, description, or active status of a custom role.
+}

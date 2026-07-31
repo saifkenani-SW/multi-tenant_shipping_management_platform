@@ -29,7 +29,9 @@ export class SupportNotificationSeeder implements Seeder {
     });
 
     if (!customerUser || !adminUser) {
-      this.logger.warn('Skipping SupportNotificationSeeder: missing customerUser or adminUser');
+      this.logger.warn(
+        'Skipping SupportNotificationSeeder: missing customerUser or adminUser',
+      );
       return;
     }
 

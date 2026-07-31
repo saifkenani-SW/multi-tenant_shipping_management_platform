@@ -1,5 +1,5 @@
 meta {
-  name: Refresh Token
+  name: Refresh Tokens
   type: http
   seq: 2
 }
@@ -10,9 +10,28 @@ post {
   auth: none
 }
 
+headers {
+  client-type: MOBILE
+}
+
 body:json {
   {
-    "refreshToken": "{{refreshToken}}",
-    "clientType":"MOBILE"
+    "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
   }
+}
+
+docs {
+  # Refresh Tokens
+  Generates new access and refresh tokens using a valid refresh token.
+
+  ## Request Notes
+  For `WEB` client type, the refresh token is automatically read from `refresh_token` cookie if present.
+
+  ## Expected Response
+  ```json
+  {
+    "accessToken": "eyJhbGciOi...",
+    "refreshToken": "eyJhbGciOi..."
+  }
+  ```
 }

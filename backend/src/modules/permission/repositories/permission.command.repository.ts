@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { TransactionalPrismaService } from '../../../core/transaction';
+import { TransactionalPrismaService } from '../../../packages/transaction';
 import { PermissionCatalogEntry } from '../catalog/permission.catalog';
 import { IPermissionCommandRepository } from '../interfaces/permission.command.repository.interface';
 
@@ -16,9 +16,7 @@ export class PermissionCommandRepository implements IPermissionCommandRepository
    * role_permission بالـ cascade ويسحب امتيازات قائمة بصمت. التنظيف
    * يبقى قراراً يدوياً عبر migration.
    */
-  async syncCatalog(
-    entries: readonly PermissionCatalogEntry[],
-  ): Promise<void> {
+  async syncCatalog(entries: readonly PermissionCatalogEntry[]): Promise<void> {
     for (const entry of entries) {
       await this.prisma.client.permission.upsert({
         where: { name: entry.name },

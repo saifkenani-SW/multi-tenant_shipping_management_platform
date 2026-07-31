@@ -1,0 +1,32 @@
+meta {
+  name: Create Organization Unit
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/organization-units
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Riyadh Main Hub",
+    "orgType": "HUB",
+    "parentId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d40",
+    "zoneId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d41",
+    "addressLine": "King Fahd Road, Building 100",
+    "latitude": 24.7136,
+    "longitude": 46.6753
+  }
+}
+
+docs {
+  # Create Organization Unit
+  Creates a new organizational unit (HQ, Region, Hub, Branch, Warehouse). Restricted to `PLATFORM_ADMIN` or authorized `EMPLOYEE`.
+}

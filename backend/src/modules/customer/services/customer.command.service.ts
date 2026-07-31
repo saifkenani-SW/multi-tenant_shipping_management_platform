@@ -6,8 +6,8 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
-import { Transactional } from '../../../core/transaction';
+
+import { Transactional } from '../../../packages/transaction';
 import type { ICacheProvider } from '../../../core/cache/interfaces/ICacheProvider';
 import { generateOtp } from '../../../common/helpers/generate-otp';
 import { MailService } from '../../../infrastructure/mail/mail.service';
@@ -43,8 +43,6 @@ export class CustomerCommandService implements ICustomerCommandService {
     @Inject(CACHE_PROVIDER)
     private readonly cacheProvider: ICacheProvider,
     private readonly mailService: MailService,
-    // مطلوبة اسمها "prisma" بالتحديد حتى يشتغل معها @Transactional()
-    private readonly prisma: PrismaService,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ message: string }> {

@@ -1,3 +1,4 @@
+import { SUBSCRIPTION_PLAN_QUERY_REPOSITORY } from '../tokens/subscription-plan-repository.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 import type { ISubscriptionPlanQueryRepository } from '../interfaces/subscription-plan.query.repository.interface';
 import { ISubscriptionPlanQueryService } from '../interfaces/subscription-plan.query.service.interface';
@@ -11,7 +12,7 @@ import { SubscriptionPlan } from '../domain/subscription-plan.entity';
 @Injectable()
 export class SubscriptionPlanQueryService implements ISubscriptionPlanQueryService {
   constructor(
-    @Inject('ISubscriptionPlanQueryRepository')
+    @Inject(SUBSCRIPTION_PLAN_QUERY_REPOSITORY)
     private readonly planQueryRepository: ISubscriptionPlanQueryRepository,
   ) {}
 

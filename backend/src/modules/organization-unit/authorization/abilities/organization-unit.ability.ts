@@ -56,7 +56,11 @@ export class OrganizationUnitAbility implements CaslAbilityContributor<
 
     const ownTenant = { tenantId: principal.tenantId } as never;
 
-    builder.can(OrganizationUnitAction.View, OrganizationUnitSubject, ownTenant);
+    builder.can(
+      OrganizationUnitAction.View,
+      OrganizationUnitSubject,
+      ownTenant,
+    );
 
     if (principal.subject.type === SubjectType.TENANT_ADMIN) {
       builder.can(

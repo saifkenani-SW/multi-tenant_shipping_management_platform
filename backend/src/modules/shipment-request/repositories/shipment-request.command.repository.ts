@@ -1,6 +1,6 @@
 import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Kysely, sql } from 'kysely';
-import { TransactionalPrismaService } from '../../../core/transaction';
+import { TransactionalPrismaService } from '../../../packages/transaction';
 import { DB } from '../../../infrastructure/database/generated/kysely/types';
 import {
   CreateShipmentRequestData,

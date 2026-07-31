@@ -5,7 +5,11 @@ import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
 export const SEEDED_ZONES = [
   { idSuffix: '301', name: 'Central Zone', description: 'Riyadh Central Area' },
-  { idSuffix: '302', name: 'Western Zone', description: 'Jeddah & Coastal Area' },
+  {
+    idSuffix: '302',
+    name: 'Western Zone',
+    description: 'Jeddah & Coastal Area',
+  },
 ] as const;
 
 @Injectable()

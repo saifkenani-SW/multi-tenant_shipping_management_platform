@@ -97,7 +97,8 @@ export class OrganizationUnitController {
   @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
   @ApiOperation({
     summary: 'Update an organization unit',
-    description: 'Type and parent are immutable; moving a unit needs its own operation.',
+    description:
+      'Type and parent are immutable; moving a unit needs its own operation.',
   })
   @ApiResponse({
     status: HttpStatus.OK,

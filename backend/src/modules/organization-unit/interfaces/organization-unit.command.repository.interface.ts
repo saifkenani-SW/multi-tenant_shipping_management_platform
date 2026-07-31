@@ -5,10 +5,7 @@ import {
 
 export interface IOrganizationUnitCommandRepository {
   create(data: CreateOrganizationUnitRepositoryData): Promise<string>;
-  update(
-    id: string,
-    data: UpdateOrganizationUnitRepositoryData,
-  ): Promise<void>;
+  update(id: string, data: UpdateOrganizationUnitRepositoryData): Promise<void>;
   delete(id: string): Promise<void>;
 
   /** استبدال كامل لتغطية الوحدة داخل transaction واحدة. */

@@ -34,7 +34,9 @@ export class UpdateOrganizationUnitDto {
   @MaxLength(500)
   addressLine?: string;
 
-  @ApiPropertyOptional({ description: 'Deactivating stops routing to the unit' })
+  @ApiPropertyOptional({
+    description: 'Deactivating stops routing to the unit',
+  })
   @IsBoolean()
   @IsOptional()
   isActive?: boolean;

@@ -5,15 +5,16 @@ meta {
 }
 
 get {
-  url: {{url}}/shipment-requests/:id
+  url: {{url}}/shipment-requests/{{shipmentRequestId}}
   body: none
   auth: bearer
 }
 
-params:path {
-  id:
-}
-
 auth:bearer {
   token: {{token}}
+}
+
+docs {
+  # Get Shipment Request Details
+  Returns detailed information for a specific shipment request.
 }

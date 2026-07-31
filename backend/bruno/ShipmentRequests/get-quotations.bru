@@ -1,17 +1,13 @@
 meta {
-  name: Get Quotations
+  name: List Quotations for Request
   type: http
   seq: 4
 }
 
 get {
-  url: {{url}}/shipment-requests/:id/quotations
+  url: {{url}}/shipment-requests/{{shipmentRequestId}}/quotations
   body: none
   auth: bearer
-}
-
-params:path {
-  id:
 }
 
 auth:bearer {
@@ -19,7 +15,6 @@ auth:bearer {
 }
 
 docs {
-  # List Quotations (Customer only)
-  Quotation creation is out of scope for this module — this only lists
-  whatever quotations already exist for the request.
+  # List Quotations
+  Returns all price quotations submitted for a shipment request. Customer only.
 }

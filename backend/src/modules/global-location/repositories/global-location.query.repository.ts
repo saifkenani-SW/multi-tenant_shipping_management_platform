@@ -40,9 +40,7 @@ export class GlobalLocationQueryRepository implements IGlobalLocationQueryReposi
       criteria.search?.keyword ?? 'all',
       criteria.type ?? 'all',
       // null (الجذور) و undefined (بلا تصفية) حالتان مختلفتان
-      criteria.parentId === undefined
-        ? 'any'
-        : (criteria.parentId ?? 'roots'),
+      criteria.parentId === undefined ? 'any' : (criteria.parentId ?? 'roots'),
     ],
   })
   async findMany(

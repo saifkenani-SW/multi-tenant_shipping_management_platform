@@ -1,0 +1,26 @@
+meta {
+  name: Cancel Subscription
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{url}}/tenants/{{tenantId}}/subscriptions/cancel
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "reason": "Tenant requested termination"
+  }
+}
+
+docs {
+  # Cancel Subscription
+  Cancels a tenant subscription.
+}

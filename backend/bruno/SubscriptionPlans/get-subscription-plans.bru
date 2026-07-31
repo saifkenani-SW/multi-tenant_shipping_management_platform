@@ -1,22 +1,27 @@
 meta {
-  name: Get Subscription Plans
+  name: List Subscription Plans
   type: http
   seq: 2
 }
 
 get {
-  url: {{url}}/subscription-plans?page=3
+  url: {{url}}/subscription-plans
   body: none
   auth: bearer
 }
 
-params:query {
-  page: 3
-  ~limit: 10
-  ~search: Enterprise
-  ~searchType: NAME
+query {
+  page: 1
+  limit: 10
+  search: 
+  searchType: 
 }
 
 auth:bearer {
   token: {{token}}
+}
+
+docs {
+  # List Subscription Plans
+  Returns paginated list of subscription plans. Restricted to `PLATFORM_ADMIN`.
 }

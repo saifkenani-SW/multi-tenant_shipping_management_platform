@@ -1,0 +1,26 @@
+meta {
+  name: Resume Subscription
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{url}}/tenants/{{tenantId}}/subscriptions/resume
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "reason": "Billing resolved"
+  }
+}
+
+docs {
+  # Resume Subscription
+  Resumes a suspended tenant subscription.
+}

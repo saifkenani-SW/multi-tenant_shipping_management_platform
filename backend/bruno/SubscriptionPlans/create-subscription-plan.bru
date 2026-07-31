@@ -16,26 +16,22 @@ auth:bearer {
 
 body:json {
   {
-    "name": "سسسسسسسسسسسسسسسسسسسسسسسسسس",
-    "description": "Unlimited features for large businesses",
-    "max_branches": 50,
-    "max_warehouses": 20,
-    "max_employees": 500,
-    "max_vehicles": 200,
-    "max_zones": 50,
-    "max_monthly_shipments": 100000,
-    "max_monthly_parcels": 500000,
-    "price_monthly": 499.99,
-     "price_yearly": 2222222.99,
-    "is_active": true
+    "name": "Enterprise Logistics Tier",
+    "description": "Full-scale logistics management with unlimited branches and advanced analytics",
+    "priceMonthly": 499.99,
+    "priceYearly": 4999.99,
+    "maxBranches": 50,
+    "maxWarehouses": 20,
+    "maxEmployees": 500,
+    "maxVehicles": 100,
+    "maxZones": 50,
+    "maxMonthlyShipments": 100000,
+    "maxMonthlyParcels": 200000,
+    "isActive": true
   }
 }
 
 docs {
   # Create Subscription Plan
-  Creates a new subscription plan on the platform. Restricted to `PLATFORM_ADMIN` users only.
-  
-  ## Usage
-  - `{{url}}` resolves to the base API path.
-  - `{{token}}` is injected automatically.
+  Creates a new platform subscription plan. Restricted to `PLATFORM_ADMIN`.
 }

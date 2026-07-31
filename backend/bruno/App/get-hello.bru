@@ -1,0 +1,24 @@
+meta {
+  name: Get Hello Message
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/
+  body: none
+  auth: none
+}
+
+docs {
+# Get Hello Message
+Returns a simple welcome message from the API.
+
+## Usage
+Public root endpoint to test if the API server is responding.
+
+## Response Example
+```json
+"Hello World!"
+```
+}

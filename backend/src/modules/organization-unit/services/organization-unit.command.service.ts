@@ -1,8 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { Transactional } from '../../../core/transaction';
+import { Transactional } from '../../../packages/transaction';
 import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+
 import { Authorize } from '../../../packages/authorization';
 import { Policy } from '../../../packages/authorization/policy';
 import { RequestContextService } from '../../../packages/context/services/request-context.service';
@@ -37,7 +37,6 @@ export class OrganizationUnitCommandService implements IOrganizationUnitCommandS
     private readonly queryRepository: IOrganizationUnitQueryRepository,
     private readonly requestContext: RequestContextService,
     // مطلوب بهذا الاسم تحديداً لأن @Transactional() يبحث عن this.prisma
-    private readonly prisma: PrismaService,
   ) {}
 
   @CacheEvict({
@@ -95,10 +94,7 @@ export class OrganizationUnitCommandService implements IOrganizationUnitCommandS
       dto,
     }),
   })
-  async updateUnit(
-    id: string,
-    dto: UpdateOrganizationUnitDto,
-  ): Promise<void> {
+  async updateUnit(id: string, dto: UpdateOrganizationUnitDto): Promise<void> {
     const unit = await this.queryRepository.findById(id);
 
     if (!unit) {

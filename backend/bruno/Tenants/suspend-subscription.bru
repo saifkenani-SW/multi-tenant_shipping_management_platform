@@ -1,0 +1,26 @@
+meta {
+  name: Suspend Subscription
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{url}}/tenants/{{tenantId}}/subscriptions/suspend
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "reason": "Billing dispute under review"
+  }
+}
+
+docs {
+  # Suspend Subscription
+  Suspends active subscription for a tenant.
+}

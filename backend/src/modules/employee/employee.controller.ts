@@ -121,9 +121,7 @@ export class EmployeeController {
     status: HttpStatus.OK,
     description: 'Employee deactivated successfully',
   })
-  async deactivateEmployee(
-    @Param() params: BaseUuidParamDto,
-  ): Promise<void> {
+  async deactivateEmployee(@Param() params: BaseUuidParamDto): Promise<void> {
     await this.commandService.deactivateEmployee(params.id);
   }
 
@@ -184,12 +182,7 @@ export class EmployeeController {
     status: HttpStatus.OK,
     description: 'Assignment removed successfully',
   })
-  async removeAssignment(
-    @Param() params: AssignmentParamsDto,
-  ): Promise<void> {
-    await this.commandService.removeAssignment(
-      params.id,
-      params.assignmentId,
-    );
+  async removeAssignment(@Param() params: AssignmentParamsDto): Promise<void> {
+    await this.commandService.removeAssignment(params.id, params.assignmentId);
   }
 }

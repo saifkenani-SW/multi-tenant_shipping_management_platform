@@ -1,0 +1,33 @@
+meta {
+  name: List Organization Units
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/organization-units
+  body: none
+  auth: bearer
+}
+
+query {
+  page: 1
+  limit: 10
+  search: 
+  searchType: 
+  orgType: 
+  zoneId: 
+  parentId: 
+  locationId: 
+  rootsOnly: 
+  isActive: 
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # List Organization Units
+  Returns paginated organization units. Supports filtering by type, parent, zone, location, or root units.
+}

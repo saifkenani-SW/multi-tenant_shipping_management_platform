@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { TransactionalPrismaService } from '../../../core/transaction';
+import { TransactionalPrismaService } from '../../../packages/transaction';
 import { ISubscriptionPlanCommandRepository } from '../interfaces/subscription-plan.command.repository.interface';
 import { Prisma } from '@prisma/client';
 import { SubscriptionPlan } from '../domain/subscription-plan.entity';

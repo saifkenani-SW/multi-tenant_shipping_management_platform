@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { QuotationStatus, QuotationType, RequestStatus, ShipmentStatus } from '@prisma/client';
+import {
+  QuotationStatus,
+  QuotationType,
+  RequestStatus,
+  ShipmentStatus,
+} from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { Seeder } from '../seeder.interface';
 import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
@@ -23,7 +28,9 @@ export class ShipmentRequestSeeder implements Seeder {
     });
 
     if (!customer || !orgUnit || !employee) {
-      this.logger.warn('Skipping ShipmentRequestSeeder: missing customer/orgUnit/employee');
+      this.logger.warn(
+        'Skipping ShipmentRequestSeeder: missing customer/orgUnit/employee',
+      );
       return;
     }
 

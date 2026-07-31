@@ -5,7 +5,7 @@ meta {
 }
 
 post {
-  url: {{url}}/subscription-plans/{{subscriptionPlanId}}/activate
+  url: {{url}}/subscription-plans/{{planId}}/activate
   body: none
   auth: bearer
 }
@@ -14,3 +14,7 @@ auth:bearer {
   token: {{token}}
 }
 
+docs {
+  # Activate Subscription Plan
+  Re-activates a subscription plan.
+}

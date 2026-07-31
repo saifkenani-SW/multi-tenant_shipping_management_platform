@@ -1,0 +1,30 @@
+meta {
+  name: Create Role
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/roles
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "name": "Branch Logistics Supervisor",
+    "description": "Manages branch level dispatching and employee operations",
+    "permissionIds": [
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d50"
+    ]
+  }
+}
+
+docs {
+  # Create Role
+  Creates a custom tenant role with a set of assigned permission IDs.
+}

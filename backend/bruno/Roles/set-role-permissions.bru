@@ -1,0 +1,29 @@
+meta {
+  name: Set Role Permissions
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{url}}/roles/{{roleId}}/permissions
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "permissionIds": [
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d50",
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d51"
+    ]
+  }
+}
+
+docs {
+  # Replace Role Permissions
+  Replaces the full set of permissions granted to a role and invalidates active permission caches.
+}

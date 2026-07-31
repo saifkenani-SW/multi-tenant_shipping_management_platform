@@ -1,0 +1,20 @@
+meta {
+  name: Delete Role
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{url}}/roles/{{roleId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Delete Role
+  Deletes a custom role. Fails if the role is currently assigned to any employee.
+}

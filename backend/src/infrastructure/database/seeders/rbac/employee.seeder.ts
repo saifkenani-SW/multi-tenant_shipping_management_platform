@@ -22,7 +22,9 @@ export class EmployeeSeeder implements Seeder {
     });
 
     if (!adminUser || !driverUser) {
-      this.logger.warn('Skipping EmployeeSeeder: adminUser or driverUser not found');
+      this.logger.warn(
+        'Skipping EmployeeSeeder: adminUser or driverUser not found',
+      );
       return;
     }
 

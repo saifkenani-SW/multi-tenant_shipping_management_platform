@@ -30,7 +30,10 @@ export class EmployeeDetailsDto {
   @ApiProperty({ description: 'Whether the employee can still work' })
   isActive: boolean;
 
-  @ApiProperty({ description: 'When the employee was deactivated', nullable: true })
+  @ApiProperty({
+    description: 'When the employee was deactivated',
+    nullable: true,
+  })
   deactivatedAt: Date | null;
 
   @ApiProperty({ description: 'Creation date' })

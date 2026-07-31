@@ -6,28 +6,36 @@ import { SubscriptionPlanCommandRepository } from './repositories/subscription-p
 import { SubscriptionPlanQueryRepository } from './repositories/subscription-plan.query.repository';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { CacheModule } from '../../infrastructure/cache/cache.module';
+import {
+  SUBSCRIPTION_PLAN_COMMAND_REPOSITORY,
+  SUBSCRIPTION_PLAN_QUERY_REPOSITORY,
+} from './tokens/subscription-plan-repository.tokens';
+import {
+  SUBSCRIPTION_PLAN_COMMAND_SERVICE,
+  SUBSCRIPTION_PLAN_QUERY_SERVICE,
+} from './tokens/subscription-plan-service.tokens';
 
 @Module({
   imports: [DatabaseModule, CacheModule],
   controllers: [SubscriptionPlanController],
   providers: [
     {
-      provide: 'ISubscriptionPlanCommandRepository',
+      provide: SUBSCRIPTION_PLAN_COMMAND_REPOSITORY,
       useClass: SubscriptionPlanCommandRepository,
     },
     {
-      provide: 'ISubscriptionPlanQueryRepository',
+      provide: SUBSCRIPTION_PLAN_QUERY_REPOSITORY,
       useClass: SubscriptionPlanQueryRepository,
     },
     {
-      provide: 'ISubscriptionPlanCommandService',
+      provide: SUBSCRIPTION_PLAN_COMMAND_SERVICE,
       useClass: SubscriptionPlanCommandService,
     },
     {
-      provide: 'ISubscriptionPlanQueryService',
+      provide: SUBSCRIPTION_PLAN_QUERY_SERVICE,
       useClass: SubscriptionPlanQueryService,
     },
   ],
-  exports: ['ISubscriptionPlanCommandService', 'ISubscriptionPlanQueryService'],
+  exports: [SUBSCRIPTION_PLAN_COMMAND_SERVICE, SUBSCRIPTION_PLAN_QUERY_SERVICE],
 })
 export class SubscriptionPlanModule {}

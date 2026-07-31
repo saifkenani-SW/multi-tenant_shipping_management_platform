@@ -1,0 +1,20 @@
+meta {
+  name: Delete Organization Unit
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{url}}/organization-units/{{orgUnitId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Delete Organization Unit
+  Deletes an organization unit. Fails if the unit has child units or assigned employees.
+}

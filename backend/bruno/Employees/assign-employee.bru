@@ -1,0 +1,29 @@
+meta {
+  name: Assign Employee to Org Unit
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{url}}/employees/{{employeeId}}/assignments
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "organizationUnitId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d20",
+    "roleIds": [
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d1f"
+    ]
+  }
+}
+
+docs {
+  # Assign Employee
+  Assigns an employee to an additional organization unit with initial roles.
+}

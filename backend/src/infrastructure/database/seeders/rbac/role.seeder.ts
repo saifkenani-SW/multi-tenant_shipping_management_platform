@@ -5,7 +5,10 @@ import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
 export const SEEDED_ROLES = [
   { name: 'Administrator', description: 'Full access to tenant operations' },
-  { name: 'Branch Manager', description: 'Manages branch activities and staff' },
+  {
+    name: 'Branch Manager',
+    description: 'Manages branch activities and staff',
+  },
   { name: 'Driver', description: 'Driver access for trips and deliveries' },
 ] as const;
 
@@ -18,7 +21,9 @@ export class RoleSeeder implements Seeder {
   async seed(): Promise<void> {
     this.logger.log('Starting RoleSeeder...');
 
-    const permissions = await this.prisma.permission.findMany({ select: { id: true } });
+    const permissions = await this.prisma.permission.findMany({
+      select: { id: true },
+    });
 
     for (let i = 0; i < SEEDED_TENANTS.length; i++) {
       const tenant = SEEDED_TENANTS[i];

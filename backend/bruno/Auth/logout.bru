@@ -1,19 +1,27 @@
 meta {
-  name: Logout
+  name: Logout User
   type: http
   seq: 3
 }
 
 post {
   url: {{url}}/auth/logout
-  body: json
+  body: none
   auth: bearer
+}
+
+headers {
+  client-type: WEB
 }
 
 auth:bearer {
   token: {{token}}
 }
 
-body:json {
-  }
+docs {
+# Logout User
+Revokes the current session and clears authentication cookies if using `WEB` client.
+
+## Permissions
+Authenticated users (`PLATFORM_ADMIN`, `EMPLOYEE`, `CUSTOMER`).
 }

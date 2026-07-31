@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 
-import { Transactional } from '../../../core/transaction';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Transactional } from '../../../packages/transaction';
+
 import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
 import { Authorize } from '../../../packages/authorization';
 import { Policy } from '../../../packages/authorization/policy';
@@ -35,7 +35,6 @@ export class RoleCommandService implements IRoleCommandService {
     private readonly permissionCacheService: PermissionCacheService,
     private readonly requestContext: RequestContextService,
     // مطلوب بهذا الاسم تحديداً لأن @Transactional() يبحث عن this.prisma
-    private readonly prisma: PrismaService,
   ) {}
 
   @CacheEvict({ keyPrefix: ROLE_CACHE_KEYS.LIST, allEntries: true })
@@ -87,11 +86,7 @@ export class RoleCommandService implements IRoleCommandService {
     if (
       dto.name &&
       dto.name !== role.name &&
-      (await this.roleQueryRepository.existsByName(
-        role.tenantId,
-        dto.name,
-        id,
-      ))
+      (await this.roleQueryRepository.existsByName(role.tenantId, dto.name, id))
     ) {
       throw new DuplicateRoleNameException(dto.name);
     }
@@ -125,8 +120,7 @@ export class RoleCommandService implements IRoleCommandService {
     }
 
     // الحذف يسقط assignment_role بالـ cascade فيسحب صلاحيات موظفين بصمت.
-    const assignmentCount =
-      await this.roleQueryRepository.countAssignments(id);
+    const assignmentCount = await this.roleQueryRepository.countAssignments(id);
 
     if (assignmentCount > 0) {
       throw new RoleInUseException(assignmentCount);

@@ -8,8 +8,8 @@ import {
 } from '@nestjs/common';
 import { RequestStatus } from '@prisma/client';
 import { CacheEvict } from '../../../infrastructure/cache/decorators/CacheEvict';
-import { Transactional } from '../../../core/transaction';
-import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import { Transactional } from '../../../packages/transaction';
+
 import type { ICustomerQueryService } from '../../customer/interfaces/customer.query.service.interface';
 import { CreateShipmentRequestDto } from '../dtos/requests/create-shipment-request.dto';
 import { RejectShipmentRequestDto } from '../dtos/requests/reject-shipment-request.dto';
@@ -34,8 +34,6 @@ export class ShipmentRequestCommandService implements IShipmentRequestCommandSer
     @Inject('ICustomerQueryService')
     private readonly customerQueryService: ICustomerQueryService,
     private readonly accessPolicy: ShipmentRequestAccessPolicy,
-    // مطلوبة اسمها "prisma" بالتحديد حتى يشتغل معها @Transactional()
-    private readonly prisma: PrismaService,
   ) {}
 
   private async resolveCustomerProfileId(userId: string): Promise<string> {

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { TransactionalPrismaService } from '../../../core/transaction';
+import { generateUuid } from '../../../common/uuid';
+import { TransactionalPrismaService } from '../../../packages/transaction';
 import {
   CreateOrganizationUnitRepositoryData,
   UpdateOrganizationUnitRepositoryData,
@@ -21,15 +22,14 @@ import { IOrganizationUnitCommandRepository } from '../interfaces/organization-u
 export class OrganizationUnitCommandRepository implements IOrganizationUnitCommandRepository {
   constructor(private readonly prisma: TransactionalPrismaService) {}
 
-  async create(
-    data: CreateOrganizationUnitRepositoryData,
-  ): Promise<string> {
+  async create(data: CreateOrganizationUnitRepositoryData): Promise<string> {
+    const id = generateUuid();
     // المسار يُبنى داخل نفس الجملة: مسار الأب متبوعاً بتسمية الصف
     // الجديد، أو التسمية وحدها للجذور.
     const rows = await this.prisma.client.$queryRaw<{ id: string }[]>(
       Prisma.sql`
         WITH new_unit AS (
-          SELECT gen_random_uuid() AS id
+          SELECT ${id}::uuid AS id
         )
         INSERT INTO organization_unit (
           id, tenant_id, parent_id, zone_id, name, org_type,

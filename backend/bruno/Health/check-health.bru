@@ -1,0 +1,27 @@
+meta {
+  name: Health Check
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/health
+  body: none
+  auth: none
+}
+
+docs {
+# Health Check
+Returns the current health status and server timestamp.
+
+## Usage
+Public health monitoring endpoint for load balancers and uptime checks.
+
+## Response Example
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-07-30T15:00:00.000Z"
+}
+```
+}

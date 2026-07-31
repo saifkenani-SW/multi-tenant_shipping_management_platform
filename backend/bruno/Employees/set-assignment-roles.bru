@@ -1,0 +1,28 @@
+meta {
+  name: Set Assignment Roles
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{url}}/employees/{{employeeId}}/assignments/{{assignmentId}}/roles
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "roleIds": [
+      "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d1f"
+    ]
+  }
+}
+
+docs {
+  # Set Assignment Roles
+  Replaces the full set of roles granted to an employee at a specific organization unit assignment.
+}

@@ -28,60 +28,60 @@ export class CreateSubscriptionPlanDto {
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_branches?: number;
+  maxBranches?: number;
 
   @ApiPropertyOptional({ description: 'Max allowed warehouses', default: 2 })
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_warehouses?: number;
+  maxWarehouses?: number;
 
   @ApiPropertyOptional({ description: 'Max allowed employees', default: 20 })
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_employees?: number;
+  maxEmployees?: number;
 
   @ApiPropertyOptional({ description: 'Max allowed vehicles', default: 10 })
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_vehicles?: number;
+  maxVehicles?: number;
 
   @ApiPropertyOptional({ description: 'Max allowed zones', default: 3 })
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_zones?: number;
+  maxZones?: number;
 
   @ApiPropertyOptional({ description: 'Max monthly shipments allowed' })
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_monthly_shipments?: number;
+  maxMonthlyShipments?: number;
 
   @ApiPropertyOptional({ description: 'Max monthly parcels allowed' })
   @IsInt()
   @Min(0)
   @IsOptional()
-  max_monthly_parcels?: number;
+  maxMonthlyParcels?: number;
 
   @ApiPropertyOptional({ description: 'Monthly price', default: 0 })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @IsOptional()
-  price_monthly?: number;
+  priceMonthly?: number;
 
   @ApiPropertyOptional({ description: 'Yearly price' })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @IsOptional()
-  price_yearly?: number;
+  priceYearly?: number;
 
   @ApiPropertyOptional({ description: 'Is the plan active?', default: true })
   @IsBoolean()
   @IsOptional()
-  is_active?: boolean;
+  isActive?: boolean;
 }

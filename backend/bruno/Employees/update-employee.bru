@@ -1,0 +1,28 @@
+meta {
+  name: Update Employee Details
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/employees/{{employeeId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "fullName": "Sarah Jenkins Updated",
+    "nationalId": "1098765432",
+    "employeeCode": "EMP-0142"
+  }
+}
+
+docs {
+  # Update Employee
+  Updates personal and employment information for an employee. Note: Email and password are master account fields.
+}
