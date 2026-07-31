@@ -3,7 +3,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Kysely, PostgresDialect } from 'kysely';
 import { Pool } from 'pg';
 import { PrismaService } from './prisma.service';
-import { TransactionalPrismaService } from '../../core/transaction';
+import {
+  TransactionalPrismaService,
+  TransactionFacade,
+} from '../../packages/transaction';
 import { DB } from './generated/kysely/types';
 import { AppConfigModule } from '../config/app-config.module';
 
@@ -12,6 +15,7 @@ import { AppConfigModule } from '../config/app-config.module';
   imports: [AppConfigModule],
   providers: [
     PrismaService,
+    TransactionFacade,
     TransactionalPrismaService,
     {
       provide: 'KYSELY_INSTANCE',
@@ -27,6 +31,11 @@ import { AppConfigModule } from '../config/app-config.module';
       },
     },
   ],
-  exports: [PrismaService, TransactionalPrismaService, 'KYSELY_INSTANCE'],
+  exports: [
+    PrismaService,
+    TransactionFacade,
+    TransactionalPrismaService,
+    'KYSELY_INSTANCE',
+  ],
 })
 export class DatabaseModule {}

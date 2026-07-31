@@ -1,5 +1,8 @@
 import { Transactional } from './transactional.decorator';
-import { TransactionContext, TransactionClient } from './transaction.context';
+import {
+  TransactionContext,
+  TransactionClient,
+} from '../context/transaction.context';
 
 describe('@Transactional()', () => {
   it('should throw a clear error when prisma is not injected', async () => {

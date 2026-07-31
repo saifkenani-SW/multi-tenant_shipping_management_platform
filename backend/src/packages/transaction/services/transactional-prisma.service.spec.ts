@@ -1,5 +1,8 @@
 import { TransactionalPrismaService } from './transactional-prisma.service';
-import { TransactionContext, TransactionClient } from './transaction.context';
+import {
+  TransactionContext,
+  TransactionClient,
+} from '../context/transaction.context';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 
 describe('TransactionalPrismaService', () => {

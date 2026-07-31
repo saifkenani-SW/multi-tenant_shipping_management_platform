@@ -15,7 +15,7 @@ const storage = new AsyncLocalStorage<TransactionClient>();
  * Internal transaction context.
  *
  * This module is an implementation detail of the transaction infrastructure.
- * It must NEVER be imported outside src/core/transaction/.
+ * It must NEVER be imported outside src/packages/transaction/.
  */
 export const TransactionContext = {
   /**

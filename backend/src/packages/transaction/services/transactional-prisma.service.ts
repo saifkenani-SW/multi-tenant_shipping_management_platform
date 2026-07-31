@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../../infrastructure/database/prisma.service';
-import { TransactionContext, TransactionClient } from './transaction.context';
+import { PrismaService } from '../../../infrastructure/database/prisma.service';
+import {
+  TransactionContext,
+  TransactionClient,
+} from '../context/transaction.context';
 
 /**
  * Transaction-aware Prisma service.
