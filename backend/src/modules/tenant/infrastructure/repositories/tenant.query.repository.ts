@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
-import { DB } from '/home/saif/projects/backend/NestJS/multi-tenant_shipping_management_platform/backend/src/infrastructure/database/generated/kysely/types';
 import { ITenantQueryRepository } from '../../application/interfaces/tenant.query.repository.interface';
 import { Cacheable } from '../../../../infrastructure/cache/decorators/Cacheable';
 import {
@@ -15,6 +14,7 @@ import { TenantSubscription } from '../../domain/entities/tenant-subscription.en
 import { TenantSubscriptionHistory } from '../../domain/entities/tenant-subscription-history.entity';
 import type { TenantQueryCriteria } from '../../application/builders/query/tenant-query-criteria';
 import { TenantPersistenceMapper } from '../mappers/tenant.persistence.mapper';
+import { DB } from '../../../../infrastructure/database/generated/kysely/types';
 
 @Injectable()
 export class TenantQueryRepository implements ITenantQueryRepository {
