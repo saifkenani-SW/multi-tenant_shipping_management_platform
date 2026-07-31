@@ -5,8 +5,8 @@ import { Test } from '@nestjs/testing';
 import { EmployeeController } from './modules/employee/employee.controller';
 import { GlobalLocationController } from './modules/global-location/global-location.controller';
 import { OrganizationUnitController } from './modules/organization-unit/organization-unit.controller';
-import { PermissionController } from './modules/permission/permission.controller';
-import { RoleController } from './modules/role/role.controller';
+import { PermissionController } from './modules/authorization/permission/permission.controller';
+import { RoleController } from './modules/authorization/role/role.controller';
 
 /**
  * يبني وثيقة OpenAPI فعلياً من الكونترولرات الخمسة.

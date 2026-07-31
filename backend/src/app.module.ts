@@ -8,8 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
-import { PermissionModule } from './modules/permission/permission.module';
-import { RoleModule } from './modules/role/role.module';
+import { AuthorizationModule as ApplicationAuthorizationModule } from './modules/authorization/authorization.module';
 import { GlobalLocationModule } from './modules/global-location/global-location.module';
 import { OrganizationUnitModule } from './modules/organization-unit/organization-unit.module';
 import { EmployeeModule } from './modules/employee/employee.module';
@@ -51,8 +50,7 @@ import { ShipmentRequestModule } from './modules/shipment-request/shipment-reque
     TenantModule,
     SubscriptionPlanModule,
     ShipmentRequestModule,
-    PermissionModule,
-    RoleModule,
+    ApplicationAuthorizationModule,
     GlobalLocationModule,
     OrganizationUnitModule,
     EmployeeModule,
