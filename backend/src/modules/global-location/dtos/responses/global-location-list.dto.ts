@@ -17,7 +17,10 @@ export class GlobalLocationListDto {
 }
 
 export class PaginatedGlobalLocationListDto {
-  @ApiProperty({ description: 'List of locations', type: [GlobalLocationListDto] })
+  @ApiProperty({
+    description: 'List of locations',
+    type: [GlobalLocationListDto],
+  })
   data: GlobalLocationListDto[];
 
   @ApiProperty({

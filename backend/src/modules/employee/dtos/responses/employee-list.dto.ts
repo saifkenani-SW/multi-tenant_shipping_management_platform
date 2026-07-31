@@ -4,7 +4,10 @@ export class EmployeeListDto {
   @ApiProperty({ description: 'Unique identifier' })
   id: string;
 
-  @ApiProperty({ description: 'Code unique within the tenant', example: 'EMP-0142' })
+  @ApiProperty({
+    description: 'Code unique within the tenant',
+    example: 'EMP-0142',
+  })
   employeeCode: string;
 
   @ApiProperty({ description: 'Full name', example: 'Sara Haddad' })

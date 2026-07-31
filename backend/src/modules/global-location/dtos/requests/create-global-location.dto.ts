@@ -14,7 +14,11 @@ import {
 import { LocationType } from '../../enums/location-type.enum';
 
 export class CreateGlobalLocationDto {
-  @ApiProperty({ description: 'Location name', example: 'Amman', maxLength: 255 })
+  @ApiProperty({
+    description: 'Location name',
+    example: 'Amman',
+    maxLength: 255,
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(255)

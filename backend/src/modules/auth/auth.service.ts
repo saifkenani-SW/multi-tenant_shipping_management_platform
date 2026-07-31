@@ -5,7 +5,7 @@ import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { JwtPayload, UserLoginType } from './types/auth.types';
-import * as crypto from 'crypto';
+import { generateUuid } from '../../common/uuid';
 
 @Injectable()
 export class AuthService {
@@ -114,7 +114,7 @@ export class AuthService {
     type: UserLoginType,
     tenantId?: string,
   ) {
-    const sessionId = crypto.randomUUID();
+    const sessionId = generateUuid();
 
     const payload: JwtPayload = {
       sub: userId,
@@ -125,7 +125,7 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: process.env.JWT_ACCESS_SECRET || 'super-secret',
-      expiresIn: '15m',
+      expiresIn: '1d',
     });
 
     const refreshToken = this.jwtService.sign(payload, {

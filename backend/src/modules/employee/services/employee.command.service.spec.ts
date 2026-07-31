@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CacheContainer } from '../../../infrastructure/cache/container/CacheContainer';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { AuthorizationContainer } from '../../../packages/authorization/authorization.container';
+import { TransactionContainer } from '../../../packages/transaction';
 import { RequestContextService } from '../../../packages/context/services/request-context.service';
 import { PermissionCacheService } from '../../auth/authorization/services/permission-cache.service';
 import { Employee } from '../domain/employee.entity';
@@ -88,6 +89,9 @@ describe('EmployeeCommandService', () => {
       authorize: jest.fn().mockResolvedValue(undefined),
       buildScope: jest.fn().mockReturnValue({}),
       buildCapabilities: jest.fn().mockResolvedValue({}),
+    } as never);
+    jest.spyOn(TransactionContainer, 'get').mockReturnValue({
+      execute: jest.fn(async (fn) => fn({})),
     } as never);
 
     jest.spyOn(CacheContainer, 'get').mockReturnValue({

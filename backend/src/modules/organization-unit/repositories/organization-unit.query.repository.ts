@@ -63,7 +63,9 @@ export class OrganizationUnitQueryRepository implements IOrganizationUnitQueryRe
   async findMany(
     criteria: OrganizationUnitQueryCriteria,
   ): Promise<[OrganizationUnit[], number]> {
-    let query = this.kysely.selectFrom('organization_unit').select(UNIT_COLUMNS);
+    let query = this.kysely
+      .selectFrom('organization_unit')
+      .select(UNIT_COLUMNS);
     let countQuery = this.kysely
       .selectFrom('organization_unit')
       .select((eb) => eb.fn.count('id').as('count'));

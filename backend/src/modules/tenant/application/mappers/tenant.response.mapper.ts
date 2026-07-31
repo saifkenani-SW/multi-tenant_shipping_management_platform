@@ -1,0 +1,91 @@
+import { Injectable } from '@nestjs/common';
+import { Tenant } from '../../domain/entities/tenant.entity';
+import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
+import {
+  PaginatedTenantListDto,
+  TenantListDto,
+} from '../dtos/responses/tenant-list.dto';
+import { Pagination, PaginationMeta } from '../../../../common/pagination';
+import { TenantSubscription } from '../../domain/entities/tenant-subscription.entity';
+import { TenantSubscriptionHistory } from '../../domain/entities/tenant-subscription-history.entity';
+import { TenantSubscriptionDto } from '../dtos/responses/tenant-subscription.dto';
+import { TenantSubscriptionHistoryDto } from '../dtos/responses/tenant-subscription-history.dto';
+
+@Injectable()
+export class TenantResponseMapper {
+  toListDto(tenant: Tenant): TenantListDto {
+    const dto = new TenantListDto();
+    dto.id = tenant.id;
+    dto.name = tenant.name;
+    dto.logoUrl = tenant.logoUrl;
+    dto.status = tenant.status;
+    dto.createdAt = tenant.createdAt;
+    return dto;
+  }
+
+  toDetailsDto(tenant: Tenant): TenantDetailsDto {
+    const dto = new TenantDetailsDto();
+    dto.id = tenant.id;
+    dto.name = tenant.name;
+    dto.status = tenant.status;
+    dto.taxNumber = tenant.taxNumber;
+    dto.email = tenant.email;
+    dto.phone = tenant.phone;
+    dto.logoUrl = tenant.logoUrl;
+    dto.createdAt = tenant.createdAt;
+    dto.updatedAt = tenant.updatedAt;
+    dto.suspendedAt = tenant.suspendedAt;
+    dto.suspendedReason = tenant.suspendedReason;
+    return dto;
+  }
+
+  toPaginatedListDto(
+    tenants: Tenant[],
+    total: number,
+    pagination: Pagination,
+  ): PaginatedTenantListDto {
+    const dto = new PaginatedTenantListDto();
+    dto.data = tenants.map((tenant) => this.toListDto(tenant));
+    dto.meta = new PaginationMeta(pagination, total);
+    return dto;
+  }
+
+  toSubscriptionDto(subscription: TenantSubscription): TenantSubscriptionDto {
+    const dto = new TenantSubscriptionDto();
+    dto.id = subscription.id;
+    dto.tenantId = subscription.tenantId;
+    dto.planId = subscription.planId;
+    dto.status = subscription.status;
+    dto.startedAt = subscription.startedAt;
+    dto.expiresAt = subscription.expiresAt;
+    dto.snapshotMaxBranches = subscription.snapshotMaxBranches;
+    dto.snapshotMaxWarehouses = subscription.snapshotMaxWarehouses;
+    dto.snapshotMaxEmployees = subscription.snapshotMaxEmployees;
+    dto.snapshotMaxVehicles = subscription.snapshotMaxVehicles;
+    dto.snapshotMaxZones = subscription.snapshotMaxZones;
+    dto.snapshotMaxMonthlyShipments = subscription.snapshotMaxMonthlyShipments;
+    dto.snapshotMaxMonthlyParcels = subscription.snapshotMaxMonthlyParcels;
+    dto.snapshotFeatures = subscription.snapshotFeatures;
+    dto.createdAt = subscription.createdAt;
+    dto.updatedAt = subscription.updatedAt;
+    dto.cancelledAt = subscription.cancelledAt;
+    dto.cancellationReason = subscription.cancellationReason;
+    return dto;
+  }
+
+  toSubscriptionHistoryDto(
+    history: TenantSubscriptionHistory,
+  ): TenantSubscriptionHistoryDto {
+    const dto = new TenantSubscriptionHistoryDto();
+    dto.id = history.id;
+    dto.tenantId = history.tenantId;
+    dto.subscriptionId = history.subscriptionId;
+    dto.planId = history.planId;
+    dto.action = history.action;
+    dto.performedAt = history.performedAt;
+    dto.previousPlanId = history.previousPlanId;
+    dto.notes = history.notes;
+    dto.performedBy = history.performedBy;
+    return dto;
+  }
+}

@@ -1,4 +1,8 @@
 import {
+  SUBSCRIPTION_PLAN_COMMAND_SERVICE,
+  SUBSCRIPTION_PLAN_QUERY_SERVICE,
+} from './tokens/subscription-plan-service.tokens';
+import {
   Body,
   Controller,
   Get,
@@ -38,9 +42,9 @@ import { UserLoginType } from '../auth/types/auth.types';
 @Controller('subscription-plans')
 export class SubscriptionPlanController {
   constructor(
-    @Inject('ISubscriptionPlanCommandService')
+    @Inject(SUBSCRIPTION_PLAN_COMMAND_SERVICE)
     private readonly commandService: ISubscriptionPlanCommandService,
-    @Inject('ISubscriptionPlanQueryService')
+    @Inject(SUBSCRIPTION_PLAN_QUERY_SERVICE)
     private readonly queryService: ISubscriptionPlanQueryService,
   ) {}
 

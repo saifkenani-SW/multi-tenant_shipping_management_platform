@@ -31,7 +31,10 @@ export class CreateEmployeeDto {
   @MaxLength(72)
   password: string;
 
-  @ApiPropertyOptional({ description: 'Contact phone', example: '+962790000000' })
+  @ApiPropertyOptional({
+    description: 'Contact phone',
+    example: '+962790000000',
+  })
   @IsString()
   @IsOptional()
   @MaxLength(50)

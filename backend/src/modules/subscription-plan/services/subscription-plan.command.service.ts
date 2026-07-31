@@ -1,3 +1,4 @@
+import { SUBSCRIPTION_PLAN_COMMAND_REPOSITORY } from '../tokens/subscription-plan-repository.tokens';
 import { Inject, Injectable } from '@nestjs/common';
 import type { ISubscriptionPlanCommandRepository } from '../interfaces/subscription-plan.command.repository.interface';
 import { ISubscriptionPlanCommandService } from '../interfaces/subscription-plan.command.service.interface';
@@ -10,7 +11,7 @@ import { SUBSCRIPTION_PLAN_CACHE_KEYS } from '../constants/subscription-plan.cac
 @Injectable()
 export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandService {
   constructor(
-    @Inject('ISubscriptionPlanCommandRepository')
+    @Inject(SUBSCRIPTION_PLAN_COMMAND_REPOSITORY)
     private readonly planRepository: ISubscriptionPlanCommandRepository,
   ) {}
 
@@ -22,16 +23,16 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
     const plan = await this.planRepository.create({
       name: dto.name,
       description: dto.description,
-      max_branches: dto.max_branches ?? 5,
-      max_warehouses: dto.max_warehouses ?? 2,
-      max_employees: dto.max_employees ?? 20,
-      max_vehicles: dto.max_vehicles ?? 10,
-      max_zones: dto.max_zones ?? 3,
-      max_monthly_shipments: dto.max_monthly_shipments,
-      max_monthly_parcels: dto.max_monthly_parcels,
-      price_monthly: dto.price_monthly ?? 0,
-      price_yearly: dto.price_yearly,
-      is_active: dto.is_active ?? true,
+      max_branches: dto.maxBranches ?? 5,
+      max_warehouses: dto.maxWarehouses ?? 2,
+      max_employees: dto.maxEmployees ?? 20,
+      max_vehicles: dto.maxVehicles ?? 10,
+      max_zones: dto.maxZones ?? 3,
+      max_monthly_shipments: dto.maxMonthlyShipments,
+      max_monthly_parcels: dto.maxMonthlyParcels,
+      price_monthly: dto.priceMonthly ?? 0,
+      price_yearly: dto.priceYearly,
+      is_active: dto.isActive ?? true,
     });
     return plan.id;
   }
@@ -48,15 +49,15 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
     await this.planRepository.update(id, {
       name: dto.name,
       description: dto.description,
-      max_branches: dto.max_branches,
-      max_warehouses: dto.max_warehouses,
-      max_employees: dto.max_employees,
-      max_vehicles: dto.max_vehicles,
-      max_zones: dto.max_zones,
-      max_monthly_shipments: dto.max_monthly_shipments,
-      max_monthly_parcels: dto.max_monthly_parcels,
-      price_monthly: dto.price_monthly,
-      price_yearly: dto.price_yearly,
+      max_branches: dto.maxBranches,
+      max_warehouses: dto.maxWarehouses,
+      max_employees: dto.maxEmployees,
+      max_vehicles: dto.maxVehicles,
+      max_zones: dto.maxZones,
+      max_monthly_shipments: dto.maxMonthlyShipments,
+      max_monthly_parcels: dto.maxMonthlyParcels,
+      price_monthly: dto.priceMonthly,
+      price_yearly: dto.priceYearly,
     });
   }
 

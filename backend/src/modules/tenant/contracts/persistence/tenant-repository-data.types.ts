@@ -1,4 +1,4 @@
-import { Tenant } from '../../domain/tenant.entity';
+import { Tenant } from '../../domain/entities/tenant.entity';
 
 export type CreateTenantRepositoryData = Pick<
   Tenant,

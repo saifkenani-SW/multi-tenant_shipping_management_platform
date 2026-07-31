@@ -26,7 +26,9 @@ export class BillingSeeder implements Seeder {
     });
 
     if (!shipment || !customer || !employee || !orgUnit) {
-      this.logger.warn('Skipping BillingSeeder: missing shipment/customer/employee/orgUnit');
+      this.logger.warn(
+        'Skipping BillingSeeder: missing shipment/customer/employee/orgUnit',
+      );
       return;
     }
 

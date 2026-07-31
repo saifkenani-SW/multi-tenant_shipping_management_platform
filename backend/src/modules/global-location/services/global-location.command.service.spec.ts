@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { CacheContainer } from '../../../infrastructure/cache/container/CacheContainer';
 import { AuthorizationContainer } from '../../../packages/authorization/authorization.container';
+import { TransactionContainer } from '../../../packages/transaction';
 import { GlobalLocation } from '../domain/global-location.entity';
 import { LocationType } from '../enums/location-type.enum';
 import { GlobalLocationNotFoundException } from '../exceptions/global-location-not-found.exception';
@@ -46,6 +47,9 @@ describe('GlobalLocationCommandService', () => {
       authorize: jest.fn().mockResolvedValue(undefined),
       buildScope: jest.fn().mockReturnValue({}),
       buildCapabilities: jest.fn().mockResolvedValue({}),
+    } as never);
+    jest.spyOn(TransactionContainer, 'get').mockReturnValue({
+      execute: jest.fn(async (fn) => fn({})),
     } as never);
 
     jest.spyOn(CacheContainer, 'get').mockReturnValue({

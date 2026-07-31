@@ -27,7 +27,10 @@ export class PermissionListDto {
 }
 
 export class PaginatedPermissionListDto {
-  @ApiProperty({ description: 'List of permissions', type: [PermissionListDto] })
+  @ApiProperty({
+    description: 'List of permissions',
+    type: [PermissionListDto],
+  })
   data: PermissionListDto[];
 
   @ApiProperty({

@@ -36,7 +36,9 @@ export class TripManifestSeeder implements Seeder {
     });
 
     if (!driver || !orgUnit || !parcel1) {
-      this.logger.warn('Skipping TripManifestSeeder: missing driver/orgUnit/parcel');
+      this.logger.warn(
+        'Skipping TripManifestSeeder: missing driver/orgUnit/parcel',
+      );
       return;
     }
 

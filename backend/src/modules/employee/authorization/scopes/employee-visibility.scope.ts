@@ -21,9 +21,7 @@ import type { EmployeeScopeInterface } from './employee-scope.interface';
  */
 @Injectable()
 export class EmployeeVisibilityScope implements VisibilityScopeBuilder<EmployeeScopeInterface> {
-  buildScope(
-    context: AuthorizationContext<Principal>,
-  ): EmployeeScopeInterface {
+  buildScope(context: AuthorizationContext<Principal>): EmployeeScopeInterface {
     if (context.principal.subject.type === SubjectType.PLATFORM_ADMIN) {
       return {};
     }

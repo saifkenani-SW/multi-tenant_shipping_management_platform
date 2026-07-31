@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { Pagination } from '../../../common/pagination';
 import { AuthorizationContainer } from '../../../packages/authorization/authorization.container';
+import { TransactionContainer } from '../../../packages/transaction';
 import { PermissionQueryCriteriaBuilder } from '../builders/query/permission-query-criteria.builder';
 import { Permission } from '../domain/permission.entity';
 import { PermissionQueryDto } from '../dtos/requests/permission-query.dto';
@@ -35,6 +36,9 @@ describe('PermissionQueryService', () => {
       authorize: jest.fn().mockResolvedValue(undefined),
       buildScope: jest.fn().mockReturnValue({}),
       buildCapabilities: jest.fn().mockResolvedValue({ canView: true }),
+    } as never);
+    jest.spyOn(TransactionContainer, 'get').mockReturnValue({
+      execute: jest.fn(async (fn) => fn({})),
     } as never);
 
     const module: TestingModule = await Test.createTestingModule({

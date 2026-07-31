@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CacheContainer } from '../../../infrastructure/cache/container/CacheContainer';
 import { PrismaService } from '../../../infrastructure/database/prisma.service';
 import { AuthorizationContainer } from '../../../packages/authorization/authorization.container';
+import { TransactionContainer } from '../../../packages/transaction';
 import { RequestContextService } from '../../../packages/context/services/request-context.service';
 import { PermissionCacheService } from '../../auth/authorization/services/permission-cache.service';
 import { Role } from '../domain/role.entity';
@@ -65,6 +66,10 @@ describe('RoleCommandService', () => {
       buildCapabilities: jest.fn().mockResolvedValue({}),
     } as never);
 
+    jest.spyOn(TransactionContainer, 'get').mockReturnValue({
+      execute: jest.fn(async (fn) => fn({})),
+    } as never);
+
     // @CacheEvict يسحب الـ facade من حاوية عامة تُهيَّأ عند الإقلاع فقط
     jest.spyOn(CacheContainer, 'get').mockReturnValue({
       evict: jest.fn().mockResolvedValue(undefined),
@@ -118,9 +123,9 @@ describe('RoleCommandService', () => {
     it('يرفض اسماً مكرراً داخل نفس الـ tenant', async () => {
       queryRepository.existsByName.mockResolvedValue(true);
 
-      await expect(service.createRole({ name: 'Branch Manager' })).rejects.toThrow(
-        DuplicateRoleNameException,
-      );
+      await expect(
+        service.createRole({ name: 'Branch Manager' }),
+      ).rejects.toThrow(DuplicateRoleNameException);
       expect(commandRepository.create).not.toHaveBeenCalled();
     });
 
@@ -165,9 +170,9 @@ describe('RoleCommandService', () => {
     it('يرمي RoleNotFoundException عند الغياب', async () => {
       queryRepository.findById.mockResolvedValue(null);
 
-      await expect(service.updateRole('missing', { name: 'X' })).rejects.toThrow(
-        RoleNotFoundException,
-      );
+      await expect(
+        service.updateRole('missing', { name: 'X' }),
+      ).rejects.toThrow(RoleNotFoundException);
     });
 
     it('يسمح بإبقاء نفس الاسم دون اعتباره تكراراً', async () => {

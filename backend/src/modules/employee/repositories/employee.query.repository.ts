@@ -79,12 +79,20 @@ export class EmployeeQueryRepository implements IEmployeeQueryRepository {
 
     if (criteria.tenantId) {
       query = query.where('employee.tenant_id', '=', criteria.tenantId);
-      countQuery = countQuery.where('employee.tenant_id', '=', criteria.tenantId);
+      countQuery = countQuery.where(
+        'employee.tenant_id',
+        '=',
+        criteria.tenantId,
+      );
     }
 
     if (criteria.isActive !== undefined) {
       query = query.where('employee.is_active', '=', criteria.isActive);
-      countQuery = countQuery.where('employee.is_active', '=', criteria.isActive);
+      countQuery = countQuery.where(
+        'employee.is_active',
+        '=',
+        criteria.isActive,
+      );
     }
 
     if (criteria.organizationUnitId) {
@@ -243,9 +251,7 @@ export class EmployeeQueryRepository implements IEmployeeQueryRepository {
     return row?.tenant_id ?? null;
   }
 
-  async findRoleTenants(
-    roleIds: readonly string[],
-  ): Promise<IRoleTenantRow[]> {
+  async findRoleTenants(roleIds: readonly string[]): Promise<IRoleTenantRow[]> {
     if (roleIds.length === 0) {
       return [];
     }

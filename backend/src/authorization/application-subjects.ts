@@ -3,7 +3,7 @@ import { GlobalLocationSubject } from '../modules/global-location/authorization/
 import { OrganizationUnitSubject } from '../modules/organization-unit/authorization/subjects/organization-unit.subject';
 import { PermissionSubject } from '../modules/permission/authorization/subjects/permission.subject';
 import { RoleSubject } from '../modules/role/authorization/subjects/role.subject';
-import { TenantSubject } from '../modules/tenant/authorization/subjects/tenant.subject';
+import { TenantSubject } from '../modules/tenant/domain/authorization/subjects/tenant.subject';
 
 export type ApplicationSubjects =
   | typeof TenantSubject

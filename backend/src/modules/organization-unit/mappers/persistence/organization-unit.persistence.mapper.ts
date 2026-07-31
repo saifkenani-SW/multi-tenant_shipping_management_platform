@@ -45,9 +45,7 @@ export class OrganizationUnitPersistenceMapper {
     );
   }
 
-  private toPoint(
-    record: OrganizationUnitPersistenceRecord,
-  ): GeoPoint | null {
+  private toPoint(record: OrganizationUnitPersistenceRecord): GeoPoint | null {
     const longitude = this.toNumber(record.longitude);
     const latitude = this.toNumber(record.latitude);
 

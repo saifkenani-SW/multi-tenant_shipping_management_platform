@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
-import { TransactionalPrismaService } from '../../../core/transaction';
+import { generateUuid } from '../../../common/uuid';
+import { TransactionalPrismaService } from '../../../packages/transaction';
 import {
   CreateGlobalLocationRepositoryData,
   UpdateGlobalLocationRepositoryData,
@@ -20,11 +21,12 @@ export class GlobalLocationCommandRepository implements IGlobalLocationCommandRe
   constructor(private readonly prisma: TransactionalPrismaService) {}
 
   async create(data: CreateGlobalLocationRepositoryData): Promise<string> {
+    const id = generateUuid();
     const rows = await this.prisma.client.$queryRaw<{ id: string }[]>(
       Prisma.sql`
         INSERT INTO global_location (id, name, type, parent_id, location)
         VALUES (
-          gen_random_uuid(),
+          ${id}::uuid,
           ${data.name},
           ${data.type}::"LocationType",
           ${data.parentId}::uuid,

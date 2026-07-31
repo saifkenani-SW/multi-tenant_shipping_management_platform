@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { TransactionalPrismaService } from '../../../core/transaction';
+import { TransactionalPrismaService } from '../../../packages/transaction';
 import {
   CreateAssignmentRepositoryData,
   CreateEmployeeRepositoryData,
@@ -39,10 +39,7 @@ export class EmployeeCommandRepository implements IEmployeeCommandRepository {
     return employee.id;
   }
 
-  async update(
-    id: string,
-    data: UpdateEmployeeRepositoryData,
-  ): Promise<void> {
+  async update(id: string, data: UpdateEmployeeRepositoryData): Promise<void> {
     await this.prisma.client.employee.update({
       where: { id },
       data: {
