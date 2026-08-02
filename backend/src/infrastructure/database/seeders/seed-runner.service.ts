@@ -17,6 +17,7 @@ import { PlatformOwnerSeeder } from './system/platform-owner.seeder';
 import { SubscriptionPlanSeeder } from './system/subscription-plan.seeder';
 import { UserSeeder } from './system/user.seeder';
 import { TenantSeeder } from './tenant/tenant.seeder';
+import { SuperUserSeeder } from './demo/super-user.seeder';
 
 @Injectable()
 export class SeedRunner {
@@ -40,6 +41,7 @@ export class SeedRunner {
     private readonly parcelSeeder: ParcelSeeder,
     private readonly tripManifestSeeder: TripManifestSeeder,
     private readonly supportNotificationSeeder: SupportNotificationSeeder,
+    private readonly superUserSeeder: SuperUserSeeder,
   ) {}
 
   async run(): Promise<void> {
@@ -76,6 +78,9 @@ export class SeedRunner {
 
       // 7. Support, Notifications & Audit Logs
       this.supportNotificationSeeder, // support_ticket, support_ticket_message, notification, audit_log
+
+      // 8. Demo Accounts
+      this.superUserSeeder,
     ];
 
     await this.runSeeders(topologicalSeeders);

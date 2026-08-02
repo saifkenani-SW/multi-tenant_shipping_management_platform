@@ -1,0 +1,27 @@
+meta {
+  name: Update Pricing Settings
+  type: http
+  seq: 16
+}
+
+patch {
+  url: {{url}}/tenants/{{tenantId}}/settings/pricing
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "defaultCurrency": "USD",
+    "volumetricDivisor": 5000
+  }
+}
+
+docs {
+  # Update Pricing Settings
+  Updates the pricing settings for a given tenant. All fields are optional.
+}

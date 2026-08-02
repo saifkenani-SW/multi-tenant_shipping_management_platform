@@ -19,6 +19,7 @@ import { PlatformOwnerSeeder } from './system/platform-owner.seeder';
 import { SubscriptionPlanSeeder } from './system/subscription-plan.seeder';
 import { UserSeeder } from './system/user.seeder';
 import { TenantSeeder } from './tenant/tenant.seeder';
+import { SuperUserSeeder } from './demo/super-user.seeder';
 
 const SEEDERS = [
   SeedRunner,
@@ -39,6 +40,7 @@ const SEEDERS = [
   ParcelSeeder,
   TripManifestSeeder,
   SupportNotificationSeeder,
+  SuperUserSeeder,
 ];
 
 @Module({

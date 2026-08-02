@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SubscriptionPlanCommandRepository } from './subscription-plan.command.repository';
-import { TransactionalPrismaService } from '../../../core/transaction';
+import { TransactionalPrismaService } from '../../../packages/transaction';
 import { NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 

@@ -1,0 +1,14 @@
+export enum RoleType {
+  PLATFORM_OWNER = 'PLATFORM_OWNER',
+  PLATFORM_ADMIN = 'PLATFORM_ADMIN',
+  TENANT_ADMIN = 'TENANT_ADMIN',
+  TENANT_USER = 'TENANT_USER',
+  EMPLOYEE = 'EMPLOYEE',
+  DRIVER = 'DRIVER',
+  CUSTOMER = 'CUSTOMER',
+}
+
+export enum RoleSearchField {
+  NAME = 'name',
+  DESCRIPTION = 'description',
+}

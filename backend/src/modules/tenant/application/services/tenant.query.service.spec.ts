@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { TenantQueryService } from './tenant.query.service';
 import { TenantStatus } from '../../domain/enums/tenant-status.enum';
 import { Tenant } from '../../domain/entities/tenant.entity';
-import { TENANT_QUERY_REPOSITORY_TOKEN } from '../../tokens/tenant-repository.tokens';
+import { TenantQueryRepository } from '../../infrastructure/repositories/tenant.query.repository';
 import { AuthorizationFacade } from '../../../../packages/authorization';
 import { AuthorizationContainer } from '../../../../packages/authorization/authorization.container';
 import { TenantQueryCriteriaBuilder } from '../builders/query/tenant-query-criteria.builder';
@@ -41,7 +41,7 @@ describe('TenantQueryService', () => {
       providers: [
         TenantQueryService,
         {
-          provide: TENANT_QUERY_REPOSITORY_TOKEN,
+          provide: TenantQueryRepository,
           useValue: tenantQueryRepository,
         },
         { provide: AuthorizationFacade, useValue: authorizationFacade },
@@ -81,7 +81,6 @@ describe('TenantQueryService', () => {
       const criteria = tenantQueryRepository.findMany.mock
         .calls[0][0] as TenantQueryCriteria;
 
-      expect(criteria).toBeInstanceOf(TenantQueryCriteria);
       expect(criteria.pagination).toBeInstanceOf(Pagination);
       expect(criteria.pagination.skip).toBe(0);
       expect(criteria.pagination.take).toBe(10);

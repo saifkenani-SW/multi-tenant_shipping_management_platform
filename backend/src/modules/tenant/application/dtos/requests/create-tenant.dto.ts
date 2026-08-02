@@ -1,4 +1,10 @@
-import { IsEmail, IsNotEmpty, IsPhoneNumber, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsPhoneNumber,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTenantDto {
@@ -33,4 +39,12 @@ export class CreateTenantDto {
   @IsPhoneNumber()
   @IsNotEmpty()
   phone: string;
+
+  @ApiProperty({
+    description: 'The UUID of the existing User who will own this Tenant',
+    example: '01910b80-6e42-7000-8000-000000000000',
+  })
+  @IsUUID(7)
+  @IsNotEmpty()
+  ownerUserId: string;
 }

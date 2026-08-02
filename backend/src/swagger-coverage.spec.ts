@@ -5,8 +5,10 @@ import { Test } from '@nestjs/testing';
 import { EmployeeController } from './modules/employee/employee.controller';
 import { GlobalLocationController } from './modules/global-location/global-location.controller';
 import { OrganizationUnitController } from './modules/organization-unit/organization-unit.controller';
-import { PermissionController } from './modules/permission/permission.controller';
-import { RoleController } from './modules/role/role.controller';
+import { PermissionController } from './modules/authorization/permission.controller';
+import { RoleController } from './modules/authorization/role.controller';
+import { RoleService } from './modules/authorization/services/role.service';
+import { PermissionService } from './modules/authorization/services/permission.service';
 
 /**
  * يبني وثيقة OpenAPI فعلياً من الكونترولرات الخمسة.
@@ -30,9 +32,8 @@ describe('تغطية Swagger للموديولات الجديدة', () => {
         EmployeeController,
       ],
       providers: [
-        { provide: 'IPermissionQueryService', useValue: noop },
-        { provide: 'IRoleCommandService', useValue: noop },
-        { provide: 'IRoleQueryService', useValue: noop },
+        { provide: PermissionService, useValue: noop },
+        { provide: RoleService, useValue: noop },
         { provide: 'IGlobalLocationCommandService', useValue: noop },
         { provide: 'IGlobalLocationQueryService', useValue: noop },
         { provide: 'IOrganizationUnitCommandService', useValue: noop },

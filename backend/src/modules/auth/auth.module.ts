@@ -12,6 +12,7 @@ import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { PermissionCacheService } from './authorization/services/permission-cache.service';
 import { UserTypeGuard } from './authorization/guards/user-type.guard';
 import { PermissionsGuard } from './authorization/guards/permissions.guard';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { PermissionsGuard } from './authorization/guards/permissions.guard';
         limit: 5,
       },
     ]),
+    UserModule,
   ],
   controllers: [AuthController],
   providers: [
