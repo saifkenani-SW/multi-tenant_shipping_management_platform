@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ConfigService } from '@nestjs/config'; // استدعاء ConfigService
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -8,7 +9,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CustomerModule } from './modules/customer/customer.module';
 import { TenantModule } from './modules/tenant/tenant.module';
 import { SubscriptionPlanModule } from './modules/subscription-plan/subscription-plan.module';
-import { AuthorizationModule as ApplicationAuthorizationModule } from './modules/authorization/authorization.module';
+import { AuthorizationModule as AuthorizationBusinessModule } from './modules/authorization/authorization.module';
 import { GlobalLocationModule } from './modules/global-location/global-location.module';
 import { OrganizationUnitModule } from './modules/organization-unit/organization-unit.module';
 import { EmployeeModule } from './modules/employee/employee.module';
@@ -21,12 +22,20 @@ import { AuthorizationModule } from './packages/authorization';
 import { ContextModule } from './packages/context/context.module';
 import { HealthModule } from './health/health.module';
 import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
+import { VehicleModule } from './modules/vehicle/vehicle.module';
+import { ShipmentModule } from './modules/shipment/shipment.module';
+import { UserModule } from './modules/user/user.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
+import { LabelGeneratorModule } from './packages/label-generator/label-generator.module';
+import { PdfGeneratorModule } from './packages/pdf-generator/pdf-generator.module';
+import { StorageModule } from './packages/storage/src/storage.module';
 
 @Module({
   imports: [
     ContextModule,
     CaslModule.forRoot(),
     AuthorizationModule,
+    EventEmitterModule.forRoot(),
     LoggerModule.forRoot(),
     AppConfigModule,
     DatabaseModule,
@@ -49,11 +58,18 @@ import { ShipmentRequestModule } from './modules/shipment-request/shipment-reque
     CustomerModule,
     TenantModule,
     SubscriptionPlanModule,
+    ShipmentModule,
     ShipmentRequestModule,
-    ApplicationAuthorizationModule,
+    AuthorizationBusinessModule,
     GlobalLocationModule,
     OrganizationUnitModule,
     EmployeeModule,
+    VehicleModule,
+    UserModule,
+    TrackingModule,
+    LabelGeneratorModule,
+    PdfGeneratorModule,
+    StorageModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

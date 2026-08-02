@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
-import { ITenantQueryRepository } from '../../application/interfaces/tenant.query.repository.interface';
+
 import { Cacheable } from '../../../../infrastructure/cache/decorators/Cacheable';
 import {
   TENANT_CACHE_KEYS,
@@ -17,7 +17,7 @@ import { TenantPersistenceMapper } from '../mappers/tenant.persistence.mapper';
 import { DB } from '../../../../infrastructure/database/generated/kysely/types';
 
 @Injectable()
-export class TenantQueryRepository implements ITenantQueryRepository {
+export class TenantQueryRepository {
   constructor(
     @Inject('KYSELY_INSTANCE')
     private readonly kysely: Kysely<DB>,
@@ -127,6 +127,13 @@ export class TenantQueryRepository implements ITenantQueryRepository {
     return this.tenantPersistenceMapper.toDomain(record as any);
   }
 
+  @Cacheable({
+    ttl: TENANT_CACHE_TTL.SUBSCRIPTION,
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+      tenantId,
+    ],
+  })
   async findActiveSubscription(
     tenantId: string,
   ): Promise<TenantSubscription | null> {
@@ -142,6 +149,13 @@ export class TenantQueryRepository implements ITenantQueryRepository {
     return this.tenantPersistenceMapper.toSubscriptionDomain(record as any);
   }
 
+  @Cacheable({
+    ttl: TENANT_CACHE_TTL.SUBSCRIPTION,
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+      tenantId,
+    ],
+  })
   async findSubscriptionHistory(
     tenantId: string,
   ): Promise<TenantSubscriptionHistory[]> {
@@ -155,5 +169,50 @@ export class TenantQueryRepository implements ITenantQueryRepository {
     return records.map((record) =>
       this.tenantPersistenceMapper.toSubscriptionHistoryDomain(record as any),
     );
+  }
+
+  @Cacheable({
+    ttl: TENANT_CACHE_TTL.SETTINGS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.SETTINGS, id],
+  })
+  async getTenantSettings(tenantId: string): Promise<any | null> {
+    const record = await this.kysely
+      .selectFrom('tenant as t')
+      .leftJoin('tenant_delivery_settings as d', 't.id', 'd.tenant_id')
+      .leftJoin('tenant_operational_settings as o', 't.id', 'o.tenant_id')
+      .leftJoin('tenant_pricing_settings as p', 't.id', 'p.tenant_id')
+      .where('t.id', '=', tenantId)
+      .select([
+        // Delivery
+        'd.require_otp',
+        'd.require_signature',
+        'd.require_proof_photo',
+        'd.require_id_photo',
+        'd.allow_representative',
+        // Operational
+        'o.tracking_prefix',
+        'o.auto_close_shipment_after_collection',
+        'o.allow_shipment_reopen',
+        'o.allow_trip_cancellation_after_loading',
+        'o.require_manager_before_trip_departure',
+        'o.allow_return_after_collection',
+        'o.quotation_validity_hours',
+        // Pricing
+        'p.volumetric_divisor',
+        'p.default_currency',
+      ])
+      .executeTakeFirst();
+
+    return record || null;
+  }
+
+  async isTenantOwner(tenantId: string, userId: string): Promise<boolean> {
+    const record = await this.kysely
+      .selectFrom('tenant_owner')
+      .select('id')
+      .where('tenant_id', '=', tenantId)
+      .where('user_id', '=', userId)
+      .executeTakeFirst();
+    return !!record;
   }
 }

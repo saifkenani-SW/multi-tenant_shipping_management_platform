@@ -1,20 +1,43 @@
 import { Injectable } from '@nestjs/common';
 import { TransactionalPrismaService } from '../../../../packages/transaction';
-import {
-  ITenantCommandRepository,
-  CreateTenantData,
-  UpdateTenantData,
-  CreateSubscriptionData,
-} from '../../application/interfaces/tenant.command.repository.interface';
+import { Tenant } from '../../domain/entities/tenant.entity';
+
+export type CreateTenantData = Pick<
+  Tenant,
+  'name' | 'taxNumber' | 'email' | 'phone' | 'logoUrl'
+>;
+export type UpdateTenantData = Partial<CreateTenantData>;
+
+export type CreateSubscriptionData = Pick<
+  TenantSubscription,
+  | 'createdAt'
+  | 'expiresAt'
+  | 'id'
+  | 'planId'
+  | 'snapshotFeatures'
+  | 'snapshotMaxBranches'
+  | 'snapshotMaxEmployees'
+  | 'snapshotMaxMonthlyParcels'
+  | 'snapshotMaxMonthlyShipments'
+  | 'snapshotMaxVehicles'
+  | 'snapshotMaxWarehouses'
+  | 'snapshotMaxZones'
+  | 'startedAt'
+  | 'status'
+  | 'tenantId'
+  | 'updatedAt'
+  | 'cancelledAt'
+  | 'cancellationReason'
+>;
+export type UpdateSubscriptionData = Partial<CreateSubscriptionData>;
 import { TenantStatus } from '../../domain/enums/tenant-status.enum';
 import { SubscriptionStatus } from '@prisma/client';
-import { Tenant } from '../../domain/entities/tenant.entity';
 import { TenantPersistenceMapper } from '../mappers/tenant.persistence.mapper';
 import { TenantSubscription } from '../../domain/entities/tenant-subscription.entity';
 import { TenantSubscriptionHistory } from '../../domain/entities/tenant-subscription-history.entity';
 
 @Injectable()
-export class TenantCommandRepository implements ITenantCommandRepository {
+export class TenantCommandRepository {
   constructor(
     private readonly prisma: TransactionalPrismaService,
     private readonly tenantPersistenceMapper: TenantPersistenceMapper,

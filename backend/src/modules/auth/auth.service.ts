@@ -4,59 +4,132 @@ import { PrismaService } from '../../infrastructure/database/prisma.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
+import { SelectProfileDto } from './dtos/select-profile.dto';
 import { JwtPayload, UserLoginType } from './types/auth.types';
 import { generateUuid } from '../../common/uuid';
+import { UserFacade } from '../user/application/facades/user.facade';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly userFacade: UserFacade,
   ) {}
 
   async login(loginDto: LoginDto) {
-    const user = await this.prisma.users.findUnique({
-      where: { email: loginDto.email },
-      include: {
-        employee: true,
-        platform_admin: true,
-        customer_profile: true,
-      },
-    });
+    const identity = await this.userFacade.getIdentityByEmail(loginDto.email);
 
-    if (!user) {
+    if (!identity) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const isPasswordValid = await bcrypt.compare(
       loginDto.password,
-      user.password_hash,
+      identity.passwordHash,
     );
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    let type: UserLoginType = UserLoginType.CUSTOMER;
-    let tenantId: string | undefined;
+    const activeProfiles = identity.profiles.filter((p) => p.isActive);
 
-    if (user.platform_admin && user.platform_admin.is_active) {
-      type = UserLoginType.PLATFORM_ADMIN;
-    } else if (user.employee && user.employee.length > 0) {
-      const activeEmployee = user.employee.find((e: any) => e.is_active);
-      if (activeEmployee) {
-        type = UserLoginType.EMPLOYEE;
-        tenantId = activeEmployee.tenant_id;
-      } else {
-        throw new UnauthorizedException('Account deactivated');
-      }
-    } else if (user.customer_profile) {
-      type = UserLoginType.CUSTOMER;
-    } else {
-      throw new UnauthorizedException('User profile not found');
+    if (activeProfiles.length === 0) {
+      throw new UnauthorizedException(
+        'Account deactivated or no active profiles found',
+      );
     }
 
-    const tokens = await this.generateTokens(user.id, type, tenantId);
-    return { ...tokens, user: { id: user.id, email: user.email, type } };
+    // If only one profile, log them in directly
+    if (activeProfiles.length === 1) {
+      const profile = activeProfiles[0];
+      const tokens = await this.generateTokens(
+        identity.userId,
+        profile.type,
+        profile.tenantId,
+        profile.employeeId,
+        profile.vehicleId,
+      );
+      return {
+        ...tokens,
+        user: {
+          id: identity.userId,
+          email: loginDto.email,
+          type: profile.type,
+          tenantId: profile.tenantId,
+        },
+      };
+    }
+
+    // Multiple profiles: return a session token to select a profile
+    const sessionToken = this.jwtService.sign(
+      { sub: identity.userId, isSessionToken: true },
+      {
+        secret: process.env.JWT_ACCESS_SECRET || 'super-secret',
+        expiresIn: '15m',
+      },
+    );
+
+    const profilesForClient = activeProfiles.map((p) => ({
+      type: p.type,
+      tenantId: p.tenantId,
+      isActive: p.isActive,
+    }));
+
+    return {
+      status: 'REQUIRE_PROFILE_SELECTION',
+      sessionToken,
+      profiles: profilesForClient,
+      user: { id: identity.userId, email: loginDto.email },
+    };
+  }
+
+  async selectProfile(userId: string, selectProfileDto: SelectProfileDto) {
+    // 1. Find user and their profiles via Facade (to ensure they actually own this profile)
+    // We need the email to use getIdentityByEmail. Let's fetch the email from DB directly or just use a generic query
+    const user = await this.prisma.users.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+
+    const identity = await this.userFacade.getIdentityByEmail(user.email);
+    if (!identity) throw new UnauthorizedException('Identity not found');
+
+    // 2. Verify that the requested profile exists and is active for this user
+    const requestedProfile = identity.profiles.find((p) => {
+      if (
+        p.type === UserLoginType.PLATFORM_ADMIN ||
+        p.type === UserLoginType.CUSTOMER
+      ) {
+        return p.type === selectProfileDto.type && p.isActive;
+      }
+      return (
+        p.type === selectProfileDto.type &&
+        p.tenantId === selectProfileDto.tenantId &&
+        p.isActive
+      );
+    });
+
+    if (!requestedProfile) {
+      throw new UnauthorizedException('Invalid or inactive profile selected');
+    }
+
+    // 3. Generate final tokens
+    const tokens = await this.generateTokens(
+      userId,
+      requestedProfile.type,
+      requestedProfile.tenantId,
+      requestedProfile.employeeId,
+      requestedProfile.vehicleId,
+    );
+    return {
+      ...tokens,
+      user: {
+        id: userId,
+        email: user.email,
+        type: requestedProfile.type,
+        tenantId: requestedProfile.tenantId,
+      },
+    };
   }
 
   async refreshToken(dto: RefreshTokenDto) {
@@ -101,6 +174,8 @@ export class AuthService {
       payload.sub,
       payload.type,
       payload.tenantId,
+      payload.profileId,
+      payload.vehicleId,
     );
   }
   async logout(sessionId: string) {
@@ -113,6 +188,8 @@ export class AuthService {
     userId: string,
     type: UserLoginType,
     tenantId?: string,
+    profileId?: string,
+    vehicleId?: string,
   ) {
     const sessionId = generateUuid();
 
@@ -121,6 +198,8 @@ export class AuthService {
       sessionId,
       type,
       tenantId,
+      profileId,
+      vehicleId,
     };
 
     const accessToken = this.jwtService.sign(payload, {

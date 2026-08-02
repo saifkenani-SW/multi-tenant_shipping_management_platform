@@ -66,7 +66,6 @@ export class ParcelSeeder implements Seeder {
           current_status: ParcelStatus.IN_TRANSIT,
           current_condition: ParcelCondition.NORMAL,
           current_org_unit_id: orgUnit.id,
-          qr_code_url: `https://cdn.fastship.com/qr/${p.trackingNumber}.png`,
         },
       });
     }

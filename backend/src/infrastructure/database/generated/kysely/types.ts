@@ -15,8 +15,8 @@ export const RequestStatus = {
 } as const;
 export type RequestStatus = (typeof RequestStatus)[keyof typeof RequestStatus];
 export const ParcelStatus = {
-    CREATED: "CREATED",
-    READY_FOR_TRANSPORT: "READY_FOR_TRANSPORT",
+    PROCESSING: "PROCESSING",
+    READY_FOR_DISPATCH: "READY_FOR_DISPATCH",
     IN_TRANSIT: "IN_TRANSIT",
     READY_FOR_COLLECTION: "READY_FOR_COLLECTION",
     COLLECTED: "COLLECTED",
@@ -28,14 +28,18 @@ export const ParcelCondition = {
     NORMAL: "NORMAL",
     DAMAGED: "DAMAGED",
     OPENED: "OPENED",
-    LOST: "LOST"
+    LOST: "LOST",
+    DESTROYED: "DESTROYED"
 } as const;
 export type ParcelCondition = (typeof ParcelCondition)[keyof typeof ParcelCondition];
 export const ShipmentStatus = {
+    PENDING: "PENDING",
     PROCESSING: "PROCESSING",
+    READY_FOR_DISPATCH: "READY_FOR_DISPATCH",
     IN_TRANSIT: "IN_TRANSIT",
     READY_FOR_COLLECTION: "READY_FOR_COLLECTION",
     DELIVERED: "DELIVERED",
+    CANCELLED: "CANCELLED",
     RETURNED: "RETURNED"
 } as const;
 export type ShipmentStatus = (typeof ShipmentStatus)[keyof typeof ShipmentStatus];
@@ -170,11 +174,11 @@ export type LocationType = (typeof LocationType)[keyof typeof LocationType];
 export const ActionType = {
     RECEIVED_AT_BRANCH: "RECEIVED_AT_BRANCH",
     LOADED_ON_TRIP: "LOADED_ON_TRIP",
-    IN_TRANSIT: "IN_TRANSIT",
+    TRIP_DEPARTED: "TRIP_DEPARTED",
     ARRIVED_AT_FACILITY: "ARRIVED_AT_FACILITY",
     READY_FOR_COLLECTION: "READY_FOR_COLLECTION",
     COLLECTED: "COLLECTED",
-    RETURNED: "RETURNED",
+    RETURN_COMPLETED: "RETURN_COMPLETED",
     CANCELLED: "CANCELLED",
     CONDITION_UPDATED: "CONDITION_UPDATED",
     POD_COMPLETED: "POD_COMPLETED",
@@ -247,7 +251,8 @@ export type customer_profile = {
 export type customer_shipment = {
     id: string;
     tenant_id: string;
-    customer_profile_id: string;
+    sender_customer_profile_id: string;
+    receiver_customer_profile_id: string | null;
     shipment_request_id: string | null;
     approved_quotation_id: string | null;
     receiver_name: string;
@@ -363,7 +368,6 @@ export type parcel = {
     current_status: Generated<ParcelStatus>;
     current_condition: Generated<ParcelCondition>;
     current_org_unit_id: string | null;
-    qr_code_url: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };
@@ -371,12 +375,21 @@ export type parcel_movement = {
     id: string;
     tenant_id: string;
     parcel_id: string;
-    organization_unit_id: string | null;
     trip_id: string | null;
-    action_type: ActionType;
-    parcel_status_snapshot: ParcelStatus;
-    parcel_condition_snapshot: Generated<ParcelCondition>;
+    organization_unit_id: string | null;
     performed_by_employee_id: string;
+    action_type: ActionType;
+    previous_status: ParcelStatus | null;
+    new_status: ParcelStatus;
+    previous_condition: ParcelCondition | null;
+    new_condition: ParcelCondition;
+    organization_unit_name: string | null;
+    organization_type: OrgType | null;
+    organization_latitude: string | null;
+    organization_longitude: string | null;
+    trip_number: string | null;
+    performed_by_name: string;
+    metadata: unknown | null;
     notes: string | null;
     created_at: Generated<Timestamp>;
 };
@@ -547,12 +560,20 @@ export type tenant_delivery_settings = {
 };
 export type tenant_operational_settings = {
     tenant_id: string;
+    tracking_prefix: string | null;
     auto_close_shipment_after_collection: Generated<boolean>;
     allow_shipment_reopen: Generated<boolean>;
     allow_trip_cancellation_after_loading: Generated<boolean>;
     require_manager_before_trip_departure: Generated<boolean>;
     allow_return_after_collection: Generated<boolean>;
     quotation_validity_hours: Generated<number>;
+};
+export type tenant_owner = {
+    id: string;
+    tenant_id: string;
+    user_id: string;
+    is_primary: Generated<boolean>;
+    created_at: Generated<Timestamp>;
 };
 export type tenant_pricing_settings = {
     tenant_id: string;
@@ -650,6 +671,15 @@ export type vehicle = {
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };
+export type vehicle_assignment = {
+    id: string;
+    tenant_id: string;
+    employee_id: string;
+    vehicle_id: string;
+    is_active: Generated<boolean>;
+    assigned_at: Generated<Timestamp>;
+    removed_at: Timestamp | null;
+};
 export type zone_pricing_matrix = {
     id: string;
     tenant_id: string;
@@ -693,6 +723,7 @@ export type DB = {
     tenant: tenant;
     tenant_delivery_settings: tenant_delivery_settings;
     tenant_operational_settings: tenant_operational_settings;
+    tenant_owner: tenant_owner;
     tenant_pricing_settings: tenant_pricing_settings;
     tenant_subscription: tenant_subscription;
     tenant_subscription_history: tenant_subscription_history;
@@ -702,5 +733,6 @@ export type DB = {
     user_session: user_session;
     users: users;
     vehicle: vehicle;
+    vehicle_assignment: vehicle_assignment;
     zone_pricing_matrix: zone_pricing_matrix;
 };

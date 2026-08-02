@@ -12,6 +12,12 @@ export interface IAssignmentOwnerRow {
   readonly tenantId: string;
 }
 
+export interface IScopeAccessRow {
+  readonly scopeId: string;
+  readonly orgType: string;
+  readonly roleId: string;
+}
+
 export interface IEmployeeQueryRepository {
   findMany(criteria: EmployeeQueryCriteria): Promise<[Employee[], number]>;
 
@@ -41,4 +47,13 @@ export interface IEmployeeQueryRepository {
 
   /** يرجّع الشركة المالكة لكل دور من القائمة. */
   findRoleTenants(roleIds: readonly string[]): Promise<IRoleTenantRow[]>;
+
+  /**
+   * يجلب كل المنشآت (فروع ومستودعات) التابعة للموظف عبر شجرة المواقع (ltree)
+   * مع جميع أدوارها (قد يكون للمنشأة الواحدة أكثر من دور).
+   */
+  getEmployeeAssignmentsWithRoles(
+    userId: string,
+    tenantId: string,
+  ): Promise<IScopeAccessRow[]>;
 }
