@@ -45,7 +45,7 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
 
     // Only populate principal if it's not a session token
     if (!user.isSessionToken) {
-      await this.populatePrincipal(user);
+      await this.populatePrincipal(user, request);
     }
 
     return true;
@@ -61,11 +61,13 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
     return user;
   }
 
-  private async populatePrincipal(user: any) {
+  private async populatePrincipal(user: any, request?: any) {
     // 1. Platform Admin
     if (user.type === UserLoginType.PLATFORM_ADMIN) {
+      const tenantId = request?.headers?.['x-tenant-id'] as string | undefined;
       this.requestContext.setPrincipal({
         subject: { id: user.sub, type: SubjectType.PLATFORM_ADMIN },
+        tenantId,
         branches: [],
         warehouses: [],
       });
@@ -110,12 +112,19 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
     // 5. Employee
     if (user.type === UserLoginType.EMPLOYEE) {
       // Lazy load EmployeeFacade to avoid Circular Dependency
-      const employeeFacade = this.moduleRef.get(EmployeeFacade, { strict: false });
-      
-      const principalDetails = await employeeFacade.getPrincipalByUserId(user.sub, user.tenantId);
-      
+      const employeeFacade = this.moduleRef.get(EmployeeFacade, {
+        strict: false,
+      });
+
+      const principalDetails = await employeeFacade.getPrincipalByUserId(
+        user.sub,
+        user.tenantId,
+      );
+
       if (!principalDetails) {
-        throw new UnauthorizedException('Employee assignments not found or deactivated');
+        throw new UnauthorizedException(
+          'Employee assignments not found or deactivated',
+        );
       }
 
       this.requestContext.setPrincipal({

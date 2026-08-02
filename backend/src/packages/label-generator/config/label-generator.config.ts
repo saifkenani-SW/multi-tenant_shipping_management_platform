@@ -22,8 +22,8 @@ export const labelGeneratorConfig = {
     maxHeight: '80px',
   },
   colors: {
-    primary: '26, 86, 232',   // Figma Blue Primary (rgb)
-    secondary: '210, 54, 0',  // Figma Orange Secondary (rgb)
+    primary: '26, 86, 232', // Figma Blue Primary (rgb)
+    secondary: '210, 54, 0', // Figma Orange Secondary (rgb)
   },
   typography: {
     fontFamily: 'Arial, sans-serif',

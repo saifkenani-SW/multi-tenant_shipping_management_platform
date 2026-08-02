@@ -1,0 +1,24 @@
+meta {
+  name: Get Customer Shipments
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{url}}/shipments/customer
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+vars:pre-request {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMTAiLCJzZXNzaW9uSWQiOiIwMTlmYzIxMy03MjczLTc1MWYtODI1Yy03M2Y1Y2Q3YzEyNDIiLCJ0eXBlIjoiUExBVEZPUk1fQURNSU4iLCJpYXQiOjE3ODU2Njc0ODIsImV4cCI6MTc4NTc1Mzg4Mn0.QUM-tfweOQKQgxw-Ry8FyvJ4ZWgxhjn4HIVzgsLBcwU
+}
+
+docs {
+  # Get Customer Shipments
+  Returns a cursor-paginated list of customer shipments matching the query criteria.
+}

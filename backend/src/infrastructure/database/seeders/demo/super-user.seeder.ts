@@ -85,7 +85,10 @@ export class SuperUserSeeder implements Seeder {
 
     if (branch) {
       const assignment = await this.prisma.employee_assignment.findFirst({
-        where: { employee_id: superEmployee.id, organization_unit_id: branch.id },
+        where: {
+          employee_id: superEmployee.id,
+          organization_unit_id: branch.id,
+        },
       });
 
       if (!assignment) {
@@ -119,9 +122,10 @@ export class SuperUserSeeder implements Seeder {
     });
 
     if (vehicle) {
-      const existingVehicleAssignment = await this.prisma.vehicle_assignment.findFirst({
-        where: { employee_id: superEmployee.id, vehicle_id: vehicle.id },
-      });
+      const existingVehicleAssignment =
+        await this.prisma.vehicle_assignment.findFirst({
+          where: { employee_id: superEmployee.id, vehicle_id: vehicle.id },
+        });
 
       if (!existingVehicleAssignment) {
         await this.prisma.vehicle_assignment.create({
@@ -146,6 +150,8 @@ export class SuperUserSeeder implements Seeder {
       },
     });
 
-    this.logger.log('✅ Super All-In-One User seeded successfully! (super@all-in-one.com / password123)');
+    this.logger.log(
+      '✅ Super All-In-One User seeded successfully! (super@all-in-one.com / password123)',
+    );
   }
 }

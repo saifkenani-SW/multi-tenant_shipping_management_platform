@@ -8,7 +8,9 @@ import { PaymentResponsibility, $Enums } from '@prisma/client';
 export class CustomerShipmentCommandRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(shipmentEntity: CustomerShipmentEntity): Promise<CustomerShipmentEntity> {
+  async create(
+    shipmentEntity: CustomerShipmentEntity,
+  ): Promise<CustomerShipmentEntity> {
     const shipment = await this.prisma.customer_shipment.create({
       data: {
         id: shipmentEntity.id,
@@ -48,12 +50,15 @@ export class CustomerShipmentCommandRepository {
     return CustomerShipmentPersistenceMapper.toDomain(shipment);
   }
 
-  async update(id: string, data: {
-    receiverName?: string;
-    receiverPhone?: string;
-    receiverAddress?: string;
-    paymentResponsibility?: PaymentResponsibility;
-  }): Promise<CustomerShipmentEntity> {
+  async update(
+    id: string,
+    data: {
+      receiverName?: string;
+      receiverPhone?: string;
+      receiverAddress?: string;
+      paymentResponsibility?: PaymentResponsibility;
+    },
+  ): Promise<CustomerShipmentEntity> {
     const shipment = await this.prisma.customer_shipment.update({
       where: { id },
       data: {

@@ -20,7 +20,13 @@ import type { JwtPayload } from './types/auth.types';
 import { ClientType } from './types/auth.types';
 import type { CookieOptions, Request, Response } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { ApiBearerAuth, ApiHeader, ApiOperation, ApiResponse, ApiTags, } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -56,7 +62,11 @@ export class AuthController {
     }
 
     if (clientType === ClientType.WEB) {
-      this.setCookies(res, (result as any).accessToken, (result as any).refreshToken);
+      this.setCookies(
+        res,
+        (result as any).accessToken,
+        (result as any).refreshToken,
+      );
       return { message: 'Logged in successfully', user: (result as any).user };
     }
 
@@ -80,10 +90,15 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ) {
     if (!user.isSessionToken) {
-      throw new UnauthorizedException('Invalid session token for profile selection');
+      throw new UnauthorizedException(
+        'Invalid session token for profile selection',
+      );
     }
 
-    const result = await this.authService.selectProfile(user.sub, selectProfileDto);
+    const result = await this.authService.selectProfile(
+      user.sub,
+      selectProfileDto,
+    );
 
     if (clientType === ClientType.WEB) {
       this.setCookies(res, result.accessToken, result.refreshToken);
@@ -164,7 +179,11 @@ export class AuthController {
     return { message: 'Logged out successfully' };
   }
 
-  private setCookies(res: Response, accessToken: string, refreshToken?: string) {
+  private setCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken?: string,
+  ) {
     // ثابتة دائمًا: secure + sameSite=none، ضرورية لأن الفرونت (localhost)
     // والباك (saifkenani.me عبر HTTPS) على origins مختلفة
     const baseCookieOptions: CookieOptions = {
@@ -185,7 +204,10 @@ export class AuthController {
         path: '/auth/refresh',
       });
     } else {
-      res.clearCookie('refresh_token', { ...baseCookieOptions, path: '/auth/refresh' });
+      res.clearCookie('refresh_token', {
+        ...baseCookieOptions,
+        path: '/auth/refresh',
+      });
     }
   }
 }

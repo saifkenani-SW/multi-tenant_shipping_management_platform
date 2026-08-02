@@ -44,10 +44,10 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    // 2. Drivers and Customers typically don't use this RBAC guard directly, 
+    // 2. Drivers and Customers typically don't use this RBAC guard directly,
     // but if they hit a protected route, they are denied unless specifically handled.
     if (subjectType !== SubjectType.EMPLOYEE) {
-       throw new ForbiddenException(
+      throw new ForbiddenException(
         'Access denied: User type does not support granular permissions.',
       );
     }

@@ -1,0 +1,20 @@
+meta {
+  name: Get Customer Shipment Details
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{url}}/shipments/customer/{{customerShipmentId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Get Customer Shipment Details
+  Returns detailed information for a specific customer shipment.
+}

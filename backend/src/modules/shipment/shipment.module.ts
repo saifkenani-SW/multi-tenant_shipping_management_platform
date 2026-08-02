@@ -9,15 +9,28 @@ import { CustomerShipmentQueryService } from './application/services/customer-sh
 import { CustomerShipmentController } from './presentation/controllers/customer-shipment.controller';
 import { ShipmentFacade } from './application/facades/shipment.facade';
 
+import { ParcelQueryService } from './application/services/parcel.query.service';
+import { ParcelController } from './presentation/controllers/parcel.controller';
+import { TrackingModule } from '../tracking/tracking.module';
+import { LabelGeneratorModule } from '../../packages/label-generator/label-generator.module';
+import { PdfGeneratorModule } from '../../packages/pdf-generator/pdf-generator.module';
+
 @Module({
-  imports: [DatabaseModule, TenantModule],
-  controllers: [CustomerShipmentController],
+  imports: [
+    DatabaseModule,
+    TenantModule,
+    TrackingModule,
+    LabelGeneratorModule,
+    PdfGeneratorModule,
+  ],
+  controllers: [CustomerShipmentController, ParcelController],
   providers: [
     CustomerShipmentCommandRepository,
     CustomerShipmentQueryRepository,
     ParcelQueryRepository,
     CustomerShipmentCommandService,
     CustomerShipmentQueryService,
+    ParcelQueryService,
     ShipmentFacade,
   ],
   exports: [ShipmentFacade],

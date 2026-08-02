@@ -19,12 +19,16 @@ export class CreateCustomerShipmentDto {
   @IsNotEmpty()
   senderCustomerProfileId: string;
 
-  @ApiPropertyOptional({ description: 'The UUID of the receiver customer profile, if registered' })
+  @ApiPropertyOptional({
+    description: 'The UUID of the receiver customer profile, if registered',
+  })
   @IsUUID('7')
   @IsOptional()
   receiverCustomerProfileId?: string;
 
-  @ApiPropertyOptional({ description: 'Optional ID of the originating shipment request' })
+  @ApiPropertyOptional({
+    description: 'Optional ID of the originating shipment request',
+  })
   @IsUUID('7')
   @IsOptional()
   shipmentRequestId?: string;

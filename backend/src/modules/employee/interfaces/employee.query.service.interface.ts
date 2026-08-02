@@ -7,5 +7,8 @@ import { Principal } from '../../../packages/context/principal/principal/Princip
 export interface IEmployeeQueryService {
   findEmployees(query: EmployeeQueryDto): Promise<PaginatedEmployeeListDto>;
   getEmployeeDetails(id: string): Promise<EmployeeDetailsDto>;
-  getPrincipalByUserId(userId: string, tenantId: string): Promise<Partial<Principal> | null>;
+  getPrincipalByUserId(
+    userId: string,
+    tenantId: string,
+  ): Promise<Partial<Principal> | null>;
 }

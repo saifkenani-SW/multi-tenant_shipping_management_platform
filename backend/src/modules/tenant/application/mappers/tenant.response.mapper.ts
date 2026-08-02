@@ -105,11 +105,15 @@ export class TenantResponseMapper {
 
     const operational = new OperationalSettingsDto();
     operational.trackingPrefix = record.tracking_prefix || null;
-    operational.autoCloseShipmentAfterCollection = record.auto_close_shipment_after_collection;
+    operational.autoCloseShipmentAfterCollection =
+      record.auto_close_shipment_after_collection;
     operational.allowShipmentReopen = record.allow_shipment_reopen;
-    operational.allowTripCancellationAfterLoading = record.allow_trip_cancellation_after_loading;
-    operational.requireManagerBeforeTripDeparture = record.require_manager_before_trip_departure;
-    operational.allowReturnAfterCollection = record.allow_return_after_collection;
+    operational.allowTripCancellationAfterLoading =
+      record.allow_trip_cancellation_after_loading;
+    operational.requireManagerBeforeTripDeparture =
+      record.require_manager_before_trip_departure;
+    operational.allowReturnAfterCollection =
+      record.allow_return_after_collection;
     operational.quotationValidityHours = record.quotation_validity_hours;
 
     const pricing = new PricingSettingsDto();

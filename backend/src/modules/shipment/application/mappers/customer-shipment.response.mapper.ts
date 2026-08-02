@@ -3,7 +3,9 @@ import { CustomerShipmentDetailsDto } from '../dtos/responses/customer-shipment-
 import { ParcelDetailsDto } from '../dtos/responses/parcel-details.dto';
 
 export class CustomerShipmentResponseMapper {
-  static toDetailsDto(entity: CustomerShipmentEntity): CustomerShipmentDetailsDto {
+  static toDetailsDto(
+    entity: CustomerShipmentEntity,
+  ): CustomerShipmentDetailsDto {
     const dto = new CustomerShipmentDetailsDto();
     dto.id = entity.id;
     dto.tenantId = entity.tenantId;
@@ -19,7 +21,7 @@ export class CustomerShipmentResponseMapper {
     dto.status = entity.status;
     dto.createdAt = entity.createdAt;
     dto.updatedAt = entity.updatedAt;
-    
+
     dto.parcels = entity.parcels.map((p) => {
       const pDto = new ParcelDetailsDto();
       pDto.id = p.id;
@@ -36,7 +38,7 @@ export class CustomerShipmentResponseMapper {
       pDto.updatedAt = p.updatedAt;
       return pDto;
     });
-    
+
     return dto;
   }
 }

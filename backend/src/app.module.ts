@@ -24,6 +24,11 @@ import { HealthModule } from './health/health.module';
 import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { ShipmentModule } from './modules/shipment/shipment.module';
+import { UserModule } from './modules/user/user.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
+import { LabelGeneratorModule } from './packages/label-generator/label-generator.module';
+import { PdfGeneratorModule } from './packages/pdf-generator/pdf-generator.module';
+import { StorageModule } from './packages/storage/src/storage.module';
 
 @Module({
   imports: [
@@ -60,6 +65,11 @@ import { ShipmentModule } from './modules/shipment/shipment.module';
     OrganizationUnitModule,
     EmployeeModule,
     VehicleModule,
+    UserModule,
+    TrackingModule,
+    LabelGeneratorModule,
+    PdfGeneratorModule,
+    StorageModule.forRoot(),
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
