@@ -3,7 +3,7 @@ import {
   TransactionContext,
   TransactionClient,
 } from '../context/transaction.context';
-import { PrismaService } from '../../infrastructure/database/prisma.service';
+import { PrismaService } from '../../../infrastructure/database/prisma.service';
 
 describe('TransactionalPrismaService', () => {
   let service: TransactionalPrismaService;
