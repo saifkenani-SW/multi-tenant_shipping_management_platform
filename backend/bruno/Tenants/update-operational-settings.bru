@@ -1,0 +1,31 @@
+meta {
+  name: Update Operational Settings
+  type: http
+  seq: 15
+}
+
+patch {
+  url: {{url}}/tenants/{{tenantId}}/settings/operational
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "autoCloseShipmentAfterCollection": true,
+    "allowShipmentReopen": false,
+    "allowTripCancellationAfterLoading": false,
+    "requireManagerBeforeTripDeparture": true,
+    "allowReturnAfterCollection": false,
+    "quotationValidityHours": 24
+  }
+}
+
+docs {
+  # Update Operational Settings
+  Updates the operational settings for a given tenant. All fields are optional.
+}

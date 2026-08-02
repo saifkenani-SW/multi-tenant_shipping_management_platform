@@ -110,9 +110,10 @@ export class TripManifestSeeder implements Seeder {
         organization_unit_id: orgUnit.id,
         trip_id: trip.id,
         action_type: ActionType.LOADED_ON_TRIP,
-        parcel_status_snapshot: ParcelStatus.IN_TRANSIT,
-        parcel_condition_snapshot: ParcelCondition.NORMAL,
+        new_status: ParcelStatus.IN_TRANSIT,
+        new_condition: ParcelCondition.NORMAL,
         performed_by_employee_id: driver.id,
+        performed_by_name: 'Driver 1',
         notes: 'Parcel loaded on trip',
       },
     });

@@ -1,18 +1,25 @@
-import { Inject, Injectable } from '@nestjs/common';
-import type { ITenantCommandRepository } from '../interfaces/tenant.command.repository.interface';
-import { ITenantCommandService } from '../interfaces/tenant.command.service.interface';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { TenantCommandRepository } from '../../infrastructure/repositories/tenant.command.repository';
+import { TenantSettingsCommandRepository } from '../../infrastructure/repositories/tenant-settings.command.repository';
+import { UserFacade } from '../../../user/application/facades/user.facade';
+import { TenantDeliverySettings } from '../../domain/entities/tenant-delivery-settings.entity';
+import { TenantOperationalSettings } from '../../domain/entities/tenant-operational-settings.entity';
+import { TenantPricingSettings } from '../../domain/entities/tenant-pricing-settings.entity';
+
 import { CreateTenantDto } from '../dtos/requests/create-tenant.dto';
 import { UpdateTenantDto } from '../dtos/requests/update-tenant.dto';
+import { UpdateTenantDeliverySettingsDto } from '../dtos/requests/update-tenant-delivery-settings.dto';
+import { UpdateTenantOperationalSettingsDto } from '../dtos/requests/update-tenant-operational-settings.dto';
+import { UpdateTenantPricingSettingsDto } from '../dtos/requests/update-tenant-pricing-settings.dto';
 import { TenantStatus } from '../../domain/enums/tenant-status.enum';
 import { CacheEvict } from '../../../../infrastructure/cache/decorators/CacheEvict';
 import { TENANT_CACHE_KEYS } from '../../constants/tenant.cache.constants';
 import { TenantAction, TenantPolicy } from '../../domain/authorization';
 import { Authorize } from '../../../../packages/authorization';
-import { TENANT_COMMAND_REPOSITORY_TOKEN } from '../../tokens/tenant-repository.tokens';
+
 import { Policy } from '../../../../packages/authorization/policy';
 import { TenantNotFoundException } from '../../domain/exceptions/tenant-not-found.exception';
 import { AssignSubscriptionDto } from '../dtos/requests/assign-subscription.dto';
-import { RenewSubscriptionDto } from '../dtos/requests/renew-subscription.dto';
 import {
   CancelSubscriptionDto,
   ReasonDto,
@@ -26,14 +33,25 @@ import { TenantSubscriptionHistory } from '../../domain/entities/tenant-subscrip
 import { Transactional } from '../../../../packages/transaction';
 
 @Injectable()
-export class TenantCommandService implements ITenantCommandService {
+export class TenantCommandService {
   constructor(
-    @Inject(TENANT_COMMAND_REPOSITORY_TOKEN)
-    private readonly tenantRepository: ITenantCommandRepository,
+    private readonly tenantRepository: TenantCommandRepository,
+    private readonly settingsCommandRepository: TenantSettingsCommandRepository,
+    private readonly userFacade: UserFacade,
     @Inject(SUBSCRIPTION_PLAN_QUERY_SERVICE)
     private readonly planQueryService: ISubscriptionPlanQueryService,
   ) {}
 
+  private async validateOwnerUserExistsAndActive(
+    userId: string,
+  ): Promise<void> {
+    const isUserValid = await this.userFacade.existsAndActive(userId);
+    if (!isUserValid) {
+      throw new BadRequestException('Owner user must exist and be active');
+    }
+  }
+
+  @Transactional()
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.LIST,
     allEntries: true,
@@ -45,6 +63,10 @@ export class TenantCommandService implements ITenantCommandService {
     }),
   })
   async createTenant(dto: CreateTenantDto): Promise<string> {
+    // 1. Guardrail Check: Validate owner user via UserFacade
+    await this.validateOwnerUserExistsAndActive(dto.ownerUserId);
+
+    // 2. Create Core Tenant Entity
     const tenant = await this.tenantRepository.create({
       name: dto.name,
       taxNumber: dto.taxNumber,
@@ -52,6 +74,26 @@ export class TenantCommandService implements ITenantCommandService {
       phone: dto.phone,
       logoUrl: null,
     });
+
+    // 3. Seed Default Configurations
+    await this.settingsCommandRepository.upsertDeliverySettings(
+      new TenantDeliverySettings(tenant.id),
+    );
+
+    await this.settingsCommandRepository.upsertOperationalSettings(
+      new TenantOperationalSettings(tenant.id),
+    );
+
+    await this.settingsCommandRepository.upsertPricingSettings(
+      new TenantPricingSettings(tenant.id),
+    );
+
+    // 4. Assign Primary Owner
+    await this.settingsCommandRepository.assignOwner(
+      tenant.id,
+      dto.ownerUserId,
+      true,
+    );
 
     return tenant.id;
   }
@@ -133,6 +175,14 @@ export class TenantCommandService implements ITenantCommandService {
   }
 
   @Transactional()
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+  })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),
@@ -190,6 +240,14 @@ export class TenantCommandService implements ITenantCommandService {
     await this.tenantRepository.createSubscriptionHistory(history);
   }
 
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+  })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),
@@ -227,6 +285,14 @@ export class TenantCommandService implements ITenantCommandService {
     await this.tenantRepository.createSubscriptionHistory(history);
   }
 
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+  })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),
@@ -264,6 +330,14 @@ export class TenantCommandService implements ITenantCommandService {
     await this.tenantRepository.createSubscriptionHistory(history);
   }
 
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+  })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),
@@ -298,5 +372,59 @@ export class TenantCommandService implements ITenantCommandService {
       performedBy,
     );
     await this.tenantRepository.createSubscriptionHistory(history);
+  }
+
+  @Authorize({
+    policy: Policy(TenantPolicy, TenantAction.Update),
+    payloadResolver: (tenantId: string) => ({ tenantId }),
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SETTINGS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.SETTINGS, id],
+  })
+  async updateDeliverySettings(
+    tenantId: string,
+    dto: UpdateTenantDeliverySettingsDto,
+  ): Promise<void> {
+    const tenant = await this.tenantRepository.findById(tenantId);
+    if (!tenant) throw new TenantNotFoundException();
+    await this.settingsCommandRepository.updateDeliverySettings(tenantId, dto);
+  }
+
+  @Authorize({
+    policy: Policy(TenantPolicy, TenantAction.Update),
+    payloadResolver: (tenantId: string) => ({ tenantId }),
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SETTINGS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.SETTINGS, id],
+  })
+  async updateOperationalSettings(
+    tenantId: string,
+    dto: UpdateTenantOperationalSettingsDto,
+  ): Promise<void> {
+    const tenant = await this.tenantRepository.findById(tenantId);
+    if (!tenant) throw new TenantNotFoundException();
+    await this.settingsCommandRepository.updateOperationalSettings(
+      tenantId,
+      dto,
+    );
+  }
+
+  @Authorize({
+    policy: Policy(TenantPolicy, TenantAction.Update),
+    payloadResolver: (tenantId: string) => ({ tenantId }),
+  })
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.SETTINGS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.SETTINGS, id],
+  })
+  async updatePricingSettings(
+    tenantId: string,
+    dto: UpdateTenantPricingSettingsDto,
+  ): Promise<void> {
+    const tenant = await this.tenantRepository.findById(tenantId);
+    if (!tenant) throw new TenantNotFoundException();
+    await this.settingsCommandRepository.updatePricingSettings(tenantId, dto);
   }
 }

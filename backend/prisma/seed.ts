@@ -252,6 +252,116 @@ async function main() {
 
   console.log('✅ Subscriptions created');
 
+  // =========================================================================
+  // 6. SUPER ALL-IN-ONE USER (For Testing Multi-Profile)
+  // =========================================================================
+  const superUser = await prisma.users.create({
+    data: {
+      email: 'super@all-in-one.com',
+      phone: '+9999999999',
+      password_hash: passwordHash,
+    },
+  });
+
+  // 6.1. Platform Admin
+  await prisma.platform_admin.create({
+    data: {
+      user_id: superUser.id,
+      full_name: 'Super Admin',
+      role: 'SUPER_ADMIN',
+    },
+  });
+
+  // 6.2. Tenant Owner
+  await prisma.tenant_owner.create({
+    data: {
+      user_id: superUser.id,
+      tenant_id: tenant1.id,
+    },
+  });
+
+  // 6.3. Employee
+  const superEmployee = await prisma.employee.create({
+    data: {
+      user_id: superUser.id,
+      tenant_id: tenant1.id,
+      employee_code: 'EMP-SUPER',
+      full_name: 'Super Employee',
+    },
+  });
+
+  // Create a branch for the employee assignment
+  const hqLocation = await prisma.global_location.create({
+    data: {
+      name: 'Riyadh HQ Location',
+      type: 'CITY',
+    },
+  });
+
+  const branch = await prisma.organization_unit.create({
+    data: {
+      tenant_id: tenant1.id,
+      name: 'Riyadh Main Branch',
+      org_type: 'BRANCH',
+    },
+  });
+
+  // Create a role for the employee
+  const managerRole = await prisma.role.create({
+    data: {
+      tenant_id: tenant1.id,
+      name: 'Branch Manager',
+      description: 'Manages the branch',
+    },
+  });
+
+  // Assign employee to branch
+  const empAssignment = await prisma.employee_assignment.create({
+    data: {
+      tenant_id: tenant1.id,
+      employee_id: superEmployee.id,
+      organization_unit_id: branch.id,
+    },
+  });
+
+  // Link role to assignment
+  await prisma.assignment_role.create({
+    data: {
+      assignment_id: empAssignment.id,
+      role_id: managerRole.id,
+    },
+  });
+
+  // 6.4. Vehicle & Driver Assignment
+  const vehicle = await prisma.vehicle.create({
+    data: {
+      tenant_id: tenant1.id,
+      plate_number: 'ABC-1234',
+      type: 'Van',
+      capacity_kg: 1000,
+    },
+  });
+
+  await prisma.vehicle_assignment.create({
+    data: {
+      tenant_id: tenant1.id,
+      employee_id: superEmployee.id,
+      vehicle_id: vehicle.id,
+      is_active: true,
+    },
+  });
+
+  // 6.5. Customer Profile
+  await prisma.customer_profile.create({
+    data: {
+      user_id: superUser.id,
+      full_name: 'Super Customer',
+      phone: '+9999999999',
+    },
+  });
+
+  console.log('✅ Super All-In-One User created');
+
   // ... يمكنك إكمال باقي الكود من الرد السابق ...
 
   console.log('✅ Seed completed successfully!');
@@ -263,6 +373,7 @@ async function main() {
   console.log('👤 Customer 1: john.doe@email.com');
   console.log('👤 Customer 2: jane.smith@email.com');
   console.log('👤 Customer 3: bob.wilson@email.com');
+  console.log('🌟 Super All-In-One: super@all-in-one.com');
 }
 
 main()

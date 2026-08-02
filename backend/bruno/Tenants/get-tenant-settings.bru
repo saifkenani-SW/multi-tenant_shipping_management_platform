@@ -1,0 +1,20 @@
+meta {
+  name: Get Tenant Settings
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{url}}/tenants/{{tenantId}}/settings
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+docs {
+  # Get Tenant Settings
+  Returns the aggregated delivery, operational, and pricing settings for a tenant.
+}

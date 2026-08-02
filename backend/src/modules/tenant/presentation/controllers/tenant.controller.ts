@@ -18,12 +18,18 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import type { ITenantCommandService } from '../../application/interfaces/tenant.command.service.interface';
+import { TenantCommandService } from '../../application/services/tenant.command.service';
 import { CreateTenantDto } from '../../application/dtos/requests/create-tenant.dto';
 import { UpdateTenantDto } from '../../application/dtos/requests/update-tenant.dto';
-import type { ITenantQueryService } from '../../application/interfaces/tenant.query.service.interface';
+import { TenantQueryService } from '../../application/services/tenant.query.service';
 import { PaginatedTenantListDto } from '../../application/dtos/responses/tenant-list.dto';
 import { TenantDetailsDto } from '../../application/dtos/responses/tenant-details.dto';
+import { TenantSettingsDto } from '../../application/dtos/responses/tenant-settings.dto';
+import { UpdateTenantDeliverySettingsDto } from '../../application/dtos/requests/update-tenant-delivery-settings.dto';
+import { UpdateTenantOperationalSettingsDto } from '../../application/dtos/requests/update-tenant-operational-settings.dto';
+import { UpdateTenantPricingSettingsDto } from '../../application/dtos/requests/update-tenant-pricing-settings.dto';
+import { Roles } from '../../../../common/authorization/decorators/roles.decorator';
+import { RoleType } from '../../../authorization/domain/enums/role.enum';
 import type { JwtPayload } from '../../../auth/types/auth.types';
 import { UserLoginType } from '../../../auth/types/auth.types';
 import { RequireTypes } from '../../../auth/authorization/decorators/require-types.decorator';
@@ -40,10 +46,6 @@ import {
 import { TenantSubscriptionDto } from '../../application/dtos/responses/tenant-subscription.dto';
 import { TenantSubscriptionHistoryDto } from '../../application/dtos/responses/tenant-subscription-history.dto';
 import { BaseUuidParamDto } from '../../../../core/dtos/base-uuid-param.dto';
-import {
-  TENANT_COMMAND_SERVICE,
-  TENANT_QUERY_SERVICE,
-} from '../../tokens/tenant-service.tokens';
 
 @ApiTags('Tenants')
 @ApiBearerAuth()
@@ -51,10 +53,8 @@ import {
 @Controller('tenants')
 export class TenantController {
   constructor(
-    @Inject(TENANT_COMMAND_SERVICE)
-    private readonly tenantCommandService: ITenantCommandService,
-    @Inject(TENANT_QUERY_SERVICE)
-    private readonly tenantQueryService: ITenantQueryService,
+    private readonly tenantCommandService: TenantCommandService,
+    private readonly tenantQueryService: TenantQueryService,
   ) {}
 
   @Post()
@@ -256,5 +256,69 @@ export class TenantController {
   ): Promise<void> {
     const id = params.id;
     await this.tenantCommandService.cancelSubscription(id, dto, user.sub);
+  }
+
+  @Patch(':id/settings/delivery')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'Update tenant delivery settings' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Delivery settings updated successfully',
+  })
+  async updateDeliverySettings(
+    @Param() params: BaseUuidParamDto,
+    @Body() dto: UpdateTenantDeliverySettingsDto,
+  ): Promise<void> {
+    const id = params.id;
+    await this.tenantCommandService.updateDeliverySettings(id, dto);
+  }
+
+  @Patch(':id/settings/operational')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'Update tenant operational settings' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Operational settings updated successfully',
+  })
+  async updateOperationalSettings(
+    @Param() params: BaseUuidParamDto,
+    @Body() dto: UpdateTenantOperationalSettingsDto,
+  ): Promise<void> {
+    const id = params.id;
+    await this.tenantCommandService.updateOperationalSettings(id, dto);
+  }
+
+  @Patch(':id/settings/pricing')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'Update tenant pricing settings' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Pricing settings updated successfully',
+  })
+  async updatePricingSettings(
+    @Param() params: BaseUuidParamDto,
+    @Body() dto: UpdateTenantPricingSettingsDto,
+  ): Promise<void> {
+    const id = params.id;
+    await this.tenantCommandService.updatePricingSettings(id, dto);
+  }
+
+  @Get(':id/settings')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'Get all settings for a tenant' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Tenant settings',
+    type: TenantSettingsDto,
+  })
+  async getTenantSettings(
+    @Param() params: BaseUuidParamDto,
+  ): Promise<TenantSettingsDto> {
+    const id = params.id;
+    return this.tenantQueryService.getTenantSettings(id);
   }
 }

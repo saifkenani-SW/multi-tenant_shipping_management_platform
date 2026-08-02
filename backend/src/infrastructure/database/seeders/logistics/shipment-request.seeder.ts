@@ -88,7 +88,7 @@ export class ShipmentRequestSeeder implements Seeder {
       create: {
         id: shipmentId,
         tenant_id: tenant1.id,
-        customer_profile_id: customer.id,
+        sender_customer_profile_id: customer.id,
         shipment_request_id: request.id,
         approved_quotation_id: quotation.id,
         receiver_name: 'Jane Receiver',
