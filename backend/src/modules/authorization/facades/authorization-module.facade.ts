@@ -24,16 +24,17 @@ export class AuthorizationModuleFacade {
     // For better performance, caching can be added here if needed,
     // but the repository might already leverage caching for single lookups.
     // Given the bulk query, it's efficient enough for now.
-    const roles = await this.roleRepository.findByIdsWithPermissions(uniqueRoleIds);
+    const roles =
+      await this.roleRepository.findByIdsWithPermissions(uniqueRoleIds);
 
-    return roles.map(role => this.mapRoleToAccessRole(role));
+    return roles.map((role) => this.mapRoleToAccessRole(role));
   }
 
   private mapRoleToAccessRole(role: Role): AccessRole {
     return {
       id: role.id,
       name: role.name,
-      permissions: role.permissions.map(p => p.name as Permission),
+      permissions: role.permissions.map((p) => p.name as Permission),
     };
   }
 }

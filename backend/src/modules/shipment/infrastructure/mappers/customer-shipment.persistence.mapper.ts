@@ -7,18 +7,22 @@ import { ParcelStatus } from '../../domain/enums/parcel-status.enum';
 import { ParcelCondition } from '../../domain/enums/parcel-condition.enum';
 
 export class CustomerShipmentPersistenceMapper {
-  static toDomain(prismaShipment: customer_shipment & { parcel?: parcel[] }): CustomerShipmentEntity {
+  static toDomain(
+    prismaShipment: customer_shipment & { parcel?: parcel[] },
+  ): CustomerShipmentEntity {
     return new CustomerShipmentEntity({
       id: prismaShipment.id,
       tenantId: prismaShipment.tenant_id,
       senderCustomerProfileId: prismaShipment.sender_customer_profile_id,
-      receiverCustomerProfileId: prismaShipment.receiver_customer_profile_id ?? undefined,
+      receiverCustomerProfileId:
+        prismaShipment.receiver_customer_profile_id ?? undefined,
       shipmentRequestId: prismaShipment.shipment_request_id,
       approvedQuotationId: prismaShipment.approved_quotation_id,
       receiverName: prismaShipment.receiver_name,
       receiverPhone: prismaShipment.receiver_phone,
       receiverAddress: prismaShipment.receiver_address,
-      paymentResponsibility: prismaShipment.payment_responsibility as PaymentResponsibility,
+      paymentResponsibility:
+        prismaShipment.payment_responsibility as PaymentResponsibility,
       totalChargeableWeightKg: prismaShipment.total_chargeable_weight_kg
         ? Number(prismaShipment.total_chargeable_weight_kg)
         : 0,

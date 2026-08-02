@@ -9,7 +9,9 @@ export class TrackingCommandService {
   constructor(private readonly repository: TrackingCommandRepository) {}
 
   async appendMovement(command: AppendParcelMovementCommand): Promise<void> {
-    this.logger.debug(`Appending parcel movement for parcel ${command.parcelId} with action ${command.actionType}`);
+    this.logger.debug(
+      `Appending parcel movement for parcel ${command.parcelId} with action ${command.actionType}`,
+    );
     await this.repository.appendMovement(command);
   }
 }

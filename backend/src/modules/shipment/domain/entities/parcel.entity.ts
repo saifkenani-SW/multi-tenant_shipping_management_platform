@@ -31,8 +31,10 @@ export class Parcel {
     condition: ParcelCondition,
     volumetricDivisor: number,
   ): Parcel {
-    const volumetricWeightKg = Number(((lengthCm * widthCm * heightCm) / volumetricDivisor).toFixed(2));
-    
+    const volumetricWeightKg = Number(
+      ((lengthCm * widthCm * heightCm) / volumetricDivisor).toFixed(2),
+    );
+
     return new Parcel(
       id,
       tenantId,

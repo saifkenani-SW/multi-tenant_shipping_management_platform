@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { UserQueryRepository, UserSummary } from '../../infrastructure/repositories/user.query.repository';
+import {
+  UserQueryRepository,
+  UserSummary,
+} from '../../infrastructure/repositories/user.query.repository';
 import { UserLoginType } from '../../../auth/types/auth.types';
 
 export interface UserProfileInfo {
@@ -30,7 +33,7 @@ export class UserQueryService {
 
   async getIdentityByEmail(email: string): Promise<UserIdentityResult | null> {
     const data = await this.queryRepository.getUserIdentityByEmail(email);
-    
+
     if (!data) return null;
 
     const profiles: UserProfileInfo[] = [];
@@ -63,7 +66,7 @@ export class UserQueryService {
 
         // Check if this employee is also a driver
         const activeVehicleAssignment = data.vehicleAssignments.find(
-          (va) => va.employee_id === emp.id
+          (va) => va.employee_id === emp.id,
         );
 
         if (activeVehicleAssignment) {

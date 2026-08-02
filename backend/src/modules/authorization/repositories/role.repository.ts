@@ -204,7 +204,6 @@ export class RoleRepository {
     });
   }
 
-
   async findMany(
     queryDto: RoleQueryDto,
     tenantId?: string,

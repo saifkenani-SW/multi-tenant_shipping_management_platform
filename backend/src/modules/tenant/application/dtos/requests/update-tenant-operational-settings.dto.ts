@@ -1,8 +1,16 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class UpdateTenantOperationalSettingsDto {
-  @ApiPropertyOptional({ description: 'Prefix for tracking numbers (e.g. SYR-)' })
+  @ApiPropertyOptional({
+    description: 'Prefix for tracking numbers (e.g. SYR-)',
+  })
   @IsString()
   @IsOptional()
   @MaxLength(10)

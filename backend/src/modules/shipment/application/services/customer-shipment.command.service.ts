@@ -26,7 +26,10 @@ export class CustomerShipmentCommandService {
     keyPrefix: SHIPMENT_CACHE_KEYS.LIST,
     allEntries: true,
   })
-  async createShipment(tenantId: string, dto: CreateCustomerShipmentDto): Promise<string> {
+  async createShipment(
+    tenantId: string,
+    dto: CreateCustomerShipmentDto,
+  ): Promise<string> {
     this.logger.log(`Creating shipment for tenant ${tenantId}`);
 
     const tenantSettings = await this.tenantFacade.getTenantSettings(tenantId);
@@ -90,7 +93,10 @@ export class CustomerShipmentCommandService {
     keyPrefix: SHIPMENT_CACHE_KEYS.DETAILS,
     keyBuilder: (id: string) => [SHIPMENT_CACHE_KEYS.DETAILS, id],
   })
-  async updateShipment(id: string, dto: UpdateCustomerShipmentDto): Promise<void> {
+  async updateShipment(
+    id: string,
+    dto: UpdateCustomerShipmentDto,
+  ): Promise<void> {
     this.logger.log(`Updating shipment ${id}`);
 
     await this.commandRepository.update(id, {

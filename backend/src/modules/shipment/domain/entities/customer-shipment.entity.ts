@@ -32,9 +32,12 @@ export class CustomerShipmentEntity {
       this.totalChargeableWeightKg = 0;
       return;
     }
-    
+
     this.totalChargeableWeightKg = this.parcels.reduce((sum, parcel) => {
-      const chargeable = Math.max(parcel.actualWeightKg, parcel.volumetricWeightKg || 0);
+      const chargeable = Math.max(
+        parcel.actualWeightKg,
+        parcel.volumetricWeightKg || 0,
+      );
       return sum + chargeable;
     }, 0);
   }

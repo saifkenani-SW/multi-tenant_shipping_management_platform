@@ -13,7 +13,9 @@ export class CustomerShipmentDetailsDto {
   @ApiProperty({ description: 'The UUID of the sender customer profile' })
   senderCustomerProfileId: string;
 
-  @ApiPropertyOptional({ description: 'The UUID of the receiver customer profile, if registered' })
+  @ApiPropertyOptional({
+    description: 'The UUID of the receiver customer profile, if registered',
+  })
   receiverCustomerProfileId?: string;
 
   @ApiPropertyOptional()

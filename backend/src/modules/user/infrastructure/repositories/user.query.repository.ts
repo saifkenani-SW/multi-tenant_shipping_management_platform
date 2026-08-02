@@ -51,16 +51,33 @@ export class UserQueryRepository {
 
     if (!user) return null;
 
-    const [platformAdmin, tenantOwners, employees, customerProfile] = await Promise.all([
-      this.db.selectFrom('platform_admin').selectAll().where('user_id', '=', user.id).executeTakeFirst(),
-      this.db.selectFrom('tenant_owner').selectAll().where('user_id', '=', user.id).execute(),
-      this.db.selectFrom('employee').selectAll().where('user_id', '=', user.id).execute(),
-      this.db.selectFrom('customer_profile').selectAll().where('user_id', '=', user.id).executeTakeFirst(),
-    ]);
+    const [platformAdmin, tenantOwners, employees, customerProfile] =
+      await Promise.all([
+        this.db
+          .selectFrom('platform_admin')
+          .selectAll()
+          .where('user_id', '=', user.id)
+          .executeTakeFirst(),
+        this.db
+          .selectFrom('tenant_owner')
+          .selectAll()
+          .where('user_id', '=', user.id)
+          .execute(),
+        this.db
+          .selectFrom('employee')
+          .selectAll()
+          .where('user_id', '=', user.id)
+          .execute(),
+        this.db
+          .selectFrom('customer_profile')
+          .selectAll()
+          .where('user_id', '=', user.id)
+          .executeTakeFirst(),
+      ]);
 
     let vehicleAssignments: any[] = [];
     if (employees.length > 0) {
-      const employeeIds = employees.map(e => e.id);
+      const employeeIds = employees.map((e) => e.id);
       vehicleAssignments = await this.db
         .selectFrom('vehicle_assignment')
         .selectAll()
