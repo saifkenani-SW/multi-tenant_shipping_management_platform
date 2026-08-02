@@ -37,4 +37,28 @@ export class ParcelQueryRepository {
       record.updated_at
     );
   }
+
+  async findLabelDataByTrackingNumber(trackingNumber: string) {
+    const record = await this.kysely
+      .selectFrom('parcel')
+      .innerJoin('customer_shipment', 'customer_shipment.id', 'parcel.customer_shipment_id')
+      .leftJoin('customer_profile as sender', 'sender.id', 'customer_shipment.sender_customer_profile_id')
+      .leftJoin('customer_profile as receiver', 'receiver.id', 'customer_shipment.receiver_customer_profile_id')
+      .select([
+        'parcel.tracking_number',
+        'parcel.actual_weight_kg',
+        'parcel.length_cm',
+        'parcel.width_cm',
+        'parcel.height_cm',
+        'customer_shipment.id as shipment_id',
+        'sender.full_name as sender_name',
+        'customer_shipment.receiver_name',
+        'sender.phone as sender_phone',
+        'customer_shipment.receiver_phone as receiver_phone',
+      ])
+      .where('parcel.tracking_number', '=', trackingNumber)
+      .executeTakeFirst();
+
+    return record || null;
+  }
 }
