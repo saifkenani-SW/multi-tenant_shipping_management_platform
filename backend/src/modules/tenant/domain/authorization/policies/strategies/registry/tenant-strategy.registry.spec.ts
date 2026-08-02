@@ -9,6 +9,7 @@ describe('TenantStrategyRegistry', () => {
     const viewStrategy = { action: TenantAction.View };
     const suspendStrategy = { action: TenantAction.Suspend };
     const activateStrategy = { action: TenantAction.Activate };
+    const manageSubscriptionStrategy = { action: TenantAction.ManageSubscription };
 
     const registry = new TenantStrategyRegistry(
       createStrategy as any,
@@ -17,6 +18,7 @@ describe('TenantStrategyRegistry', () => {
       viewStrategy as any,
       suspendStrategy as any,
       activateStrategy as any,
+      manageSubscriptionStrategy as any,
     );
 
     expect(registry.get(TenantAction.Suspend)).toBe(suspendStrategy);

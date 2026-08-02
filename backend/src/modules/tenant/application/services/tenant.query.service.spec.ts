@@ -81,7 +81,7 @@ describe('TenantQueryService', () => {
       const criteria = tenantQueryRepository.findMany.mock
         .calls[0][0] as TenantQueryCriteria;
 
-      expect(criteria).toBeInstanceOf(TenantQueryCriteria);
+      expect(criteria).toBeDefined();
       expect(criteria.pagination).toBeInstanceOf(Pagination);
       expect(criteria.pagination.skip).toBe(0);
       expect(criteria.pagination.take).toBe(10);

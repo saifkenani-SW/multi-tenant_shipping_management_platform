@@ -70,6 +70,7 @@ describe('TenantCommandService', () => {
         name: 'Test Tenant',
         taxNumber: '123',
         email: 'test@example.com',
+        phone: '12345678',
       };
       tenantRepository.create.mockResolvedValue({ id: 'tenant-uuid-1' });
 
@@ -79,6 +80,7 @@ describe('TenantCommandService', () => {
         name: dto.name,
         taxNumber: dto.taxNumber,
         email: dto.email,
+        phone: dto.phone,
       });
       expect(result).toEqual('tenant-uuid-1');
       expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:list:*');
@@ -89,6 +91,7 @@ describe('TenantCommandService', () => {
         name: 'Test Tenant',
         taxNumber: '123',
         email: 'test@example.com',
+        phone: '12345678',
       };
       const prismaError = { code: 'P2002' };
       tenantRepository.create.mockRejectedValue(prismaError);
