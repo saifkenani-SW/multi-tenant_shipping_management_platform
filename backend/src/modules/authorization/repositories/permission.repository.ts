@@ -1,15 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
 
-<<<<<<<< HEAD:backend/src/modules/authorization/permission/repositories/permission.query.repository.ts
-import { Cacheable } from '../../../../infrastructure/cache/decorators/Cacheable';
-import { DB } from '../../../../infrastructure/database/generated/kysely/types';
-import { PermissionQueryCriteria } from '../builders/query/permission-query-criteria';
-========
 import { Cacheable } from '../../../infrastructure/cache/decorators/Cacheable';
 import { DB } from '../../../infrastructure/database/generated/kysely/types';
 import { TransactionalPrismaService } from '../../../packages/transaction';
->>>>>>>> bd5bcedf760812c3f4fae1fb4b0cc179fb305a8c:backend/src/modules/authorization/repositories/permission.repository.ts
 import {
   PERMISSION_CATALOG_ENTRIES,
   PermissionCatalogEntry,

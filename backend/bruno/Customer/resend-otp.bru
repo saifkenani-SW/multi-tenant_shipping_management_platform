@@ -1,5 +1,5 @@
 meta {
-  name: Resend Registration OTP
+  name: Resend OTP
   type: http
   seq: 2
 }
@@ -18,5 +18,5 @@ body:json {
 
 docs {
   # Resend OTP
-  Resends verification OTP for pending registration. Subject to cooldown and rate limiting.
+  Resends the active OTP for either registration or password reset. Subject to a 60-second cooldown and rate limiting.
 }

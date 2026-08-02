@@ -13,18 +13,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-<<<<<<<< HEAD:backend/src/modules/authorization/permission/permission.controller.ts
-import { BaseUuidParamDto } from '../../../core/dtos/base-uuid-param.dto';
-import { RequireTypes } from '../../auth/authorization/decorators/require-types.decorator';
-import { UserTypeGuard } from '../../auth/authorization/guards/user-type.guard';
-import { UserLoginType } from '../../auth/types/auth.types';
-========
 import { BaseUuidParamDto } from '../../core/dtos/base-uuid-param.dto';
 import { RequireTypes } from '../auth/authorization/decorators/require-types.decorator';
 import { UserTypeGuard } from '../auth/authorization/guards/user-type.guard';
 import { UserLoginType } from '../auth/types/auth.types';
 
->>>>>>>> bd5bcedf760812c3f4fae1fb4b0cc179fb305a8c:backend/src/modules/authorization/permission.controller.ts
 import { PermissionQueryDto } from './dtos/requests/permission-query.dto';
 import { PermissionDetailsDto } from './dtos/responses/permission-details.dto';
 import { PaginatedPermissionListDto } from './dtos/responses/permission-list.dto';

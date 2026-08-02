@@ -14,19 +14,23 @@ auth:bearer {
   token: {{token}}
 }
 
+headers {
+  x-tenant-id: 00000000-0000-7000-8000-000000000101
+}
+
 body:json {
   {
-    "name": "Riyadh Main Hub",
-    "orgType": "HUB",
-    "parentId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d40",
-    "zoneId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d41",
-    "addressLine": "King Fahd Road, Building 100",
-    "latitude": 24.7136,
-    "longitude": 46.6753
+    "name": "Amman Main Branch",
+    "orgType": "REGION",
+    "addressLine": "Downtown, Amman",
+    "longitude": 35.9106,
+    "latitude": 31.9539
   }
 }
 
 docs {
   # Create Organization Unit
-  Creates a new organizational unit (HQ, Region, Hub, Branch, Warehouse). Restricted to `PLATFORM_ADMIN` or authorized `EMPLOYEE`.
+  Creates a new organizational unit. Restricted to `PLATFORM_ADMIN` or an authorized `EMPLOYEE`.
+
+  `PLATFORM_ADMIN` must send `x-tenant-id`. An employee's tenant comes from the selected login profile.
 }

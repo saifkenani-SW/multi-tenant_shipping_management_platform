@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-<<<<<<<< HEAD:backend/src/modules/authorization/role/mappers/response/role.response.mapper.ts
-import { Pagination, PaginationMeta } from '../../../../../common/pagination';
-import { PermissionResponseMapper } from '../../../permission/mappers/response/permission.response.mapper';
-========
 import { Pagination, PaginationMeta } from '../../../../common/pagination';
->>>>>>>> bd5bcedf760812c3f4fae1fb4b0cc179fb305a8c:backend/src/modules/authorization/mappers/response/role.response.mapper.ts
 import { Role } from '../../domain/role.entity';
 import { RoleDetailsDto } from '../../dtos/responses/role-details.dto';
 import {

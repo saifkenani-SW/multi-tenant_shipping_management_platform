@@ -57,6 +57,9 @@ services:
     expose:
       - "3000"
 
+    volumes:
+      - uploads_data:/app/uploads
+
     networks:
       - app-network
 
@@ -90,6 +93,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:
 
 networks:
   app-network:

@@ -10,6 +10,7 @@ export class Customer {
     public readonly email: string,
     public readonly fullName: string,
     public readonly phone: string,
+    public readonly profileImageKey: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}

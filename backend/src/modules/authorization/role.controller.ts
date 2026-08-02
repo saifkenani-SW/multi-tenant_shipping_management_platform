@@ -19,18 +19,11 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-<<<<<<<< HEAD:backend/src/modules/authorization/role/role.controller.ts
-import { BaseUuidParamDto } from '../../../core/dtos/base-uuid-param.dto';
-import { RequireTypes } from '../../auth/authorization/decorators/require-types.decorator';
-import { UserTypeGuard } from '../../auth/authorization/guards/user-type.guard';
-import { UserLoginType } from '../../auth/types/auth.types';
-========
 import { BaseUuidParamDto } from '../../core/dtos/base-uuid-param.dto';
 import { RequireTypes } from '../auth/authorization/decorators/require-types.decorator';
 import { UserTypeGuard } from '../auth/authorization/guards/user-type.guard';
 import { UserLoginType } from '../auth/types/auth.types';
 
->>>>>>>> bd5bcedf760812c3f4fae1fb4b0cc179fb305a8c:backend/src/modules/authorization/role.controller.ts
 import { CreateRoleDto } from './dtos/requests/create-role.dto';
 import { RoleQueryDto } from './dtos/requests/role-query.dto';
 import { SetRolePermissionsDto } from './dtos/requests/set-role-permissions.dto';

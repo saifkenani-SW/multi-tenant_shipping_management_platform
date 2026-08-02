@@ -1,4 +1,4 @@
-import { Permission } from '../../../../core/security/Permission';
+import { Permission } from '../../../core/security/Permission';
 
 export interface PermissionCatalogEntry {
   readonly name: Permission;

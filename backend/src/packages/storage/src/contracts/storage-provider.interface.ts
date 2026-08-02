@@ -1,5 +1,13 @@
 import { Readable } from 'stream';
 
+export interface StorageFile {
+  originalname: string;
+  mimetype: string;
+  size: number;
+  buffer?: Buffer;
+  path?: string;
+}
+
 export interface StorageSaveResult {
   storage_key: string;
 }
@@ -15,7 +23,7 @@ export interface StorageSaveResult {
  */
 export interface IStorageProvider<TCategory extends string = string> {
   save(
-    file: Express.Multer.File,
+    file: StorageFile,
     ownerId: string,
     category: TCategory,
   ): Promise<StorageSaveResult>;

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Pagination, PaginationMeta } from '../../../../../common/pagination';
+import { Pagination, PaginationMeta } from '../../../../common/pagination';
 import { Permission } from '../../domain/permission.entity';
 import { PermissionDetailsDto } from '../../dtos/responses/permission-details.dto';
 import {

@@ -61,7 +61,9 @@ COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN mkdir -p /app/uploads && \
+    chown -R node:node /app/uploads && \
+    chmod +x /usr/local/bin/docker-entrypoint.sh
 
 USER node
 

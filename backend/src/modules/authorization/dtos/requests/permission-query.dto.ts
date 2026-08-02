@@ -1,13 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 
-<<<<<<<< HEAD:backend/src/modules/authorization/permission/dtos/requests/permission-query.dto.ts
-import { PaginationQueryDto } from '../../../../../common/pagination';
-import { PermissionSearchField } from '../../enums/permission-search-field.enum';
-========
 import { PaginationQueryDto } from '../../../../common/pagination';
 import { PermissionSearchField } from '../../domain/enums/permission.enum';
->>>>>>>> bd5bcedf760812c3f4fae1fb4b0cc179fb305a8c:backend/src/modules/authorization/dtos/requests/permission-query.dto.ts
 
 export class PermissionQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional({

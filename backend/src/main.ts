@@ -54,9 +54,6 @@ async function bootstrap() {
       description: 'User Role (PLATFORM_OWNER, etc)',
     })
 
-    // تفعيل المتطلبات
-    .addSecurityRequirements('x-tenant-id')
-    .addSecurityRequirements('x-role')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

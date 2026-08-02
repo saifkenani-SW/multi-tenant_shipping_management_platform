@@ -15,6 +15,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiHeader,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -48,6 +49,12 @@ export class OrganizationUnitController {
   @Post()
   @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Create an organization unit' })
+  @ApiHeader({
+    name: 'x-tenant-id',
+    required: false,
+    description:
+      'Required for PLATFORM_ADMIN. Employee requests use the tenant selected during login.',
+  })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Unit created successfully',
