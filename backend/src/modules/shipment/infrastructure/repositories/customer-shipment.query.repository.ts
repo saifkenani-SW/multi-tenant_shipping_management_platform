@@ -4,16 +4,20 @@ import { CustomerShipmentEntity } from '../../domain/entities/customer-shipment.
 import { CustomerShipmentPersistenceMapper } from '../mappers/customer-shipment.persistence.mapper';
 import { CustomerShipmentQueryCriteria } from '../../application/builders/query/customer-shipment-query-criteria';
 import { Cacheable } from '../../../../infrastructure/cache/decorators/Cacheable';
-import { SHIPMENT_CACHE_KEYS, SHIPMENT_CACHE_TTL } from '../../constants/shipment.cache.constants';
+import {
+  SHIPMENT_CACHE_KEYS,
+  SHIPMENT_CACHE_TTL,
+} from '../../constants/shipment.cache.constants';
 import { DB } from '../../../../infrastructure/database/generated/kysely/types';
-import { CursorPaginatedResponse, CursorPaginationMeta } from '../../../../common/pagination/cursor/responses/cursor-paginated-response';
+import {
+  CursorPaginatedResponse,
+  CursorPaginationMeta,
+} from '../../../../common/pagination/cursor/responses/cursor-paginated-response';
 import { sql } from 'kysely';
 
 @Injectable()
 export class CustomerShipmentQueryRepository {
-  constructor(
-    @Inject('KYSELY_INSTANCE') private readonly kysely: Kysely<DB>,
-  ) {}
+  constructor(@Inject('KYSELY_INSTANCE') private readonly kysely: Kysely<DB>) {}
 
   @Cacheable({
     ttl: SHIPMENT_CACHE_TTL.DETAILS,
@@ -38,12 +42,7 @@ export class CustomerShipmentQueryRepository {
         'cs.status',
         'cs.created_at',
         'cs.updated_at',
-        eb.fn
-          .coalesce(
-            sql<any>`json_agg(p)`,
-            eb.val('[]')
-          )
-          .as('parcels')
+        eb.fn.coalesce(sql<any>`json_agg(p)`, eb.val('[]')).as('parcels'),
       ])
       .where('cs.id', '=', id)
       .groupBy('cs.id')
@@ -78,7 +77,9 @@ export class CustomerShipmentQueryRepository {
       criteria.receiverCustomerProfileId ?? 'all',
     ],
   })
-  async findMany(criteria: CustomerShipmentQueryCriteria): Promise<CursorPaginatedResponse<CustomerShipmentEntity>> {
+  async findMany(
+    criteria: CustomerShipmentQueryCriteria,
+  ): Promise<CursorPaginatedResponse<CustomerShipmentEntity>> {
     let query = this.kysely
       .selectFrom('customer_shipment as cs')
       .leftJoin('parcel as p', 'cs.id', 'p.customer_shipment_id')
@@ -97,12 +98,7 @@ export class CustomerShipmentQueryRepository {
         'cs.status',
         'cs.created_at',
         'cs.updated_at',
-        eb.fn
-          .coalesce(
-            sql<any>`json_agg(p)`,
-            eb.val('[]')
-          )
-          .as('parcels')
+        eb.fn.coalesce(sql<any>`json_agg(p)`, eb.val('[]')).as('parcels'),
       ])
       .groupBy('cs.id');
 
@@ -111,11 +107,19 @@ export class CustomerShipmentQueryRepository {
     }
 
     if (criteria.senderCustomerProfileId) {
-      query = query.where('cs.sender_customer_profile_id', '=', criteria.senderCustomerProfileId);
+      query = query.where(
+        'cs.sender_customer_profile_id',
+        '=',
+        criteria.senderCustomerProfileId,
+      );
     }
 
     if (criteria.receiverCustomerProfileId) {
-      query = query.where('cs.receiver_customer_profile_id', '=', criteria.receiverCustomerProfileId);
+      query = query.where(
+        'cs.receiver_customer_profile_id',
+        '=',
+        criteria.receiverCustomerProfileId,
+      );
     }
 
     if (criteria.status) {
@@ -127,7 +131,7 @@ export class CustomerShipmentQueryRepository {
         eb.or([
           eb('cs.receiver_name', 'ilike', `%\${criteria.search}%`),
           eb('cs.receiver_phone', 'ilike', `%\${criteria.search}%`),
-        ])
+        ]),
       );
     }
 

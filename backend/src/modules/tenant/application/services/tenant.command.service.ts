@@ -177,11 +177,17 @@ export class TenantCommandService {
   @Transactional()
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+      tenantId,
+    ],
   })
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+      tenantId,
+    ],
   })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
@@ -242,11 +248,17 @@ export class TenantCommandService {
 
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+      tenantId,
+    ],
   })
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+      tenantId,
+    ],
   })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
@@ -287,11 +299,17 @@ export class TenantCommandService {
 
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+      tenantId,
+    ],
   })
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+      tenantId,
+    ],
   })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
@@ -332,11 +350,17 @@ export class TenantCommandService {
 
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
+      tenantId,
+    ],
   })
   @CacheEvict({
     keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY, tenantId],
+    keyBuilder: (tenantId: string) => [
+      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
+      tenantId,
+    ],
   })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),

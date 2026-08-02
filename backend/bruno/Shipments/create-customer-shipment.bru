@@ -1,0 +1,40 @@
+meta {
+  name: Create Customer Shipment
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/shipments/customer
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "senderCustomerProfileId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d1e",
+    "receiverCustomerProfileId": "01948f6c-82e4-7d5a-8b1a-2e4a8b9c0d1f",
+    "receiverName": "Ahmad Al-Sayed",
+    "receiverPhone": "+966512345678",
+    "receiverAddress": "King Fahd Road, Riyadh, Saudi Arabia",
+    "paymentResponsibility": "SENDER",
+    "parcels": [
+      {
+        "actualWeightKg": 3.5,
+        "lengthCm": 40,
+        "widthCm": 30,
+        "heightCm": 25,
+        "condition": "NORMAL"
+      }
+    ]
+  }
+}
+
+docs {
+  # Create Customer Shipment
+  Creates a new customer shipment with one or more parcels. Scoped to the authenticated user's tenant.
+}

@@ -5,9 +5,7 @@ import { Parcel } from '../../domain/entities/parcel.entity';
 
 @Injectable()
 export class ParcelQueryRepository {
-  constructor(
-    @Inject('KYSELY_INSTANCE') private readonly kysely: Kysely<DB>,
-  ) {}
+  constructor(@Inject('KYSELY_INSTANCE') private readonly kysely: Kysely<DB>) {}
 
   async findByTrackingNumber(trackingNumber: string): Promise<Parcel | null> {
     const record = await this.kysely
@@ -34,16 +32,28 @@ export class ParcelQueryRepository {
       record.current_org_unit_id,
       record.volumetric_weight_kg ? Number(record.volumetric_weight_kg) : null,
       record.created_at,
-      record.updated_at
+      record.updated_at,
     );
   }
 
   async findLabelDataByTrackingNumber(trackingNumber: string) {
     const record = await this.kysely
       .selectFrom('parcel')
-      .innerJoin('customer_shipment', 'customer_shipment.id', 'parcel.customer_shipment_id')
-      .leftJoin('customer_profile as sender', 'sender.id', 'customer_shipment.sender_customer_profile_id')
-      .leftJoin('customer_profile as receiver', 'receiver.id', 'customer_shipment.receiver_customer_profile_id')
+      .innerJoin(
+        'customer_shipment',
+        'customer_shipment.id',
+        'parcel.customer_shipment_id',
+      )
+      .leftJoin(
+        'customer_profile as sender',
+        'sender.id',
+        'customer_shipment.sender_customer_profile_id',
+      )
+      .leftJoin(
+        'customer_profile as receiver',
+        'receiver.id',
+        'customer_shipment.receiver_customer_profile_id',
+      )
       .select([
         'parcel.tracking_number',
         'parcel.actual_weight_kg',

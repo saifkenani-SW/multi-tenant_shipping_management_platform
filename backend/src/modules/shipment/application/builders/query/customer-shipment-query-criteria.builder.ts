@@ -10,7 +10,9 @@ export class CustomerShipmentQueryCriteriaBuilder {
     this.criteria = new CustomerShipmentQueryCriteria();
   }
 
-  static fromDto(dto: CustomerShipmentQueryDto): CustomerShipmentQueryCriteriaBuilder {
+  static fromDto(
+    dto: CustomerShipmentQueryDto,
+  ): CustomerShipmentQueryCriteriaBuilder {
     const builder = new CustomerShipmentQueryCriteriaBuilder();
 
     // Base pagination mapping
@@ -19,7 +21,7 @@ export class CustomerShipmentQueryCriteriaBuilder {
     if (dto.tenantId) {
       builder.withTenantId(dto.tenantId);
     }
-    
+
     if (dto.senderCustomerProfileId) {
       builder.withSenderCustomerProfile(dto.senderCustomerProfileId);
     }
@@ -27,11 +29,11 @@ export class CustomerShipmentQueryCriteriaBuilder {
     if (dto.receiverCustomerProfileId) {
       builder.withReceiverCustomerProfile(dto.receiverCustomerProfileId);
     }
-    
+
     if (dto.status) {
       builder.withStatus(dto.status);
     }
-    
+
     if (dto.search) {
       builder.withSearch(dto.search);
     }

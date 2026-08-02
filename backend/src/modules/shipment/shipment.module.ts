@@ -17,11 +17,11 @@ import { PdfGeneratorModule } from '../../packages/pdf-generator/pdf-generator.m
 
 @Module({
   imports: [
-    DatabaseModule, 
-    TenantModule, 
-    TrackingModule, 
-    LabelGeneratorModule, 
-    PdfGeneratorModule
+    DatabaseModule,
+    TenantModule,
+    TrackingModule,
+    LabelGeneratorModule,
+    PdfGeneratorModule,
   ],
   controllers: [CustomerShipmentController, ParcelController],
   providers: [

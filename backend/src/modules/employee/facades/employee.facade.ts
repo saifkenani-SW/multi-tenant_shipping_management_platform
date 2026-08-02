@@ -10,7 +10,7 @@ export class EmployeeFacade {
   ) {}
 
   /**
-   * Retrieves the Principal object for an employee, including all their 
+   * Retrieves the Principal object for an employee, including all their
    * assigned branches and warehouses along with their respective access roles.
    */
   async getPrincipalByUserId(

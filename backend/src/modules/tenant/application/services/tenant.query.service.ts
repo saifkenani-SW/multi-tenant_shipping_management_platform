@@ -117,7 +117,8 @@ export class TenantQueryService {
     }),
   })
   async getTenantSettings(tenantId: string): Promise<TenantSettingsDto> {
-    const settingsRecord = await this.tenantQueryRepository.getTenantSettings(tenantId);
+    const settingsRecord =
+      await this.tenantQueryRepository.getTenantSettings(tenantId);
     if (!settingsRecord) {
       throw new TenantNotFoundException();
     }

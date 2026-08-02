@@ -9,12 +9,16 @@ export class CustomerShipmentQueryDto extends CursorPaginationQueryDto {
   @IsOptional()
   tenantId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by specific sender customer profile ID' })
+  @ApiPropertyOptional({
+    description: 'Filter by specific sender customer profile ID',
+  })
   @IsUUID()
   @IsOptional()
   senderCustomerProfileId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by specific receiver customer profile ID' })
+  @ApiPropertyOptional({
+    description: 'Filter by specific receiver customer profile ID',
+  })
   @IsUUID()
   @IsOptional()
   receiverCustomerProfileId?: string;
@@ -27,7 +31,9 @@ export class CustomerShipmentQueryDto extends CursorPaginationQueryDto {
   @IsOptional()
   status?: ShipmentStatus;
 
-  @ApiPropertyOptional({ description: 'Search term for receiver name or phone' })
+  @ApiPropertyOptional({
+    description: 'Search term for receiver name or phone',
+  })
   @IsString()
   @IsOptional()
   search?: string;

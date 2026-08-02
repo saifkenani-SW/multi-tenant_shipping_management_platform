@@ -22,7 +22,9 @@ export class QRCodeGenerator {
 
       return qrDataUrl;
     } catch (error) {
-      throw new Error(`Failed to generate QR code: ${(error as Error).message}`);
+      throw new Error(
+        `Failed to generate QR code: ${(error as Error).message}`,
+      );
     }
   }
 }

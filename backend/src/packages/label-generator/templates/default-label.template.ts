@@ -119,7 +119,6 @@ export function getDefaultLabelTemplate(data: {
           flex-direction: row;
           justify-content: space-between;
           align-items: stretch;
-          flex: 1;
           gap: 20px;
         }
 
@@ -162,7 +161,7 @@ export function getDefaultLabelTemplate(data: {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-start;
           flex: 1;
           background-color: rgba(var(--secondary-rgb), 0.03);
           border-radius: 12px;

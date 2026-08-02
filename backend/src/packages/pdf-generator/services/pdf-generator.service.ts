@@ -46,14 +46,16 @@ export class PdfGeneratorService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Generates a PDF Buffer from an HTML string.
-   * 
+   *
    * @param html The full HTML string to render
    * @param options Generic PDF options (maps to Playwright internally)
    * @returns A Promise resolving to a Buffer containing the PDF data
    */
   async generate(html: string, options?: PdfOptions): Promise<Buffer> {
     if (!this.browser) {
-      throw new Error('PDF Generator Service is not ready (Browser not initialized).');
+      throw new Error(
+        'PDF Generator Service is not ready (Browser not initialized).',
+      );
     }
 
     // 1. Create a fresh context for complete isolation per request
@@ -74,12 +76,18 @@ export class PdfGeneratorService implements OnModuleInit, OnModuleDestroy {
       return Buffer.from(pdfBuffer);
     } finally {
       // 5. Always cleanup the page and context, even if PDF generation fails
-      await page.close().catch((err) => this.logger.error('Failed to close page', err));
-      await context.close().catch((err) => this.logger.error('Failed to close context', err));
+      await page
+        .close()
+        .catch((err) => this.logger.error('Failed to close page', err));
+      await context
+        .close()
+        .catch((err) => this.logger.error('Failed to close context', err));
     }
   }
 
-  private mapOptions(options?: PdfOptions): Parameters<import('playwright').Page['pdf']>[0] {
+  private mapOptions(
+    options?: PdfOptions,
+  ): Parameters<import('playwright').Page['pdf']>[0] {
     const defaultOptions = {
       printBackground: true,
     };

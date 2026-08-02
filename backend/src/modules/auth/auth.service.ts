@@ -28,34 +28,50 @@ export class AuthService {
       loginDto.password,
       identity.passwordHash,
     );
-    
+
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const activeProfiles = identity.profiles.filter(p => p.isActive);
+    const activeProfiles = identity.profiles.filter((p) => p.isActive);
 
     if (activeProfiles.length === 0) {
-      throw new UnauthorizedException('Account deactivated or no active profiles found');
+      throw new UnauthorizedException(
+        'Account deactivated or no active profiles found',
+      );
     }
 
     // If only one profile, log them in directly
     if (activeProfiles.length === 1) {
       const profile = activeProfiles[0];
-      const tokens = await this.generateTokens(identity.userId, profile.type, profile.tenantId, profile.employeeId, profile.vehicleId);
-      return { 
-        ...tokens, 
-        user: { id: identity.userId, email: loginDto.email, type: profile.type, tenantId: profile.tenantId } 
+      const tokens = await this.generateTokens(
+        identity.userId,
+        profile.type,
+        profile.tenantId,
+        profile.employeeId,
+        profile.vehicleId,
+      );
+      return {
+        ...tokens,
+        user: {
+          id: identity.userId,
+          email: loginDto.email,
+          type: profile.type,
+          tenantId: profile.tenantId,
+        },
       };
     }
 
     // Multiple profiles: return a session token to select a profile
     const sessionToken = this.jwtService.sign(
       { sub: identity.userId, isSessionToken: true },
-      { secret: process.env.JWT_ACCESS_SECRET || 'super-secret', expiresIn: '15m' }
+      {
+        secret: process.env.JWT_ACCESS_SECRET || 'super-secret',
+        expiresIn: '15m',
+      },
     );
 
-    const profilesForClient = activeProfiles.map(p => ({
+    const profilesForClient = activeProfiles.map((p) => ({
       type: p.type,
       tenantId: p.tenantId,
       isActive: p.isActive,
@@ -65,7 +81,7 @@ export class AuthService {
       status: 'REQUIRE_PROFILE_SELECTION',
       sessionToken,
       profiles: profilesForClient,
-      user: { id: identity.userId, email: loginDto.email }
+      user: { id: identity.userId, email: loginDto.email },
     };
   }
 
@@ -79,11 +95,18 @@ export class AuthService {
     if (!identity) throw new UnauthorizedException('Identity not found');
 
     // 2. Verify that the requested profile exists and is active for this user
-    const requestedProfile = identity.profiles.find(p => {
-      if (p.type === UserLoginType.PLATFORM_ADMIN || p.type === UserLoginType.CUSTOMER) {
+    const requestedProfile = identity.profiles.find((p) => {
+      if (
+        p.type === UserLoginType.PLATFORM_ADMIN ||
+        p.type === UserLoginType.CUSTOMER
+      ) {
         return p.type === selectProfileDto.type && p.isActive;
       }
-      return p.type === selectProfileDto.type && p.tenantId === selectProfileDto.tenantId && p.isActive;
+      return (
+        p.type === selectProfileDto.type &&
+        p.tenantId === selectProfileDto.tenantId &&
+        p.isActive
+      );
     });
 
     if (!requestedProfile) {
@@ -91,10 +114,21 @@ export class AuthService {
     }
 
     // 3. Generate final tokens
-    const tokens = await this.generateTokens(userId, requestedProfile.type, requestedProfile.tenantId, requestedProfile.employeeId, requestedProfile.vehicleId);
-    return { 
-      ...tokens, 
-      user: { id: userId, email: user.email, type: requestedProfile.type, tenantId: requestedProfile.tenantId } 
+    const tokens = await this.generateTokens(
+      userId,
+      requestedProfile.type,
+      requestedProfile.tenantId,
+      requestedProfile.employeeId,
+      requestedProfile.vehicleId,
+    );
+    return {
+      ...tokens,
+      user: {
+        id: userId,
+        email: user.email,
+        type: requestedProfile.type,
+        tenantId: requestedProfile.tenantId,
+      },
     };
   }
 

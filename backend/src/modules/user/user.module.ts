@@ -5,16 +5,8 @@ import { UserQueryRepository } from './infrastructure/repositories/user.query.re
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 
 @Module({
-  imports: [
-    DatabaseModule,
-  ],
-  providers: [
-    UserQueryRepository,
-    UserQueryService,
-    UserFacade,
-  ],
-  exports: [
-    UserFacade,
-  ],
+  imports: [DatabaseModule],
+  providers: [UserQueryRepository, UserQueryService, UserFacade],
+  exports: [UserFacade],
 })
 export class UserModule {}

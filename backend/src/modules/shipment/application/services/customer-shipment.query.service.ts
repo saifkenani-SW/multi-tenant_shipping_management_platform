@@ -26,15 +26,19 @@ export class CustomerShipmentQueryService {
     return CustomerShipmentResponseMapper.toDetailsDto(shipment);
   }
 
-  async findShipments(dto: CustomerShipmentQueryDto): Promise<CustomerShipmentListDto> {
+  async findShipments(
+    dto: CustomerShipmentQueryDto,
+  ): Promise<CustomerShipmentListDto> {
     this.logger.log(`Finding shipments with query criteria`);
 
     const criteria = CustomerShipmentQueryCriteriaBuilder.fromDto(dto).build();
     const paginatedShipments = await this.queryRepository.findMany(criteria);
 
     return new CustomerShipmentListDto(
-      paginatedShipments.data.map(s => CustomerShipmentResponseMapper.toDetailsDto(s)),
-      paginatedShipments.meta
+      paginatedShipments.data.map((s) =>
+        CustomerShipmentResponseMapper.toDetailsDto(s),
+      ),
+      paginatedShipments.meta,
     );
   }
 }
