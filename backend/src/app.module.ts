@@ -24,7 +24,8 @@ import { HealthModule } from './health/health.module';
 import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { ShipmentModule } from './modules/shipment/shipment.module';
-
+import { UserModule } from './modules/user/user.module';
+import { TrackingModule } from './modules/tracking/tracking.module';
 @Module({
   imports: [
     ContextModule,
@@ -60,6 +61,8 @@ import { ShipmentModule } from './modules/shipment/shipment.module';
     OrganizationUnitModule,
     EmployeeModule,
     VehicleModule,
+    UserModule,
+    TrackingModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
