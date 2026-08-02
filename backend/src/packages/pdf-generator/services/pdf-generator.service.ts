@@ -16,10 +16,14 @@ export class PdfGeneratorService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     this.logger.log('Initializing Chromium browser for PDF generation...');
     try {
-      this.browser = await chromium.launch({
+      const launchOptions: any = {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'], // Recommended for server environments
-      });
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      };
+      if (process.env.CHROME_BIN) {
+        launchOptions.executablePath = process.env.CHROME_BIN;
+      }
+      this.browser = await chromium.launch(launchOptions);
       this.isBrowserReady = true;
       this.logger.log('Chromium browser initialized successfully.');
     } catch (error) {

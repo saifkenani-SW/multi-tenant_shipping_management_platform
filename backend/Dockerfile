@@ -47,11 +47,18 @@ RUN apk add --no-cache \
     dumb-init \
     openssl \
     libc6-compat \
-    wget
+    wget \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
 
 WORKDIR /app
 
 ENV NODE_ENV=production
+ENV CHROME_BIN="/usr/bin/chromium-browser"
 
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=builder /app/node_modules/.prisma /app/node_modules/.prisma
