@@ -1,3 +1,4 @@
+import { TenantQueryRepository } from '../../../../infrastructure/repositories/tenant.query.repository';
 import {
   Inject,
   Injectable,
@@ -14,9 +15,7 @@ import { DeleteTenantPayload } from '../payloads';
 import { Principal } from '../../../../../../packages/context/principal/principal/Principal';
 import { CaslAbilityBuilder } from '../../../../../../packages/authorization-casl';
 import { TenantSubject } from '../../subjects/tenant.subject';
-import type { ITenantQueryRepository } from '../../../../application/interfaces/tenant.query.repository.interface';
 import { subject } from '@casl/ability';
-import { TENANT_QUERY_REPOSITORY_TOKEN } from '../../../../tokens/tenant-repository.tokens';
 
 @Injectable()
 export class DeleteTenantStrategy implements TenantAuthorizationStrategy<DeleteTenantPayload> {
@@ -24,8 +23,7 @@ export class DeleteTenantStrategy implements TenantAuthorizationStrategy<DeleteT
 
   constructor(
     private readonly caslFactory: CaslAbilityBuilder<Principal>,
-    @Inject(TENANT_QUERY_REPOSITORY_TOKEN)
-    private readonly tenantQueryRepository: ITenantQueryRepository,
+    private readonly tenantQueryRepository: TenantQueryRepository,
   ) {}
 
   async authorize(

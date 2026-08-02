@@ -15,6 +15,7 @@ import {
   IAssignmentOwnerRow,
   IEmployeeQueryRepository,
   IRoleTenantRow,
+  IScopeAccessRow,
 } from '../interfaces/employee.query.repository.interface';
 import { EmployeePersistenceMapper } from '../mappers/persistence/employee.persistence.mapper';
 
@@ -306,5 +307,53 @@ export class EmployeeQueryRepository implements IEmployeeQueryRepository {
         rolesByAssignment.get(row.id) ?? [],
       ),
     );
+  }
+
+  @Cacheable({
+    ttl: EMPLOYEE_CACHE_TTL.DETAILS, // Reusing DETAILS TTL, or we can use a new one. We'll use 5 mins.
+    keyBuilder: (userId: string, tenantId: string) => [
+      'employee:principal',
+      tenantId,
+      userId,
+    ],
+  })
+  async getEmployeeAssignmentsWithRoles(
+    userId: string,
+    tenantId: string,
+  ): Promise<IScopeAccessRow[]> {
+    const { sql } = await import('kysely');
+    
+    // We fetch the employee's assignments (parent_ou)
+    // Then we join the L-tree descendant facilities (child_ou)
+    // And we fetch the roles attached to the assignment.
+    
+    const rows = await this.kysely
+      .selectFrom('employee as e')
+      .innerJoin('employee_assignment as ea', 'ea.employee_id', 'e.id')
+      .innerJoin('organization_unit as parent_ou', 'parent_ou.id', 'ea.organization_unit_id')
+      // Join to find all descendant organization units of the parent assignment
+      .innerJoin('organization_unit as child_ou', (join) =>
+        join.on(sql<boolean>`child_ou.tree_path <@ parent_ou.tree_path`)
+      )
+      // Join assignment roles 
+      .innerJoin('assignment_role as ar', 'ar.assignment_id', 'ea.id')
+      .where('e.user_id', '=', userId)
+      .where('e.tenant_id', '=', tenantId)
+      .where('e.is_active', '=', true)
+      .where('ea.is_active', '=', true)
+      .where('child_ou.is_active', '=', true)
+      .where('child_ou.org_type', 'in', ['BRANCH', 'WAREHOUSE'])
+      .select([
+        'child_ou.id as scopeId',
+        'child_ou.org_type as orgType',
+        'ar.role_id as roleId'
+      ])
+      .execute();
+
+    return rows.map((r) => ({
+      scopeId: r.scopeId,
+      orgType: r.orgType,
+      roleId: r.roleId,
+    }));
   }
 }

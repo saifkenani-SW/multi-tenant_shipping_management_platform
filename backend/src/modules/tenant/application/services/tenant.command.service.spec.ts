@@ -5,17 +5,23 @@ import { CACHE_PROVIDER } from '../../../../core/cache/tokens/cache.tokens';
 import { CacheContainer } from '../../../../infrastructure/cache/container/CacheContainer';
 import { CacheFacade } from '../../../../infrastructure/cache/facade/CacheFacade';
 import { CacheKeyBuilder } from '../../../../infrastructure/cache/builders/CacheKeyBuilder';
-import { TENANT_COMMAND_REPOSITORY_TOKEN } from '../../tokens/tenant-repository.tokens';
+import { TenantCommandRepository } from '../../infrastructure/repositories/tenant.command.repository';
+import { TenantSettingsCommandRepository } from '../../infrastructure/repositories/tenant-settings.command.repository';
+import { UserFacade } from '../../../user/application/facades/user.facade';
 import { TransactionContainer } from '../../../../packages/transaction';
 import { AuthorizationContainer } from '../../../../packages/authorization/authorization.container';
 import { TenantNotFoundException } from '../../domain/exceptions/tenant-not-found.exception';
 import { TenantAction } from '../../domain/authorization';
+import { SUBSCRIPTION_PLAN_QUERY_SERVICE } from '../../../subscription-plan/tokens/subscription-plan-service.tokens';
 
 describe('TenantCommandService', () => {
   let service: TenantCommandService;
   let tenantRepository: any;
+  let settingsCommandRepository: any;
   let cacheProvider: any;
   let authorizationFacade: any;
+  let userFacade: any;
+  let planQueryService: any;
 
   beforeEach(async () => {
     tenantRepository = {
@@ -23,6 +29,21 @@ describe('TenantCommandService', () => {
       findById: jest.fn(),
       update: jest.fn(),
       updateStatus: jest.fn(),
+    };
+
+    settingsCommandRepository = {
+      upsertDeliverySettings: jest.fn(),
+      upsertOperationalSettings: jest.fn(),
+      upsertPricingSettings: jest.fn(),
+      assignOwner: jest.fn(),
+    };
+
+    userFacade = {
+      existsAndActive: jest.fn().mockResolvedValue(true),
+    };
+
+    planQueryService = {
+      getPlanDetails: jest.fn(),
     };
 
     cacheProvider = {
@@ -49,8 +70,20 @@ describe('TenantCommandService', () => {
       providers: [
         TenantCommandService,
         {
-          provide: TENANT_COMMAND_REPOSITORY_TOKEN,
+          provide: TenantCommandRepository,
           useValue: tenantRepository,
+        },
+        {
+          provide: TenantSettingsCommandRepository,
+          useValue: settingsCommandRepository,
+        },
+        {
+          provide: UserFacade,
+          useValue: userFacade,
+        },
+        {
+          provide: SUBSCRIPTION_PLAN_QUERY_SERVICE,
+          useValue: planQueryService,
         },
         { provide: CACHE_PROVIDER, useValue: cacheProvider },
       ],
@@ -70,16 +103,38 @@ describe('TenantCommandService', () => {
         name: 'Test Tenant',
         taxNumber: '123',
         email: 'test@example.com',
+        phone: '1234567890',
+        ownerUserId: 'owner-uuid-1',
       };
       tenantRepository.create.mockResolvedValue({ id: 'tenant-uuid-1' });
 
       const result = await service.createTenant(dto);
 
+      expect(userFacade.existsAndActive).toHaveBeenCalledWith(dto.ownerUserId);
+
       expect(tenantRepository.create).toHaveBeenCalledWith({
         name: dto.name,
         taxNumber: dto.taxNumber,
         email: dto.email,
+        phone: dto.phone,
+        logoUrl: null,
       });
+
+      expect(
+        settingsCommandRepository.upsertDeliverySettings,
+      ).toHaveBeenCalled();
+      expect(
+        settingsCommandRepository.upsertOperationalSettings,
+      ).toHaveBeenCalled();
+      expect(
+        settingsCommandRepository.upsertPricingSettings,
+      ).toHaveBeenCalled();
+      expect(settingsCommandRepository.assignOwner).toHaveBeenCalledWith(
+        'tenant-uuid-1',
+        'owner-uuid-1',
+        true,
+      );
+
       expect(result).toEqual('tenant-uuid-1');
       expect(cacheProvider.delByPattern).toHaveBeenCalledWith('tenant:list:*');
     });
@@ -89,12 +144,30 @@ describe('TenantCommandService', () => {
         name: 'Test Tenant',
         taxNumber: '123',
         email: 'test@example.com',
+        phone: '1234567890',
+        ownerUserId: 'owner-uuid-1',
       };
       const prismaError = { code: 'P2002' };
       tenantRepository.create.mockRejectedValue(prismaError);
 
       await expect(service.createTenant(dto)).rejects.toEqual(prismaError);
       expect(cacheProvider.delByPattern).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if userFacade returns false', async () => {
+      userFacade.existsAndActive.mockResolvedValue(false);
+      const dto = {
+        name: 'Test Tenant',
+        taxNumber: '123',
+        email: 'test@example.com',
+        phone: '1234567890',
+        ownerUserId: 'invalid-user',
+      };
+
+      await expect(service.createTenant(dto)).rejects.toThrow(
+        'Owner user must exist and be active',
+      );
+      expect(tenantRepository.create).not.toHaveBeenCalled();
     });
   });
 

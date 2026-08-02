@@ -1,10 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { ITenantQueryService } from '../interfaces/tenant.query.service.interface';
-import type { ITenantQueryRepository } from '../interfaces/tenant.query.repository.interface';
+import { TenantQueryRepository } from '../../infrastructure/repositories/tenant.query.repository';
+
 import { PaginatedTenantListDto } from '../dtos/responses/tenant-list.dto';
 import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
 import { TenantSubscriptionDto } from '../dtos/responses/tenant-subscription.dto';
 import { TenantSubscriptionHistoryDto } from '../dtos/responses/tenant-subscription-history.dto';
+import { TenantSettingsDto } from '../dtos/responses/tenant-settings.dto';
 import {
   AuthorizationFacade,
   Authorize,
@@ -16,7 +17,7 @@ import {
   TenantPolicy,
   TenantVisibilityScope,
 } from '../../domain/authorization';
-import { TENANT_QUERY_REPOSITORY_TOKEN } from '../../tokens/tenant-repository.tokens';
+
 import { ReturnVisibilityScope } from '../../../../packages/authorization/decorators/return-visibility-scope.decorator';
 import { TenantQueryDto } from '../dtos/requests/tenant-query.dto';
 import { Policy } from '../../../../packages/authorization/policy';
@@ -25,10 +26,9 @@ import { TenantResponseMapper } from '../mappers/tenant.response.mapper';
 import { TenantNotFoundException } from '../../domain/exceptions/tenant-not-found.exception';
 
 @Injectable()
-export class TenantQueryService implements ITenantQueryService {
+export class TenantQueryService {
   constructor(
-    @Inject(TENANT_QUERY_REPOSITORY_TOKEN)
-    private readonly tenantQueryRepository: ITenantQueryRepository,
+    private readonly tenantQueryRepository: TenantQueryRepository,
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly tenantQueryCriteriaBuilder: TenantQueryCriteriaBuilder,
     private readonly tenantResponseMapper: TenantResponseMapper,
@@ -106,5 +106,25 @@ export class TenantQueryService implements ITenantQueryService {
     return history.map((h) =>
       this.tenantResponseMapper.toSubscriptionHistoryDto(h),
     );
+  }
+  @ReturnCapabilities({
+    policy: TenantCapabilityBuilder,
+  })
+  @Authorize({
+    policy: Policy(TenantPolicy, TenantAction.View),
+    payloadResolver: (tenantId: string) => ({
+      tenantId,
+    }),
+  })
+  async getTenantSettings(tenantId: string): Promise<TenantSettingsDto> {
+    const settingsRecord = await this.tenantQueryRepository.getTenantSettings(tenantId);
+    if (!settingsRecord) {
+      throw new TenantNotFoundException();
+    }
+    return this.tenantResponseMapper.toSettingsDto(settingsRecord);
+  }
+
+  async isTenantOwner(tenantId: string, userId: string): Promise<boolean> {
+    return this.tenantQueryRepository.isTenantOwner(tenantId, userId);
   }
 }

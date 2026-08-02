@@ -1,0 +1,30 @@
+meta {
+  name: Update Delivery Settings
+  type: http
+  seq: 14
+}
+
+patch {
+  url: {{url}}/tenants/{{tenantId}}/settings/delivery
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "requireOtp": true,
+    "requireSignature": false,
+    "requireProofPhoto": true,
+    "requireIdPhoto": false,
+    "allowRepresentative": true
+  }
+}
+
+docs {
+  # Update Delivery Settings
+  Updates the delivery settings for a given tenant. All fields are optional.
+}

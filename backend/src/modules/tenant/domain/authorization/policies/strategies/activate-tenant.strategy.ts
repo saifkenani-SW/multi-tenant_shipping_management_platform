@@ -1,3 +1,4 @@
+import { TenantQueryRepository } from '../../../../infrastructure/repositories/tenant.query.repository';
 import {
   BadRequestException,
   Inject,
@@ -11,8 +12,6 @@ import {
 } from '../../../../../../packages/authorization';
 import { CaslAbilityBuilder } from '../../../../../../packages/authorization-casl';
 import { Principal } from '../../../../../../packages/context/principal/principal/Principal';
-import type { ITenantQueryRepository } from '../../../../application/interfaces/tenant.query.repository.interface';
-import { TENANT_QUERY_REPOSITORY_TOKEN } from '../../../../tokens/tenant-repository.tokens';
 import { TenantAction } from '../../actions/tenant.action';
 import { TenantAuthorizationStrategy } from './interfaces/tenant-authorization-strategy.interface';
 import { ActivateTenantPayload } from '../payloads';
@@ -24,8 +23,7 @@ export class ActivateTenantStrategy implements TenantAuthorizationStrategy<Activ
 
   constructor(
     private readonly caslFactory: CaslAbilityBuilder<Principal>,
-    @Inject(TENANT_QUERY_REPOSITORY_TOKEN)
-    private readonly tenantQueryRepository: ITenantQueryRepository,
+    private readonly tenantQueryRepository: TenantQueryRepository,
   ) {}
 
   async authorize(

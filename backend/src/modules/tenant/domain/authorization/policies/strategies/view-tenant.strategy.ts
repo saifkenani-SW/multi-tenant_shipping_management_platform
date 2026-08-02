@@ -1,3 +1,4 @@
+import { TenantQueryRepository } from '../../../../infrastructure/repositories/tenant.query.repository';
 import {
   Inject,
   Injectable,
@@ -14,17 +15,14 @@ import { subject } from '@casl/ability';
 import { TenantSubject } from '../../subjects/tenant.subject';
 import { CaslAbilityBuilder } from '../../../../../../packages/authorization-casl';
 import { Principal } from '../../../../../../packages/context/principal/principal/Principal';
-import type { ITenantQueryRepository } from '../../../../application/interfaces/tenant.query.repository.interface';
 import { ViewTenantPayload } from '../payloads/view-tenant.payload';
-import { TENANT_QUERY_REPOSITORY_TOKEN } from '../../../../tokens/tenant-repository.tokens';
 
 @Injectable()
 export class ViewTenantStrategy implements TenantAuthorizationStrategy<ViewTenantPayload> {
   readonly action = TenantAction.View;
   constructor(
     private readonly caslFactory: CaslAbilityBuilder<Principal>,
-    @Inject(TENANT_QUERY_REPOSITORY_TOKEN)
-    private readonly tenantQueryRepository: ITenantQueryRepository,
+    private readonly tenantQueryRepository: TenantQueryRepository,
   ) {}
   async authorize(
     context: AuthorizationContext<Principal>,

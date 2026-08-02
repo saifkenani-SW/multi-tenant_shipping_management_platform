@@ -10,6 +10,12 @@ import { TenantSubscription } from '../../domain/entities/tenant-subscription.en
 import { TenantSubscriptionHistory } from '../../domain/entities/tenant-subscription-history.entity';
 import { TenantSubscriptionDto } from '../dtos/responses/tenant-subscription.dto';
 import { TenantSubscriptionHistoryDto } from '../dtos/responses/tenant-subscription-history.dto';
+import {
+  TenantSettingsDto,
+  DeliverySettingsDto,
+  OperationalSettingsDto,
+  PricingSettingsDto,
+} from '../dtos/responses/tenant-settings.dto';
 
 @Injectable()
 export class TenantResponseMapper {
@@ -86,6 +92,35 @@ export class TenantResponseMapper {
     dto.previousPlanId = history.previousPlanId;
     dto.notes = history.notes;
     dto.performedBy = history.performedBy;
+    return dto;
+  }
+
+  toSettingsDto(record: any): TenantSettingsDto {
+    const delivery = new DeliverySettingsDto();
+    delivery.requireOtp = record.require_otp;
+    delivery.requireSignature = record.require_signature;
+    delivery.requireProofPhoto = record.require_proof_photo;
+    delivery.requireIdPhoto = record.require_id_photo;
+    delivery.allowRepresentative = record.allow_representative;
+
+    const operational = new OperationalSettingsDto();
+    operational.trackingPrefix = record.tracking_prefix || null;
+    operational.autoCloseShipmentAfterCollection = record.auto_close_shipment_after_collection;
+    operational.allowShipmentReopen = record.allow_shipment_reopen;
+    operational.allowTripCancellationAfterLoading = record.allow_trip_cancellation_after_loading;
+    operational.requireManagerBeforeTripDeparture = record.require_manager_before_trip_departure;
+    operational.allowReturnAfterCollection = record.allow_return_after_collection;
+    operational.quotationValidityHours = record.quotation_validity_hours;
+
+    const pricing = new PricingSettingsDto();
+    pricing.volumetricDivisor = record.volumetric_divisor;
+    pricing.defaultCurrency = record.default_currency;
+
+    const dto = new TenantSettingsDto();
+    dto.delivery = delivery;
+    dto.operational = operational;
+    dto.pricing = pricing;
+
     return dto;
   }
 }

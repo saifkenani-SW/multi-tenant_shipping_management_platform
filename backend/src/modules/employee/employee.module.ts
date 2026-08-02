@@ -4,6 +4,8 @@ import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { CaslModule } from '../../packages/authorization-casl';
 import { AuthModule } from '../auth/auth.module';
+import { AuthorizationModule } from '../authorization/authorization.module';
+import { EmployeeFacade } from './facades/employee.facade';
 import {
   EmployeeAbility,
   EmployeePolicy,
@@ -36,6 +38,7 @@ import {
     // مطلوب لـ PermissionCacheService: تغيير التعيينات أو التعطيل يبطل
     // كاش الحُرّاس، وبدونه يظل الموظف المفصول عاملاً حتى ساعة.
     AuthModule,
+    AuthorizationModule,
     CaslModule.forFeature([EmployeeAbility]),
   ],
   controllers: [EmployeeController],
@@ -83,6 +86,9 @@ import {
     // Visibility
     EmployeeVisibilityScope,
     EmployeeCapabilityBuilder,
+
+    // Facades
+    EmployeeFacade,
   ],
   exports: [
     'IEmployeeCommandService',
@@ -90,6 +96,7 @@ import {
     EMPLOYEE_QUERY_REPOSITORY_TOKEN,
     EmployeePolicy,
     EmployeeCapabilityBuilder,
+    EmployeeFacade,
   ],
 })
 export class EmployeeModule {}

@@ -6,6 +6,10 @@ export interface Principal {
 
   tenantId?: string;
 
+  profileId?: string;
+
+  vehicleId?: string;
+
   branches: ScopeAccess[];
 
   warehouses: ScopeAccess[];

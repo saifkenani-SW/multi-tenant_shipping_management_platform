@@ -205,7 +205,7 @@ export class ShipmentRequestCommandRepository implements IShipmentRequestCommand
     await this.prisma.client.customer_shipment.create({
       data: {
         tenant_id: request.target_tenant_id,
-        customer_profile_id: request.customer_profile_id,
+        sender_customer_profile_id: request.customer_profile_id,
         shipment_request_id: request.id,
         approved_quotation_id: approvedQuotation.id,
         receiver_name: request.receiver_name,
