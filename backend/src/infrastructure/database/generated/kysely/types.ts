@@ -245,6 +245,7 @@ export type customer_profile = {
     user_id: string;
     full_name: string;
     phone: string;
+    profile_image_key: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };

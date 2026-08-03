@@ -6,6 +6,7 @@ import { v7 as uuidv7 } from 'uuid';
 
 import {
   IStorageProvider,
+  StorageFile,
   StorageSaveResult,
 } from '../contracts/storage-provider.interface';
 import {
@@ -34,7 +35,7 @@ export class LocalStorageProvider<TCategory extends string = string>
   }
 
   async save(
-    file: Express.Multer.File,
+    file: StorageFile,
     ownerId: string,
     category: TCategory,
   ): Promise<StorageSaveResult> {

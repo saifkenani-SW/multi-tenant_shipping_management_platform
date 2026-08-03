@@ -34,4 +34,16 @@ export class MailService {
 
     this.logger.log(`OTP email sent to ${to}`);
   }
+
+  async sendPasswordResetOtpEmail(to: string, otp: string): Promise<void> {
+    await this.transporter.sendMail({
+      from: this.fromAddress,
+      to,
+      subject: 'إعادة تعيين كلمة المرور',
+      text: `رمز إعادة تعيين كلمة المرور هو: ${otp}\nصالح لمدة 10 دقائق.`,
+      html: `<p>رمز إعادة تعيين كلمة المرور هو: <b>${otp}</b></p><p>صالح لمدة 10 دقائق.</p>`,
+    });
+
+    this.logger.log(`Password reset OTP email sent to ${to}`);
+  }
 }

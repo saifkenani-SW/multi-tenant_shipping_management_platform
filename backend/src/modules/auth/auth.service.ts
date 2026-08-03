@@ -18,7 +18,8 @@ export class AuthService {
   ) {}
 
   async login(loginDto: LoginDto) {
-    const identity = await this.userFacade.getIdentityByEmail(loginDto.email);
+    const email = loginDto.email.trim().toLowerCase();
+    const identity = await this.userFacade.getIdentityByEmail(email);
 
     if (!identity) {
       throw new UnauthorizedException('Invalid credentials');
@@ -55,7 +56,7 @@ export class AuthService {
         ...tokens,
         user: {
           id: identity.userId,
-          email: loginDto.email,
+          email,
           type: profile.type,
           tenantId: profile.tenantId,
         },
@@ -81,7 +82,7 @@ export class AuthService {
       status: 'REQUIRE_PROFILE_SELECTION',
       sessionToken,
       profiles: profilesForClient,
-      user: { id: identity.userId, email: loginDto.email },
+      user: { id: identity.userId, email },
     };
   }
 
@@ -140,7 +141,7 @@ export class AuthService {
       payload = this.jwtService.verify<JwtPayload>(dto.refreshToken, {
         secret: process.env.JWT_REFRESH_SECRET || 'super-refresh-secret',
       });
-    } catch (e) {
+    } catch {
       throw new UnauthorizedException('Invalid or expired refresh tokens');
     }
 

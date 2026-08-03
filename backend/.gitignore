@@ -49,6 +49,7 @@ Thumbs.db
 
 # Runtime data
 pids
+/uploads
 *.pid
 *.seed
 *.pid.lock

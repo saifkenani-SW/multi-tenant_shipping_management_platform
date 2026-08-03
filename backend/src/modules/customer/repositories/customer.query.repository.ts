@@ -30,6 +30,7 @@ export class CustomerQueryRepository implements ICustomerQueryRepository {
         'users.email',
         'customer_profile.full_name',
         'customer_profile.phone',
+        'customer_profile.profile_image_key',
         'customer_profile.created_at',
         'customer_profile.updated_at',
       ])
@@ -44,8 +45,19 @@ export class CustomerQueryRepository implements ICustomerQueryRepository {
       row.email,
       row.full_name,
       row.phone,
+      row.profile_image_key,
       row.created_at,
       row.updated_at,
     );
+  }
+
+  async findProfileImageKeyById(profileId: string): Promise<string | null> {
+    const row = await this.kysely
+      .selectFrom('customer_profile')
+      .select('profile_image_key')
+      .where('id', '=', profileId)
+      .executeTakeFirst();
+
+    return row?.profile_image_key ?? null;
   }
 }

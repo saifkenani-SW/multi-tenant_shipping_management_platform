@@ -222,8 +222,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       for (const [key, value] of Object.entries(statusTranslations)) {
         if (message.toLowerCase().includes(key.toLowerCase())) return value;
       }
-      return Object.values(statusTranslations)[0] || null;
+      return null;
     }
-    return Object.values(statusTranslations)[0] || null;
+    return null;
   }
 }
