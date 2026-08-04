@@ -33,7 +33,7 @@ export class OrganizationUnitCommandRepository implements IOrganizationUnitComma
         )
         INSERT INTO organization_unit (
           id, tenant_id, parent_id, zone_id, name, org_type,
-          address_line, location, tree_path
+          address_line, location, updated_at, tree_path
         )
         SELECT
           new_unit.id,
@@ -44,6 +44,9 @@ export class OrganizationUnitCommandRepository implements IOrganizationUnitComma
           ${data.orgType}::"OrgType",
           ${data.addressLine},
           ${this.pointExpression(data.longitude, data.latitude)},
+          -- @updatedAt ميزة في Prisma client لا تُنشئ DEFAULT في القاعدة،
+          -- والعمود NOT NULL، فالإدراج الخام يجب أن يملأه صراحةً.
+          NOW(),
           CASE
             WHEN ${data.parentId}::uuid IS NULL
               THEN text2ltree(replace(new_unit.id::text, '-', '_'))
