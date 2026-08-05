@@ -1,0 +1,24 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { GlobalLocationQueryRepository } from '../../infrastructure/repositories/global-location.query.repository';
+import { GlobalLocationQueryDto } from '../dtos/requests/global-location-query.dto';
+import { GlobalLocationResponseDto } from '../dtos/responses/global-location.response.dto';
+import { CursorPaginatedResponse } from '../../../../common/pagination/cursor/responses/cursor-paginated-response';
+
+@Injectable()
+export class GlobalLocationQueryService {
+  constructor(private readonly repository: GlobalLocationQueryRepository) {}
+
+  async findMany(
+    criteria: GlobalLocationQueryDto,
+  ): Promise<CursorPaginatedResponse<GlobalLocationResponseDto>> {
+    return this.repository.findMany(criteria);
+  }
+
+  async findById(id: string): Promise<GlobalLocationResponseDto> {
+    const record = await this.repository.findById(id);
+    if (!record) {
+      throw new NotFoundException(`Global Location with ID ${id} not found`);
+    }
+    return record;
+  }
+}

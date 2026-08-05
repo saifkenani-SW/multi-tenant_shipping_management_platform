@@ -6,14 +6,14 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../constants/authorization.constants';
-import {
-  AuthenticatedUser,
-  UserRole,
-} from '../interfaces/authenticated-user.interface';
+import { RequestContextService } from '../../../packages/context/services/request-context.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private readonly reflector: Reflector) {}
+  constructor(
+    private readonly reflector: Reflector,
+    private readonly requestContext: RequestContextService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(
@@ -25,17 +25,17 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest();
-    const user: AuthenticatedUser | undefined = request.user;
-
-    if (!user || !user.roles || user.roles.length === 0) {
+    let principal;
+    try {
+      principal = this.requestContext.getPrincipal();
+    } catch {
       throw new ForbiddenException(
-        'Access denied: User is not authenticated or has no roles assigned.',
+        'Access denied: User is not authenticated or principal is missing.',
       );
     }
 
-    const userRoles = this.extractRoleStrings(user.roles);
-    const hasRole = requiredRoles.some((role) => userRoles.includes(role));
+    const userRole = principal.subject.type;
+    const hasRole = requiredRoles.includes(userRole);
 
     if (!hasRole) {
       throw new ForbiddenException(
@@ -44,14 +44,5 @@ export class RolesGuard implements CanActivate {
     }
 
     return true;
-  }
-
-  private extractRoleStrings(roles: UserRole[]): string[] {
-    return roles.map((role) => {
-      if (typeof role === 'string') {
-        return role;
-      }
-      return role.code ?? role.name ?? role.slug ?? role.id ?? '';
-    });
   }
 }

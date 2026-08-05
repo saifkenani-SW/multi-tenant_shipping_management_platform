@@ -102,6 +102,19 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       errorType = 'خطأ_في_قاعدة_البيانات';
       switch (exception.code) {
+        case 'P2010':
+          const originalCode = (exception.meta as any)?.driverAdapterError?.cause?.originalCode;
+          if (originalCode === '23503') {
+            status = HttpStatus.BAD_REQUEST;
+            message = 'فشل قيد المفتاح الخارجي - السجل المرتبط غير موجود';
+          } else if (originalCode === '23505') {
+            status = HttpStatus.CONFLICT;
+            message = 'هذه البيانات موجودة بالفعل ولا يمكن تكرارها';
+          } else {
+            status = HttpStatus.INTERNAL_SERVER_ERROR;
+            message = 'حدث خطأ غير متوقع في استعلام قاعدة البيانات';
+          }
+          break;
         case 'P2002':
           status = HttpStatus.CONFLICT;
           const target = (exception.meta as any)?.target;
@@ -116,7 +129,11 @@ export class GlobalExceptionFilter implements ExceptionFilter {
           break;
         case 'P2003':
           status = HttpStatus.BAD_REQUEST;
-          message = 'فشل قيد المفتاح الخارجي - السجل المرتبط غير موجود';
+          if (method === 'DELETE') {
+            message = 'لا يمكن الحذف لوجود بيانات أخرى مرتبطة بهذا السجل';
+          } else {
+            message = 'فشل قيد المفتاح الخارجي - السجل المرتبط غير موجود';
+          }
           break;
         case 'P2014':
           status = HttpStatus.BAD_REQUEST;
