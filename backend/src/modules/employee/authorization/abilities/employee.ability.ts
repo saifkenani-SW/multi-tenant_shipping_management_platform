@@ -38,7 +38,7 @@ export class EmployeeAbility implements CaslAbilityContributor<
       return;
     }
 
-    if (principal.subject.type === SubjectType.PLATFORM_ADMIN) {
+    if (principal.subject.type === SubjectType.PLATFORM_OWNER) {
       builder.can(EmployeeAction.View, EmployeeSubject);
       builder.can(EmployeeAction.Create, EmployeeSubject);
       builder.can(EmployeeAction.Update, EmployeeSubject);

@@ -19,7 +19,7 @@ describe('TenantVisibilityScope', () => {
   it('should return an unrestricted scope for platform administrators', () => {
     expect(
       scope.buildScope({
-        principal: createPrincipal(SubjectType.PLATFORM_ADMIN),
+        principal: createPrincipal(SubjectType.PLATFORM_OWNER),
       }),
     ).toEqual({});
   });

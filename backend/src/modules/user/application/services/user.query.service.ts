@@ -40,7 +40,7 @@ export class UserQueryService {
 
     if (data.platformAdmin) {
       profiles.push({
-        type: UserLoginType.PLATFORM_ADMIN,
+        type: UserLoginType.PLATFORM_OWNER,
         isActive: data.platformAdmin.is_active,
       });
     }

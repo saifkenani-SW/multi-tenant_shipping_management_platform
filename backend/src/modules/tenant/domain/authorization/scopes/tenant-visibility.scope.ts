@@ -11,7 +11,7 @@ import { SubjectType } from '../../../../../packages/context/principal/principal
 @Injectable()
 export class TenantVisibilityScope implements VisibilityScopeBuilder<TenantScopeInterface> {
   buildScope(context: AuthorizationContext<Principal>): TenantScopeInterface {
-    if (context.principal.subject.type === SubjectType.PLATFORM_ADMIN) {
+    if (context.principal.subject.type === SubjectType.PLATFORM_OWNER) {
       return {};
     }
 

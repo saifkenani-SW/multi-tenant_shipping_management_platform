@@ -25,7 +25,7 @@ export class TenantAbility implements CaslAbilityContributor<
       return;
     }
 
-    if (principal.subject.type === SubjectType.PLATFORM_ADMIN) {
+    if (principal.subject.type === SubjectType.PLATFORM_OWNER) {
       builder.can(TenantAction.Create, TenantSubject);
       builder.can(TenantAction.Update, TenantSubject);
       builder.can(TenantAction.Suspend, TenantSubject);

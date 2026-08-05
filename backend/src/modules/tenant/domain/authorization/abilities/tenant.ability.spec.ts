@@ -10,7 +10,7 @@ describe('TenantAbility', () => {
   it('should allow platform administrators to view and manage tenant lifecycle states', () => {
     const builder = new AbilityBuilder<ApplicationAbility>(createMongoAbility);
     const principal: Principal = {
-      subject: { id: 'admin-id', type: SubjectType.PLATFORM_ADMIN },
+      subject: { id: 'admin-id', type: SubjectType.PLATFORM_OWNER },
       branches: [],
       warehouses: [],
     };

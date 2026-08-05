@@ -48,7 +48,7 @@ export class EmployeeController {
   ) {}
 
   @Post()
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({
     summary: 'Create an employee',
     description: 'Creates the login account and the employee record together.',
@@ -65,7 +65,7 @@ export class EmployeeController {
   }
 
   @Get()
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'List employees' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -79,7 +79,7 @@ export class EmployeeController {
   }
 
   @Get(':id')
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Get employee details with assignments and roles' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -94,7 +94,7 @@ export class EmployeeController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({
     summary: 'Update employee details',
     description: 'Email and password are account data and change elsewhere.',
@@ -112,7 +112,7 @@ export class EmployeeController {
 
   @Post(':id/deactivate')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({
     summary: 'Deactivate an employee',
     description: 'Revokes access immediately by clearing the permission cache.',
@@ -127,7 +127,7 @@ export class EmployeeController {
 
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Reactivate an employee' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -138,7 +138,7 @@ export class EmployeeController {
   }
 
   @Post(':id/assignments')
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Assign the employee to an organization unit' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -154,7 +154,7 @@ export class EmployeeController {
 
   @Put(':id/assignments/:assignmentId/roles')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({
     summary: 'Replace the roles granted at an assignment',
     description: 'The submitted list becomes the full set of roles.',
@@ -176,7 +176,7 @@ export class EmployeeController {
 
   @Delete(':id/assignments/:assignmentId')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Remove an assignment' })
   @ApiResponse({
     status: HttpStatus.OK,

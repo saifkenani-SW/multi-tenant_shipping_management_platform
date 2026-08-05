@@ -38,7 +38,7 @@ import { UserLoginType } from '../auth/types/auth.types';
 @ApiTags('Subscription Plans')
 @ApiBearerAuth()
 @UseGuards(UserTypeGuard)
-@RequireTypes(UserLoginType.PLATFORM_ADMIN)
+@RequireTypes(UserLoginType.PLATFORM_OWNER)
 @Controller('subscription-plans')
 export class SubscriptionPlanController {
   constructor(

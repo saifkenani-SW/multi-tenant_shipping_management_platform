@@ -31,7 +31,7 @@ export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Get()
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'List the permission catalog' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -45,7 +45,7 @@ export class PermissionController {
   }
 
   @Get(':id')
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Get permission details' })
   @ApiResponse({
     status: HttpStatus.OK,

@@ -38,7 +38,7 @@ export class PermissionsGuard implements CanActivate {
 
     // 1. Platform Admins & Tenant Admins bypass permission checks
     if (
-      subjectType === SubjectType.PLATFORM_ADMIN ||
+      subjectType === SubjectType.PLATFORM_OWNER ||
       subjectType === SubjectType.TENANT_ADMIN
     ) {
       return true;

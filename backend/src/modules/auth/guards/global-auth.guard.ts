@@ -47,6 +47,7 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
     if (!user.isSessionToken) {
       await this.populatePrincipal(user, request);
     }
+    console.log('getPrincipal        ' + this.requestContext.getPrincipal());
 
     return true;
   }
@@ -62,12 +63,10 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
   }
 
   private async populatePrincipal(user: any, request?: any) {
-    // 1. Platform Admin
-    if (user.type === UserLoginType.PLATFORM_ADMIN) {
-      const tenantId = request?.headers?.['x-tenant-id'] as string | undefined;
+    // 1. Platform Owner
+    if (user.type === UserLoginType.PLATFORM_OWNER) {
       this.requestContext.setPrincipal({
-        subject: { id: user.sub, type: SubjectType.PLATFORM_ADMIN },
-        tenantId,
+        subject: { id: user.sub, type: SubjectType.PLATFORM_OWNER },
         branches: [],
         warehouses: [],
       });

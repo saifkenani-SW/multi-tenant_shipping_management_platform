@@ -26,7 +26,7 @@ export class CreateEmployeeStrategy implements EmployeeAuthorizationStrategy<Cre
     const ability = this.caslFactory.create(context.principal);
 
     const candidate =
-      context.principal.subject.type === SubjectType.PLATFORM_ADMIN
+      context.principal.subject.type === SubjectType.PLATFORM_OWNER
         ? EmployeeSubject
         : subject(EmployeeSubject, {
             tenantId: context.principal.tenantId,

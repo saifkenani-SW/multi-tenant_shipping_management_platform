@@ -39,7 +39,7 @@ export class VehicleController {
   ) {}
 
   @Post()
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Create a vehicle' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -51,7 +51,7 @@ export class VehicleController {
   }
 
   @Get()
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'List vehicles in the current tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -64,7 +64,7 @@ export class VehicleController {
   }
 
   @Get(':id')
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Get vehicle details' })
   @ApiResponse({ status: HttpStatus.OK, type: VehicleDetailsDto })
   async getVehicleDetails(
@@ -75,7 +75,7 @@ export class VehicleController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Update a vehicle' })
   @ApiResponse({
     status: HttpStatus.OK,

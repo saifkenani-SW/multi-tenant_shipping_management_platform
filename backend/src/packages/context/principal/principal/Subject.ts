@@ -4,7 +4,7 @@ export interface Subject {
   id: string;
 
   type:
-    | SubjectType.PLATFORM_ADMIN
+    | SubjectType.PLATFORM_OWNER
     | SubjectType.TENANT_ADMIN
     | SubjectType.EMPLOYEE
     | SubjectType.DRIVER

@@ -58,7 +58,7 @@ export class TenantController {
   ) {}
 
   @Post()
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Create a new tenant (Platform Admin only)' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -71,7 +71,7 @@ export class TenantController {
   }
 
   @Get()
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'List all tenants (Platform Admin only)' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -85,7 +85,7 @@ export class TenantController {
   }
 
   @Get(':id')
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Get tenant details' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -101,7 +101,7 @@ export class TenantController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Update tenant details' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -117,7 +117,7 @@ export class TenantController {
 
   @Post(':id/suspend')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Suspend a tenant (Platform Admin only)' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -133,7 +133,7 @@ export class TenantController {
 
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Activate a suspended tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -145,7 +145,7 @@ export class TenantController {
   }
 
   @Get(':id/subscriptions/active')
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Get active subscription for a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -160,7 +160,7 @@ export class TenantController {
   }
 
   @Get(':id/subscriptions/history')
-  @RequireTypes(UserLoginType.PLATFORM_ADMIN, UserLoginType.EMPLOYEE)
+  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
   @ApiOperation({ summary: 'Get subscription history for a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -176,7 +176,7 @@ export class TenantController {
 
   @Post(':id/subscriptions/assign')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Assign a subscription to a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -193,7 +193,7 @@ export class TenantController {
 
   @Post(':id/subscriptions/renew')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Renew or upgrade a subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -209,7 +209,7 @@ export class TenantController {
   }*/
   @Post(':id/subscriptions/suspend')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Suspend an active subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -226,7 +226,7 @@ export class TenantController {
 
   @Post(':id/subscriptions/resume')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Resume a suspended subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -243,7 +243,7 @@ export class TenantController {
 
   @Post(':id/subscriptions/cancel')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_ADMIN)
+  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Cancel an active subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -260,7 +260,7 @@ export class TenantController {
 
   @Patch(':id/settings/delivery')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update tenant delivery settings' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -276,7 +276,7 @@ export class TenantController {
 
   @Patch(':id/settings/operational')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update tenant operational settings' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -292,7 +292,7 @@ export class TenantController {
 
   @Patch(':id/settings/pricing')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update tenant pricing settings' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -308,7 +308,7 @@ export class TenantController {
 
   @Get(':id/settings')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_ADMIN, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get all settings for a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,

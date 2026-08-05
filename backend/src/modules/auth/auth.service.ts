@@ -98,7 +98,7 @@ export class AuthService {
     // 2. Verify that the requested profile exists and is active for this user
     const requestedProfile = identity.profiles.find((p) => {
       if (
-        p.type === UserLoginType.PLATFORM_ADMIN ||
+        p.type === UserLoginType.PLATFORM_OWNER ||
         p.type === UserLoginType.CUSTOMER
       ) {
         return p.type === selectProfileDto.type && p.isActive;
