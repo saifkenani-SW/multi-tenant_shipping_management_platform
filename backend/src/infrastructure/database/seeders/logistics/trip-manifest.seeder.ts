@@ -134,7 +134,7 @@ export class TripManifestSeeder implements Seeder {
         received_by_name: 'Jane Receiver',
         otp_verified: true,
         otp_verified_at: new Date(),
-        signature_url: 'https://cdn.fastship.com/pod/sig.png',
+        signature_key: 'https://cdn.fastship.com/pod/sig.png',
         delivery_lat: 24.6901,
         delivery_lng: 46.6853,
       },

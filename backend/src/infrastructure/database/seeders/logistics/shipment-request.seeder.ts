@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../../prisma.service';
 import { Seeder } from '../seeder.interface';
 import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
+import { SEEDED_GLOBAL_LOCATIONS } from '../system/global-location.seeder';
 
 @Injectable()
 export class ShipmentRequestSeeder implements Seeder {
@@ -44,14 +45,12 @@ export class ShipmentRequestSeeder implements Seeder {
         id: reqId,
         customer_profile_id: customer.id,
         target_tenant_id: tenant1.id,
-        origin_org_unit_id: orgUnit.id,
-        destination_org_unit_id: orgUnit.id,
+        origin_global_location_id: SEEDED_GLOBAL_LOCATIONS[2].id,
+        destination_global_location_id: SEEDED_GLOBAL_LOCATIONS[2].id,
         sender_name: 'John Sender',
         sender_phone: '+123456789',
-        sender_address: 'Olaya Street, Riyadh',
         receiver_name: 'Jane Receiver',
         receiver_phone: '+987654321',
-        receiver_address: 'Tahlia Street, Riyadh',
         expected_pieces_count: 2,
         expected_total_weight_kg: 5.5,
         status: RequestStatus.CONVERTED,
@@ -69,6 +68,8 @@ export class ShipmentRequestSeeder implements Seeder {
         id: quoteId,
         tenant_id: tenant1.id,
         shipment_request_id: request.id,
+        origin_org_unit_id: orgUnit.id,
+        destination_org_unit_id: orgUnit.id,
         quotation_type: QuotationType.AUTOMATIC,
         base_price: 25.0,
         weight_charge: 10.0,
@@ -90,10 +91,11 @@ export class ShipmentRequestSeeder implements Seeder {
         tenant_id: tenant1.id,
         sender_customer_profile_id: customer.id,
         shipment_request_id: request.id,
+        origin_org_unit_id: orgUnit.id,
+        destination_org_unit_id: orgUnit.id,
         approved_quotation_id: quotation.id,
         receiver_name: 'Jane Receiver',
         receiver_phone: '+987654321',
-        receiver_address: 'Tahlia Street, Riyadh',
         total_chargeable_weight_kg: 5.5,
         status: ShipmentStatus.PROCESSING,
       },
