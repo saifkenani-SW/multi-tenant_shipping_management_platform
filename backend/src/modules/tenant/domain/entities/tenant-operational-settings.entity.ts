@@ -7,6 +7,7 @@ export class TenantOperationalSettings {
     public readonly allowTripCancellationAfterLoading: boolean = false,
     public readonly requireManagerBeforeTripDeparture: boolean = false,
     public readonly allowReturnAfterCollection: boolean = false,
+    public readonly requireSenderNationalId: boolean = true,
     public readonly quotationValidityHours: number = 48,
   ) {}
 }

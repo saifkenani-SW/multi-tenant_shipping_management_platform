@@ -63,6 +63,7 @@ export class TenantSettingsCommandRepository {
         require_manager_before_trip_departure:
           settings.requireManagerBeforeTripDeparture,
         allow_return_after_collection: settings.allowReturnAfterCollection,
+        require_sender_national_id: settings.requireSenderNationalId,
         quotation_validity_hours: settings.quotationValidityHours,
       },
       update: {
@@ -75,6 +76,7 @@ export class TenantSettingsCommandRepository {
         require_manager_before_trip_departure:
           settings.requireManagerBeforeTripDeparture,
         allow_return_after_collection: settings.allowReturnAfterCollection,
+        require_sender_national_id: settings.requireSenderNationalId,
         quotation_validity_hours: settings.quotationValidityHours,
       },
     });
@@ -96,6 +98,7 @@ export class TenantSettingsCommandRepository {
         require_manager_before_trip_departure:
           payload.requireManagerBeforeTripDeparture,
         allow_return_after_collection: payload.allowReturnAfterCollection,
+        require_sender_national_id: payload.requireSenderNationalId,
         quotation_validity_hours: payload.quotationValidityHours,
       },
     });

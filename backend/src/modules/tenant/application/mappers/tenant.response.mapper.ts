@@ -114,6 +114,7 @@ export class TenantResponseMapper {
       record.require_manager_before_trip_departure;
     operational.allowReturnAfterCollection =
       record.allow_return_after_collection;
+    operational.requireSenderNationalId = record.require_sender_national_id;
     operational.quotationValidityHours = record.quotation_validity_hours;
 
     const pricing = new PricingSettingsDto();

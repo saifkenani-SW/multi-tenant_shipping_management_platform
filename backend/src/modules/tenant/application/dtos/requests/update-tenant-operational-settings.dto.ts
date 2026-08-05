@@ -45,6 +45,11 @@ export class UpdateTenantOperationalSettingsDto {
   @IsOptional()
   allowReturnAfterCollection?: boolean;
 
+  @ApiPropertyOptional({ description: 'Require sender national ID' })
+  @IsBoolean()
+  @IsOptional()
+  requireSenderNationalId?: boolean;
+
   @ApiPropertyOptional({ description: 'Validity of quotations in hours' })
   @IsNumber()
   @IsOptional()

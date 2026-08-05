@@ -196,6 +196,7 @@ export class TenantQueryRepository {
         'o.allow_trip_cancellation_after_loading',
         'o.require_manager_before_trip_departure',
         'o.allow_return_after_collection',
+        'o.require_sender_national_id',
         'o.quotation_validity_hours',
         // Pricing
         'p.volumetric_divisor',

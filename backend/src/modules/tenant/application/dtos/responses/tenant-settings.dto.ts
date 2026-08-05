@@ -37,6 +37,9 @@ export class OperationalSettingsDto {
   allowReturnAfterCollection: boolean;
 
   @ApiProperty()
+  requireSenderNationalId: boolean;
+
+  @ApiProperty()
   quotationValidityHours: number;
 }
 
