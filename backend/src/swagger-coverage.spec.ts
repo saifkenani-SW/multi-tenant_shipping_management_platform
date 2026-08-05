@@ -4,7 +4,6 @@ import { Test } from '@nestjs/testing';
 
 import { EmployeeController } from './modules/employee/employee.controller';
 import { GlobalLocationController } from './modules/global-location/presentation/controllers/global-location.controller';
-import { OrganizationUnitController } from './modules/organization-unit/organization-unit.controller';
 import { PermissionController } from './modules/authorization/permission.controller';
 import { RoleController } from './modules/authorization/role.controller';
 import { RoleService } from './modules/authorization/services/role.service';
@@ -28,7 +27,6 @@ describe('تغطية Swagger للموديولات الجديدة', () => {
         PermissionController,
         RoleController,
         GlobalLocationController,
-        OrganizationUnitController,
         EmployeeController,
       ],
       providers: [
