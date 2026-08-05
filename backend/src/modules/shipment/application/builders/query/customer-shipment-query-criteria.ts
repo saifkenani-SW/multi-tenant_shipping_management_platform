@@ -1,6 +1,6 @@
+import { CursorPagination } from 'src/common/pagination';
 import { ShipmentStatus } from '../../../domain/enums/shipment-status.enum';
 
-import { CursorPagination } from '../../../../../common/pagination/cursor/value-objects/cursor-pagination';
 
 export class CustomerShipmentQueryCriteria {
   public pagination: CursorPagination;

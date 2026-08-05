@@ -187,6 +187,7 @@ export const ActionType = {
 } as const;
 export type ActionType = (typeof ActionType)[keyof typeof ActionType];
 export const NotificationType = {
+    QUOTATION: "QUOTATION",
     OTP: "OTP",
     SHIPMENT: "SHIPMENT",
     PARCEL: "PARCEL",
@@ -212,6 +213,22 @@ export const CollectionMethod = {
     REPRESENTATIVE: "REPRESENTATIVE"
 } as const;
 export type CollectionMethod = (typeof CollectionMethod)[keyof typeof CollectionMethod];
+export const ParcelType = {
+    DOCUMENT: "DOCUMENT",
+    PACKAGE: "PACKAGE",
+    FRAGILE: "FRAGILE",
+    PERISHABLE: "PERISHABLE",
+    HAZARDOUS: "HAZARDOUS",
+    LIQUID: "LIQUID"
+} as const;
+export type ParcelType = (typeof ParcelType)[keyof typeof ParcelType];
+export const HandlingFeeType = {
+    FRAGILE: "FRAGILE",
+    HAZARDOUS: "HAZARDOUS",
+    PERISHABLE: "PERISHABLE",
+    TEMPERATURE_SENSITIVE: "TEMPERATURE_SENSITIVE"
+} as const;
+export type HandlingFeeType = (typeof HandlingFeeType)[keyof typeof HandlingFeeType];
 export type assignment_role = {
     id: string;
     assignment_id: string;
@@ -252,13 +269,15 @@ export type customer_profile = {
 export type customer_shipment = {
     id: string;
     tenant_id: string;
+    sender_national_id: string | null;
     sender_customer_profile_id: string;
     receiver_customer_profile_id: string | null;
     shipment_request_id: string | null;
     approved_quotation_id: string | null;
+    origin_org_unit_id: string;
+    destination_org_unit_id: string;
     receiver_name: string;
     receiver_phone: string;
-    receiver_address: string;
     payment_responsibility: Generated<PaymentResponsibility>;
     total_chargeable_weight_kg: Generated<string | null>;
     status: Generated<ShipmentStatus>;
@@ -297,6 +316,13 @@ export type global_location = {
     name: string;
     type: LocationType;
 };
+export type handling_fee_rule = {
+    id: string;
+    tenant_id: string;
+    fee_type: HandlingFeeType;
+    amount: string;
+    is_active: Generated<boolean>;
+};
 export type invoice = {
     id: string;
     tenant_id: string;
@@ -304,6 +330,7 @@ export type invoice = {
     customer_shipment_id: string | null;
     invoice_number: string;
     subtotal: string;
+    handling_fees: Generated<string>;
     tax_amount: Generated<string>;
     discount_amount: Generated<string>;
     total_amount: string;
@@ -361,6 +388,12 @@ export type parcel = {
     tenant_id: string;
     customer_shipment_id: string;
     tracking_number: string;
+    description: string | null;
+    category: string | null;
+    parcel_type: Generated<ParcelType>;
+    is_fragile: Generated<boolean>;
+    requires_upright_handling: Generated<boolean>;
+    temperature_sensitive: Generated<boolean>;
     actual_weight_kg: string;
     length_cm: string;
     width_cm: string;
@@ -433,10 +466,10 @@ export type proof_of_delivery = {
     received_by_national_id: string | null;
     otp_verified: Generated<boolean>;
     otp_verified_at: Timestamp | null;
-    signature_url: string | null;
-    id_photo_url: string | null;
-    parcel_photo_url: string | null;
-    additional_photo_url: string | null;
+    signature_key: string | null;
+    id_photo_key: string | null;
+    parcel_photo_key: string | null;
+    additional_photo_key: string | null;
     delivery_lat: string | null;
     delivery_lng: string | null;
     created_at: Generated<Timestamp>;
@@ -445,6 +478,8 @@ export type quotation = {
     id: string;
     tenant_id: string;
     shipment_request_id: string;
+    origin_org_unit_id: string;
+    destination_org_unit_id: string;
     quotation_type: Generated<QuotationType>;
     base_price: string | null;
     weight_charge: string | null;
@@ -475,16 +510,14 @@ export type shipment_request = {
     id: string;
     customer_profile_id: string;
     target_tenant_id: string | null;
-    origin_org_unit_id: string | null;
-    destination_org_unit_id: string | null;
+    origin_global_location_id: string;
+    destination_global_location_id: string;
     sender_name: string;
     sender_phone: string;
-    sender_address: string;
     sender_lat: string | null;
     sender_lng: string | null;
     receiver_name: string;
     receiver_phone: string;
-    receiver_address: string;
     receiver_lat: string | null;
     receiver_lng: string | null;
     expected_pieces_count: Generated<number>;
@@ -567,6 +600,7 @@ export type tenant_operational_settings = {
     allow_trip_cancellation_after_loading: Generated<boolean>;
     require_manager_before_trip_departure: Generated<boolean>;
     allow_return_after_collection: Generated<boolean>;
+    require_sender_national_id: Generated<boolean>;
     quotation_validity_hours: Generated<number>;
 };
 export type tenant_owner = {
@@ -703,6 +737,7 @@ export type DB = {
     employee: employee;
     employee_assignment: employee_assignment;
     global_location: global_location;
+    handling_fee_rule: handling_fee_rule;
     invoice: invoice;
     manifest_item: manifest_item;
     notification: notification;

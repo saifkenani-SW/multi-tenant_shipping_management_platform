@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: {{url}}/shipments/customer
+  url: https://saifkenani.me/parcels/TRK-2026-0002/label
   body: none
   auth: bearer
+}
+
+headers {
+  client-type: MOBILE
 }
 
 auth:bearer {
@@ -15,7 +19,7 @@ auth:bearer {
 }
 
 vars:pre-request {
-  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMTAiLCJzZXNzaW9uSWQiOiIwMTlmYzIxMy03MjczLTc1MWYtODI1Yy03M2Y1Y2Q3YzEyNDIiLCJ0eXBlIjoiUExBVEZPUk1fQURNSU4iLCJpYXQiOjE3ODU2Njc0ODIsImV4cCI6MTc4NTc1Mzg4Mn0.QUM-tfweOQKQgxw-Ry8FyvJ4ZWgxhjn4HIVzgsLBcwU
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMTAiLCJzZXNzaW9uSWQiOiIwMTlmYzJmYS0xNTg5LTc3MzgtYjg2Yi05MzZjY2U1YWVhN2YiLCJ0eXBlIjoiUExBVEZPUk1fQURNSU4iLCJpYXQiOjE3ODU2ODI1OTcsImV4cCI6MTc4NTc2ODk5N30.4GhjjGkN-tyv6v2rMYIdbYTwQhZQ_BLOHYXG-tDEQA8
 }
 
 docs {
