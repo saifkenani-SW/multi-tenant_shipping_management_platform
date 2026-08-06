@@ -141,6 +141,22 @@ async function main() {
     },
   });
 
+  const employeeUser = await prisma.users.create({
+    data: {
+      email: 'employee@fastship.com',
+      phone: '+1234567000',
+      password_hash: passwordHash,
+    },
+  });
+
+  const driverUser = await prisma.users.create({
+    data: {
+      email: 'driver@fastship.com',
+      phone: '+1234567001',
+      password_hash: passwordHash,
+    },
+  });
+
   console.log('✅ Users created');
 
   // =========================================================================
@@ -280,6 +296,27 @@ async function main() {
     },
   });
 
+  await prisma.tenant_owner.create({
+    data: {
+      user_id: tenantAdmin1User.id,
+      tenant_id: tenant1.id,
+    },
+  });
+
+  await prisma.tenant_owner.create({
+    data: {
+      user_id: tenantAdmin2User.id,
+      tenant_id: tenant2.id,
+    },
+  });
+
+  await prisma.tenant_owner.create({
+    data: {
+      user_id: tenantAdmin3User.id,
+      tenant_id: tenant3.id,
+    },
+  });
+
   // 6.3. Employee
   const superEmployee = await prisma.employee.create({
     data: {
@@ -290,7 +327,7 @@ async function main() {
     },
   });
 
-  // Create a branch for the employee assignment
+  // Create a branch for the employee2 assignment
   const hqLocation = await prisma.global_location.create({
     data: {
       name: 'Riyadh HQ Location',
@@ -306,7 +343,7 @@ async function main() {
     },
   });
 
-  // Create a role for the employee
+  // Create a role for the employee2
   const managerRole = await prisma.role.create({
     data: {
       tenant_id: tenant1.id,
@@ -315,7 +352,7 @@ async function main() {
     },
   });
 
-  // Assign employee to branch
+  // Assign employee2 to branch
   const empAssignment = await prisma.employee_assignment.create({
     data: {
       tenant_id: tenant1.id,
@@ -360,8 +397,89 @@ async function main() {
     },
   });
 
+  await prisma.customer_profile.createMany({
+    data: [
+      {
+        user_id: customer1User.id,
+        full_name: 'John Doe',
+        phone: '+1230000001',
+      },
+      {
+        user_id: customer2User.id,
+        full_name: 'Jane Smith',
+        phone: '+1230000002',
+      },
+      {
+        user_id: customer3User.id,
+        full_name: 'Bob Wilson',
+        phone: '+1230000003',
+      },
+    ],
+  });
+
   console.log('✅ Super All-In-One User created');
 
+  // =========================================================================
+  // 7. Regular Employee and Driver
+  // =========================================================================
+  const regEmployee = await prisma.employee.create({
+    data: {
+      user_id: employeeUser.id,
+      tenant_id: tenant1.id,
+      employee_code: 'EMP-001',
+      full_name: 'Regular Employee',
+    },
+  });
+
+  const regEmpAssignment = await prisma.employee_assignment.create({
+    data: {
+      tenant_id: tenant1.id,
+      employee_id: regEmployee.id,
+      organization_unit_id: branch.id,
+    },
+  });
+
+  await prisma.assignment_role.create({
+    data: {
+      assignment_id: regEmpAssignment.id,
+      role_id: managerRole.id,
+    },
+  });
+
+  const regDriver = await prisma.employee.create({
+    data: {
+      user_id: driverUser.id,
+      tenant_id: tenant1.id,
+      employee_code: 'DRV-001',
+      full_name: 'Regular Driver',
+    },
+  });
+
+  const regDrvAssignment = await prisma.employee_assignment.create({
+    data: {
+      tenant_id: tenant1.id,
+      employee_id: regDriver.id,
+      organization_unit_id: branch.id,
+    },
+  });
+
+  await prisma.assignment_role.create({
+    data: {
+      assignment_id: regDrvAssignment.id,
+      role_id: managerRole.id,
+    },
+  });
+
+  await prisma.vehicle_assignment.create({
+    data: {
+      tenant_id: tenant1.id,
+      employee_id: regDriver.id,
+      vehicle_id: vehicle.id,
+      is_active: true,
+    },
+  });
+
+  console.log('✅ Regular Employee and Driver created');
   // ... يمكنك إكمال باقي الكود من الرد السابق ...
 
   console.log('✅ Seed completed successfully!');
@@ -374,6 +492,8 @@ async function main() {
   console.log('👤 Customer 2: jane.smith@email.com');
   console.log('👤 Customer 3: bob.wilson@email.com');
   console.log('🌟 Super All-In-One: super@all-in-one.com');
+  console.log('👔 Employee: employee@fastship.com');
+  console.log('🚚 Driver: driver@fastship.com');
 }
 
 main()

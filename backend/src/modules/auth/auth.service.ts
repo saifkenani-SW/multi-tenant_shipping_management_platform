@@ -42,6 +42,43 @@ export class AuthService {
       );
     }
 
+    // If user provided a specific profile type at login, try to match it directly
+    if (loginDto.type) {
+      const requestedProfile = activeProfiles.find((p) => {
+        if (
+          p.type === UserLoginType.PLATFORM_OWNER ||
+          p.type === UserLoginType.CUSTOMER
+        ) {
+          return p.type === loginDto.type;
+        }
+        return (
+          p.type === loginDto.type &&
+          (!loginDto.tenantId || p.tenantId === loginDto.tenantId)
+        );
+      });
+
+      if (!requestedProfile) {
+        throw new UnauthorizedException('Requested profile is invalid or inactive');
+      }
+
+      const tokens = await this.generateTokens(
+        identity.userId,
+        requestedProfile.type,
+        requestedProfile.tenantId,
+        requestedProfile.employeeId,
+        requestedProfile.vehicleId,
+      );
+      return {
+        ...tokens,
+        user: {
+          id: identity.userId,
+          email,
+          type: requestedProfile.type,
+          tenantId: requestedProfile.tenantId,
+        },
+      };
+    }
+
     // If only one profile, log them in directly
     if (activeProfiles.length === 1) {
       const profile = activeProfiles[0];
