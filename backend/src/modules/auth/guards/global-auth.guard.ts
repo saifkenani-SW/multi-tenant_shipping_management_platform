@@ -47,7 +47,6 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
     if (!user.isSessionToken) {
       await this.populatePrincipal(user, request);
     }
-    console.log('getPrincipal        ' + this.requestContext.getPrincipal());
 
     return true;
   }

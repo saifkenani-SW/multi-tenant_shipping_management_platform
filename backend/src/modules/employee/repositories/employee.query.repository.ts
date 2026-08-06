@@ -335,9 +335,11 @@ export class EmployeeQueryRepository implements IEmployeeQueryRepository {
         'parent_ou.id',
         'ea.organization_unit_id',
       )
-      // Join to find all descendant organization units of the parent assignment
+      // Join to find all descendant organization units of the parent assignment (or itself if tree_path is null)
       .innerJoin('organization_unit as child_ou', (join) =>
-        join.on(sql<boolean>`child_ou.tree_path <@ parent_ou.tree_path`),
+        join.on(
+          sql<boolean>`child_ou.tree_path <@ parent_ou.tree_path OR child_ou.id = parent_ou.id`,
+        ),
       )
       // Join assignment roles
       .innerJoin('assignment_role as ar', 'ar.assignment_id', 'ea.id')
