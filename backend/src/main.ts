@@ -60,6 +60,7 @@ async function bootstrap() {
   SwaggerModule.setup('api/docs', app, document);
   AuthorizationContainer.setApp(app);
   TransactionContainer.setApp(app);
+  app.enableShutdownHooks();
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();
