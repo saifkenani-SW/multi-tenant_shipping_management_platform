@@ -38,10 +38,10 @@ export class UserQueryService {
 
     const profiles: UserProfileInfo[] = [];
 
-    if (data.platformAdmin) {
+    if (data.platformOwner) {
       profiles.push({
         type: UserLoginType.PLATFORM_OWNER,
-        isActive: data.platformAdmin.is_active,
+        isActive: data.platformOwner.is_active,
       });
     }
 

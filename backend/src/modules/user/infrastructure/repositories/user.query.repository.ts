@@ -51,7 +51,7 @@ export class UserQueryRepository {
 
     if (!user) return null;
 
-    const [platformAdmin, tenantOwners, employees, customerProfile] =
+    const [platformOwner, tenantOwners, employees, customerProfile] =
       await Promise.all([
         this.db
           .selectFrom('platform_admin')
@@ -88,7 +88,7 @@ export class UserQueryRepository {
 
     return {
       user,
-      platformAdmin,
+      platformOwner,
       tenantOwners,
       employees,
       customerProfile,
