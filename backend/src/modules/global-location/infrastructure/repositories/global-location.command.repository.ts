@@ -54,15 +54,22 @@ export class GlobalLocationCommandRepository {
     }
 
     if (data.parentId !== undefined) {
-      updates.push(Prisma.sql`parent_id = ${data.parentId ? data.parentId : null}::uuid`);
+      updates.push(
+        Prisma.sql`parent_id = ${data.parentId ? data.parentId : null}::uuid`,
+      );
     }
 
     if (data.location !== undefined) {
       if (data.location === null) {
-         updates.push(Prisma.sql`location = NULL`);
+        updates.push(Prisma.sql`location = NULL`);
       } else {
-         const geoPoint = new GeoPoint(data.location.longitude, data.location.latitude);
-         updates.push(Prisma.sql`location = ${Prisma.raw(geoPoint.toPostGisPoint())}`);
+        const geoPoint = new GeoPoint(
+          data.location.longitude,
+          data.location.latitude,
+        );
+        updates.push(
+          Prisma.sql`location = ${Prisma.raw(geoPoint.toPostGisPoint())}`,
+        );
       }
     }
 

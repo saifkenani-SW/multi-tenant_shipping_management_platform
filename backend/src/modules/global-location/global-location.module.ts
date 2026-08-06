@@ -4,6 +4,7 @@ import { GlobalLocationCommandService } from './application/services/global-loca
 import { GlobalLocationQueryService } from './application/services/global-location.query.service';
 import { GlobalLocationCommandRepository } from './infrastructure/repositories/global-location.command.repository';
 import { GlobalLocationQueryRepository } from './infrastructure/repositories/global-location.query.repository';
+import { GlobalLocationFacade } from './facades/global-location.facade';
 
 @Module({
   controllers: [GlobalLocationController],
@@ -12,7 +13,8 @@ import { GlobalLocationQueryRepository } from './infrastructure/repositories/glo
     GlobalLocationQueryService,
     GlobalLocationCommandRepository,
     GlobalLocationQueryRepository,
+    GlobalLocationFacade,
   ],
-  exports: [GlobalLocationQueryService],
+  exports: [GlobalLocationFacade],
 })
 export class GlobalLocationModule {}

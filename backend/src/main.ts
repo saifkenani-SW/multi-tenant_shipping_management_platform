@@ -56,8 +56,14 @@ async function bootstrap() {
 
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  const document = SwaggerModule.createDocument(app, config, {
+    deepScanRoutes: true,
+  });
+  SwaggerModule.setup('api/docs', app, document, {
+    swaggerOptions: {
+      persistAuthorization: true,
+    },
+  });
   AuthorizationContainer.setApp(app);
   TransactionContainer.setApp(app);
   app.enableShutdownHooks();

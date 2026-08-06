@@ -1,0 +1,6 @@
+export enum OrgType {
+  BRANCH = 'BRANCH',
+  HUB = 'HUB',
+  WAREHOUSE = 'WAREHOUSE',
+  HEADQUARTERS = 'HEADQUARTERS',
+}

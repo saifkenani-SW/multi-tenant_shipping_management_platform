@@ -45,6 +45,18 @@ export class RequestContextService {
     return context.principal;
   }
 
+  public getTenantId(): string | undefined {
+    return this.getPrincipal().tenantId;
+  }
+
+  public getTenantIdOrThrow(): string {
+    const tenantId = this.getTenantId();
+    if (!tenantId) {
+      throw new Error('Tenant ID is missing from the current request context.');
+    }
+    return tenantId;
+  }
+
   setTraceId(traceId: string): void {
     const context = this.get();
 

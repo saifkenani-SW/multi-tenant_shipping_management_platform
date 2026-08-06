@@ -21,4 +21,9 @@ export class GlobalLocationQueryService {
     }
     return record;
   }
+
+  async validateLocationsExist(ids: string[]): Promise<boolean> {
+    if (!ids || ids.length === 0) return true;
+    return this.repository.validateLocationsExist(ids);
+  }
 }

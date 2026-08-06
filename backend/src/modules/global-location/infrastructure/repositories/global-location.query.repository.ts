@@ -133,5 +133,13 @@ export class GlobalLocationQueryRepository {
       location,
     } as GlobalLocationResponseDto;
   }
-}
 
+  async validateLocationsExist(ids: string[]): Promise<boolean> {
+    const records = await this.kysely
+      .selectFrom('global_location')
+      .select('id')
+      .where('id', 'in', ids)
+      .execute();
+    return records.length === ids.length;
+  }
+}

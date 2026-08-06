@@ -17,6 +17,7 @@ import {
   ApiParam,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { ApiCursorPaginationQuery } from '../../../../common/pagination/cursor/decorators/api-cursor-pagination-query.decorator';
 
 import { Roles } from '../../../../common/authorization/decorators/roles.decorator';
 import { RoleType } from '../../../authorization/domain/enums/role.enum';
@@ -52,6 +53,7 @@ export class GlobalLocationController {
 
   @Get()
   @ApiOperation({ summary: 'List global locations with cursor pagination' })
+  @ApiCursorPaginationQuery()
   @ApiResponse({
     status: HttpStatus.OK,
     description: 'List of global locations.',

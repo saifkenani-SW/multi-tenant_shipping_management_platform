@@ -26,6 +26,8 @@ import { StorageModule } from './packages/storage/src/storage.module';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { UserModule } from './modules/user/user.module';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
+import { Employee2Module } from './modules/employee2/employee2.module';
+import { OrganizationModule } from './modules/organization/organization.module';
 
 @Module({
   imports: [
@@ -58,6 +60,8 @@ import { VehicleModule } from './modules/vehicle/vehicle.module';
     AuthorizationBusinessModule,
     GlobalLocationModule,
     EmployeeModule,
+    Employee2Module,
+    OrganizationModule,
     VehicleModule,
     UserModule,
     TrackingModule,

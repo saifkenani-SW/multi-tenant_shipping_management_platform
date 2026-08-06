@@ -229,6 +229,12 @@ export const HandlingFeeType = {
     TEMPERATURE_SENSITIVE: "TEMPERATURE_SENSITIVE"
 } as const;
 export type HandlingFeeType = (typeof HandlingFeeType)[keyof typeof HandlingFeeType];
+export const CoverageType = {
+    DELIVERY_AREA: "DELIVERY_AREA",
+    PICKUP_AREA: "PICKUP_AREA",
+    BOTH: "BOTH"
+} as const;
+export type CoverageType = (typeof CoverageType)[keyof typeof CoverageType];
 export type assignment_role = {
     id: string;
     assignment_id: string;
@@ -369,7 +375,7 @@ export type org_unit_location_mapping = {
     tenant_id: string;
     organization_unit_id: string;
     global_location_id: string;
-    coverage_type: Generated<string>;
+    coverage_type: Generated<CoverageType>;
 };
 export type organization_unit = {
     id: string;
