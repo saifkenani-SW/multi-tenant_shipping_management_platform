@@ -8,6 +8,7 @@ export const SEEDED_TENANTS = [
     id: '00000000-0000-7000-8000-000000000101',
     name: 'FastShip Logistics',
     email: 'info@fastship.com',
+    owner_email: 'admin@fastship.com',
     phone: '+1987654321',
     tax_number: 'TAX-001-2024',
     logo_url: 'https://cdn.fastship.com/logo.png',
@@ -16,6 +17,7 @@ export const SEEDED_TENANTS = [
     id: '00000000-0000-7000-8000-000000000102',
     name: 'QuickDelivery Co.',
     email: 'info@quickdelivery.com',
+    owner_email: 'admin@quickdelivery.com',
     phone: '+1122334455',
     tax_number: 'TAX-002-2024',
     logo_url: null,
@@ -136,6 +138,29 @@ export class TenantSeeder implements Seeder {
           notes: 'Initial subscription creation',
         },
       });
+
+      // Tenant Owner
+      const user = await this.prisma.users.findUnique({
+        where: { email: t.owner_email },
+      });
+      if (user) {
+        const ownerId = `00000000-0000-7000-8000-0000000003${t.id.slice(-2)}`;
+        await this.prisma.tenant_owner.upsert({
+          where: {
+            tenant_id_user_id: {
+              tenant_id: t.id,
+              user_id: user.id,
+            },
+          },
+          update: { is_primary: true },
+          create: {
+            id: ownerId,
+            tenant_id: t.id,
+            user_id: user.id,
+            is_primary: true,
+          },
+        });
+      }
     }
 
     this.logger.log('TenantSeeder completed.');

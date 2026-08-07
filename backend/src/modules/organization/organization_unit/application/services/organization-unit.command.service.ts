@@ -1,11 +1,7 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Transactional } from '../../../../../packages/transaction';
 import { OrganizationUnitCommandRepository } from '../../infrastructure/repositories/organization-unit.command.repository';
-import { OrganizationUnitQueryRepository } from '../../infrastructure/repositories/organization-unit.query.repository';
+import { OrganizationUnitQueryService } from './organization-unit.query.service';
 import { TenantZoneQueryService } from '../../../tenant_zone/application/services/tenant-zone.query.service';
 import { CreateOrganizationUnitDto } from '../dtos/requests/create-organization-unit.dto';
 import { UpdateOrganizationUnitDto } from '../dtos/requests/update-organization-unit.dto';
@@ -21,7 +17,7 @@ import { OrganizationUnitChangedEvent } from '../../domain/events/organization-u
 export class OrganizationUnitCommandService {
   constructor(
     private readonly commandRepository: OrganizationUnitCommandRepository,
-    private readonly queryRepository: OrganizationUnitQueryRepository,
+    private readonly queryService: OrganizationUnitQueryService,
     private readonly globalLocationFacade: GlobalLocationFacade,
     private readonly tenantZoneQueryService: TenantZoneQueryService,
     private readonly tenantFacade: TenantFacade,
@@ -40,7 +36,7 @@ export class OrganizationUnitCommandService {
     if (dto.orgType === 'BRANCH') {
       const maxBranches =
         await this.tenantFacade.getMaxBranchesAllowed(tenantId);
-      const currentBranches = await this.queryRepository.countByType(
+      const currentBranches = await this.queryService.countByType(
         tenantId,
         'BRANCH',
       );
@@ -52,7 +48,7 @@ export class OrganizationUnitCommandService {
     } else if (dto.orgType === 'WAREHOUSE') {
       const maxWarehouses =
         await this.tenantFacade.getMaxWarehousesAllowed(tenantId);
-      const currentWarehouses = await this.queryRepository.countByType(
+      const currentWarehouses = await this.queryService.countByType(
         tenantId,
         'WAREHOUSE',
       );
@@ -74,12 +70,7 @@ export class OrganizationUnitCommandService {
     }
 
     if (dto.parentId) {
-      const parent = await this.queryRepository.findById(dto.parentId);
-      if (!parent || parent.tenantId !== tenantId) {
-        throw new BadRequestException(
-          'Parent organization unit not found or belongs to another tenant.',
-        );
-      }
+      await this.queryService.findById(dto.parentId, tenantId);
     }
 
     if (dto.zoneId) {
@@ -114,10 +105,7 @@ export class OrganizationUnitCommandService {
   })
   @Transactional()
   async update(tenantId: string, id: string, dto: UpdateOrganizationUnitDto) {
-    const existing = await this.queryRepository.findById(id);
-    if (!existing || existing.tenantId !== tenantId) {
-      throw new NotFoundException('Organization unit not found');
-    }
+    const existing = await this.queryService.findById(id, tenantId);
 
     if (dto.coverageLocations && dto.coverageLocations.length > 0) {
       const locationIds = dto.coverageLocations.map((c) => c.globalLocationId);
@@ -136,12 +124,7 @@ export class OrganizationUnitCommandService {
           'Organization unit cannot be its own parent.',
         );
       }
-      const parent = await this.queryRepository.findById(dto.parentId);
-      if (!parent || parent.tenantId !== tenantId) {
-        throw new BadRequestException(
-          'Parent organization unit not found or belongs to another tenant.',
-        );
-      }
+      await this.queryService.findById(dto.parentId, tenantId);
     }
 
     if (dto.zoneId) {
@@ -173,10 +156,7 @@ export class OrganizationUnitCommandService {
     ],
   })
   async addLocations(tenantId: string, id: string, dto: AddLocationsDto) {
-    const existing = await this.queryRepository.findById(id);
-    if (!existing || existing.tenantId !== tenantId) {
-      throw new NotFoundException('Organization unit not found');
-    }
+    const existing = await this.queryService.findById(id, tenantId);
 
     if (dto.locations && dto.locations.length > 0) {
       const locationIds = dto.locations.map((c) => c.globalLocationId);

@@ -21,8 +21,13 @@ export const SEEDED_USERS = [
   },
   {
     id: '00000000-0000-7000-8000-000000000013',
-    email: 'driver1@fastship.com',
+    email: 'driver@fastship.com',
     phone: '+1555666777',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000016',
+    email: 'employee@fastship.com',
+    phone: '+1555666888',
   },
   {
     id: '00000000-0000-7000-8000-000000000014',

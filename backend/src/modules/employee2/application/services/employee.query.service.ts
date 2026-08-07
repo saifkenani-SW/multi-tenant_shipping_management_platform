@@ -1,14 +1,17 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { EmployeeQueryRepository } from '../../infrastructure/repositories/employee.query.repository';
 import { EmployeeQueryDto } from '../dtos/requests/employee-query.dto';
+import { PaginatedResponse } from '../../../../common/pagination/offset/responses/paginated-response';
+import { PaginationMeta } from '../../../../common/pagination/offset/responses/pagination-meta';
+import { Pagination } from '../../../../common/pagination/offset/value-objects/pagination';
 
 @Injectable()
 export class EmployeeQueryService {
   constructor(private readonly queryRepository: EmployeeQueryRepository) {}
 
   async findById(id: string, tenantId?: string) {
-    const employee = await this.queryRepository.findById(id, tenantId);
-    if (!employee || (tenantId && employee.tenant_id !== tenantId)) {
+    const employee = await this.queryRepository.findById(id);
+    if (!employee || (tenantId && employee.tenantId !== tenantId)) {
       throw new NotFoundException('الموظف غير موجود');
     }
     return employee;
@@ -28,14 +31,13 @@ export class EmployeeQueryService {
     );
     const total = await this.queryRepository.countByTenantId(effectiveTenantId); // optionally filter by search for accurate count
 
-    return {
+    return new PaginatedResponse(
       items,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit),
-      },
-    };
+      new PaginationMeta(new Pagination({ page, limit }), total),
+    );
+  }
+
+  async countByTenantId(tenantId?: string) {
+    return this.queryRepository.countByTenantId(tenantId);
   }
 }

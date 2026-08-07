@@ -16,6 +16,10 @@ export class OrganizationUnitQueryService {
     return record;
   }
 
+  async countByType(tenantId: string, orgType: string) {
+    return this.queryRepository.countByType(tenantId, orgType);
+  }
+
   async findMany(criteria: OrganizationUnitQueryDto, contextTenantId?: string) {
     const effectiveTenantId = contextTenantId || criteria.tenantId;
     return this.queryRepository.findMany(criteria, effectiveTenantId);

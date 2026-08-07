@@ -14,22 +14,22 @@ export class EmployeeSeeder implements Seeder {
 
     const tenant1 = SEEDED_TENANTS[0];
 
-    const adminUser = await this.prisma.users.findUnique({
-      where: { email: 'admin@fastship.com' },
+    const employeeUser = await this.prisma.users.findUnique({
+      where: { email: 'employee@fastship.com' },
     });
     const driverUser = await this.prisma.users.findUnique({
-      where: { email: 'driver1@fastship.com' },
+      where: { email: 'driver@fastship.com' },
     });
 
-    if (!adminUser || !driverUser) {
+    if (!employeeUser || !driverUser) {
       this.logger.warn(
-        'Skipping EmployeeSeeder: adminUser or driverUser not found',
+        'Skipping EmployeeSeeder: employeeUser or driverUser not found',
       );
       return;
     }
 
     const orgUnit = await this.prisma.organization_unit.findFirst({
-      where: { tenant_id: tenant1.id },
+      where: { tenant_id: tenant1.id, org_type: 'BRANCH' },
     });
 
     const adminRole = await this.prisma.role.findFirst({
@@ -43,9 +43,9 @@ export class EmployeeSeeder implements Seeder {
     const employeesToSeed = [
       {
         id: '00000000-0000-7000-8000-000000000601',
-        user_id: adminUser.id,
+        user_id: employeeUser.id,
         code: 'EMP-001',
-        name: 'FastShip Admin',
+        name: 'FastShip Employee',
         role: adminRole,
       },
       {

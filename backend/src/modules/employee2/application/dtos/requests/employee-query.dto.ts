@@ -1,30 +1,17 @@
 import { ApiPropertyOptional, IntersectionType } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, IsUUID } from 'class-validator';
-import { Type } from 'class-transformer';
-import { CursorPaginationQueryDto } from '../../../../../common/pagination/cursor/dtos/cursor-pagination-query.dto';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { PaginationQueryDto } from '../../../../../common/pagination/offset/dtos/pagination-query.dto';
 
 class EmployeeBaseQueryDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  limit?: number;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumber()
-  @Type(() => Number)
-  page?: number;
-
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'معرف مساحة العمل (للتصفية من قبل مدير المنصة)' })
   @IsOptional()
   @IsUUID()
   tenantId?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ description: 'نص البحث للبحث في الاسم أو الرمز الوظيفي' })
   @IsOptional()
   @IsString()
   search?: string;
 }
 
-export class EmployeeQueryDto extends IntersectionType(CursorPaginationQueryDto, EmployeeBaseQueryDto) {}
+export class EmployeeQueryDto extends IntersectionType(PaginationQueryDto, EmployeeBaseQueryDto) {}

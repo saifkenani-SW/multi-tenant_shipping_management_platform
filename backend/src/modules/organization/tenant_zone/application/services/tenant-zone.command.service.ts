@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Transactional } from '../../../../../packages/transaction';
 import { TenantZoneCommandRepository } from '../../infrastructure/repositories/tenant-zone.command.repository';
-import { TenantZoneQueryRepository } from '../../infrastructure/repositories/tenant-zone.query.repository';
+import { TenantZoneQueryService } from './tenant-zone.query.service';
 import { CreateTenantZoneDto } from '../dtos/requests/create-tenant-zone.dto';
 import { UpdateTenantZoneDto } from '../dtos/requests/update-tenant-zone.dto';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
@@ -11,7 +11,7 @@ import { TENANT_ZONE_CACHE_KEYS } from '../../constants/tenant-zone.cache.consta
 export class TenantZoneCommandService {
   constructor(
     private readonly commandRepository: TenantZoneCommandRepository,
-    private readonly queryRepository: TenantZoneQueryRepository,
+    private readonly queryService: TenantZoneQueryService,
   ) {}
 
   @CacheEvict({
@@ -45,12 +45,7 @@ export class TenantZoneCommandService {
   })
   @Transactional()
   async update(tenantId: string, id: string, dto: UpdateTenantZoneDto) {
-    const existing = await this.queryRepository.findById(id);
-    if (!existing || existing.tenantId !== tenantId) {
-      throw new NotFoundException(
-        'Tenant zone not found or belongs to another tenant.',
-      );
-    }
+    await this.queryService.findById(id, tenantId);
 
     await this.commandRepository.update(id, dto);
     return { id };

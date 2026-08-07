@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Transactional } from '../../../../packages/transaction';
 import { EmployeeCommandRepository } from '../../infrastructure/repositories/employee.command.repository';
-import { EmployeeQueryRepository } from '../../infrastructure/repositories/employee.query.repository';
+import { EmployeeQueryService } from './employee.query.service';
 import { TenantFacade } from '../../../tenant/application/facades/tenant.facade';
 import { OrganizationFacade } from '../../../organization/facades/organization.facade';
 import { CreateEmployeeDto } from '../dtos/requests/create-employee.dto';
@@ -18,7 +18,7 @@ import { EMPLOYEE_CACHE_KEYS } from '../../constants/employee.cache.constants';
 export class EmployeeCommandService {
   constructor(
     private readonly commandRepository: EmployeeCommandRepository,
-    private readonly queryRepository: EmployeeQueryRepository,
+    private readonly queryService: EmployeeQueryService,
     private readonly tenantFacade: TenantFacade,
     private readonly organizationFacade: OrganizationFacade,
   ) {}
@@ -34,7 +34,7 @@ export class EmployeeCommandService {
   async create(tenantId: string, dto: CreateEmployeeDto) {
     const maxEmployees =
       await this.tenantFacade.getMaxEmployeesAllowed(tenantId);
-    const currentCount = await this.queryRepository.countByTenantId(tenantId);
+    const currentCount = await this.queryService.countByTenantId(tenantId);
 
     if (maxEmployees > 0 && currentCount >= maxEmployees) {
       throw new BadRequestException(
@@ -62,11 +62,7 @@ export class EmployeeCommandService {
   })
   @Transactional()
   async update(id: string, tenantId: string, dto: UpdateEmployeeDto) {
-    // Optionally check if employee exists and belongs to tenant
-    const employee = await this.queryRepository.findById(id, tenantId);
-    if (!employee || employee.tenant_id !== tenantId) {
-      throw new BadRequestException('الموظف غير موجود');
-    }
+    await this.queryService.findById(id, tenantId);
 
     return this.commandRepository.update(id, tenantId, dto);
   }
@@ -88,10 +84,7 @@ export class EmployeeCommandService {
   })
   @Transactional()
   async delete(id: string, tenantId: string) {
-    const employee = await this.queryRepository.findById(id, tenantId);
-    if (!employee || employee.tenant_id !== tenantId) {
-      throw new BadRequestException('الموظف غير موجود');
-    }
+    await this.queryService.findById(id, tenantId);
     return this.commandRepository.delete(id, tenantId);
   }
 
@@ -117,10 +110,7 @@ export class EmployeeCommandService {
     employeeId: string,
     dto: AddEmployeeAssignmentsDto,
   ) {
-    const employee = await this.queryRepository.findById(employeeId, tenantId);
-    if (!employee || employee.tenant_id !== tenantId) {
-      throw new NotFoundException('الموظف غير موجود');
-    }
+    await this.queryService.findById(employeeId, tenantId);
 
     const { organizationUnitIds } = dto;
     const unitsExist =

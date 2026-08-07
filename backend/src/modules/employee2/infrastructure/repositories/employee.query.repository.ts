@@ -13,20 +13,27 @@ export class EmployeeQueryRepository {
 
   @Cacheable({
     ttl: EMPLOYEE_CACHE_TTL.DETAILS,
-    keyBuilder: (id: string, tenantId?: string) => [
+    keyBuilder: (id: string) => [
       EMPLOYEE_CACHE_KEYS.DETAILS,
-      tenantId || 'none',
       id,
     ],
   })
-  async findById(id: string, tenantId?: string) {
-    let query = this.db.selectFrom('employee').selectAll().where('id', '=', id);
+  async findById(id: string) {
+    const query = this.db.selectFrom('employee').selectAll().where('id', '=', id);
 
-    if (tenantId) {
-      query = query.where('tenant_id', '=', tenantId);
-    }
+    const record = await query.executeTakeFirst();
+    if (!record) return null;
 
-    return query.executeTakeFirst();
+    return {
+      id: record.id,
+      tenantId: record.tenant_id,
+      userId: record.user_id,
+      employeeCode: record.employee_code,
+      fullName: record.full_name,
+      nationalId: record.national_id || undefined,
+      createdAt: record.created_at,
+      updatedAt: record.updated_at,
+    };
   }
 
   @Cacheable({
@@ -65,7 +72,17 @@ export class EmployeeQueryRepository {
       );
     }
 
-    return query.limit(limit).offset(offset).execute();
+    const records = await query.limit(limit).offset(offset).execute();
+    return records.map(record => ({
+      id: record.id,
+      tenantId: record.tenant_id,
+      userId: record.user_id,
+      employeeCode: record.employee_code,
+      fullName: record.full_name,
+      nationalId: record.national_id || undefined,
+      createdAt: record.created_at,
+      updatedAt: record.updated_at,
+    }));
   }
 
   async countByTenantId(tenantId?: string) {

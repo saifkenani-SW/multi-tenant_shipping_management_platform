@@ -18,12 +18,13 @@ import { UpdateEmployeeDto } from '../../application/dtos/requests/update-employ
 import { EmployeeQueryDto } from '../../application/dtos/requests/employee-query.dto';
 import { AddEmployeeAssignmentsDto } from '../../application/dtos/requests/add-employee-assignments.dto';
 import { RequestContextService } from '../../../../packages/context/services/request-context.service';
-import { Roles } from '../../../../common/authorization/decorators/roles.decorator';
-import { RoleType } from '../../../authorization/domain/enums/role.enum';
-import { RolesGuard } from '../../../../common/authorization/guards/roles.guard';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
+import { Roles } from '../../../../common/authorization';
+import { RoleType } from '../../../authorization';
 
+@ApiTags('Employees')
+@ApiBearerAuth()
 @Controller('employee2')
-@UseGuards(RolesGuard)
 export class EmployeeController {
   constructor(
     private readonly commandService: EmployeeCommandService,
@@ -33,6 +34,21 @@ export class EmployeeController {
 
   @Post()
   @Roles(RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'إنشاء موظف جديد' })
+  @ApiBody({
+    type: CreateEmployeeDto,
+    examples: {
+      default: {
+        summary: 'مثال لبيانات إنشاء موظف',
+        value: {
+          userId: '00000000-0000-0000-0000-000000000000',
+          employeeCode: 'EMP-001',
+          fullName: 'John Doe',
+          nationalId: '1234567890',
+        },
+      },
+    },
+  })
   async create(@Body() dto: CreateEmployeeDto) {
     const tenantId = this.requestContext.getTenantIdOrThrow();
     return this.commandService.create(tenantId, dto);
@@ -40,6 +56,20 @@ export class EmployeeController {
 
   @Put(':id')
   @Roles(RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'تحديث بيانات موظف' })
+  @ApiBody({
+    type: UpdateEmployeeDto,
+    examples: {
+      default: {
+        summary: 'مثال لبيانات تحديث موظف',
+        value: {
+          employeeCode: 'EMP-001-MOD',
+          fullName: 'John Doe Updated',
+          nationalId: '1234567890',
+        },
+      },
+    },
+  })
   async update(@Param('id') id: string, @Body() dto: UpdateEmployeeDto) {
     const tenantId = this.requestContext.getTenantIdOrThrow();
     return this.commandService.update(id, tenantId, dto);
@@ -48,6 +78,7 @@ export class EmployeeController {
   @Delete(':id')
   @Roles(RoleType.TENANT_ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'حذف موظف' })
   async delete(@Param('id') id: string) {
     const tenantId = this.requestContext.getTenantIdOrThrow();
     return this.commandService.delete(id, tenantId);
@@ -56,6 +87,7 @@ export class EmployeeController {
   @Post(':id/assignments')
   @Roles(RoleType.TENANT_ADMIN)
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'تعيين موظف في وحدات تنظيمية' })
   async addAssignments(
     @Param('id') id: string,
     @Body() dto: AddEmployeeAssignmentsDto,
@@ -66,6 +98,7 @@ export class EmployeeController {
 
   @Get()
   @Roles(RoleType.TENANT_ADMIN, RoleType.PLATFORM_OWNER)
+  @ApiOperation({ summary: 'جلب قائمة الموظفين (مع التصفح والبحث)' })
   async findMany(@Query() query: EmployeeQueryDto) {
     const tenantId = this.requestContext.getTenantId();
     return this.queryService.findMany(query, tenantId);
@@ -73,6 +106,7 @@ export class EmployeeController {
 
   @Get(':id')
   @Roles(RoleType.TENANT_ADMIN, RoleType.PLATFORM_OWNER)
+  @ApiOperation({ summary: 'جلب بيانات موظف بواسطة المعرف' })
   async findById(@Param('id') id: string) {
     const tenantId = this.requestContext.getTenantId();
     return this.queryService.findById(id, tenantId);
