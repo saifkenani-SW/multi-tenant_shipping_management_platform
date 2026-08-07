@@ -42,12 +42,12 @@ export class VehicleSeeder implements Seeder {
 
       // Find the driver employee for this tenant
       const driverUser = await this.prisma.users.findUnique({
-        where: { email: 'driver@fastship.com' }
+        where: { email: 'driver@fastship.com' },
       });
 
       if (driverUser) {
         const driverEmp = await this.prisma.employee.findFirst({
-          where: { tenant_id: tenant.id, user_id: driverUser.id }
+          where: { tenant_id: tenant.id, user_id: driverUser.id },
         });
 
         if (driverEmp) {

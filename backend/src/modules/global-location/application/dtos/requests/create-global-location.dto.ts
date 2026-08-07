@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, ValidateNested } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { LocationType } from '@prisma/client';
 import { LocationPointDto } from './location-point.dto';
@@ -19,7 +26,10 @@ export class CreateGlobalLocationDto {
   @IsUUID()
   parentId?: string;
 
-  @ApiPropertyOptional({ type: LocationPointDto, description: 'Geographical coordinates' })
+  @ApiPropertyOptional({
+    type: LocationPointDto,
+    description: 'Geographical coordinates',
+  })
   @IsOptional()
   @ValidateNested()
   @Type(() => LocationPointDto)

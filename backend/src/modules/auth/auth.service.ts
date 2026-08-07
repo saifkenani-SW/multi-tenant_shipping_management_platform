@@ -58,7 +58,9 @@ export class AuthService {
       });
 
       if (!requestedProfile) {
-        throw new UnauthorizedException('Requested profile is invalid or inactive');
+        throw new UnauthorizedException(
+          'Requested profile is invalid or inactive',
+        );
       }
 
       const tokens = await this.generateTokens(

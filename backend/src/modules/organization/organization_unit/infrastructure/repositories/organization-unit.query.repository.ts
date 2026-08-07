@@ -3,6 +3,7 @@ import { Kysely, sql } from 'kysely';
 import { DB } from '../../../../../infrastructure/database/generated/kysely/types';
 import { OrganizationUnitResponseDto } from '../../application/dtos/responses/organization-unit.response.dto';
 import { OrganizationUnitQueryDto } from '../../application/dtos/requests/organization-unit-query.dto';
+import { OrganizationCandidateDto } from '../../application/dtos/responses/resolved-tenant-candidates.dto';
 import { CursorPaginatedResponse } from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
 import { Cacheable } from '../../../../../infrastructure/cache/decorators/Cacheable';
 import { CacheStrategy } from '../../../../../infrastructure/cache/decorators/cache-strategy.enum';
@@ -269,5 +270,48 @@ export class OrganizationUnitQueryRepository {
       .executeTakeFirst();
 
     return Number(record?.count || 0);
+  }
+
+  /**
+   * Finds all organization units covering a specific global location.
+   * Returns candidates with their zone details.
+   * Cached for 30 minutes (1800 seconds).
+   */
+  @Cacheable({
+    ttl: ORG_UNIT_CACHE_TTL.CANDIDATES,
+    keyBuilder: (locationId: string) => [
+      ORG_UNIT_CACHE_KEYS.CANDIDATES,
+      locationId,
+    ],
+  })
+  async findCandidatesByGlobalLocation(
+    locationId: string,
+  ): Promise<OrganizationCandidateDto[]> {
+    const records = await this.kysely
+      .selectFrom('organization_unit as ou')
+      .innerJoin(
+        'org_unit_location_mapping as oulm',
+        'ou.id',
+        'oulm.organization_unit_id',
+      )
+      .leftJoin('tenant_zone as tz', 'ou.zone_id', 'tz.id')
+      .select([
+        'ou.id as orgUnitId',
+        'ou.name as orgUnitName',
+        'ou.tenant_id as tenantId',
+        'ou.zone_id as zoneId',
+        'tz.name as zoneName',
+      ])
+      .where('oulm.global_location_id', '=', locationId)
+      .where('ou.is_active', '=', true)
+      .execute();
+
+    return records.map((r) => ({
+      tenantId: r.tenantId,
+      orgUnitId: r.orgUnitId,
+      orgUnitName: r.orgUnitName,
+      zoneId: r.zoneId || undefined,
+      zoneName: r.zoneName || undefined,
+    }));
   }
 }

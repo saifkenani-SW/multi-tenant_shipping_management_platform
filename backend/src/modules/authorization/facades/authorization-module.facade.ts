@@ -39,14 +39,21 @@ export class AuthorizationModuleFacade {
    * Validates if all provided role IDs exist for a given tenant.
    * Returns true if all exist, false otherwise.
    */
-  async validateRolesExist(tenantId: string, roleIds: string[]): Promise<boolean> {
+  async validateRolesExist(
+    tenantId: string,
+    roleIds: string[],
+  ): Promise<boolean> {
     if (!roleIds || roleIds.length === 0) {
       return true;
     }
 
     const uniqueRoleIds = Array.from(new Set(roleIds));
-    const rolesResult = await this.roleRepository.findByIdsWithPermissions(uniqueRoleIds);
-    const rolesList = rolesResult instanceof Map ? Array.from(rolesResult.values()) : rolesResult;
+    const rolesResult =
+      await this.roleRepository.findByIdsWithPermissions(uniqueRoleIds);
+    const rolesList =
+      rolesResult instanceof Map
+        ? Array.from(rolesResult.values())
+        : rolesResult;
 
     const validRoles = rolesList.filter((role) => role.tenantId === tenantId);
     return validRoles.length === uniqueRoleIds.length;

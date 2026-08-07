@@ -17,17 +17,20 @@ export class TenantFacade {
   }
 
   async getMaxBranchesAllowed(tenantId: string): Promise<number> {
-    const subscription = await this.tenantQueryService.getTenantSubscription(tenantId);
+    const subscription =
+      await this.tenantQueryService.getTenantSubscription(tenantId);
     return subscription?.snapshotMaxBranches ?? 0;
   }
 
   async getMaxWarehousesAllowed(tenantId: string): Promise<number> {
-    const subscription = await this.tenantQueryService.getTenantSubscription(tenantId);
+    const subscription =
+      await this.tenantQueryService.getTenantSubscription(tenantId);
     return subscription?.snapshotMaxWarehouses ?? 0;
   }
 
   async getMaxEmployeesAllowed(tenantId: string): Promise<number> {
-    const subscription = await this.tenantQueryService.getTenantSubscription(tenantId);
+    const subscription =
+      await this.tenantQueryService.getTenantSubscription(tenantId);
     return subscription?.snapshotMaxEmployees ?? 0;
   }
 }

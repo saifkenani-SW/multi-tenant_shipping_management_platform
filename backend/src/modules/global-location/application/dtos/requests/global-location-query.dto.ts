@@ -4,12 +4,17 @@ import { LocationType } from '@prisma/client';
 import { CursorPaginationQueryDto } from '../../../../../common/pagination/cursor/dtos/cursor-pagination-query.dto';
 
 export class GlobalLocationQueryDto extends CursorPaginationQueryDto {
-  @ApiPropertyOptional({ description: 'Filter by location name (partial match)' })
+  @ApiPropertyOptional({
+    description: 'Filter by location name (partial match)',
+  })
   @IsOptional()
   @IsString()
   name?: string;
 
-  @ApiPropertyOptional({ enum: LocationType, description: 'Filter by location type' })
+  @ApiPropertyOptional({
+    enum: LocationType,
+    description: 'Filter by location type',
+  })
   @IsOptional()
   @IsEnum(LocationType)
   type?: LocationType;

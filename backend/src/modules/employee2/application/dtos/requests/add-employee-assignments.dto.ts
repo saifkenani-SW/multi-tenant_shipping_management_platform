@@ -7,7 +7,10 @@ export class AssignmentInputDto {
   @IsUUID()
   organizationUnitId: string;
 
-  @ApiProperty({ description: 'Role IDs assigned in this unit', type: [String] })
+  @ApiProperty({
+    description: 'Role IDs assigned in this unit',
+    type: [String],
+  })
   @IsArray()
   @IsUUID(undefined, { each: true })
   roleIds: string[];

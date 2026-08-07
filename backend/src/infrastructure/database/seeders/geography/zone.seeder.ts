@@ -55,10 +55,11 @@ export class ZoneSeeder implements Seeder {
 
         await this.prisma.zone_pricing_matrix.upsert({
           where: {
-            tenant_id_origin_zone_id_destination_zone_id: {
+            tenant_id_origin_zone_id_destination_zone_id_service_level: {
               tenant_id: tenant.id,
               origin_zone_id: originZoneId,
               destination_zone_id: destZoneId,
+              service_level: 'STANDARD',
             },
           },
           update: {

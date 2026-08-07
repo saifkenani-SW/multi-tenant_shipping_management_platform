@@ -103,7 +103,8 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       errorType = 'خطأ_في_قاعدة_البيانات';
       switch (exception.code) {
         case 'P2010':
-          const originalCode = (exception.meta as any)?.driverAdapterError?.cause?.originalCode;
+          const originalCode = (exception.meta as any)?.driverAdapterError
+            ?.cause?.originalCode;
           if (originalCode === '23503') {
             status = HttpStatus.BAD_REQUEST;
             message = 'فشل قيد المفتاح الخارجي - السجل المرتبط غير موجود';

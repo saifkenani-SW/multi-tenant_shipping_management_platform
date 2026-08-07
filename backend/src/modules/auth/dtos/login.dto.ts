@@ -1,4 +1,11 @@
-import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserLoginType } from '../types/auth.types';
 
@@ -24,7 +31,8 @@ export class LoginDto {
   @ApiPropertyOptional({
     example: UserLoginType.PLATFORM_OWNER,
     enum: UserLoginType,
-    description: 'Optional: Specify profile type to bypass profile selection for multi-profile users',
+    description:
+      'Optional: Specify profile type to bypass profile selection for multi-profile users',
   })
   @IsEnum(UserLoginType)
   @IsOptional()
@@ -32,7 +40,8 @@ export class LoginDto {
 
   @ApiPropertyOptional({
     example: '550e8400-e29b-41d4-a716-446655440000',
-    description: 'Optional: Specify tenant ID if the selected profile is TENANT_ADMIN or EMPLOYEE',
+    description:
+      'Optional: Specify tenant ID if the selected profile is TENANT_ADMIN or EMPLOYEE',
   })
   @IsString()
   @IsOptional()

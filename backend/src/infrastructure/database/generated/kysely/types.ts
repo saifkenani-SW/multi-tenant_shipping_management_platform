@@ -235,6 +235,13 @@ export const CoverageType = {
     BOTH: "BOTH"
 } as const;
 export type CoverageType = (typeof CoverageType)[keyof typeof CoverageType];
+export const ServiceLevel = {
+    STANDARD: "STANDARD",
+    EXPRESS: "EXPRESS",
+    SAME_DAY: "SAME_DAY",
+    REFRIGERATED: "REFRIGERATED"
+} as const;
+export type ServiceLevel = (typeof ServiceLevel)[keyof typeof ServiceLevel];
 export type assignment_role = {
     id: string;
     assignment_id: string;
@@ -282,6 +289,7 @@ export type customer_shipment = {
     approved_quotation_id: string | null;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
+    service_level: Generated<ServiceLevel>;
     receiver_name: string;
     receiver_phone: string;
     payment_responsibility: Generated<PaymentResponsibility>;
@@ -397,6 +405,7 @@ export type parcel = {
     description: string | null;
     category: string | null;
     parcel_type: Generated<ParcelType>;
+    service_level: Generated<ServiceLevel>;
     is_fragile: Generated<boolean>;
     requires_upright_handling: Generated<boolean>;
     temperature_sensitive: Generated<boolean>;
@@ -486,6 +495,7 @@ export type quotation = {
     shipment_request_id: string;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
+    service_level: Generated<ServiceLevel>;
     quotation_type: Generated<QuotationType>;
     base_price: string | null;
     weight_charge: string | null;
@@ -726,6 +736,7 @@ export type zone_pricing_matrix = {
     tenant_id: string;
     origin_zone_id: string;
     destination_zone_id: string;
+    service_level: Generated<ServiceLevel>;
     base_price: string;
     base_weight_kg: string;
     price_per_extra_kg: Generated<string>;

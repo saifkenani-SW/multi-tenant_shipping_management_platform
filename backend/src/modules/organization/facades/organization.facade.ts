@@ -1,41 +1,61 @@
 import { Injectable } from '@nestjs/common';
-import { OrganizationUnitQueryRepository } from '../organization_unit/infrastructure/repositories/organization-unit.query.repository';
+import { OrganizationUnitQueryService } from '../organization_unit/application/services/organization-unit.query.service';
+import { TenantZoneQueryService } from '../tenant_zone/application/services/tenant-zone.query.service';
 import { OrganizationUnitResponseDto } from '../organization_unit/application/dtos/responses/organization-unit.response.dto';
+import { ResolvedTenantCandidatesDto } from '../organization_unit/application/dtos/responses/resolved-tenant-candidates.dto';
 
 @Injectable()
 export class OrganizationFacade {
   constructor(
-    private readonly queryRepository: OrganizationUnitQueryRepository,
+    private readonly orgUnitQueryService: OrganizationUnitQueryService,
+    private readonly tenantZoneQueryService: TenantZoneQueryService,
   ) {}
 
   /**
-   * Validates if all provided organization unit IDs exist for a given tenant.
-   * Returns true if all exist, false otherwise.
+   * Validates if all provided organization unit IDs exist and belong to the given tenant.
    */
   async validateOrganizationUnitsExist(
     tenantId: string,
     orgUnitIds: string[],
   ): Promise<boolean> {
-    if (!orgUnitIds || orgUnitIds.length === 0) return true;
-
-    const uniqueIds = Array.from(new Set(orgUnitIds));
-    const results = await Promise.all(
-      uniqueIds.map((id) => this.queryRepository.findById(id)),
+    return this.orgUnitQueryService.validateAllBelongToTenant(
+      tenantId,
+      orgUnitIds,
     );
+  }
 
-    const validUnits = results.filter(
-      (unit) => unit !== null && unit.tenantId === tenantId,
+  /**
+   * Validates if all provided tenant zone IDs exist and belong to the given tenant.
+   */
+  async validateTenantZonesExist(
+    tenantId: string,
+    zoneIds: string[],
+  ): Promise<boolean> {
+    return this.tenantZoneQueryService.validateAllBelongToTenant(
+      tenantId,
+      zoneIds,
     );
-    return validUnits.length === uniqueIds.length;
   }
 
   /**
    * Fetches multiple organization units by their IDs.
    */
-  async getOrganizationUnitsByIds(orgUnitIds: string[]): Promise<OrganizationUnitResponseDto[]> {
-    if (!orgUnitIds || orgUnitIds.length === 0) return [];
-    const uniqueIds = Array.from(new Set(orgUnitIds));
-    const mapOrArray: any = await this.queryRepository.findByIds(uniqueIds);
-    return mapOrArray instanceof Map ? Array.from(mapOrArray.values()) : mapOrArray;
+  async getOrganizationUnitsByIds(
+    orgUnitIds: string[],
+  ): Promise<OrganizationUnitResponseDto[]> {
+    return this.orgUnitQueryService.findByIds(orgUnitIds);
+  }
+
+  /**
+   * Resolves routes for a shipment based on origin and destination locations.
+   */
+  async resolveRoutesForLocations(
+    originLocationId: string,
+    destinationLocationId: string,
+  ): Promise<ResolvedTenantCandidatesDto[]> {
+    return this.orgUnitQueryService.resolveRoutesForLocations(
+      originLocationId,
+      destinationLocationId,
+    );
   }
 }

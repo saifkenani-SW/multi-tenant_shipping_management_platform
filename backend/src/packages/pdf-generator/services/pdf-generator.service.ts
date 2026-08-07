@@ -18,7 +18,11 @@ export class PdfGeneratorService implements OnModuleInit, OnModuleDestroy {
     try {
       const launchOptions: any = {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+        ],
       };
       if (process.env.CHROME_BIN) {
         launchOptions.executablePath = process.env.CHROME_BIN;

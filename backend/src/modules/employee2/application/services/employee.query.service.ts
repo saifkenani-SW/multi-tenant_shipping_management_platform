@@ -53,10 +53,14 @@ export class EmployeeQueryService {
 
     const { rawAssignments, ...employeeData } = employee;
 
-    return plainToInstance(EmployeeResponseDto, {
-      ...employeeData,
-      assignments,
-    }, { excludeExtraneousValues: true });
+    return plainToInstance(
+      EmployeeResponseDto,
+      {
+        ...employeeData,
+        assignments,
+      },
+      { excludeExtraneousValues: true },
+    );
   }
 
   async findMany(query: EmployeeQueryDto, contextTenantId?: string) {
@@ -80,11 +84,10 @@ export class EmployeeQueryService {
     );
 
     return new PaginatedResponse(
-      plainToInstance(EmployeeResponseDto, items, { excludeExtraneousValues: true }),
-      new PaginationMeta(
-        pagination,
-        total,
-      ),
+      plainToInstance(EmployeeResponseDto, items, {
+        excludeExtraneousValues: true,
+      }),
+      new PaginationMeta(pagination, total),
     );
   }
 

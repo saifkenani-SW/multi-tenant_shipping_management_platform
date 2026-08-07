@@ -28,6 +28,7 @@ import { UserModule } from './modules/user/user.module';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { Employee2Module } from './modules/employee2/employee2.module';
 import { OrganizationModule } from './modules/organization/organization.module';
+import { PricingModule } from './modules/shipment-request/pricing/pricing.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { OrganizationModule } from './modules/organization/organization.module';
     LabelGeneratorModule,
     PdfGeneratorModule,
     StorageModule.forRoot(),
+    PricingModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

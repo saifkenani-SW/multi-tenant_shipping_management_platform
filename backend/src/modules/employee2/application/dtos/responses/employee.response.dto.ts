@@ -47,8 +47,6 @@ export class EmployeeResponseDto {
   assignments: EmployeeAssignmentDto[] = [];
 }
 
-
-
 export class AssignmentRoleDto {
   @ApiProperty({ description: 'Role ID' })
   @Expose()
@@ -76,7 +74,10 @@ export class EmployeeAssignmentDto {
   @Expose()
   organizationUnitType: string;
 
-  @ApiProperty({ description: 'Roles in this Assignment', type: [AssignmentRoleDto] })
+  @ApiProperty({
+    description: 'Roles in this Assignment',
+    type: [AssignmentRoleDto],
+  })
   @Expose()
   roles: AssignmentRoleDto[];
 }

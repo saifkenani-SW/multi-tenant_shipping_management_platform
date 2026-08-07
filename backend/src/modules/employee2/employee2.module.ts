@@ -10,14 +10,8 @@ import { OrganizationModule } from '../organization/organization.module';
 import { AuthorizationModule } from '../authorization/authorization.module';
 
 @Module({
-  imports: [
-    TenantModule,
-    OrganizationModule,
-    AuthorizationModule,
-  ],
-  controllers: [
-    EmployeeController,
-  ],
+  imports: [TenantModule, OrganizationModule, AuthorizationModule],
+  controllers: [EmployeeController],
   providers: [
     EmployeeCommandService,
     EmployeeQueryService,
@@ -25,10 +19,6 @@ import { AuthorizationModule } from '../authorization/authorization.module';
     EmployeeQueryRepository,
     EmployeeFacade,
   ],
-  exports: [
-    EmployeeCommandService,
-    EmployeeQueryService,
-    EmployeeFacade,
-  ],
+  exports: [EmployeeCommandService, EmployeeQueryService, EmployeeFacade],
 })
 export class Employee2Module {}

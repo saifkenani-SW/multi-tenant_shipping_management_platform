@@ -50,7 +50,10 @@ export class AuthController {
       },
       'Platform Owner': {
         summary: 'Platform Owner (System Admin)',
-        value: { email: 'owner@logisticsplatform.com', password: 'password123' },
+        value: {
+          email: 'owner@logisticsplatform.com',
+          password: 'password123',
+        },
       },
       'Company Owner': {
         summary: 'Tenant Admin (Company Owner)',
