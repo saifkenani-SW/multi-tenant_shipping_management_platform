@@ -7,11 +7,13 @@ import { EmployeeQueryRepository } from './infrastructure/repositories/employee.
 import { EmployeeFacade } from './facades/employee.facade';
 import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { AuthorizationModule } from '../authorization/authorization.module';
 
 @Module({
   imports: [
     TenantModule,
     OrganizationModule,
+    AuthorizationModule,
   ],
   controllers: [
     EmployeeController,

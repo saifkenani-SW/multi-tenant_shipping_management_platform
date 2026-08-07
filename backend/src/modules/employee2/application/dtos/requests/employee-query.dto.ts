@@ -12,6 +12,11 @@ class EmployeeBaseQueryDto {
   @IsOptional()
   @IsString()
   search?: string;
+
+  @ApiPropertyOptional({ description: 'تصفية الموظفين حسب الوحدة التنظيمية (الفرع/المستودع)' })
+  @IsOptional()
+  @IsUUID()
+  organizationUnitId?: string;
 }
 
 export class EmployeeQueryDto extends IntersectionType(PaginationQueryDto, EmployeeBaseQueryDto) {}

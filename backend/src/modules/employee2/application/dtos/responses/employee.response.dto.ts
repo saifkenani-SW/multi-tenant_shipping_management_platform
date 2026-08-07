@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 
 export class EmployeeResponseDto {
   @ApiProperty({ description: 'معرف الموظف' })
@@ -22,6 +22,10 @@ export class EmployeeResponseDto {
   @Expose()
   fullName: string;
 
+  @ApiProperty({ description: 'حالة الموظف (نشط أو غير نشط)' })
+  @Expose()
+  isActive: boolean;
+
   @ApiPropertyOptional({ description: 'الرقم الوطني' })
   @Expose()
   nationalId?: string;
@@ -33,4 +37,46 @@ export class EmployeeResponseDto {
   @ApiProperty({ description: 'تاريخ التحديث' })
   @Expose()
   updatedAt: Date;
+
+  @ApiProperty({
+    description: 'قائمة تعيينات الموظف (الفروع والصلاحيات)',
+    type: () => [EmployeeAssignmentDto],
+  })
+  @Expose()
+  @Type(() => EmployeeAssignmentDto)
+  assignments: EmployeeAssignmentDto[] = [];
+}
+
+
+
+export class AssignmentRoleDto {
+  @ApiProperty({ description: 'Role ID' })
+  @Expose()
+  id: string;
+
+  @ApiProperty({ description: 'Role Name' })
+  @Expose()
+  name: string;
+}
+
+export class EmployeeAssignmentDto {
+  @ApiProperty({ description: 'المعرف الفريد للتعيين' })
+  @Expose()
+  id: string;
+
+  @ApiProperty({ description: 'معرف الوحدة التنظيمية (الفرع/المستودع)' })
+  @Expose()
+  organizationUnitId: string;
+
+  @ApiProperty({ description: 'Organization Unit Name' })
+  @Expose()
+  organizationUnitName: string;
+
+  @ApiProperty({ description: 'Organization Unit Type' })
+  @Expose()
+  organizationUnitType: string;
+
+  @ApiProperty({ description: 'Roles in this Assignment', type: [AssignmentRoleDto] })
+  @Expose()
+  roles: AssignmentRoleDto[];
 }

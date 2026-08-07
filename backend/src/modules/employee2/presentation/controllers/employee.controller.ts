@@ -7,7 +7,6 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -22,7 +21,7 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../../../../common/authorization';
 import { RoleType } from '../../../authorization';
 
-@ApiTags('Employees')
+@ApiTags('Employees2')
 @ApiBearerAuth()
 @Controller('employee2')
 export class EmployeeController {
@@ -87,7 +86,23 @@ export class EmployeeController {
   @Post(':id/assignments')
   @Roles(RoleType.TENANT_ADMIN)
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'تعيين موظف في وحدات تنظيمية' })
+  @ApiOperation({ summary: 'تعيين موظف في وحدات تنظيمية وإسناد الصلاحيات' })
+  @ApiBody({
+    type: AddEmployeeAssignmentsDto,
+    examples: {
+      default: {
+        summary: 'مثال لبيانات التعيين (الفرع + الصلاحيات)',
+        value: {
+          assignments: [
+            {
+              organizationUnitId: '00000000-0000-7000-8000-000000001502',
+              roleIds: ['00000000-0000-7000-8000-000000001111', '00000000-0000-7000-8000-000000002222'],
+            },
+          ],
+        },
+      },
+    },
+  })
   async addAssignments(
     @Param('id') id: string,
     @Body() dto: AddEmployeeAssignmentsDto,
@@ -110,5 +125,35 @@ export class EmployeeController {
   async findById(@Param('id') id: string) {
     const tenantId = this.requestContext.getTenantId();
     return this.queryService.findById(id, tenantId);
+  }
+
+  @Post(':id/activate')
+  @Roles(RoleType.TENANT_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'إعادة تنشيط موظف' })
+  async activate(@Param('id') id: string) {
+    const tenantId = this.requestContext.getTenantIdOrThrow();
+    return this.commandService.activate(id, tenantId);
+  }
+
+  @Post(':id/deactivate')
+  @Roles(RoleType.TENANT_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'إلغاء تنشيط موظف' })
+  async deactivate(@Param('id') id: string) {
+    const tenantId = this.requestContext.getTenantIdOrThrow();
+    return this.commandService.deactivate(id, tenantId);
+  }
+
+  @Delete(':id/assignments/:assignmentId')
+  @Roles(RoleType.TENANT_ADMIN)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'إزالة تعيين موظف من وحدة تنظيمية' })
+  async removeAssignment(
+    @Param('id') id: string,
+    @Param('assignmentId') assignmentId: string,
+  ) {
+    const tenantId = this.requestContext.getTenantIdOrThrow();
+    return this.commandService.removeAssignment(id, assignmentId, tenantId);
   }
 }

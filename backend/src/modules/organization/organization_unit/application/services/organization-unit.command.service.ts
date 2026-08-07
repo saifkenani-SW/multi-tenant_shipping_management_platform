@@ -40,7 +40,7 @@ export class OrganizationUnitCommandService {
         tenantId,
         'BRANCH',
       );
-      if (maxBranches > 0 && currentBranches >= maxBranches) {
+      if (maxBranches !== -1 && currentBranches >= maxBranches) {
         throw new BadRequestException(
           'تم تجاوز الحد الأقصى للفروع المسموح به في اشتراكك',
         );
@@ -52,7 +52,7 @@ export class OrganizationUnitCommandService {
         tenantId,
         'WAREHOUSE',
       );
-      if (maxWarehouses > 0 && currentWarehouses >= maxWarehouses) {
+      if (maxWarehouses !== -1 && currentWarehouses >= maxWarehouses) {
         throw new BadRequestException(
           'تم تجاوز الحد الأقصى للمستودعات المسموح به في اشتراكك',
         );

@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { OrganizationUnitQueryRepository } from '../organization_unit/infrastructure/repositories/organization-unit.query.repository';
+import { OrganizationUnitResponseDto } from '../organization_unit/application/dtos/responses/organization-unit.response.dto';
 
 @Injectable()
 export class OrganizationFacade {
@@ -26,5 +27,15 @@ export class OrganizationFacade {
       (unit) => unit !== null && unit.tenantId === tenantId,
     );
     return validUnits.length === uniqueIds.length;
+  }
+
+  /**
+   * Fetches multiple organization units by their IDs.
+   */
+  async getOrganizationUnitsByIds(orgUnitIds: string[]): Promise<OrganizationUnitResponseDto[]> {
+    if (!orgUnitIds || orgUnitIds.length === 0) return [];
+    const uniqueIds = Array.from(new Set(orgUnitIds));
+    const mapOrArray: any = await this.queryRepository.findByIds(uniqueIds);
+    return mapOrArray instanceof Map ? Array.from(mapOrArray.values()) : mapOrArray;
   }
 }

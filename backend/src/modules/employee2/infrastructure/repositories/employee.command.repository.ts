@@ -21,8 +21,6 @@ export class EmployeeCommandRepository {
   }
 
   async update(id: string, tenantId: string, dto: UpdateEmployeeDto) {
-    // Assuming we verify tenant_id before updating, or use it in a where if composite unique exists, but standard is find First then update or just by ID if we're sure.
-    // For safety, let's just use ID, the service should ensure the employee belongs to tenant.
     return this.prisma.client.employee.update({
       where: { id },
       data: {
@@ -44,17 +42,59 @@ export class EmployeeCommandRepository {
   async addAssignments(
     tenantId: string,
     employeeId: string,
-    orgUnitIds: string[],
+    assignments: { organizationUnitId: string; roleIds: string[] }[],
   ) {
-    const data = orgUnitIds.map((orgUnitId) => ({
-      tenant_id: tenantId,
-      employee_id: employeeId,
-      organization_unit_id: orgUnitId,
-    }));
-    await this.prisma.client.employee_assignment.createMany({
-      data,
-      skipDuplicates: true,
-    });
+    for (const assignment of assignments) {
+      const createdAssignment =
+        await this.prisma.client.employee_assignment.create({
+          data: {
+            tenant_id: tenantId,
+            employee_id: employeeId,
+            organization_unit_id: assignment.organizationUnitId,
+          },
+        });
+
+      if (assignment.roleIds.length > 0) {
+        const rolesData = assignment.roleIds.map((roleId) => ({
+          assignment_id: createdAssignment.id,
+          role_id: roleId,
+        }));
+        await this.prisma.client.assignment_role.createMany({
+          data: rolesData,
+          skipDuplicates: true,
+        });
+      }
+    }
+
     return { id: employeeId };
+  }
+
+  async activate(id: string) {
+    return this.prisma.client.employee.update({
+      where: { id },
+      data: {
+        is_active: true,
+        deactivated_at: null,
+      },
+    });
+  }
+
+  async deactivate(id: string) {
+    return this.prisma.client.employee.update({
+      where: { id },
+      data: {
+        is_active: false,
+        deactivated_at: new Date(),
+      },
+    });
+  }
+
+  async removeAssignment(id: string, assignmentId: string) {
+    return this.prisma.client.employee_assignment.deleteMany({
+      where: {
+        id: assignmentId,
+        employee_id: id,
+      },
+    });
   }
 }

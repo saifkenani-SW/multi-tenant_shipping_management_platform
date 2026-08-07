@@ -5,6 +5,7 @@ import { OrganizationUnitResponseDto } from '../../application/dtos/responses/or
 import { OrganizationUnitQueryDto } from '../../application/dtos/requests/organization-unit-query.dto';
 import { CursorPaginatedResponse } from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
 import { Cacheable } from '../../../../../infrastructure/cache/decorators/Cacheable';
+import { CacheStrategy } from '../../../../../infrastructure/cache/decorators/cache-strategy.enum';
 import {
   ORG_UNIT_CACHE_KEYS,
   ORG_UNIT_CACHE_TTL,
@@ -75,6 +76,78 @@ export class OrganizationUnitQueryRepository {
         coverageType: m.coverage_type as any,
       })),
     };
+  }
+
+  @Cacheable({
+    strategy: CacheStrategy.MANY,
+    ttl: ORG_UNIT_CACHE_TTL.DETAILS,
+    keyPrefix: ORG_UNIT_CACHE_KEYS.DETAILS,
+    ids: (ids: string[]) => ids,
+    loader: (args: any[], missingIds: string[]) => [missingIds],
+  })
+  async findByIds(ids: string[]): Promise<OrganizationUnitResponseDto[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const records = await this.kysely
+      .selectFrom('organization_unit as ou')
+      .select([
+        'ou.id',
+        'ou.tenant_id',
+        'ou.name',
+        'ou.org_type',
+        'ou.parent_id',
+        'ou.zone_id',
+        'ou.address_line',
+        'ou.is_active',
+        'ou.created_at',
+        'ou.updated_at',
+        sql<number>`ST_X(ou.location::geometry)`.as('longitude'),
+        sql<number>`ST_Y(ou.location::geometry)`.as('latitude'),
+      ])
+      .where('ou.id', 'in', ids)
+      .execute();
+
+    if (records.length === 0) return [];
+
+    const recordIds = records.map((r) => r.id);
+
+    const mappings = await this.kysely
+      .selectFrom('org_unit_location_mapping')
+      .select(['organization_unit_id', 'global_location_id', 'coverage_type'])
+      .where('organization_unit_id', 'in', recordIds)
+      .execute();
+
+    return records.map((record) => {
+      const location =
+        record.longitude != null && record.latitude != null
+          ? {
+              longitude: Number(record.longitude),
+              latitude: Number(record.latitude),
+            }
+          : undefined;
+
+      const recordMappings = mappings.filter(
+        (m) => m.organization_unit_id === record.id,
+      );
+
+      return {
+        id: record.id,
+        tenantId: record.tenant_id,
+        name: record.name,
+        orgType: record.org_type as any,
+        parentId: record.parent_id || undefined,
+        zoneId: record.zone_id || undefined,
+        addressLine: record.address_line || undefined,
+        isActive: record.is_active,
+        createdAt: record.created_at,
+        updatedAt: record.updated_at,
+        location,
+        coverageLocations: recordMappings.map((m) => ({
+          globalLocationId: m.global_location_id,
+          coverageType: m.coverage_type as any,
+        })),
+      };
+    });
   }
 
   @Cacheable({
