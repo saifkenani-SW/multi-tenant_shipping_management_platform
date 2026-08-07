@@ -18,7 +18,7 @@ export class VehicleSeeder implements Seeder {
       const plateNumber = `KSA-${1000 + i}`;
       const vehicleId = `00000000-0000-7000-8000-00000000100${i}`;
 
-      await this.prisma.vehicle.upsert({
+      const vehicle = await this.prisma.vehicle.upsert({
         where: {
           tenant_id_plate_number: {
             tenant_id: tenant.id,
@@ -39,6 +39,32 @@ export class VehicleSeeder implements Seeder {
           status: VehicleStatus.ACTIVE,
         },
       });
+
+      // Find the driver employee for this tenant
+      const driverUser = await this.prisma.users.findUnique({
+        where: { email: 'driver@fastship.com' }
+      });
+
+      if (driverUser) {
+        const driverEmp = await this.prisma.employee.findFirst({
+          where: { tenant_id: tenant.id, user_id: driverUser.id }
+        });
+
+        if (driverEmp) {
+          const vehicleAssignId = `00000000-0000-7000-8000-00000000101${i}`;
+          await this.prisma.vehicle_assignment.upsert({
+            where: { id: vehicleAssignId },
+            update: { is_active: true },
+            create: {
+              id: vehicleAssignId,
+              tenant_id: tenant.id,
+              employee_id: driverEmp.id,
+              vehicle_id: vehicle.id,
+              is_active: true,
+            },
+          });
+        }
+      }
     }
 
     this.logger.log('VehicleSeeder completed.');

@@ -14,6 +14,9 @@ export class EmployeeSeeder implements Seeder {
 
     const tenant1 = SEEDED_TENANTS[0];
 
+    const adminUser = await this.prisma.users.findUnique({
+      where: { email: 'admin@fastship.com' },
+    });
     const employeeUser = await this.prisma.users.findUnique({
       where: { email: 'employee@fastship.com' },
     });
@@ -21,9 +24,9 @@ export class EmployeeSeeder implements Seeder {
       where: { email: 'driver@fastship.com' },
     });
 
-    if (!employeeUser || !driverUser) {
+    if (!adminUser || !employeeUser || !driverUser) {
       this.logger.warn(
-        'Skipping EmployeeSeeder: employeeUser or driverUser not found',
+        'Skipping EmployeeSeeder: admin, employee, or driver not found',
       );
       return;
     }
@@ -41,6 +44,13 @@ export class EmployeeSeeder implements Seeder {
     });
 
     const employeesToSeed = [
+      {
+        id: '00000000-0000-7000-8000-000000000600',
+        user_id: adminUser.id,
+        code: 'EMP-000',
+        name: 'FastShip Admin Employee',
+        role: adminRole,
+      },
       {
         id: '00000000-0000-7000-8000-000000000601',
         user_id: employeeUser.id,
