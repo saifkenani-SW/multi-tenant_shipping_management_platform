@@ -74,7 +74,7 @@ CREATE TYPE "LocationType" AS ENUM ('COUNTRY', 'GOVERNORATE', 'CITY', 'DISTRICT'
 CREATE TYPE "ActionType" AS ENUM ('RECEIVED_AT_BRANCH', 'LOADED_ON_TRIP', 'TRIP_DEPARTED', 'ARRIVED_AT_FACILITY', 'READY_FOR_COLLECTION', 'COLLECTED', 'RETURN_COMPLETED', 'CANCELLED', 'CONDITION_UPDATED', 'POD_COMPLETED', 'CREATED', 'TRANSFERRED');
 
 -- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('OTP', 'SHIPMENT', 'PARCEL', 'PAYMENT', 'SYSTEM', 'PROMOTION');
+CREATE TYPE "NotificationType" AS ENUM ('QUOTATION', 'OTP', 'SHIPMENT', 'PARCEL', 'PAYMENT', 'SYSTEM', 'PROMOTION');
 
 -- CreateEnum
 CREATE TYPE "PaymentResponsibility" AS ENUM ('SENDER', 'RECEIVER');
@@ -84,6 +84,15 @@ CREATE TYPE "VehicleType" AS ENUM ('Bike', 'Car', 'Van', 'Truck');
 
 -- CreateEnum
 CREATE TYPE "CollectionMethod" AS ENUM ('CUSTOMER', 'REPRESENTATIVE');
+
+-- CreateEnum
+CREATE TYPE "ParcelType" AS ENUM ('DOCUMENT', 'PACKAGE', 'FRAGILE', 'PERISHABLE', 'HAZARDOUS', 'LIQUID');
+
+-- CreateEnum
+CREATE TYPE "HandlingFeeType" AS ENUM ('FRAGILE', 'HAZARDOUS', 'PERISHABLE', 'TEMPERATURE_SENSITIVE');
+
+-- CreateEnum
+CREATE TYPE "CoverageType" AS ENUM ('DELIVERY_AREA', 'PICKUP_AREA', 'BOTH');
 
 -- CreateTable
 CREATE TABLE "assignment_role" (
@@ -132,6 +141,7 @@ CREATE TABLE "customer_profile" (
     "user_id" UUID NOT NULL,
     "full_name" VARCHAR(255) NOT NULL,
     "phone" VARCHAR(50) NOT NULL,
+    "profile_image_key" VARCHAR(500),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -142,12 +152,15 @@ CREATE TABLE "customer_profile" (
 CREATE TABLE "customer_shipment" (
     "id" UUID NOT NULL,
     "tenant_id" UUID NOT NULL,
-    "customer_profile_id" UUID NOT NULL,
+    "sender_national_id" VARCHAR(50),
+    "sender_customer_profile_id" UUID NOT NULL,
+    "receiver_customer_profile_id" UUID,
     "shipment_request_id" UUID,
     "approved_quotation_id" UUID,
+    "origin_org_unit_id" UUID NOT NULL,
+    "destination_org_unit_id" UUID NOT NULL,
     "receiver_name" VARCHAR(255) NOT NULL,
     "receiver_phone" VARCHAR(50) NOT NULL,
-    "receiver_address" VARCHAR(500) NOT NULL,
     "payment_responsibility" "PaymentResponsibility" NOT NULL DEFAULT 'SENDER',
     "total_chargeable_weight_kg" DECIMAL(10,2) DEFAULT 0,
     "status" "ShipmentStatus" NOT NULL DEFAULT 'PROCESSING',
@@ -214,6 +227,7 @@ CREATE TABLE "invoice" (
     "customer_shipment_id" UUID,
     "invoice_number" VARCHAR(100) NOT NULL,
     "subtotal" DECIMAL(10,2) NOT NULL,
+    "handling_fees" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "tax_amount" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "discount_amount" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "total_amount" DECIMAL(10,2) NOT NULL,
@@ -282,6 +296,12 @@ CREATE TABLE "parcel" (
     "tenant_id" UUID NOT NULL,
     "customer_shipment_id" UUID NOT NULL,
     "tracking_number" VARCHAR(50) NOT NULL,
+    "description" VARCHAR(500),
+    "category" VARCHAR(100),
+    "parcel_type" "ParcelType" NOT NULL DEFAULT 'PACKAGE',
+    "is_fragile" BOOLEAN NOT NULL DEFAULT false,
+    "requires_upright_handling" BOOLEAN NOT NULL DEFAULT false,
+    "temperature_sensitive" BOOLEAN NOT NULL DEFAULT false,
     "actual_weight_kg" DECIMAL(10,2) NOT NULL,
     "length_cm" DECIMAL(10,2) NOT NULL,
     "width_cm" DECIMAL(10,2) NOT NULL,
@@ -290,7 +310,6 @@ CREATE TABLE "parcel" (
     "current_status" "ParcelStatus" NOT NULL DEFAULT 'PROCESSING',
     "current_condition" "ParcelCondition" NOT NULL DEFAULT 'NORMAL',
     "current_org_unit_id" UUID,
-    "qr_code_url" VARCHAR(500),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -362,10 +381,10 @@ CREATE TABLE "proof_of_delivery" (
     "received_by_national_id" VARCHAR(50),
     "otp_verified" BOOLEAN NOT NULL DEFAULT false,
     "otp_verified_at" TIMESTAMP(6),
-    "signature_url" VARCHAR(500),
-    "id_photo_url" VARCHAR(500),
-    "parcel_photo_url" VARCHAR(500),
-    "additional_photo_url" VARCHAR(500),
+    "signature_key" VARCHAR(500),
+    "id_photo_key" VARCHAR(500),
+    "parcel_photo_key" VARCHAR(500),
+    "additional_photo_key" VARCHAR(500),
     "delivery_lat" DECIMAL(10,8),
     "delivery_lng" DECIMAL(11,8),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -378,6 +397,8 @@ CREATE TABLE "quotation" (
     "id" UUID NOT NULL,
     "tenant_id" UUID NOT NULL,
     "shipment_request_id" UUID NOT NULL,
+    "origin_org_unit_id" UUID NOT NULL,
+    "destination_org_unit_id" UUID NOT NULL,
     "quotation_type" "QuotationType" NOT NULL DEFAULT 'AUTOMATIC',
     "base_price" DECIMAL(10,2),
     "weight_charge" DECIMAL(10,2),
@@ -420,16 +441,14 @@ CREATE TABLE "shipment_request" (
     "id" UUID NOT NULL,
     "customer_profile_id" UUID NOT NULL,
     "target_tenant_id" UUID,
-    "origin_org_unit_id" UUID,
-    "destination_org_unit_id" UUID,
+    "origin_global_location_id" UUID NOT NULL,
+    "destination_global_location_id" UUID NOT NULL,
     "sender_name" VARCHAR(255) NOT NULL,
     "sender_phone" VARCHAR(50) NOT NULL,
-    "sender_address" VARCHAR(500) NOT NULL,
     "sender_lat" DECIMAL(10,8),
     "sender_lng" DECIMAL(11,8),
     "receiver_name" VARCHAR(255) NOT NULL,
     "receiver_phone" VARCHAR(50) NOT NULL,
-    "receiver_address" VARCHAR(500) NOT NULL,
     "receiver_lat" DECIMAL(10,8),
     "receiver_lng" DECIMAL(11,8),
     "expected_pieces_count" INTEGER NOT NULL DEFAULT 1,
@@ -504,7 +523,7 @@ CREATE TABLE "org_unit_location_mapping" (
     "tenant_id" UUID NOT NULL,
     "organization_unit_id" UUID NOT NULL,
     "global_location_id" UUID NOT NULL,
-    "coverage_type" VARCHAR(30) NOT NULL DEFAULT 'DELIVERY_AREA',
+    "coverage_type" "CoverageType" NOT NULL DEFAULT 'DELIVERY_AREA',
 
     CONSTRAINT "org_unit_location_mapping_pkey" PRIMARY KEY ("id")
 );
@@ -541,11 +560,13 @@ CREATE TABLE "tenant_delivery_settings" (
 -- CreateTable
 CREATE TABLE "tenant_operational_settings" (
     "tenant_id" UUID NOT NULL,
+    "tracking_prefix" VARCHAR(10),
     "auto_close_shipment_after_collection" BOOLEAN NOT NULL DEFAULT true,
     "allow_shipment_reopen" BOOLEAN NOT NULL DEFAULT false,
     "allow_trip_cancellation_after_loading" BOOLEAN NOT NULL DEFAULT false,
     "require_manager_before_trip_departure" BOOLEAN NOT NULL DEFAULT false,
     "allow_return_after_collection" BOOLEAN NOT NULL DEFAULT false,
+    "require_sender_national_id" BOOLEAN NOT NULL DEFAULT true,
     "quotation_validity_hours" INTEGER NOT NULL DEFAULT 48,
 
     CONSTRAINT "tenant_operational_settings_pkey" PRIMARY KEY ("tenant_id")
@@ -736,6 +757,17 @@ CREATE TABLE "vehicle_assignment" (
     CONSTRAINT "vehicle_assignment_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "handling_fee_rule" (
+    "id" UUID NOT NULL,
+    "tenant_id" UUID NOT NULL,
+    "fee_type" "HandlingFeeType" NOT NULL,
+    "amount" DECIMAL(10,2) NOT NULL,
+    "is_active" BOOLEAN NOT NULL DEFAULT true,
+
+    CONSTRAINT "handling_fee_rule_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "uq_assignment_role" ON "assignment_role"("assignment_id", "role_id");
 
@@ -746,7 +778,10 @@ CREATE INDEX "idx_customer_address_location" ON "customer_address" USING GIST ("
 CREATE UNIQUE INDEX "customer_profile_user_id_key" ON "customer_profile"("user_id");
 
 -- CreateIndex
-CREATE INDEX "idx_customer_shipment_customer" ON "customer_shipment"("customer_profile_id");
+CREATE INDEX "idx_customer_shipment_sender" ON "customer_shipment"("sender_customer_profile_id");
+
+-- CreateIndex
+CREATE INDEX "idx_customer_shipment_receiver" ON "customer_shipment"("receiver_customer_profile_id");
 
 -- CreateIndex
 CREATE INDEX "idx_customer_shipment_tenant" ON "customer_shipment"("tenant_id");
@@ -776,13 +811,31 @@ CREATE UNIQUE INDEX "uq_manifest_parcel" ON "manifest_item"("manifest_id", "parc
 CREATE INDEX "idx_org_unit_location" ON "organization_unit" USING GIST ("location");
 
 -- CreateIndex
+CREATE INDEX "parcel_current_org_unit_id_idx" ON "parcel"("current_org_unit_id");
+
+-- CreateIndex
+CREATE INDEX "parcel_customer_shipment_id_idx" ON "parcel"("customer_shipment_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "uq_tracking" ON "parcel"("tracking_number");
+
+-- CreateIndex
+CREATE INDEX "parcel_movement_organization_unit_id_created_at_idx" ON "parcel_movement"("organization_unit_id", "created_at");
+
+-- CreateIndex
+CREATE INDEX "parcel_movement_parcel_id_created_at_idx" ON "parcel_movement"("parcel_id", "created_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "permission_name_key" ON "permission"("name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "uq_parcel_pod" ON "proof_of_delivery"("parcel_id");
+
+-- CreateIndex
+CREATE INDEX "quotation_shipment_request_id_idx" ON "quotation"("shipment_request_id");
+
+-- CreateIndex
+CREATE INDEX "quotation_tenant_id_idx" ON "quotation"("tenant_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "uq_tenant_role_name" ON "role"("tenant_id", "name");
@@ -820,6 +873,9 @@ CREATE UNIQUE INDEX "uq_pricing_route" ON "zone_pricing_matrix"("tenant_id", "or
 -- CreateIndex
 CREATE INDEX "vehicle_assignment_employee_id_is_active_idx" ON "vehicle_assignment"("employee_id", "is_active");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "uq_tenant_handling_fee" ON "handling_fee_rule"("tenant_id", "fee_type");
+
 -- AddForeignKey
 ALTER TABLE "assignment_role" ADD CONSTRAINT "assignment_role_assignment_id_fkey" FOREIGN KEY ("assignment_id") REFERENCES "employee_assignment"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
@@ -842,13 +898,22 @@ ALTER TABLE "customer_profile" ADD CONSTRAINT "customer_profile_user_id_fkey" FO
 ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_approved_quotation_id_fkey" FOREIGN KEY ("approved_quotation_id") REFERENCES "quotation"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_customer_profile_id_fkey" FOREIGN KEY ("customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_sender_customer_profile_id_fkey" FOREIGN KEY ("sender_customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_receiver_customer_profile_id_fkey" FOREIGN KEY ("receiver_customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_shipment_request_id_fkey" FOREIGN KEY ("shipment_request_id") REFERENCES "shipment_request"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "customer_tenant" ADD CONSTRAINT "customer_tenant_customer_profile_id_fkey" FOREIGN KEY ("customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -959,6 +1024,12 @@ ALTER TABLE "quotation" ADD CONSTRAINT "quotation_submitted_by_employee_id_fkey"
 ALTER TABLE "quotation" ADD CONSTRAINT "quotation_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "quotation" ADD CONSTRAINT "quotation_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "quotation" ADD CONSTRAINT "quotation_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "role" ADD CONSTRAINT "role_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
@@ -977,10 +1048,10 @@ ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_customer_profile
 ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_target_tenant_id_fkey" FOREIGN KEY ("target_tenant_id") REFERENCES "tenant"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_origin_global_location_id_fkey" FOREIGN KEY ("origin_global_location_id") REFERENCES "global_location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_destination_global_location_id_fkey" FOREIGN KEY ("destination_global_location_id") REFERENCES "global_location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "support_ticket" ADD CONSTRAINT "support_ticket_assigned_to_employee_id_fkey" FOREIGN KEY ("assigned_to_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
@@ -1101,3 +1172,6 @@ ALTER TABLE "vehicle_assignment" ADD CONSTRAINT "vehicle_assignment_vehicle_id_f
 
 -- AddForeignKey
 ALTER TABLE "vehicle_assignment" ADD CONSTRAINT "vehicle_assignment_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "handling_fee_rule" ADD CONSTRAINT "handling_fee_rule_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
