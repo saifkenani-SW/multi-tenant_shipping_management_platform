@@ -324,6 +324,7 @@ model customer_shipment {
   approved_quotation_id        String?               @db.Uuid
   origin_org_unit_id           String                @db.Uuid
   destination_org_unit_id      String                @db.Uuid
+  service_level                ServiceLevel          @default(STANDARD)
   receiver_name                String                @db.VarChar(255)
   receiver_phone               String                @db.VarChar(50)
   payment_responsibility       PaymentResponsibility @default(SENDER)
@@ -516,6 +517,7 @@ model parcel {
   description                                                     String?            @db.VarChar(500)
   category                                                        String?            @db.VarChar(100)
   parcel_type                                                     ParcelType         @default(PACKAGE)
+  service_level                                                   ServiceLevel       @default(STANDARD)
   is_fragile                                                      Boolean            @default(false)
   requires_upright_handling                                       Boolean            @default(false) // ممنوع القلب/التكديس فوقه
   temperature_sensitive                                           Boolean            @default(false) // يحتاج تبريد/تجنب حرارة
@@ -650,6 +652,7 @@ model quotation {
   shipment_request_id      String          @db.Uuid
   origin_org_unit_id       String          @db.Uuid
   destination_org_unit_id  String          @db.Uuid
+  service_level            ServiceLevel    @default(STANDARD)
   quotation_type           QuotationType   @default(AUTOMATIC)
   base_price               Decimal?        @db.Decimal(10, 2)
   weight_charge            Decimal?        @db.Decimal(10, 2)
@@ -786,10 +789,10 @@ model support_ticket_message {
 }
 
 model org_unit_location_mapping {
-  id                   String @id @default(uuid(7)) @db.Uuid
-  tenant_id            String @db.Uuid
-  organization_unit_id String @db.Uuid
-  global_location_id   String @db.Uuid
+  id                   String       @id @default(uuid(7)) @db.Uuid
+  tenant_id            String       @db.Uuid
+  organization_unit_id String       @db.Uuid
+  global_location_id   String       @db.Uuid
   coverage_type        CoverageType @default(DELIVERY_AREA)
 
   global_location   global_location   @relation(fields: [global_location_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -1039,22 +1042,23 @@ model vehicle {
 }
 
 model zone_pricing_matrix {
-  id                  String   @id @default(uuid(7)) @db.Uuid
-  tenant_id           String   @db.Uuid
-  origin_zone_id      String   @db.Uuid
-  destination_zone_id String   @db.Uuid
-  base_price          Decimal  @db.Decimal(10, 2)
-  base_weight_kg      Decimal  @db.Decimal(10, 2)
-  price_per_extra_kg  Decimal  @default(0) @db.Decimal(10, 2)
-  is_active           Boolean  @default(true)
-  created_at          DateTime @default(now()) @db.Timestamp(6)
-  updated_at          DateTime @updatedAt
+  id                  String       @id @default(uuid(7)) @db.Uuid
+  tenant_id           String       @db.Uuid
+  origin_zone_id      String       @db.Uuid
+  destination_zone_id String       @db.Uuid
+  service_level       ServiceLevel @default(STANDARD)
+  base_price          Decimal      @db.Decimal(10, 2)
+  base_weight_kg      Decimal      @db.Decimal(10, 2)
+  price_per_extra_kg  Decimal      @default(0) @db.Decimal(10, 2)
+  is_active           Boolean      @default(true)
+  created_at          DateTime     @default(now()) @db.Timestamp(6)
+  updated_at          DateTime     @updatedAt
 
   tenant_zone_zone_pricing_matrix_destination_zone_idTotenant_zone tenant_zone @relation("zone_pricing_matrix_destination_zone_idTotenant_zone", fields: [destination_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   tenant_zone_zone_pricing_matrix_origin_zone_idTotenant_zone      tenant_zone @relation("zone_pricing_matrix_origin_zone_idTotenant_zone", fields: [origin_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   tenant                                                           tenant      @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([tenant_id, origin_zone_id, destination_zone_id], map: "uq_pricing_route")
+  @@unique([tenant_id, origin_zone_id, destination_zone_id, service_level], map: "uq_pricing_route_service")
 }
 model vehicle_assignment {
   id          String    @id @default(uuid(7)) @db.Uuid
@@ -1080,11 +1084,11 @@ enum HandlingFeeType {
 }
 
 model handling_fee_rule {
-  id         String          @id @default(uuid(7)) @db.Uuid
-  tenant_id  String          @db.Uuid
-  fee_type   HandlingFeeType
-  amount     Decimal         @db.Decimal(10, 2)
-  is_active  Boolean         @default(true)
+  id        String          @id @default(uuid(7)) @db.Uuid
+  tenant_id String          @db.Uuid
+  fee_type  HandlingFeeType
+  amount    Decimal         @db.Decimal(10, 2)
+  is_active Boolean         @default(true)
 
   tenant tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -1094,4 +1098,10 @@ enum CoverageType {
   DELIVERY_AREA
   PICKUP_AREA
   BOTH
+}
+enum ServiceLevel {
+  STANDARD // شحن عادي
+  EXPRESS // شحن سريع
+  SAME_DAY // شحن في نفس اليوم
+  REFRIGERATED // شحن مبرد (إن لزم)
 }
