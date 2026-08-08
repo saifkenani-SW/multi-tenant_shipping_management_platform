@@ -25,7 +25,7 @@ import { PdfGeneratorModule } from './packages/pdf-generator/pdf-generator.modul
 import { StorageModule } from './packages/storage/src/storage.module';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { UserModule } from './modules/user/user.module';
-import { VehicleModule } from './modules/vehicle/vehicle.module';
+import { FleetModule } from './modules/fleet/fleet.module';
 import { Employee2Module } from './modules/employee2/employee2.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { PricingModule } from './modules/shipment-request/pricing/pricing.module';
@@ -63,7 +63,7 @@ import { PricingModule } from './modules/shipment-request/pricing/pricing.module
     EmployeeModule,
     Employee2Module,
     OrganizationModule,
-    VehicleModule,
+    FleetModule,
     UserModule,
     TrackingModule,
     LabelGeneratorModule,

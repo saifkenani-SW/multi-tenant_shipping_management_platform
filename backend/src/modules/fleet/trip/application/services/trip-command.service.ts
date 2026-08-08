@@ -1,0 +1,210 @@
+import { Injectable } from '@nestjs/common';
+import { Transactional } from '../../../../../packages/transaction';
+import { EmployeeFacade } from '../../../../employee2/facades/employee.facade';
+import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
+import { TripCommandRepository } from '../../infrastructure/repositories/trip-command.repository';
+import { TripQueryService } from './trip-query.service';
+import { ManifestCommandService } from '../../../transport_manifest/application/services/manifest-command.service';
+import { VehicleQueryService } from '../../../vehicle/application/services/vehicle-query.service';
+import { VehicleNotOperableException } from '../../../vehicle/domain/exceptions/vehicle-not-operable.exception';
+import { Trip } from '../../domain/entities/trip.entity';
+import { DriverNotFoundException } from '../../../vehicle/domain/exceptions/driver-not-found.exception';
+import { InvalidTripOrgUnitsException } from '../../domain/exceptions/invalid-trip-org-units.exception';
+import { CreateTripDto } from '../dtos/requests/create-trip.dto';
+import { UpdateTripDto } from '../dtos/requests/update-trip.dto';
+
+@Injectable()
+export class TripCommandService {
+  constructor(
+    private readonly tripCommandRepository: TripCommandRepository,
+    private readonly tripQueryService: TripQueryService,
+    private readonly manifestCommandService: ManifestCommandService,
+    private readonly vehicleQueryService: VehicleQueryService,
+    private readonly employeeFacade: EmployeeFacade,
+    private readonly organizationFacade: OrganizationFacade,
+  ) {}
+
+  /**
+   * Creates a SCHEDULED trip.
+   *
+   * External references are verified through facades only: the driver through
+   * EmployeeFacade and both organization units through OrganizationFacade.
+   * The vehicle lives inside Fleet, so it is read through the sibling
+   * vehicle query service.
+   */
+  @Transactional()
+  async createTrip(tenantId: string, dto: CreateTripDto): Promise<string> {
+    // Route validity is a domain rule — fail before doing any lookups.
+    Trip.assertRouteIsValid(dto.originOrgUnitId, dto.destinationOrgUnitId);
+
+    await this.assertDriverExists(tenantId, dto.driverId);
+    await this.assertOrgUnitsExist(tenantId, [
+      dto.originOrgUnitId,
+      dto.destinationOrgUnitId,
+    ]);
+
+    if (dto.vehicleId) {
+      await this.assertVehicleIsOperable(tenantId, dto.vehicleId);
+    }
+
+    const trip = Trip.create({
+      tenantId,
+      driverId: dto.driverId,
+      vehicleId: dto.vehicleId ?? null,
+      originOrgUnitId: dto.originOrgUnitId,
+      destinationOrgUnitId: dto.destinationOrgUnitId,
+      scheduledAt: dto.scheduledAt ?? null,
+      notes: dto.notes ?? null,
+    });
+
+    const created = await this.tripCommandRepository.create(trip);
+
+    return created.id;
+  }
+
+  /**
+   * Updates a trip that has not departed yet. The aggregate decides whether it
+   * is still editable.
+   */
+  @Transactional()
+  async updateTrip(
+    tenantId: string,
+    id: string,
+    dto: UpdateTripDto,
+  ): Promise<void> {
+    const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
+
+    trip.assertEditable();
+
+    const originOrgUnitId = dto.originOrgUnitId ?? trip.originOrgUnitId;
+    const destinationOrgUnitId =
+      dto.destinationOrgUnitId ?? trip.destinationOrgUnitId;
+
+    Trip.assertRouteIsValid(originOrgUnitId, destinationOrgUnitId);
+
+    if (dto.driverId && dto.driverId !== trip.driverId) {
+      await this.assertDriverExists(tenantId, dto.driverId);
+    }
+
+    const changedOrgUnits: string[] = [];
+    if (dto.originOrgUnitId && dto.originOrgUnitId !== trip.originOrgUnitId) {
+      changedOrgUnits.push(dto.originOrgUnitId);
+    }
+    if (
+      dto.destinationOrgUnitId &&
+      dto.destinationOrgUnitId !== trip.destinationOrgUnitId
+    ) {
+      changedOrgUnits.push(dto.destinationOrgUnitId);
+    }
+    if (changedOrgUnits.length > 0) {
+      await this.assertOrgUnitsExist(tenantId, changedOrgUnits);
+    }
+
+    if (dto.vehicleId && dto.vehicleId !== trip.vehicleId) {
+      await this.assertVehicleIsOperable(tenantId, dto.vehicleId);
+    }
+
+    await this.tripCommandRepository.update(id, {
+      driverId: dto.driverId,
+      vehicleId: dto.vehicleId,
+      originOrgUnitId: dto.originOrgUnitId,
+      destinationOrgUnitId: dto.destinationOrgUnitId,
+      scheduledAt: dto.scheduledAt,
+      notes: dto.notes,
+    });
+  }
+
+  /**
+   * SCHEDULED -> IN_PROGRESS.
+   *
+   * The manifest count is fetched here and handed to the aggregate, which
+   * enforces the "a trip cannot depart empty" invariant.
+   *
+   * Departure also carries every attached manifest to IN_TRANSIT, in the same
+   * transaction, so a departed trip can never leave a manifest still open for
+   * loading.
+   */
+  @Transactional()
+  async startTrip(tenantId: string, id: string): Promise<void> {
+    const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
+    const manifestCount = await this.tripQueryService.countManifests(
+      tenantId,
+      id,
+    );
+
+    trip.start(manifestCount);
+
+    await this.tripCommandRepository.updateStatus(id, trip.status, {
+      startedAt: trip.startedAt,
+    });
+
+    await this.manifestCommandService.markTripManifestsInTransit(tenantId, id);
+  }
+
+  /** IN_PROGRESS -> COMPLETED. */
+  @Transactional()
+  async completeTrip(tenantId: string, id: string): Promise<void> {
+    const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
+
+    trip.complete();
+
+    await this.tripCommandRepository.updateStatus(id, trip.status, {
+      endedAt: trip.endedAt,
+    });
+  }
+
+  /** SCHEDULED -> CANCELLED. */
+  @Transactional()
+  async cancelTrip(tenantId: string, id: string): Promise<void> {
+    const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
+
+    trip.cancel();
+
+    await this.tripCommandRepository.updateStatus(id, trip.status, {
+      endedAt: trip.endedAt,
+    });
+  }
+
+  private async assertDriverExists(
+    tenantId: string,
+    driverId: string,
+  ): Promise<void> {
+    const exists = await this.employeeFacade.validateEmployeeExists(
+      driverId,
+      tenantId,
+    );
+
+    if (!exists) {
+      throw new DriverNotFoundException();
+    }
+  }
+
+  private async assertOrgUnitsExist(
+    tenantId: string,
+    orgUnitIds: string[],
+  ): Promise<void> {
+    const allExist =
+      await this.organizationFacade.validateOrganizationUnitsExist(
+        tenantId,
+        orgUnitIds,
+      );
+
+    if (!allExist) {
+      throw new InvalidTripOrgUnitsException();
+    }
+  }
+
+  private async assertVehicleIsOperable(
+    tenantId: string,
+    vehicleId: string,
+  ): Promise<void> {
+    const vehicle = await this.vehicleQueryService.findVehicleOrThrow(
+      tenantId,
+      vehicleId,
+    );
+
+    if (!vehicle.isOperable()) {
+      throw new VehicleNotOperableException();
+    }
+  }
+}
