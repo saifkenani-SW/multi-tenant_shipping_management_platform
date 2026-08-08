@@ -1,0 +1,24 @@
+import { ApiProperty } from '@nestjs/swagger';
+
+export class VehicleAssignmentDto {
+  @ApiProperty({ description: 'Unique identifier' })
+  id: string;
+
+  @ApiProperty({ description: 'Assigned employee (driver) identifier' })
+  employeeId: string;
+
+  @ApiProperty({ description: 'Vehicle identifier' })
+  vehicleId: string;
+
+  @ApiProperty({ description: 'Whether the assignment is currently active' })
+  isActive: boolean;
+
+  @ApiProperty({ description: 'When the driver was assigned' })
+  assignedAt: Date;
+
+  @ApiProperty({
+    description: 'When the assignment was released',
+    nullable: true,
+  })
+  removedAt: Date | null;
+}
