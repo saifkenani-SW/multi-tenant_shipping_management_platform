@@ -65,9 +65,9 @@ enum ShipmentStatus {
 
   DELIVERED // استلمت جميع الطرود
 
-  CANCELLED // ألغيت قبل التنفيذ
+  CANCELLED // ألغيت قبل التنفيذ ربما بسبب تغيير الشحنه لشحنه امكبر او عدد بارسلات اكثر لان الفاتوره الخاصه به يجب ان تلتغي ايضا!
 
-  RETURNED // اكتمل الإرجاع
+  RETURNED // اكتمل الإرجاعالفاتوره الخاصه به يجب ان ترجع ايضا!
 }
 
 enum TripStatus {
@@ -318,6 +318,7 @@ model customer_profile {
 
 model customer_shipment {
   id                           String                @id @default(uuid(7)) @db.Uuid
+  version                      Int                   @default(1)
   tenant_id                    String                @db.Uuid
   sender_national_id           String?               @db.VarChar(50)
   sender_customer_profile_id   String                @db.Uuid
@@ -513,8 +514,12 @@ model organization_unit {
 }
 model parcel {
   id                                                              String             @id @default(uuid(7)) @db.Uuid
+  version                                                         Int                @default(1)
   tenant_id                                                       String             @db.Uuid
   customer_shipment_id                                            String             @db.Uuid
+  organization_unit_parcel_current_org_unit_idToorganization_unit organization_unit? @relation("parcel_current_org_unit_idToorganization_unit", fields: [current_org_unit_id], references: [id], onUpdate: NoAction)
+  destination_org_unit_id                                         String?            @db.Uuid
+  label_key                                                       String?            @db.VarChar(500)
   tracking_number                                                 String             @db.VarChar(50)
   description                                                     String?            @db.VarChar(500)
   category                                                        String?            @db.VarChar(100)
@@ -534,7 +539,6 @@ model parcel {
   created_at                                                      DateTime           @default(now()) @db.Timestamp(6)
   updated_at                                                      DateTime           @updatedAt
   manifest_item                                                   manifest_item[]
-  organization_unit_parcel_current_org_unit_idToorganization_unit organization_unit? @relation("parcel_current_org_unit_idToorganization_unit", fields: [current_org_unit_id], references: [id], onUpdate: NoAction)
   customer_shipment                                               customer_shipment  @relation(fields: [customer_shipment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   tenant                                                          tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   parcel_movement                                                 parcel_movement[]

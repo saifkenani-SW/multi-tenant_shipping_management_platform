@@ -52,7 +52,7 @@ export class VehicleQueryRepository {
       .where('tenant_id', '=', criteria.tenantId);
 
     if (criteria.search) {
-      const keyword = `%${criteria.search}%`;
+      const keyword = `${criteria.search}%`;
       query = query.where('plate_number', 'ilike', keyword);
       countQuery = countQuery.where('plate_number', 'ilike', keyword);
     }

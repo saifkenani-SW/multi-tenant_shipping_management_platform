@@ -283,6 +283,7 @@ export type customer_profile = {
 };
 export type customer_shipment = {
     id: string;
+    version: Generated<number>;
     tenant_id: string;
     sender_national_id: string | null;
     sender_customer_profile_id: string;
@@ -401,8 +402,11 @@ export type organization_unit = {
 };
 export type parcel = {
     id: string;
+    version: Generated<number>;
     tenant_id: string;
     customer_shipment_id: string;
+    destination_org_unit_id: string | null;
+    label_key: string | null;
     tracking_number: string;
     description: string | null;
     category: string | null;
