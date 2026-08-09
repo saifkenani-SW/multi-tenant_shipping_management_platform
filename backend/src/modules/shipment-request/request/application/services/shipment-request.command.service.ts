@@ -38,12 +38,13 @@ export class ShipmentRequestCommandService {
   })
   async create(customerProfileId: string, dto: CreateShipmentRequestDto) {
     if (dto.target_tenant_id) {
-      const tenant = await this.tenantFacade.getTenantDetails(
+      const tenants = await this.tenantFacade.getTenantsByIds([
         dto.target_tenant_id,
-      );
-      if (tenant.status !== 'ACTIVE') {
+      ]);
+      const tenant = tenants[0];
+      if (!tenant || tenant.status !== 'ACTIVE') {
         throw new BadRequestException(
-          'The requested shipping company is inactive.',
+          'The requested shipping company is inactive or not found.',
         );
       }
     }
