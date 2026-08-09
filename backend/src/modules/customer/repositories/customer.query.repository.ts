@@ -60,4 +60,14 @@ export class CustomerQueryRepository implements ICustomerQueryRepository {
 
     return row?.profile_image_key ?? null;
   }
+
+  async existsByProfileId(profileId: string): Promise<boolean> {
+    const row = await this.kysely
+      .selectFrom('customer_profile')
+      .select('id')
+      .where('id', '=', profileId)
+      .executeTakeFirst();
+
+    return Boolean(row);
+  }
 }

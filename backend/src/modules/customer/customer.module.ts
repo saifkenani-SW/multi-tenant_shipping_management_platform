@@ -8,6 +8,7 @@ import { CacheModule } from '../../infrastructure/cache/cache.module';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { MailModule } from '../../infrastructure/mail/mail.module';
 import { AuthModule } from '../auth/auth.module';
+import { CustomerFacade } from './facades/customer.facade';
 
 @Module({
   imports: [CacheModule, DatabaseModule, MailModule, AuthModule],
@@ -29,7 +30,12 @@ import { AuthModule } from '../auth/auth.module';
       provide: 'ICustomerQueryService',
       useClass: CustomerQueryService,
     },
+    CustomerFacade,
   ],
-  exports: ['ICustomerCommandService', 'ICustomerQueryService'],
+  exports: [
+    'ICustomerCommandService',
+    'ICustomerQueryService',
+    CustomerFacade,
+  ],
 })
 export class CustomerModule {}

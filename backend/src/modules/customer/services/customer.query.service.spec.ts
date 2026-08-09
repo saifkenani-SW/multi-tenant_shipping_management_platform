@@ -6,6 +6,7 @@ describe('CustomerQueryService', () => {
   const repository = {
     findProfileByUserId: jest.fn(),
     findProfileImageKeyById: jest.fn(),
+    existsByProfileId: jest.fn(),
   };
   const storage = {
     get: jest.fn(),
