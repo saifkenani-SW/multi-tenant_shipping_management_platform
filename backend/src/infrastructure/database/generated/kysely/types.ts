@@ -69,6 +69,8 @@ export const QuotationType = {
 } as const;
 export type QuotationType = (typeof QuotationType)[keyof typeof QuotationType];
 export const QuotationStatus = {
+    WAITING_PRICING_REQUEST: "WAITING_PRICING_REQUEST",
+    WAITING_PRICING: "WAITING_PRICING",
     PENDING: "PENDING",
     APPROVED: "APPROVED",
     REJECTED: "REJECTED",
@@ -537,12 +539,16 @@ export type shipment_request = {
     receiver_lat: string | null;
     receiver_lng: string | null;
     expected_pieces_count: Generated<number>;
-    expected_total_weight_kg: string | null;
+    expected_total_weight_kg: string;
+    expected_length_cm: Generated<string>;
+    expected_width_cm: Generated<string>;
+    expected_height_cm: Generated<string>;
     notes: string | null;
     status: Generated<RequestStatus>;
     cancelled_at: Timestamp | null;
     cancellation_reason: string | null;
     expires_at: Timestamp | null;
+    approved_quotation_id: string | null;
     created_by_employee_id: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;

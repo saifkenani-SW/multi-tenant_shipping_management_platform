@@ -13,7 +13,7 @@ import { Roles } from '../../../../../common/authorization/decorators/roles.deco
 import { RoleType } from '../../../../../modules/authorization/domain/enums/role.enum';
 import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { ZonePricingCommandService } from '../../application/services/zone-pricing.command.service';
-import { ZonePricingQueryService } from '../../application/services/zone-pricing.query.service';
+import { ZonePricingResolutionService } from '../../application/services/zone-pricing-resolution.service';
 import { CreateZonePricingDto } from '../../application/dtos/requests/create-zone-pricing.dto';
 import { UpdateZonePricingDto } from '../../application/dtos/requests/update-zone-pricing.dto';
 import { ZonePricingQueryDto } from '../../application/dtos/requests/zone-pricing-query.dto';
@@ -25,7 +25,7 @@ import { ApiCursorPaginationQuery } from '../../../../../common/pagination/curso
 export class ZonePricingController {
   constructor(
     private readonly commandService: ZonePricingCommandService,
-    private readonly queryService: ZonePricingQueryService,
+    private readonly queryService: ZonePricingResolutionService,
     private readonly requestContext: RequestContextService,
   ) {}
 

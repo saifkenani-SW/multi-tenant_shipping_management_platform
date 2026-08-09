@@ -11,6 +11,7 @@ export interface UserProfileInfo {
   isActive: boolean;
   employeeId?: string;
   vehicleId?: string;
+  profileId?: string;
 }
 
 export interface UserIdentityResult {
@@ -85,6 +86,7 @@ export class UserQueryService {
       profiles.push({
         type: UserLoginType.CUSTOMER,
         isActive: true,
+        profileId: data.customerProfile.id,
       });
     }
 

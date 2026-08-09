@@ -22,6 +22,15 @@ export const SEEDED_TENANTS = [
     tax_number: 'TAX-002-2024',
     logo_url: null,
   },
+  {
+    id: '00000000-0000-7000-8000-000000000103',
+    name: 'GlobalFreight Co.',
+    email: 'info@globalfreight.com',
+    owner_email: 'admin@globalfreight.com',
+    phone: '+1199887766',
+    tax_number: 'TAX-003-2024',
+    logo_url: null,
+  },
 ] as const;
 
 const PLAN_ID = '00000000-0000-7000-8000-000000000002'; // Business plan
@@ -86,15 +95,17 @@ export class TenantSeeder implements Seeder {
         },
       });
 
+      const volumetricDivisor = t.id === '00000000-0000-7000-8000-000000000102' ? 0 : 5000;
+
       await this.prisma.tenant_pricing_settings.upsert({
         where: { tenant_id: t.id },
         update: {
-          volumetric_divisor: 5000,
+          volumetric_divisor: volumetricDivisor,
           default_currency: 'USD',
         },
         create: {
           tenant_id: t.id,
-          volumetric_divisor: 5000,
+          volumetric_divisor: volumetricDivisor,
           default_currency: 'USD',
         },
       });

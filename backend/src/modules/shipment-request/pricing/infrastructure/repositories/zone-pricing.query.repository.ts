@@ -1,5 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Kysely } from 'kysely';
+import { Kysely, sql } from 'kysely';
 import { DB } from '../../../../../infrastructure/database/generated/kysely/types';
 import { ZonePricingResponseDto } from '../../application/dtos/responses/zone-pricing.response.dto';
 import { ZonePricingQueryDto } from '../../application/dtos/requests/zone-pricing-query.dto';
@@ -139,5 +139,91 @@ export class ZonePricingQueryRepository {
         previousCursor: null,
       },
     };
+  }
+
+  async findPricesForZonePairsV2(
+    zonePairs: {
+      tenantId: string;
+      originZoneId: string;
+      destinationZoneId: string;
+    }[],
+  ): Promise<ZonePricingResponseDto[]> {
+    if (zonePairs.length === 0) return [];
+
+    const tuples = sql.join(
+      zonePairs.map(
+        (pair) =>
+          sql`(${pair.tenantId}, ${pair.originZoneId}, ${pair.destinationZoneId})`,
+      ),
+      sql`, `,
+    );
+
+    const query = this.kysely
+      .selectFrom('zone_pricing_matrix as zp')
+      .selectAll('zp')
+      .where('zp.is_active', '=', true)
+      .where(
+        sql<boolean>`(zp.tenant_id, zp.origin_zone_id, zp.destination_zone_id) IN (${tuples})`,
+      );
+
+    const records = await query.execute();
+
+    return records.map((record) => ({
+      id: record.id,
+      tenantId: record.tenant_id,
+      originZoneId: record.origin_zone_id,
+      destinationZoneId: record.destination_zone_id,
+      serviceLevel: record.service_level as any,
+      basePrice: Number(record.base_price),
+      baseWeightKg: Number(record.base_weight_kg),
+      pricePerExtraKg: Number(record.price_per_extra_kg),
+      isActive: record.is_active,
+      createdAt: record.created_at,
+      updatedAt: record.updated_at,
+    }));
+  }
+
+  async findPricesForZonePairs(
+    zonePairs: {
+      tenantId: string;
+      originZoneId: string;
+      destinationZoneId: string;
+    }[],
+  ): Promise<ZonePricingResponseDto[]> {
+    if (zonePairs.length === 0) return [];
+
+    let query = this.kysely
+      .selectFrom('zone_pricing_matrix as zp')
+      .selectAll('zp')
+      .where((eb) =>
+        eb.and([
+          eb('zp.is_active', '=', true),
+          eb.or(
+            zonePairs.map((pair) =>
+              eb.and([
+                eb('zp.tenant_id', '=', pair.tenantId),
+                eb('zp.origin_zone_id', '=', pair.originZoneId),
+                eb('zp.destination_zone_id', '=', pair.destinationZoneId),
+              ]),
+            ),
+          ),
+        ]),
+      );
+
+    const records = await query.execute();
+
+    return records.map((record) => ({
+      id: record.id,
+      tenantId: record.tenant_id,
+      originZoneId: record.origin_zone_id,
+      destinationZoneId: record.destination_zone_id,
+      serviceLevel: record.service_level as any,
+      basePrice: Number(record.base_price),
+      baseWeightKg: Number(record.base_weight_kg),
+      pricePerExtraKg: Number(record.price_per_extra_kg),
+      isActive: record.is_active,
+      createdAt: record.created_at,
+      updatedAt: record.updated_at,
+    }));
   }
 }

@@ -76,7 +76,7 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
     if (user.type === UserLoginType.CUSTOMER) {
       this.requestContext.setPrincipal({
         subject: { id: user.sub, type: SubjectType.CUSTOMER },
-        profileId: user.sub, // The customer ID is typically the user ID, or you could pass profileId in JWT
+        profileId: user.profileId, // This is the customer_profile.id
         branches: [],
         warehouses: [],
       });

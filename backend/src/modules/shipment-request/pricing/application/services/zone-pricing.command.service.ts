@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { ZonePricingCommandRepository } from '../../infrastructure/repositories/zone-pricing.command.repository';
 import { CreateZonePricingDto } from '../dtos/requests/create-zone-pricing.dto';
 import { UpdateZonePricingDto } from '../dtos/requests/update-zone-pricing.dto';
-import { ZonePricingQueryService } from './zone-pricing.query.service';
+import { ZonePricingResolutionService } from './zone-pricing-resolution.service';
 import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
 import { Transactional } from '../../../../../packages/transaction';
@@ -12,7 +12,7 @@ import { PRICING_CACHE_KEYS } from '../../constants/pricing.cache.constants';
 export class ZonePricingCommandService {
   constructor(
     private readonly commandRepository: ZonePricingCommandRepository,
-    private readonly queryService: ZonePricingQueryService,
+    private readonly queryService: ZonePricingResolutionService,
     private readonly organizationFacade: OrganizationFacade,
   ) {}
 

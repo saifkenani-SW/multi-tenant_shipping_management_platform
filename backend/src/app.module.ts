@@ -20,15 +20,15 @@ import { AuthorizationModule } from './packages/authorization';
 import { ContextModule } from './packages/context/context.module';
 import { HealthModule } from './health/health.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
-import { LabelGeneratorModule } from './packages/label-generator/label-generator.module';
-import { PdfGeneratorModule } from './packages/pdf-generator/pdf-generator.module';
-import { StorageModule } from './packages/storage/src/storage.module';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { UserModule } from './modules/user/user.module';
 import { FleetModule } from './modules/fleet/fleet.module';
 import { Employee2Module } from './modules/employee2/employee2.module';
 import { OrganizationModule } from './modules/organization/organization.module';
-import { PricingModule } from './modules/shipment-request/pricing/pricing.module';
+import { LabelGeneratorModule } from './packages/label-generator';
+import { PdfGeneratorModule } from './packages/pdf-generator';
+import { StorageModule } from './packages/storage/src';
+import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
 
 @Module({
   imports: [
@@ -69,7 +69,7 @@ import { PricingModule } from './modules/shipment-request/pricing/pricing.module
     LabelGeneratorModule,
     PdfGeneratorModule,
     StorageModule.forRoot(),
-    PricingModule,
+    ShipmentRequestModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

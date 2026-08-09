@@ -1,11 +1,14 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TenantQueryRepository } from '../../infrastructure/repositories/tenant.query.repository';
 
 import { PaginatedTenantListDto } from '../dtos/responses/tenant-list.dto';
 import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
 import { TenantSubscriptionDto } from '../dtos/responses/tenant-subscription.dto';
 import { TenantSubscriptionHistoryDto } from '../dtos/responses/tenant-subscription-history.dto';
-import { TenantSettingsDto } from '../dtos/responses/tenant-settings.dto';
+import {
+  TenantPricingSettingsOnlyDto,
+  TenantSettingsDto,
+} from '../dtos/responses/tenant-settings.dto';
 import {
   AuthorizationFacade,
   Authorize,
@@ -71,6 +74,28 @@ export class TenantQueryService {
     return this.tenantResponseMapper.toDetailsDto(tenant);
   }
 
+  // Used internally by other services/facades, does not need @Authorize
+  async findByIds(
+    ids: string[],
+    activeOnly: boolean = false,
+  ): Promise<TenantDetailsDto[]> {
+    if (!ids || ids.length === 0) return [];
+    const uniqueIds = [...new Set(ids)];
+    const result = await this.tenantQueryRepository.findByIds(uniqueIds);
+    const records =
+      result instanceof Map ? Array.from(result.values()) : result;
+
+    let dtos = records.map((t: any) =>
+      this.tenantResponseMapper.toDetailsDto(t),
+    );
+
+    if (activeOnly) {
+      dtos = dtos.filter((d) => d.status === 'ACTIVE');
+    }
+
+    return dtos;
+  }
+
   @ReturnCapabilities({
     policy: TenantCapabilityBuilder,
   })
@@ -123,6 +148,22 @@ export class TenantQueryService {
       throw new TenantNotFoundException();
     }
     return this.tenantResponseMapper.toSettingsDto(settingsRecord);
+  }
+
+  // Not exposed via API directly (used internally by Facade/Services), so no @Authorize needed here
+  // as it is called in a trusted context like QuotationGenerationService.
+  async getTenantPricingSettingsBatch(
+    tenantIds: string[],
+  ): Promise<TenantPricingSettingsOnlyDto[]> {
+    if (!tenantIds || tenantIds.length === 0) return [];
+
+    const result =
+      await this.tenantQueryRepository.getTenantPricingSettingsBatch(tenantIds);
+    const settingsRecords =
+      result instanceof Map ? Array.from(result.values()) : result;
+    return settingsRecords.map((r: any) =>
+      this.tenantResponseMapper.toPricingSettingsDto(r),
+    );
   }
 
   async isTenantOwner(tenantId: string, userId: string): Promise<boolean> {
