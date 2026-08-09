@@ -29,6 +29,7 @@ import { LabelGeneratorModule } from './packages/label-generator';
 import { PdfGeneratorModule } from './packages/pdf-generator';
 import { StorageModule } from './packages/storage/src';
 import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
+import { CustomerShipmentModule } from './modules/customer-shipment/customer-shipment.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { ShipmentRequestModule } from './modules/shipment-request/shipment-reque
     PdfGeneratorModule,
     StorageModule.forRoot(),
     ShipmentRequestModule,
+    CustomerShipmentModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],
