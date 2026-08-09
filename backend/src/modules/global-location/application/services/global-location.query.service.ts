@@ -26,4 +26,20 @@ export class GlobalLocationQueryService {
     if (!ids || ids.length === 0) return true;
     return this.repository.validateLocationsExist(ids);
   }
+
+  async getLocationsByIds(
+    ids: string[],
+    failIfMissing = true,
+  ): Promise<GlobalLocationResponseDto[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const locations = await this.repository.findByIds(ids);
+
+    if (failIfMissing && locations.length !== ids.length) {
+      throw new NotFoundException('One or more Global Locations not found');
+    }
+
+    return locations;
+  }
 }
+

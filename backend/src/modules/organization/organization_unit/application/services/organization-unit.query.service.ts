@@ -34,11 +34,16 @@ export class OrganizationUnitQueryService {
    * Map<string, OrganizationUnitResponseDto> at runtime. We normalize it here
    * so callers always receive a plain array with the same shape as findById.
    */
-  async findByIds(ids: string[]): Promise<OrganizationUnitResponseDto[]> {
+  async findByIds(ids: string[], activeOnly: boolean = false): Promise<OrganizationUnitResponseDto[]> {
     if (!ids || ids.length === 0) return [];
     const uniqueIds = [...new Set(ids)];
     const result = await this.queryRepository.findByIds(uniqueIds);
-    return result instanceof Map ? Array.from(result.values()) : result;
+    let records = result instanceof Map ? Array.from(result.values()) : result;
+
+    if (activeOnly) {
+      records = records.filter(r => r.isActive);
+    }
+    return records;
   }
 
   /**
@@ -74,11 +79,16 @@ export class OrganizationUnitQueryService {
   async resolveRoutesForLocations(
     originLocationId: string,
     destinationLocationId: string,
+    targetTenantId?: string,
   ): Promise<ResolvedTenantCandidatesDto[]> {
     const [originRecords, destinationRecords] = await Promise.all([
-      this.queryRepository.findCandidatesByGlobalLocation(originLocationId),
+      this.queryRepository.findCandidatesByGlobalLocation(
+        originLocationId,
+        targetTenantId,
+      ),
       this.queryRepository.findCandidatesByGlobalLocation(
         destinationLocationId,
+        targetTenantId,
       ),
     ]);
 
@@ -88,6 +98,7 @@ export class OrganizationUnitQueryService {
       if (!tenantMap.has(record.tenantId)) {
         tenantMap.set(record.tenantId, {
           tenantId: record.tenantId,
+          tenantName: record.tenantName,
           originCandidates: [],
           destinationCandidates: [],
         });
@@ -104,6 +115,7 @@ export class OrganizationUnitQueryService {
       if (!tenantMap.has(record.tenantId)) {
         tenantMap.set(record.tenantId, {
           tenantId: record.tenantId,
+          tenantName: record.tenantName,
           originCandidates: [],
           destinationCandidates: [],
         });

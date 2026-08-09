@@ -13,4 +13,13 @@ export class GlobalLocationFacade {
     if (!ids || ids.length === 0) return true;
     return this.queryService.validateLocationsExist(ids);
   }
+
+  /**
+   * Gets a list of global locations by their IDs.
+   * If failIfMissing is true, throws NotFoundException if any location is missing.
+   */
+  async getLocationsByIds(ids: string[], failIfMissing = true) {
+    return this.queryService.getLocationsByIds(ids, failIfMissing);
+  }
 }
+

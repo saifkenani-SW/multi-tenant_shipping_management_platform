@@ -11,10 +11,10 @@ import { TenantSubscriptionHistory } from '../../domain/entities/tenant-subscrip
 import { TenantSubscriptionDto } from '../dtos/responses/tenant-subscription.dto';
 import { TenantSubscriptionHistoryDto } from '../dtos/responses/tenant-subscription-history.dto';
 import {
-  TenantSettingsDto,
   DeliverySettingsDto,
   OperationalSettingsDto,
   PricingSettingsDto,
+  TenantSettingsDto,
 } from '../dtos/responses/tenant-settings.dto';
 
 @Injectable()
@@ -122,10 +122,18 @@ export class TenantResponseMapper {
     pricing.defaultCurrency = record.default_currency;
 
     const dto = new TenantSettingsDto();
+    dto.tenantId = record.tenantId || record.id;
     dto.delivery = delivery;
     dto.operational = operational;
     dto.pricing = pricing;
-
     return dto;
+  }
+
+  toPricingSettingsDto(record: any): any {
+    return {
+      tenantId: record.tenantId || record.id,
+      volumetricDivisor: record.volumetric_divisor,
+      defaultCurrency: record.default_currency,
+    };
   }
 }

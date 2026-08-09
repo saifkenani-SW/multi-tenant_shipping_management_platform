@@ -142,4 +142,40 @@ export class GlobalLocationQueryRepository {
       .execute();
     return records.length === ids.length;
   }
+
+  async findByIds(ids: string[]): Promise<GlobalLocationResponseDto[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const records = await this.kysely
+      .selectFrom('global_location as gl')
+      .select([
+        'gl.id',
+        'gl.name',
+        'gl.type',
+        'gl.parent_id',
+        sql<number>`ST_X(gl.location::geometry)`.as('longitude'),
+        sql<number>`ST_Y(gl.location::geometry)`.as('latitude'),
+      ])
+      .where('gl.id', 'in', ids)
+      .execute();
+
+    return records.map((record) => {
+      const location =
+        record.longitude != null && record.latitude != null
+          ? {
+              longitude: Number(record.longitude),
+              latitude: Number(record.latitude),
+            }
+          : undefined;
+
+      return {
+        id: record.id,
+        name: record.name,
+        type: record.type,
+        parentId: record.parent_id || undefined,
+        location,
+      } as GlobalLocationResponseDto;
+    });
+  }
 }
+

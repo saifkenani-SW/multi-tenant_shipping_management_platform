@@ -279,15 +279,17 @@ export class OrganizationUnitQueryRepository {
    */
   @Cacheable({
     ttl: ORG_UNIT_CACHE_TTL.CANDIDATES,
-    keyBuilder: (locationId: string) => [
+    keyBuilder: (locationId: string, targetTenantId?: string) => [
       ORG_UNIT_CACHE_KEYS.CANDIDATES,
       locationId,
+      targetTenantId || 'all',
     ],
   })
   async findCandidatesByGlobalLocation(
     locationId: string,
+    targetTenantId?: string,
   ): Promise<OrganizationCandidateDto[]> {
-    const records = await this.kysely
+    let query = this.kysely
       .selectFrom('organization_unit as ou')
       .innerJoin(
         'org_unit_location_mapping as oulm',
@@ -295,19 +297,27 @@ export class OrganizationUnitQueryRepository {
         'oulm.organization_unit_id',
       )
       .leftJoin('tenant_zone as tz', 'ou.zone_id', 'tz.id')
+      .leftJoin('tenant as t', 'ou.tenant_id', 't.id')
       .select([
         'ou.id as orgUnitId',
         'ou.name as orgUnitName',
         'ou.tenant_id as tenantId',
+        't.name as tenantName',
         'ou.zone_id as zoneId',
         'tz.name as zoneName',
       ])
       .where('oulm.global_location_id', '=', locationId)
-      .where('ou.is_active', '=', true)
-      .execute();
+      .where('ou.is_active', '=', true);
+
+    if (targetTenantId) {
+      query = query.where('ou.tenant_id', '=', targetTenantId);
+    }
+
+    const records = await query.execute();
 
     return records.map((r) => ({
       tenantId: r.tenantId,
+      tenantName: r.tenantName || undefined,
       orgUnitId: r.orgUnitId,
       orgUnitName: r.orgUnitName,
       zoneId: r.zoneId || undefined,

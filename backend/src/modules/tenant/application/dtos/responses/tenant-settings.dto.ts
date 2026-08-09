@@ -52,6 +52,9 @@ export class PricingSettingsDto {
 }
 
 export class TenantSettingsDto {
+  @ApiProperty()
+  tenantId: string;
+
   @ApiProperty({ type: DeliverySettingsDto })
   delivery: DeliverySettingsDto;
 
@@ -60,4 +63,15 @@ export class TenantSettingsDto {
 
   @ApiProperty({ type: PricingSettingsDto })
   pricing: PricingSettingsDto;
+}
+
+export class TenantPricingSettingsOnlyDto {
+  @ApiProperty()
+  tenantId: string;
+
+  @ApiProperty()
+  volumetricDivisor: number;
+
+  @ApiProperty()
+  defaultCurrency: string;
 }

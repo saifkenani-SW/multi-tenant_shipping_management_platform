@@ -42,8 +42,9 @@ export class OrganizationFacade {
    */
   async getOrganizationUnitsByIds(
     orgUnitIds: string[],
+    activeOnly: boolean = false
   ): Promise<OrganizationUnitResponseDto[]> {
-    return this.orgUnitQueryService.findByIds(orgUnitIds);
+    return this.orgUnitQueryService.findByIds(orgUnitIds, activeOnly);
   }
 
   /**
@@ -52,10 +53,12 @@ export class OrganizationFacade {
   async resolveRoutesForLocations(
     originLocationId: string,
     destinationLocationId: string,
+    targetTenantId?: string,
   ): Promise<ResolvedTenantCandidatesDto[]> {
     return this.orgUnitQueryService.resolveRoutesForLocations(
       originLocationId,
       destinationLocationId,
+      targetTenantId,
     );
   }
 }

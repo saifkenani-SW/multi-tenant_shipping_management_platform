@@ -4,6 +4,9 @@ export class OrganizationCandidateDto {
   @ApiProperty()
   tenantId: string;
 
+  @ApiPropertyOptional()
+  tenantName?: string;
+
   @ApiProperty()
   orgUnitId: string;
 
@@ -34,6 +37,9 @@ export class RouteCandidateDto {
 export class ResolvedTenantCandidatesDto {
   @ApiProperty()
   tenantId: string;
+
+  @ApiPropertyOptional()
+  tenantName?: string;
 
   @ApiProperty({ type: [RouteCandidateDto] })
   originCandidates: RouteCandidateDto[];

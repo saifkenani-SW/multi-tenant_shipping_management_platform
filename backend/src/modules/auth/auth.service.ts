@@ -67,7 +67,7 @@ export class AuthService {
         identity.userId,
         requestedProfile.type,
         requestedProfile.tenantId,
-        requestedProfile.employeeId,
+        requestedProfile.profileId || requestedProfile.employeeId,
         requestedProfile.vehicleId,
       );
       return {
@@ -88,7 +88,7 @@ export class AuthService {
         identity.userId,
         profile.type,
         profile.tenantId,
-        profile.employeeId,
+        profile.profileId || profile.employeeId,
         profile.vehicleId,
       );
       return {
@@ -158,7 +158,7 @@ export class AuthService {
       userId,
       requestedProfile.type,
       requestedProfile.tenantId,
-      requestedProfile.employeeId,
+      requestedProfile.profileId || requestedProfile.employeeId,
       requestedProfile.vehicleId,
     );
     return {

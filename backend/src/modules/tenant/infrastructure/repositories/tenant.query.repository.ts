@@ -2,6 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Kysely } from 'kysely';
 
 import { Cacheable } from '../../../../infrastructure/cache/decorators/Cacheable';
+import { CacheStrategy } from '../../../../infrastructure/cache/decorators/cache-strategy.enum';
 import {
   TENANT_CACHE_KEYS,
   TENANT_CACHE_TTL,
@@ -128,6 +129,41 @@ export class TenantQueryRepository {
   }
 
   @Cacheable({
+    strategy: CacheStrategy.MANY,
+    ttl: TENANT_CACHE_TTL.DETAILS,
+    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
+    ids: (ids: string[]) => ids,
+    loader: (args: any[], missingIds: string[]) => [missingIds],
+  })
+  async findByIds(ids: string[]): Promise<Tenant[]> {
+    if (!ids || ids.length === 0) return [];
+
+    const records = await this.kysely
+      .selectFrom('tenant')
+      .select([
+        'id',
+        'name',
+        'is_active',
+        'tax_number',
+        'email',
+        'phone',
+        'logo_url',
+        'created_at',
+        'updated_at',
+        'suspended_at',
+        'suspended_reason',
+      ])
+      .where('id', 'in', ids)
+      .execute();
+
+    if (records.length === 0) return [];
+
+    return records.map((record) =>
+      this.tenantPersistenceMapper.toDomain(record as any),
+    );
+  }
+
+  @Cacheable({
     ttl: TENANT_CACHE_TTL.SUBSCRIPTION,
     keyBuilder: (tenantId: string) => [
       TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
@@ -205,6 +241,32 @@ export class TenantQueryRepository {
       .executeTakeFirst();
 
     return record || null;
+  }
+
+  @Cacheable({
+    strategy: CacheStrategy.MANY,
+    ttl: TENANT_CACHE_TTL.PRICING_SETTINGS,
+    keyPrefix: TENANT_CACHE_KEYS.PRICING_SETTINGS,
+    ids: (ids: string[]) => ids,
+    loader: (args: any[], missingIds: string[]) => [missingIds],
+  })
+  async getTenantPricingSettingsBatch(tenantIds: string[]): Promise<any[]> {
+    if (!tenantIds || tenantIds.length === 0) return [];
+    
+    const records = await this.kysely
+      .selectFrom('tenant as t')
+      .leftJoin('tenant_pricing_settings as p', 't.id', 'p.tenant_id')
+      .where('t.id', 'in', tenantIds)
+      .where('t.is_active', '=', true)
+      .select([
+        't.id',
+        // Pricing
+        'p.volumetric_divisor',
+        'p.default_currency',
+      ])
+      .execute();
+
+    return records;
   }
 
   async isTenantOwner(tenantId: string, userId: string): Promise<boolean> {
