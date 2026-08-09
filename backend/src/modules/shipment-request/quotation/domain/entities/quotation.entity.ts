@@ -49,7 +49,9 @@ export class Quotation {
       );
     }
     if (amount <= 0) {
-      throw new BadRequestException('Quotation amount must be greater than zero.');
+      throw new BadRequestException(
+        'Quotation amount must be greater than zero.',
+      );
     }
 
     const hasComponents =

@@ -252,7 +252,7 @@ export class TenantQueryRepository {
   })
   async getTenantPricingSettingsBatch(tenantIds: string[]): Promise<any[]> {
     if (!tenantIds || tenantIds.length === 0) return [];
-    
+
     const records = await this.kysely
       .selectFrom('tenant as t')
       .leftJoin('tenant_pricing_settings as p', 't.id', 'p.tenant_id')

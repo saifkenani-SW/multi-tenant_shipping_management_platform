@@ -42,7 +42,7 @@ export class OrganizationFacade {
    */
   async getOrganizationUnitsByIds(
     orgUnitIds: string[],
-    activeOnly: boolean = false
+    activeOnly: boolean = false,
   ): Promise<OrganizationUnitResponseDto[]> {
     return this.orgUnitQueryService.findByIds(orgUnitIds, activeOnly);
   }

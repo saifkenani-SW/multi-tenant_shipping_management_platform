@@ -51,7 +51,9 @@ export class QuotationQueryRepository {
       criteria.cursor || 'none',
     ],
   })
-  async findMany(criteria: QuotationMergedCriteria): Promise<CursorPaginatedResponse<any>> {
+  async findMany(
+    criteria: QuotationMergedCriteria,
+  ): Promise<CursorPaginatedResponse<any>> {
     let query: any = this.baseSelect();
 
     if (criteria.tenantId) {
@@ -59,11 +61,19 @@ export class QuotationQueryRepository {
     }
 
     if (criteria.originOrgUnitId) {
-      query = query.where('q.origin_org_unit_id', '=', criteria.originOrgUnitId);
+      query = query.where(
+        'q.origin_org_unit_id',
+        '=',
+        criteria.originOrgUnitId,
+      );
     }
 
     if (criteria.destinationOrgUnitId) {
-      query = query.where('q.destination_org_unit_id', '=', criteria.destinationOrgUnitId);
+      query = query.where(
+        'q.destination_org_unit_id',
+        '=',
+        criteria.destinationOrgUnitId,
+      );
     }
 
     if (criteria.serviceLevel) {
@@ -85,7 +95,8 @@ export class QuotationQueryRepository {
     const hasNextPage = records.length > limit;
     if (hasNextPage) records.pop();
 
-    const endCursor = records.length > 0 ? records[records.length - 1].id : null;
+    const endCursor =
+      records.length > 0 ? records[records.length - 1].id : null;
 
     return new CursorPaginatedResponse(records, {
       hasNextPage,
@@ -99,9 +110,7 @@ export class QuotationQueryRepository {
     keyPrefix: QUOTATION_CACHE_KEYS.DETAILS,
     ttl: QUOTATION_CACHE_TTL.DETAILS,
   })
-  async findById(
-    id: string,
-  ): Promise<any | null> {
+  async findById(id: string): Promise<any | null> {
     let query = this.baseSelect().where('q.id', '=', id);
     return query.executeTakeFirst() ?? null;
   }
@@ -110,9 +119,7 @@ export class QuotationQueryRepository {
     keyPrefix: QUOTATION_CACHE_KEYS.BY_REQUEST,
     ttl: QUOTATION_CACHE_TTL.BY_REQUEST,
   })
-  async findByShipmentRequestId(
-    shipmentRequestId: string,
-  ): Promise<any[]> {
+  async findByShipmentRequestId(shipmentRequestId: string): Promise<any[]> {
     let query = this.baseSelect().where(
       'q.shipment_request_id',
       '=',

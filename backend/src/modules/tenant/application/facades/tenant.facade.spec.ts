@@ -36,11 +36,13 @@ describe('TenantFacade', () => {
       const mockSettings = [
         {
           tenantId: 'tenant-1',
-          volumetricDivisor: 5000, defaultCurrency: 'SAR' 
+          volumetricDivisor: 5000,
+          defaultCurrency: 'SAR',
         },
         {
           tenantId: 'tenant-2',
-          volumetricDivisor: 4000, defaultCurrency: 'USD' 
+          volumetricDivisor: 4000,
+          defaultCurrency: 'USD',
         },
       ];
 
@@ -51,11 +53,12 @@ describe('TenantFacade', () => {
       const tenantIds = ['tenant-1', 'tenant-1', 'tenant-2'];
       const result = await facade.getTenantPricingSettingsBatch(tenantIds);
 
-      expect(tenantQueryService.getTenantPricingSettingsBatch).toHaveBeenCalledTimes(1);
-      expect(tenantQueryService.getTenantPricingSettingsBatch).toHaveBeenCalledWith([
-        'tenant-1',
-        'tenant-2',
-      ]); // Deduplicated
+      expect(
+        tenantQueryService.getTenantPricingSettingsBatch,
+      ).toHaveBeenCalledTimes(1);
+      expect(
+        tenantQueryService.getTenantPricingSettingsBatch,
+      ).toHaveBeenCalledWith(['tenant-1', 'tenant-2']); // Deduplicated
 
       expect(result).toBeInstanceOf(Map);
       expect(result.size).toBe(2);
@@ -74,7 +77,9 @@ describe('TenantFacade', () => {
     it('returns an empty map if no IDs are provided', async () => {
       const result = await facade.getTenantPricingSettingsBatch([]);
       expect(result.size).toBe(0);
-      expect(tenantQueryService.getTenantPricingSettingsBatch).not.toHaveBeenCalled();
+      expect(
+        tenantQueryService.getTenantPricingSettingsBatch,
+      ).not.toHaveBeenCalled();
     });
   });
 });

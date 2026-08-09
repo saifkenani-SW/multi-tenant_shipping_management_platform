@@ -148,7 +148,9 @@ export class QuotationQueryService {
       scope.quotation?.origin_org_unit_ids &&
       scope.quotation.origin_org_unit_ids.length > 0
     ) {
-      if (!scope.quotation.origin_org_unit_ids.includes(raw.origin_org_unit_id)) {
+      if (
+        !scope.quotation.origin_org_unit_ids.includes(raw.origin_org_unit_id)
+      ) {
         throw new NotFoundException(
           'Quotation not found or you do not have permission to view it.',
         );
@@ -163,9 +165,8 @@ export class QuotationQueryService {
     shipmentRequestId: string,
     scope: ShipmentRequestScopeInterface,
   ): Promise<QuotationResponseDto[]> {
-    const rawQuotations = await this.queryRepository.findByShipmentRequestId(
-      shipmentRequestId,
-    );
+    const rawQuotations =
+      await this.queryRepository.findByShipmentRequestId(shipmentRequestId);
 
     const filtered = rawQuotations.filter((q) => {
       if (scope.quotation?.tenant_id) {
@@ -175,7 +176,8 @@ export class QuotationQueryService {
         scope.quotation?.origin_org_unit_ids &&
         scope.quotation.origin_org_unit_ids.length > 0
       ) {
-        if (!scope.quotation.origin_org_unit_ids.includes(q.origin_org_unit_id)) return false;
+        if (!scope.quotation.origin_org_unit_ids.includes(q.origin_org_unit_id))
+          return false;
       }
       return true;
     });

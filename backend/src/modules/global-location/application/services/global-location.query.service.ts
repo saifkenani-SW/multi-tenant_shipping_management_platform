@@ -42,4 +42,3 @@ export class GlobalLocationQueryService {
     return locations;
   }
 }
-

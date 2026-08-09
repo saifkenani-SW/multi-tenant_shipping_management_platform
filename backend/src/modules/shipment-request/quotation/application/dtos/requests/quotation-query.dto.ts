@@ -29,4 +29,3 @@ export class QuotationQueryDto extends CursorPaginationQueryDto {
   @IsEnum(QuotationStatus)
   status?: QuotationStatus;
 }
-

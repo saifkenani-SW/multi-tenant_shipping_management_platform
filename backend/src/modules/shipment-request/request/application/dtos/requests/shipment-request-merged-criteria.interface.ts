@@ -13,4 +13,3 @@ export interface ShipmentRequestMergedCriteria {
   cursor?: string;
   limit?: number;
 }
-

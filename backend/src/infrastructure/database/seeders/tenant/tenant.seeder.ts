@@ -95,7 +95,8 @@ export class TenantSeeder implements Seeder {
         },
       });
 
-      const volumetricDivisor = t.id === '00000000-0000-7000-8000-000000000102' ? 0 : 5000;
+      const volumetricDivisor =
+        t.id === '00000000-0000-7000-8000-000000000102' ? 0 : 5000;
 
       await this.prisma.tenant_pricing_settings.upsert({
         where: { tenant_id: t.id },

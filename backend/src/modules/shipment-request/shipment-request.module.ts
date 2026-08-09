@@ -32,7 +32,11 @@ import { TenantModule } from '../tenant/tenant.module';
 
 @Module({
   imports: [OrganizationModule, GlobalLocationModule, TenantModule],
-  controllers: [ZonePricingController, ShipmentRequestController, QuotationController],
+  controllers: [
+    ZonePricingController,
+    ShipmentRequestController,
+    QuotationController,
+  ],
   providers: [
     ZonePricingCommandService,
     ZonePricingResolutionService,
@@ -54,4 +58,3 @@ import { TenantModule } from '../tenant/tenant.module';
   exports: [ShipmentRequestFacade],
 })
 export class ShipmentRequestModule {}
-

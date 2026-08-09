@@ -118,11 +118,16 @@ export class QuotationCommandService {
     keyPrefix: QUOTATION_CACHE_KEYS.PREFIX,
     allEntries: true,
   })
-  async submitManualPrice(id: string, dto: SubmitQuotationPriceDto): Promise<void> {
+  async submitManualPrice(
+    id: string,
+    dto: SubmitQuotationPriceDto,
+  ): Promise<void> {
     const quotationDto = await this.quotationQueryService.findById(id);
 
     // Validate access to the parent shipment request using company's scope
-    await this.shipmentRequestQueryService.findById(quotationDto.shipmentRequestId);
+    await this.shipmentRequestQueryService.findById(
+      quotationDto.shipmentRequestId,
+    );
 
     const quotation = new Quotation(
       quotationDto.id,

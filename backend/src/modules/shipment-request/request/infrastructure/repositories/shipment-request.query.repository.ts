@@ -59,7 +59,11 @@ export class ShipmentRequestQueryRepository {
 
     // Apply merged filters
     if (criteria.customerProfileId) {
-      query = query.where('sr.customer_profile_id', '=', criteria.customerProfileId);
+      query = query.where(
+        'sr.customer_profile_id',
+        '=',
+        criteria.customerProfileId,
+      );
     }
 
     if (criteria.targetTenantId) {
@@ -72,11 +76,19 @@ export class ShipmentRequestQueryRepository {
     }
 
     if (criteria.originGlobalLocationId) {
-      query = query.where('sr.origin_global_location_id', '=', criteria.originGlobalLocationId);
+      query = query.where(
+        'sr.origin_global_location_id',
+        '=',
+        criteria.originGlobalLocationId,
+      );
     }
 
     if (criteria.destinationGlobalLocationId) {
-      query = query.where('sr.destination_global_location_id', '=', criteria.destinationGlobalLocationId);
+      query = query.where(
+        'sr.destination_global_location_id',
+        '=',
+        criteria.destinationGlobalLocationId,
+      );
     }
 
     if (criteria.senderPhone) {
@@ -113,7 +125,8 @@ export class ShipmentRequestQueryRepository {
       });
     }
 
-    const endCursor = records.length > 0 ? records[records.length - 1].id : null;
+    const endCursor =
+      records.length > 0 ? records[records.length - 1].id : null;
 
     return new CursorPaginatedResponse<any>(records, {
       hasNextPage,
@@ -171,4 +184,3 @@ export class ShipmentRequestQueryRepository {
     };
   }
 }
-

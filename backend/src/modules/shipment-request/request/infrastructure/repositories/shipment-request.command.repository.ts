@@ -55,10 +55,7 @@ export class ShipmentRequestCommandRepository {
     });
   }
 
-  async updateStatus(
-    id: string,
-    status: RequestStatus,
-  ): Promise<void> {
+  async updateStatus(id: string, status: RequestStatus): Promise<void> {
     await this.prisma.client.shipment_request.update({
       where: { id },
       data: { status },

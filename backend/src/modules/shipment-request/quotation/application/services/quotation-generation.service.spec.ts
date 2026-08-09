@@ -109,10 +109,12 @@ describe('QuotationGenerationService', () => {
       ]);
 
       pricingResolutionService.resolvePrices.mockResolvedValue(mockPriceMap);
-      
+
       const mockSettingsMap = new Map();
       mockSettingsMap.set('tenant-1', { volumetricDivisor: 5000 });
-      tenantFacade.getTenantPricingSettingsBatch.mockResolvedValue(mockSettingsMap);
+      tenantFacade.getTenantPricingSettingsBatch.mockResolvedValue(
+        mockSettingsMap,
+      );
 
       pricingCalculationService.calculateVolumetricWeight.mockReturnValue(5);
       pricingCalculationService.calculateChargeableWeight.mockReturnValue(10);
@@ -132,11 +134,17 @@ describe('QuotationGenerationService', () => {
       expect(quotations[0].originOrgUnitId).toBe('org-o-1');
       expect(quotations[0].destinationOrgUnitId).toBe('org-d-1');
       expect(quotations[0].tenantId).toBe('tenant-1');
-      
-      expect(tenantFacade.getTenantPricingSettingsBatch).toHaveBeenCalledTimes(1);
-      expect(tenantFacade.getTenantPricingSettingsBatch).toHaveBeenCalledWith(['tenant-1']);
-      
-      expect(pricingCalculationService.calculateQuotationAmount).toHaveBeenCalledWith(
+
+      expect(tenantFacade.getTenantPricingSettingsBatch).toHaveBeenCalledTimes(
+        1,
+      );
+      expect(tenantFacade.getTenantPricingSettingsBatch).toHaveBeenCalledWith([
+        'tenant-1',
+      ]);
+
+      expect(
+        pricingCalculationService.calculateQuotationAmount,
+      ).toHaveBeenCalledWith(
         10, // weight
         20, // length
         20, // width
@@ -235,7 +243,9 @@ describe('QuotationGenerationService', () => {
       // Settings are missing (or divisor is 0)
       const mockSettingsMap = new Map();
       mockSettingsMap.set('tenant-1', { volumetricDivisor: 0 });
-      tenantFacade.getTenantPricingSettingsBatch.mockResolvedValue(mockSettingsMap);
+      tenantFacade.getTenantPricingSettingsBatch.mockResolvedValue(
+        mockSettingsMap,
+      );
 
       const quotations = await service.generateQuotations(dto);
 

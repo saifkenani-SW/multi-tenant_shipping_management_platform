@@ -22,4 +22,3 @@ export class GlobalLocationFacade {
     return this.queryService.getLocationsByIds(ids, failIfMissing);
   }
 }
-

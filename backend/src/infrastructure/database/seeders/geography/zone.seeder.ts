@@ -5,7 +5,11 @@ import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
 export const SEEDED_ZONES = [
   { idSuffix: '301', name: 'Central Zone', description: 'Riyadh Central Area' },
-  { idSuffix: '302', name: 'Western Zone', description: 'Jeddah & Coastal Area' },
+  {
+    idSuffix: '302',
+    name: 'Western Zone',
+    description: 'Jeddah & Coastal Area',
+  },
   { idSuffix: '303', name: 'Eastern Zone', description: 'Dammam Area' },
 ] as const;
 
@@ -53,22 +57,82 @@ export class ZoneSeeder implements Seeder {
 
       if (tenant.name === 'FastShip Logistics') {
         matrices.push(
-          { origin: centralId, dest: westernId, service: 'STANDARD', basePrice: 25.0, active: true },
-          { origin: centralId, dest: westernId, service: 'EXPRESS', basePrice: 40.0, active: true },
-          { origin: westernId, dest: centralId, service: 'STANDARD', basePrice: 25.0, active: true },
-          { origin: centralId, dest: easternId, service: 'STANDARD', basePrice: 30.0, active: true },
-          { origin: centralId, dest: easternId, service: 'SAME_DAY', basePrice: 50.0, active: false }
+          {
+            origin: centralId,
+            dest: westernId,
+            service: 'STANDARD',
+            basePrice: 25.0,
+            active: true,
+          },
+          {
+            origin: centralId,
+            dest: westernId,
+            service: 'EXPRESS',
+            basePrice: 40.0,
+            active: true,
+          },
+          {
+            origin: westernId,
+            dest: centralId,
+            service: 'STANDARD',
+            basePrice: 25.0,
+            active: true,
+          },
+          {
+            origin: centralId,
+            dest: easternId,
+            service: 'STANDARD',
+            basePrice: 30.0,
+            active: true,
+          },
+          {
+            origin: centralId,
+            dest: easternId,
+            service: 'SAME_DAY',
+            basePrice: 50.0,
+            active: false,
+          },
         );
       } else if (tenant.name === 'QuickDelivery Co.') {
         matrices.push(
-          { origin: centralId, dest: westernId, service: 'STANDARD', basePrice: 20.0, active: true },
-          { origin: centralId, dest: easternId, service: 'STANDARD', basePrice: 22.0, active: true }
+          {
+            origin: centralId,
+            dest: westernId,
+            service: 'STANDARD',
+            basePrice: 20.0,
+            active: true,
+          },
+          {
+            origin: centralId,
+            dest: easternId,
+            service: 'STANDARD',
+            basePrice: 22.0,
+            active: true,
+          },
         );
       } else if (tenant.name === 'GlobalFreight Co.') {
         matrices.push(
-          { origin: centralId, dest: easternId, service: 'STANDARD', basePrice: 28.0, active: true },
-          { origin: centralId, dest: easternId, service: 'EXPRESS', basePrice: 50.0, active: true },
-          { origin: easternId, dest: centralId, service: 'STANDARD', basePrice: 28.0, active: true }
+          {
+            origin: centralId,
+            dest: easternId,
+            service: 'STANDARD',
+            basePrice: 28.0,
+            active: true,
+          },
+          {
+            origin: centralId,
+            dest: easternId,
+            service: 'EXPRESS',
+            basePrice: 50.0,
+            active: true,
+          },
+          {
+            origin: easternId,
+            dest: centralId,
+            service: 'STANDARD',
+            basePrice: 28.0,
+            active: true,
+          },
         );
       }
 

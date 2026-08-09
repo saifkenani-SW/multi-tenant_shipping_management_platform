@@ -11,4 +11,3 @@ export interface QuotationMergedCriteria {
   cursor?: string;
   limit?: number;
 }
-

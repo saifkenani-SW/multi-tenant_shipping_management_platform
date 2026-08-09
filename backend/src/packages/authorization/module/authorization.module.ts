@@ -27,6 +27,10 @@ import {
     AuthorizationFacade,
   ],
 
-  exports: [AuthorizationFacade, ContextAuthorizationProvider, AUTHORIZATION_CONTEXT_PROVIDER],
+  exports: [
+    AuthorizationFacade,
+    ContextAuthorizationProvider,
+    AUTHORIZATION_CONTEXT_PROVIDER,
+  ],
 })
 export class AuthorizationModule {}

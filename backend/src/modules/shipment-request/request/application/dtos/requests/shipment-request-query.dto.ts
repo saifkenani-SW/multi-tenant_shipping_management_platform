@@ -39,4 +39,3 @@ export class ShipmentRequestQueryDto extends CursorPaginationQueryDto {
   @IsOptional()
   status?: RequestStatus;
 }
-

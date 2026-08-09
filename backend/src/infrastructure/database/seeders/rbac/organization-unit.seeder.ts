@@ -24,34 +24,94 @@ export class OrganizationUnitSeeder implements Seeder {
         where: { tenant_id: tenant.id },
         orderBy: { name: 'asc' }, // Central, Eastern, Western
       });
-      const centralZone = zones.find(z => z.name === 'Central Zone');
-      const easternZone = zones.find(z => z.name === 'Eastern Zone');
-      const westernZone = zones.find(z => z.name === 'Western Zone');
+      const centralZone = zones.find((z) => z.name === 'Central Zone');
+      const easternZone = zones.find((z) => z.name === 'Eastern Zone');
+      const westernZone = zones.find((z) => z.name === 'Western Zone');
 
       // Fetch global locations
-      const olaya = SEEDED_GLOBAL_LOCATIONS.find(l => l.name === 'Olaya District');
-      const safa = SEEDED_GLOBAL_LOCATIONS.find(l => l.name === 'Al-Safa District');
-      const faisaliyah = SEEDED_GLOBAL_LOCATIONS.find(l => l.name === 'Al-Faisaliyah District');
+      const olaya = SEEDED_GLOBAL_LOCATIONS.find(
+        (l) => l.name === 'Olaya District',
+      );
+      const safa = SEEDED_GLOBAL_LOCATIONS.find(
+        (l) => l.name === 'Al-Safa District',
+      );
+      const faisaliyah = SEEDED_GLOBAL_LOCATIONS.find(
+        (l) => l.name === 'Al-Faisaliyah District',
+      );
 
       const branchesToCreate: any[] = [];
 
       if (tenant.name === 'FastShip Logistics') {
         branchesToCreate.push(
-          { idSuffix: '501', name: 'Branch 1 (Riyadh Hub)', zoneId: centralZone?.id, locId: olaya?.id, type: OrgType.HUB },
-          { idSuffix: '504', name: 'Branch 4 (Riyadh Hub 2)', zoneId: centralZone?.id, locId: olaya?.id, type: OrgType.HUB },
-          { idSuffix: '502', name: 'Branch 2 (Jeddah Branch)', zoneId: westernZone?.id, locId: safa?.id, type: OrgType.BRANCH },
-          { idSuffix: '503', name: 'Branch 3 (Dammam Branch)', zoneId: easternZone?.id, locId: faisaliyah?.id, type: OrgType.BRANCH }
+          {
+            idSuffix: '501',
+            name: 'Branch 1 (Riyadh Hub)',
+            zoneId: centralZone?.id,
+            locId: olaya?.id,
+            type: OrgType.HUB,
+          },
+          {
+            idSuffix: '504',
+            name: 'Branch 4 (Riyadh Hub 2)',
+            zoneId: centralZone?.id,
+            locId: olaya?.id,
+            type: OrgType.HUB,
+          },
+          {
+            idSuffix: '502',
+            name: 'Branch 2 (Jeddah Branch)',
+            zoneId: westernZone?.id,
+            locId: safa?.id,
+            type: OrgType.BRANCH,
+          },
+          {
+            idSuffix: '503',
+            name: 'Branch 3 (Dammam Branch)',
+            zoneId: easternZone?.id,
+            locId: faisaliyah?.id,
+            type: OrgType.BRANCH,
+          },
         );
       } else if (tenant.name === 'QuickDelivery Co.') {
         branchesToCreate.push(
-          { idSuffix: '505', name: 'Branch 5 (Riyadh Hub)', zoneId: centralZone?.id, locId: olaya?.id, type: OrgType.HUB },
-          { idSuffix: '506', name: 'Branch 6 (Jeddah Branch)', zoneId: westernZone?.id, locId: safa?.id, type: OrgType.BRANCH },
-          { idSuffix: '509', name: 'Branch 7 (Dammam Branch)', zoneId: easternZone?.id, locId: faisaliyah?.id, type: OrgType.BRANCH }
+          {
+            idSuffix: '505',
+            name: 'Branch 5 (Riyadh Hub)',
+            zoneId: centralZone?.id,
+            locId: olaya?.id,
+            type: OrgType.HUB,
+          },
+          {
+            idSuffix: '506',
+            name: 'Branch 6 (Jeddah Branch)',
+            zoneId: westernZone?.id,
+            locId: safa?.id,
+            type: OrgType.BRANCH,
+          },
+          {
+            idSuffix: '509',
+            name: 'Branch 7 (Dammam Branch)',
+            zoneId: easternZone?.id,
+            locId: faisaliyah?.id,
+            type: OrgType.BRANCH,
+          },
         );
       } else if (tenant.name === 'GlobalFreight Co.') {
         branchesToCreate.push(
-          { idSuffix: '507', name: 'Global Riyadh Hub', zoneId: centralZone?.id, locId: olaya?.id, type: OrgType.HUB },
-          { idSuffix: '508', name: 'Global Dammam Branch', zoneId: easternZone?.id, locId: faisaliyah?.id, type: OrgType.BRANCH }
+          {
+            idSuffix: '507',
+            name: 'Global Riyadh Hub',
+            zoneId: centralZone?.id,
+            locId: olaya?.id,
+            type: OrgType.HUB,
+          },
+          {
+            idSuffix: '508',
+            name: 'Global Dammam Branch',
+            zoneId: easternZone?.id,
+            locId: faisaliyah?.id,
+            type: OrgType.BRANCH,
+          },
         );
       }
 
