@@ -96,6 +96,8 @@ enum QuotationType {
 }
 
 enum QuotationStatus {
+  WAITING_PRICING_REQUEST
+  WAITING_PRICING
   PENDING
   APPROVED
   REJECTED
@@ -668,6 +670,7 @@ model quotation {
 
   customer_shipment    customer_shipment[]
   shipment_request     shipment_request    @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  approved_for_request shipment_request?   @relation("ApprovedQuotation")
   employee             employee?           @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
   tenant               tenant              @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   origin_org_unit      organization_unit   @relation("quotation_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
@@ -715,18 +718,23 @@ model shipment_request {
   receiver_lat                   Decimal?      @db.Decimal(10, 8)
   receiver_lng                   Decimal?      @db.Decimal(11, 8)
   expected_pieces_count          Int           @default(1)
-  expected_total_weight_kg       Decimal?      @db.Decimal(10, 2)
+  expected_total_weight_kg       Decimal       @db.Decimal(10, 2)
+  expected_length_cm             Decimal       @default(0) @db.Decimal(10, 2)
+  expected_width_cm              Decimal       @default(0) @db.Decimal(10, 2)
+  expected_height_cm             Decimal       @default(0) @db.Decimal(10, 2)
   notes                          String?
   status                         RequestStatus @default(PENDING)
   cancelled_at                   DateTime?     @db.Timestamp(6)
   cancellation_reason            String?
   expires_at                     DateTime?     @db.Timestamp(6)
+  approved_quotation_id          String?       @unique @db.Uuid
   created_by_employee_id         String?       @db.Uuid
   created_at                     DateTime      @default(now()) @db.Timestamp(6)
   updated_at                     DateTime      @updatedAt
 
   customer_shipment           customer_shipment[]
   quotation                   quotation[]
+  approved_quotation          quotation?          @relation("ApprovedQuotation", fields: [approved_quotation_id], references: [id], onUpdate: NoAction)
   employee                    employee?           @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
   customer_profile            customer_profile    @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
   tenant                      tenant?             @relation(fields: [target_tenant_id], references: [id], onUpdate: NoAction)
@@ -871,7 +879,7 @@ model tenant_operational_settings {
 model tenant_pricing_settings {
   tenant_id          String @id @db.Uuid
   volumetric_divisor Int    @default(5000)
-  default_currency   String @default("USD") @db.Char(3)
+  default_currency   String @default("SR") @db.Char(3)
   tenant             tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 

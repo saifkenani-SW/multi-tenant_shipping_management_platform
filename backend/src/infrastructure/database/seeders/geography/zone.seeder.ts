@@ -5,11 +5,8 @@ import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
 export const SEEDED_ZONES = [
   { idSuffix: '301', name: 'Central Zone', description: 'Riyadh Central Area' },
-  {
-    idSuffix: '302',
-    name: 'Western Zone',
-    description: 'Jeddah & Coastal Area',
-  },
+  { idSuffix: '302', name: 'Western Zone', description: 'Jeddah & Coastal Area' },
+  { idSuffix: '303', name: 'Eastern Zone', description: 'Dammam Area' },
 ] as const;
 
 @Injectable()
@@ -48,35 +45,62 @@ export class ZoneSeeder implements Seeder {
         createdZoneIds.push(zone.id);
       }
 
-      if (createdZoneIds.length >= 2) {
-        const originZoneId = createdZoneIds[0];
-        const destZoneId = createdZoneIds[1];
-        const matrixId = `00000000-0000-7000-8000-0000000004${i}1`;
+      const centralId = createdZoneIds[0];
+      const westernId = createdZoneIds[1];
+      const easternId = createdZoneIds[2];
+
+      const matrices: any[] = [];
+
+      if (tenant.name === 'FastShip Logistics') {
+        matrices.push(
+          { origin: centralId, dest: westernId, service: 'STANDARD', basePrice: 25.0, active: true },
+          { origin: centralId, dest: westernId, service: 'EXPRESS', basePrice: 40.0, active: true },
+          { origin: westernId, dest: centralId, service: 'STANDARD', basePrice: 25.0, active: true },
+          { origin: centralId, dest: easternId, service: 'STANDARD', basePrice: 30.0, active: true },
+          { origin: centralId, dest: easternId, service: 'SAME_DAY', basePrice: 50.0, active: false }
+        );
+      } else if (tenant.name === 'QuickDelivery Co.') {
+        matrices.push(
+          { origin: centralId, dest: westernId, service: 'STANDARD', basePrice: 20.0, active: true },
+          { origin: centralId, dest: easternId, service: 'STANDARD', basePrice: 22.0, active: true }
+        );
+      } else if (tenant.name === 'GlobalFreight Co.') {
+        matrices.push(
+          { origin: centralId, dest: easternId, service: 'STANDARD', basePrice: 28.0, active: true },
+          { origin: centralId, dest: easternId, service: 'EXPRESS', basePrice: 50.0, active: true },
+          { origin: easternId, dest: centralId, service: 'STANDARD', basePrice: 28.0, active: true }
+        );
+      }
+
+      for (let m = 0; m < matrices.length; m++) {
+        const matrix = matrices[m];
+        const matrixId = `00000000-0000-7000-8000-0000000004${i}${m}`;
 
         await this.prisma.zone_pricing_matrix.upsert({
           where: {
             tenant_id_origin_zone_id_destination_zone_id_service_level: {
               tenant_id: tenant.id,
-              origin_zone_id: originZoneId,
-              destination_zone_id: destZoneId,
-              service_level: 'STANDARD',
+              origin_zone_id: matrix.origin,
+              destination_zone_id: matrix.dest,
+              service_level: matrix.service,
             },
           },
           update: {
-            base_price: 25.0,
+            base_price: matrix.basePrice,
             base_weight_kg: 5.0,
             price_per_extra_kg: 2.5,
-            is_active: true,
+            is_active: matrix.active,
           },
           create: {
             id: matrixId,
             tenant_id: tenant.id,
-            origin_zone_id: originZoneId,
-            destination_zone_id: destZoneId,
-            base_price: 25.0,
+            origin_zone_id: matrix.origin,
+            destination_zone_id: matrix.dest,
+            service_level: matrix.service,
+            base_price: matrix.basePrice,
             base_weight_kg: 5.0,
             price_per_extra_kg: 2.5,
-            is_active: true,
+            is_active: matrix.active,
           },
         });
       }
