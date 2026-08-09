@@ -11,6 +11,13 @@ import { ManifestItemDto } from '../dtos/responses/manifest-item.dto';
 import { PaginatedManifestListDto } from '../dtos/responses/manifest-list.dto';
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 
+/**
+ * Read side of the manifest sub-domain.
+ *
+ * `tenantId` is optional throughout: a platform owner carries no tenant in the
+ * request context and reads across every tenant, while any other caller is
+ * always scoped to their own.
+ */
 @Injectable()
 export class ManifestQueryService {
   constructor(
@@ -20,7 +27,7 @@ export class ManifestQueryService {
   ) {}
 
   async findManifests(
-    tenantId: string,
+    tenantId: string | undefined,
     query: ManifestQueryDto,
   ): Promise<PaginatedManifestListDto> {
     const criteria = this.criteriaBuilder.build(query, tenantId);
@@ -34,7 +41,7 @@ export class ManifestQueryService {
   }
 
   async getManifestDetails(
-    tenantId: string,
+    tenantId: string | undefined,
     id: string,
   ): Promise<ManifestDetailsDto> {
     const manifest = await this.findManifestOrThrow(tenantId, id);
@@ -44,7 +51,7 @@ export class ManifestQueryService {
   }
 
   async getManifestItems(
-    tenantId: string,
+    tenantId: string | undefined,
     manifestId: string,
   ): Promise<ManifestItemDto[]> {
     await this.findManifestOrThrow(tenantId, manifestId);
@@ -55,7 +62,7 @@ export class ManifestQueryService {
 
   /** Returns the aggregate so callers can ask it to decide a transition. */
   async findManifestOrThrow(
-    tenantId: string,
+    tenantId: string | undefined,
     id: string,
   ): Promise<TransportManifest> {
     const manifest = await this.queryRepository.findById(tenantId, id);

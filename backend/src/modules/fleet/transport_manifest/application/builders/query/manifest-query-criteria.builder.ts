@@ -5,7 +5,10 @@ import { ManifestQueryCriteria } from './manifest-query-criteria';
 
 @Injectable()
 export class ManifestQueryCriteriaBuilder {
-  build(query: ManifestQueryDto, tenantId: string): ManifestQueryCriteria {
+  build(
+    query: ManifestQueryDto,
+    tenantId: string | undefined,
+  ): ManifestQueryCriteria {
     return new ManifestQueryCriteria(
       OffsetPaginationBuilder.build(query),
       tenantId,
