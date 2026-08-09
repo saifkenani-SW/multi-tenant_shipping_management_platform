@@ -22,7 +22,7 @@ import { HealthModule } from './health/health.module';
 import { TrackingModule } from './modules/tracking/tracking.module';
 import { EmployeeModule } from './modules/employee/employee.module';
 import { UserModule } from './modules/user/user.module';
-import { VehicleModule } from './modules/vehicle/vehicle.module';
+import { FleetModule } from './modules/fleet/fleet.module';
 import { Employee2Module } from './modules/employee2/employee2.module';
 import { OrganizationModule } from './modules/organization/organization.module';
 import { LabelGeneratorModule } from './packages/label-generator';
@@ -63,7 +63,7 @@ import { ShipmentRequestModule } from './modules/shipment-request/shipment-reque
     EmployeeModule,
     Employee2Module,
     OrganizationModule,
-    VehicleModule,
+    FleetModule,
     UserModule,
     TrackingModule,
     LabelGeneratorModule,
