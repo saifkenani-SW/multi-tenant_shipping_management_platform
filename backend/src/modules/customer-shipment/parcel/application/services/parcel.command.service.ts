@@ -32,15 +32,15 @@ export class ParcelCommandService {
    */
   @Authorize({
     policy: Policy(ParcelPolicy, ParcelAction.UpdateStatus),
-    payloadResolver: (parcelId: string) => ({ parcelId }),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
   @Transactional()
   async updateStatus(
-    parcelId: string,
+    trackingNumber: string,
     dto: UpdateParcelStatusDto,
     actor: { employeeId: string; employeeName: string },
   ): Promise<void> {
-    const parcel = await this.queryService.findAggregateOrThrow(parcelId);
+    const parcel = await this.queryService.findAggregateByTrackingNumberOrThrow(trackingNumber);
 
     const previousStatus = parcel.currentStatus;
     const previousCondition = parcel.currentCondition;
@@ -57,7 +57,7 @@ export class ParcelCommandService {
     }
 
     await this.commandRepository.updateStatus(
-      parcelId,
+      parcel.id,
       parcel.currentStatus,
       parcel.version,
       {

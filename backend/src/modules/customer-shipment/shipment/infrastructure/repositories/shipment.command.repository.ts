@@ -9,10 +9,11 @@ import { TransactionalPrismaService } from '../../../../../packages/transaction'
 export interface CreateShipmentData {
   tenantId: string;
   senderCustomerProfileId: string;
+  senderName: string;
+  senderPhone: string;
   receiverCustomerProfileId: string | null;
   senderNationalId: string | null;
   shipmentRequestId: string | null;
-  approvedQuotationId: string | null;
   originOrgUnitId: string;
   destinationOrgUnitId: string;
   serviceLevel: ServiceLevel;
@@ -21,6 +22,8 @@ export interface CreateShipmentData {
   paymentResponsibility: PaymentResponsibility;
   totalChargeableWeightKg: number;
   status: ShipmentStatus;
+  createdByEmployeeId?: string | null;
+  createdByEmployeeName?: string | null;
 }
 
 @Injectable()
@@ -32,10 +35,11 @@ export class ShipmentCommandRepository {
       data: {
         tenant_id: data.tenantId,
         sender_customer_profile_id: data.senderCustomerProfileId,
+        sender_name: data.senderName,
+        sender_phone: data.senderPhone,
         receiver_customer_profile_id: data.receiverCustomerProfileId,
         sender_national_id: data.senderNationalId,
         shipment_request_id: data.shipmentRequestId,
-        approved_quotation_id: data.approvedQuotationId,
         origin_org_unit_id: data.originOrgUnitId,
         destination_org_unit_id: data.destinationOrgUnitId,
         service_level: data.serviceLevel,
@@ -44,6 +48,8 @@ export class ShipmentCommandRepository {
         payment_responsibility: data.paymentResponsibility,
         total_chargeable_weight_kg: data.totalChargeableWeightKg,
         status: data.status,
+        created_by_employee_id: data.createdByEmployeeId,
+        created_by_employee_name: data.createdByEmployeeName,
       },
       select: { id: true },
     });

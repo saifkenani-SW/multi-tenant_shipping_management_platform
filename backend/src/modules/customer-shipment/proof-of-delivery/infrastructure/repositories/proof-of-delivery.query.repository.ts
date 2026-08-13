@@ -45,6 +45,24 @@ export class ProofOfDeliveryQueryRepository {
     return record ?? null;
   }
 
+  /**
+   * Joins through the parcel to locate the POD by tracking number.
+   * Used by employee-facing endpoints where the device scans the QR / barcode.
+   */
+  async findByTrackingNumber(trackingNumber: string): Promise<any | null> {
+    const record = await this.kysely
+      .selectFrom('proof_of_delivery as pod')
+      .innerJoin('parcel as p', 'p.id', 'pod.parcel_id')
+      .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
+      .select([...POD_COLUMNS])
+      .select(['cs.sender_customer_profile_id', 'p.tenant_id as p_tenant_id'])
+      .where('p.tracking_number', '=', trackingNumber)
+      .executeTakeFirst();
+
+    return record ?? null;
+  }
+
+
   async existsForParcel(parcelId: string): Promise<boolean> {
     const record = await this.kysely
       .selectFrom('proof_of_delivery')

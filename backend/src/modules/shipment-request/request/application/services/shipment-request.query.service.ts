@@ -13,6 +13,7 @@ import { ShipmentRequestVisibilityScope } from '../../../authorization/scopes/sh
 import { AuthorizationFacade } from '../../../../../packages/authorization';
 import { QuotationQueryService } from '../../../../shipment-request/quotation/application/services/quotation.query.service';
 import { GlobalLocationFacade } from '../../../../global-location/facades/global-location.facade';
+import { TenantFacade } from '../../../../tenant/application/facades/tenant.facade';
 
 @Injectable()
 export class ShipmentRequestQueryService {
@@ -21,6 +22,7 @@ export class ShipmentRequestQueryService {
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly quotationQueryService: QuotationQueryService,
     private readonly globalLocationFacade: GlobalLocationFacade,
+    private readonly tenantFacade: TenantFacade,
   ) {}
 
   private async enrichShipmentRequests(
@@ -31,42 +33,54 @@ export class ShipmentRequestQueryService {
     const globalLocationIds = [
       ...new Set(
         rawRequests.flatMap((r) => [
-          r.origin_global_location_id,
-          r.destination_global_location_id,
+          r.originGlobalLocationId,
+          r.destinationGlobalLocationId,
         ]),
       ),
     ] as string[];
 
-    const globalLocations = await this.globalLocationFacade.getLocationsByIds(
-      globalLocationIds,
-      false,
-    );
+    const tenantIds = [
+      ...new Set(
+        rawRequests.map((r) => r.targetTenantId).filter((id) => id != null),
+      ),
+    ] as string[];
+
+    const [globalLocations, tenants] = await Promise.all([
+      this.globalLocationFacade.getLocationsByIds(globalLocationIds, false),
+      this.tenantFacade.getTenantsByIds(tenantIds, false),
+    ]);
+
     const locationMap = new Map(
       globalLocations.map((loc) => [loc.id, loc.name]),
     );
+    const tenantMap = new Map(tenants.map((t) => [t.id, t.name]));
 
     return rawRequests.map((record) => ({
       id: record.id,
-      customerProfileId: record.customer_profile_id,
-      targetTenantId: record.target_tenant_id || undefined,
-      originGlobalLocationId: record.origin_global_location_id,
+      customerProfileId: record.customerProfileId,
+      targetTenantId: record.targetTenantId ?? null,
+      targetTenantName:
+        record.targetTenantId && tenantMap.has(record.targetTenantId)
+          ? tenantMap.get(record.targetTenantId)!
+          : null,
+      originGlobalLocationId: record.originGlobalLocationId,
       originGlobalLocationName:
-        (locationMap.get(record.origin_global_location_id) as string) ||
+        (locationMap.get(record.originGlobalLocationId) as string) ||
         'Unknown Location',
-      destinationGlobalLocationId: record.destination_global_location_id,
+      destinationGlobalLocationId: record.destinationGlobalLocationId,
       destinationGlobalLocationName:
-        (locationMap.get(record.destination_global_location_id) as string) ||
+        (locationMap.get(record.destinationGlobalLocationId) as string) ||
         'Unknown Location',
-      senderName: record.sender_name,
-      senderPhone: record.sender_phone,
-      receiverName: record.receiver_name,
-      receiverPhone: record.receiver_phone,
-      expectedPiecesCount: record.expected_pieces_count,
-      expectedTotalWeightKg: Number(record.expected_total_weight_kg),
-      status: record.status as string,
-      approvedQuotationId: record.approved_quotation_id || undefined,
-      createdAt: record.created_at,
-      updatedAt: record.updated_at,
+      senderName: record.senderName,
+      senderPhone: record.senderPhone,
+      receiverName: record.receiverName,
+      receiverPhone: record.receiverPhone,
+      expectedPiecesCount: record.expectedPiecesCount,
+      expectedTotalWeightKg: Number(record.expectedTotalWeightKg),
+      status: record.status,
+      approvedQuotationId: record.approvedQuotationId ?? null,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
     }));
   }
 

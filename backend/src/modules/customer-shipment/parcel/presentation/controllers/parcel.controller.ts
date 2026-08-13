@@ -74,7 +74,7 @@ export class ParcelController {
     return this.queryService.findByTrackingNumber(trackingNumber);
   }
 
-  @Patch('parcels/:id/status')
+  @Patch('parcels/:trackingNumber/status')
   @HttpCode(HttpStatus.OK)
   @Roles(RoleType.EMPLOYEE)
   @ApiOperation({
@@ -83,12 +83,12 @@ export class ParcelController {
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Parcel status updated' })
   async updateStatus(
-    @Param('id', ParseUUIDPipe) id: string,
+    @Param('trackingNumber') trackingNumber: string,
     @Body() dto: UpdateParcelStatusDto,
   ): Promise<void> {
     const principal = this.requestContext.getPrincipal();
 
-    await this.commandService.updateStatus(id, dto, {
+    await this.commandService.updateStatus(trackingNumber, dto, {
       employeeId: principal.profileId ?? principal.subject.id,
       employeeName: principal.subject.id,
     });

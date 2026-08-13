@@ -14,7 +14,6 @@ export interface CreateParcelData {
   description: string | null;
   category: string | null;
   parcelType: ParcelType;
-  serviceLevel: ServiceLevel;
   isFragile: boolean;
   requiresUprightHandling: boolean;
   temperatureSensitive: boolean;
@@ -41,7 +40,6 @@ export class ParcelCommandRepository {
         description: data.description,
         category: data.category,
         parcel_type: data.parcelType,
-        service_level: data.serviceLevel,
         is_fragile: data.isFragile,
         requires_upright_handling: data.requiresUprightHandling,
         temperature_sensitive: data.temperatureSensitive,

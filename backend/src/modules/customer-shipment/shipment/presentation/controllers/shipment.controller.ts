@@ -51,9 +51,13 @@ export class ShipmentController {
   async createShipment(
     @Body() dto: CreateShipmentDto,
   ): Promise<{ id: string }> {
+    const principal = this.requestContext.getPrincipal();
+    const employeeId = principal.profileId ?? principal.subject.id;
+
     return this.commandService.createShipment(
-      this.requestContext.getTenantIdOrThrow(),
+      principal.tenantId!,
       dto,
+      employeeId,
     );
   }
 

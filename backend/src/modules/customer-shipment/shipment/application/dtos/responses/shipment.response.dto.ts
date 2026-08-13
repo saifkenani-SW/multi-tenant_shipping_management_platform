@@ -11,8 +11,14 @@ export class ShipmentResponseDto {
   @ApiProperty()
   senderCustomerProfileId: string;
 
-  @ApiPropertyOptional()
-  receiverCustomerProfileId?: string;
+  @ApiProperty()
+  senderName: string;
+
+  @ApiProperty()
+  senderPhone: string;
+
+  @ApiPropertyOptional({ nullable: true })
+  receiverCustomerProfileId: string | null;
 
   @ApiProperty()
   originOrgUnitId: string;
@@ -33,7 +39,7 @@ export class ShipmentResponseDto {
   paymentResponsibility: string;
 
   @ApiPropertyOptional({ nullable: true })
-  totalChargeableWeightKg?: number | null;
+  totalChargeableWeightKg: number | null;
 
   @ApiProperty({ enum: ShipmentStatus })
   status: ShipmentStatus;
@@ -46,4 +52,10 @@ export class ShipmentResponseDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @ApiPropertyOptional({ nullable: true })
+  createdByEmployeeId: string | null;
+
+  @ApiPropertyOptional({ nullable: true })
+  createdByEmployeeName: string | null;
 }

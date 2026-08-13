@@ -316,15 +316,236 @@ model customer_profile {
   shipment_request   shipment_request[]
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 model customer_shipment {
   id                           String                @id @default(uuid(7)) @db.Uuid
   version                      Int                   @default(1)
   tenant_id                    String                @db.Uuid
   sender_national_id           String?               @db.VarChar(50)
+  sender_name                  String                @db.VarChar(255)
+  sender_phone                 String                @db.VarChar(50)
   sender_customer_profile_id   String                @db.Uuid
   receiver_customer_profile_id String?               @db.Uuid
   shipment_request_id          String?               @db.Uuid
-  approved_quotation_id        String?               @db.Uuid
   origin_org_unit_id           String                @db.Uuid
   destination_org_unit_id      String                @db.Uuid
   service_level                ServiceLevel          @default(STANDARD)
@@ -335,12 +556,14 @@ model customer_shipment {
   status                       ShipmentStatus        @default(PROCESSING)
   created_at                   DateTime              @default(now()) @db.Timestamp(6)
   updated_at                   DateTime              @updatedAt
+  created_by_employee_id       String?               @db.Uuid
+  created_by_employee_name     String?               @db.VarChar(255)
 
-  quotation            quotation?        @relation(fields: [approved_quotation_id], references: [id], onUpdate: NoAction)
   sender_profile       customer_profile  @relation("SenderShipments", fields: [sender_customer_profile_id], references: [id], onUpdate: NoAction)
   receiver_profile     customer_profile? @relation("ReceiverShipments", fields: [receiver_customer_profile_id], references: [id], onUpdate: NoAction)
   shipment_request     shipment_request? @relation(fields: [shipment_request_id], references: [id], onUpdate: NoAction)
   tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  created_by_employee  employee?         @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
   origin_org_unit      organization_unit @relation("customer_shipment_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
   destination_org_unit organization_unit @relation("customer_shipment_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
   invoice              invoice[]
@@ -384,6 +607,7 @@ model employee {
   support_ticket      support_ticket[]
   trip                trip[]
   vehicle_assignment  vehicle_assignment[]
+  customer_shipment   customer_shipment[]
 
   @@unique([tenant_id, employee_code], map: "uq_tenant_emp_code")
   @@unique([tenant_id, user_id], map: "uq_tenant_user")
@@ -526,7 +750,6 @@ model parcel {
   description                                                     String?            @db.VarChar(500)
   category                                                        String?            @db.VarChar(100)
   parcel_type                                                     ParcelType         @default(PACKAGE)
-  service_level                                                   ServiceLevel       @default(STANDARD)
   is_fragile                                                      Boolean            @default(false)
   requires_upright_handling                                       Boolean            @default(false) // ممنوع القلب/التكديس فوقه
   temperature_sensitive                                           Boolean            @default(false) // يحتاج تبريد/تجنب حرارة
@@ -674,7 +897,6 @@ model quotation {
   created_at               DateTime        @default(now()) @db.Timestamp(6)
   updated_at               DateTime        @updatedAt
 
-  customer_shipment    customer_shipment[]
   shipment_request     shipment_request    @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   approved_for_request shipment_request?   @relation("ApprovedQuotation")
   employee             employee?           @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
@@ -997,6 +1219,7 @@ model users {
   support_ticket_message support_ticket_message[]
   platform_admin         platform_admin?
   userSessions           user_session[]
+  device_tokens          user_device_token[]
   owned_tenants          tenant_owner[]
 }
 
@@ -1011,6 +1234,23 @@ model user_session {
 
   users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([user_id])
+}
+
+/// توكنات أجهزة المستخدمين لإشعارات Firebase — يُخزَّن هنا FCM token لكل جهاز
+model user_device_token {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  user_id    String   @db.Uuid
+  /// الـ FCM token الذي يُرسله التطبيق عند تسجيل الدخول
+  fcm_token  String   @db.VarChar(512)
+  /// نوع الجهاز: android / ios / web
+  platform   String   @db.VarChar(20)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  /// توكن واحد لكل مستخدم × جهاز — لا يتكرر نفس التوكن لنفس المستخدم
+  @@unique([user_id, fcm_token])
   @@index([user_id])
 }
 

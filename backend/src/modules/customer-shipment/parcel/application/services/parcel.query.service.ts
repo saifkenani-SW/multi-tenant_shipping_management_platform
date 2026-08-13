@@ -98,6 +98,25 @@ export class ParcelQueryService {
     return parcel;
   }
 
+  /**
+   * Resolves a tracking number (scanned from QR / barcode) to the domain
+   * aggregate carrying its optimistic-lock version. Used exclusively by write
+   * paths that originate from a physical scan, never by a UI that has a UUID.
+   */
+  async findAggregateByTrackingNumberOrThrow(
+    trackingNumber: string,
+  ): Promise<Parcel> {
+    const parcel =
+      await this.queryRepository.findAggregateByTrackingNumber(trackingNumber);
+
+    if (!parcel) {
+      throw new NotFoundException('Parcel not found');
+    }
+
+    return parcel;
+  }
+
+
   async findRawOrThrow(id: string): Promise<any> {
     const record = await this.queryRepository.findRawById(id);
 

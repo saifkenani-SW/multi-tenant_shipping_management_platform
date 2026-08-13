@@ -116,7 +116,25 @@ export class ShipmentRequestQueryRepository {
       records.pop();
     }
 
-    if (records.length === 0) {
+    const mappedRecords = records.map((record) => ({
+      id: record.id,
+      customerProfileId: record.customer_profile_id,
+      targetTenantId: record.target_tenant_id ?? null,
+      originGlobalLocationId: record.origin_global_location_id,
+      destinationGlobalLocationId: record.destination_global_location_id,
+      senderName: record.sender_name,
+      senderPhone: record.sender_phone,
+      receiverName: record.receiver_name,
+      receiverPhone: record.receiver_phone,
+      expectedPiecesCount: record.expected_pieces_count,
+      expectedTotalWeightKg: Number(record.expected_total_weight_kg),
+      status: record.status as string,
+      approvedQuotationId: record.approved_quotation_id ?? null,
+      createdAt: record.created_at,
+      updatedAt: record.updated_at,
+    }));
+
+    if (mappedRecords.length === 0) {
       return new CursorPaginatedResponse<any>([], {
         hasNextPage: false,
         hasPreviousPage: !!criteria.cursor,
@@ -126,9 +144,9 @@ export class ShipmentRequestQueryRepository {
     }
 
     const endCursor =
-      records.length > 0 ? records[records.length - 1].id : null;
+      mappedRecords.length > 0 ? mappedRecords[mappedRecords.length - 1].id : null;
 
-    return new CursorPaginatedResponse<any>(records, {
+    return new CursorPaginatedResponse<any>(mappedRecords, {
       hasNextPage,
       hasPreviousPage: !!criteria.cursor,
       nextCursor: endCursor,
@@ -168,7 +186,7 @@ export class ShipmentRequestQueryRepository {
     return {
       id: record.id,
       customerProfileId: record.customer_profile_id,
-      targetTenantId: record.target_tenant_id || undefined,
+      targetTenantId: record.target_tenant_id ?? null,
       originGlobalLocationId: record.origin_global_location_id,
       destinationGlobalLocationId: record.destination_global_location_id,
       senderName: record.sender_name,
@@ -178,7 +196,7 @@ export class ShipmentRequestQueryRepository {
       expectedPiecesCount: record.expected_pieces_count,
       expectedTotalWeightKg: Number(record.expected_total_weight_kg),
       status: record.status as string,
-      approvedQuotationId: record.approved_quotation_id || undefined,
+      approvedQuotationId: record.approved_quotation_id ?? null,
       createdAt: record.created_at,
       updatedAt: record.updated_at,
     };

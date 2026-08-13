@@ -9,10 +9,10 @@ export class ShipmentQueryDto extends CursorPaginationQueryDto {
   @IsOptional()
   tenantId?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by the sending customer' })
-  @IsUUID()
+  @ApiPropertyOptional({ description: 'Filter by sender phone' })
+  @IsString()
   @IsOptional()
-  senderCustomerProfileId?: string;
+  senderPhone?: string;
 
   @ApiPropertyOptional({ description: 'Filter by origin organization unit' })
   @IsUUID()

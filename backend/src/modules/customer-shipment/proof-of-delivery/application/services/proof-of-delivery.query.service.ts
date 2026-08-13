@@ -21,10 +21,10 @@ export class ProofOfDeliveryQueryService {
 
   @Authorize({
     policy: Policy(PodPolicy, PodAction.View),
-    payloadResolver: (parcelId: string) => ({ parcelId }),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  async findByParcelId(parcelId: string): Promise<ProofOfDeliveryResponseDto> {
-    const record = await this.queryRepository.findByParcelId(parcelId);
+  async findByTrackingNumber(trackingNumber: string): Promise<ProofOfDeliveryResponseDto> {
+    const record = await this.queryRepository.findByTrackingNumber(trackingNumber);
 
     if (!record) {
       throw new NotFoundException('Proof of delivery not found');

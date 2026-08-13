@@ -16,9 +16,10 @@ const SHIPMENT_COLUMNS = [
   'cs.tenant_id',
   'cs.sender_national_id',
   'cs.sender_customer_profile_id',
+  'cs.sender_name',
+  'cs.sender_phone',
   'cs.receiver_customer_profile_id',
   'cs.shipment_request_id',
-  'cs.approved_quotation_id',
   'cs.origin_org_unit_id',
   'cs.destination_org_unit_id',
   'cs.service_level',
@@ -27,6 +28,8 @@ const SHIPMENT_COLUMNS = [
   'cs.payment_responsibility',
   'cs.total_chargeable_weight_kg',
   'cs.status',
+  'cs.created_by_employee_id',
+  'cs.created_by_employee_name',
   'cs.created_at',
   'cs.updated_at',
 ] as const;
@@ -49,6 +52,7 @@ export class ShipmentQueryRepository {
       (criteria.originOrgUnitIds || []).join(',') || 'none',
       criteria.destinationOrgUnitId || 'none',
       criteria.status || 'none',
+      criteria.senderPhone || 'none',
       criteria.receiverPhone || 'none',
       criteria.limit || 20,
       criteria.cursor || 'none',
@@ -113,6 +117,10 @@ export class ShipmentQueryRepository {
       query = query.where('cs.receiver_phone', '=', criteria.receiverPhone);
     }
 
+    if (criteria.senderPhone) {
+      query = query.where('cs.sender_phone', '=', criteria.senderPhone);
+    }
+
     if (criteria.cursor) {
       query = query.where('cs.id', '<', criteria.cursor);
     }
@@ -167,10 +175,11 @@ export class ShipmentQueryRepository {
       version: record.version,
       tenantId: record.tenant_id,
       senderCustomerProfileId: record.sender_customer_profile_id,
+      senderName: record.sender_name,
+      senderPhone: record.sender_phone,
       receiverCustomerProfileId: record.receiver_customer_profile_id,
       senderNationalId: record.sender_national_id,
       shipmentRequestId: record.shipment_request_id,
-      approvedQuotationId: record.approved_quotation_id,
       originOrgUnitId: record.origin_org_unit_id,
       destinationOrgUnitId: record.destination_org_unit_id,
       serviceLevel: record.service_level,
@@ -184,6 +193,8 @@ export class ShipmentQueryRepository {
       status: record.status,
       createdAt: record.created_at,
       updatedAt: record.updated_at,
+      createdByEmployeeId: record.created_by_employee_id ?? null,
+      createdByEmployeeName: record.created_by_employee_name ?? null,
     });
   }
 }

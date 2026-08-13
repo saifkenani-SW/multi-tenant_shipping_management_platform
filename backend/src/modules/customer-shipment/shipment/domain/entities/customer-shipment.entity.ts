@@ -6,10 +6,11 @@ export interface CustomerShipmentSnapshot {
   version: number;
   tenantId: string;
   senderCustomerProfileId: string;
+  senderName: string;
+  senderPhone: string;
   receiverCustomerProfileId: string | null;
   senderNationalId: string | null;
   shipmentRequestId: string | null;
-  approvedQuotationId: string | null;
   originOrgUnitId: string;
   destinationOrgUnitId: string;
   serviceLevel: string;
@@ -20,6 +21,8 @@ export interface CustomerShipmentSnapshot {
   status: ShipmentStatus;
   createdAt: Date;
   updatedAt: Date;
+  createdByEmployeeId: string | null;
+  createdByEmployeeName: string | null;
 }
 
 /**
@@ -64,10 +67,11 @@ export class CustomerShipment {
     public readonly version: number,
     public readonly tenantId: string,
     public readonly senderCustomerProfileId: string,
+    public readonly senderName: string,
+    public readonly senderPhone: string,
     public readonly receiverCustomerProfileId: string | null,
     public readonly senderNationalId: string | null,
     public readonly shipmentRequestId: string | null,
-    public readonly approvedQuotationId: string | null,
     public readonly originOrgUnitId: string,
     public readonly destinationOrgUnitId: string,
     public readonly serviceLevel: string,
@@ -78,6 +82,8 @@ export class CustomerShipment {
     private _status: ShipmentStatus,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    public readonly createdByEmployeeId: string | null,
+    public readonly createdByEmployeeName: string | null,
   ) {}
 
   get status(): ShipmentStatus {
@@ -90,10 +96,11 @@ export class CustomerShipment {
       snapshot.version,
       snapshot.tenantId,
       snapshot.senderCustomerProfileId,
+      snapshot.senderName,
+      snapshot.senderPhone,
       snapshot.receiverCustomerProfileId,
       snapshot.senderNationalId,
       snapshot.shipmentRequestId,
-      snapshot.approvedQuotationId,
       snapshot.originOrgUnitId,
       snapshot.destinationOrgUnitId,
       snapshot.serviceLevel,
@@ -104,6 +111,8 @@ export class CustomerShipment {
       snapshot.status,
       snapshot.createdAt,
       snapshot.updatedAt,
+      snapshot.createdByEmployeeId,
+      snapshot.createdByEmployeeName,
     );
   }
 

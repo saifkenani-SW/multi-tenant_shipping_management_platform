@@ -30,6 +30,8 @@ import { PdfGeneratorModule } from './packages/pdf-generator';
 import { StorageModule } from './packages/storage/src';
 import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
 import { CustomerShipmentModule } from './modules/customer-shipment/customer-shipment.module';
+import { FirebaseNotificationModule } from './packages/firebase-notifications';
+import { NotificationModule } from './modules/notification/notification.module';
 
 @Module({
   imports: [
@@ -72,6 +74,12 @@ import { CustomerShipmentModule } from './modules/customer-shipment/customer-shi
     StorageModule.forRoot(),
     ShipmentRequestModule,
     CustomerShipmentModule,
+    FirebaseNotificationModule.forRoot({
+      projectId: process.env.FIREBASE_PROJECT_ID!,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY!,
+    }),
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

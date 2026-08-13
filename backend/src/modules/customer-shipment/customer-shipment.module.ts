@@ -7,6 +7,7 @@ import { PdfGeneratorModule } from '../../packages/pdf-generator';
 import { TrackingModule } from '../tracking/tracking.module';
 import { TenantModule } from '../tenant/tenant.module';
 import { CustomerModule } from '../customer/customer.module';
+import { EmployeeModule } from '../employee/employee.module';
 import { ShipmentRequestModule } from '../shipment-request/shipment-request.module';
 
 // Shipment
@@ -76,6 +77,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     TrackingModule,
     TenantModule,
     CustomerModule,
+    EmployeeModule,
     ShipmentRequestModule,
   ],
   controllers: [

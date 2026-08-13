@@ -63,6 +63,20 @@ export class EmployeeQueryService implements IEmployeeQueryService {
     );
   }
 
+  @Authorize({
+    policy: Policy(EmployeePolicy, EmployeeAction.View),
+    payloadResolver: (employeeId: string) => ({ employeeId }),
+  })
+  async findById(id: string) {
+    const employee = await this.queryRepository.findById(id);
+
+    if (!employee) {
+      throw new EmployeeNotFoundException();
+    }
+
+    return employee;
+  }
+
   @ReturnCapabilities({
     policy: EmployeeCapabilityBuilder,
   })
@@ -70,7 +84,11 @@ export class EmployeeQueryService implements IEmployeeQueryService {
     policy: Policy(EmployeePolicy, EmployeeAction.View),
     payloadResolver: (employeeId: string) => ({ employeeId }),
   })
-  async getEmployeeDetails(id: string): Promise<EmployeeDetailsDto> {
+  async findDetailsById(id: string): Promise<EmployeeDetailsDto> {
+    // Ensures access verification happens through findById if called from another module or internally
+    // though the controller calls this directly which triggers the Authorize interceptor.
+    await this.findById(id);
+
     const employee = await this.queryRepository.findByIdWithAssignments(id);
 
     if (!employee) {

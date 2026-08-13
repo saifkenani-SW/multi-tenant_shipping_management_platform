@@ -4,7 +4,6 @@ import {
   Get,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
 import {
@@ -23,7 +22,7 @@ import { ProofOfDeliveryResponseDto } from '../../application/dtos/responses/pro
 
 @ApiTags('Customer Shipments - Proof of Delivery')
 @ApiBearerAuth()
-@Controller('parcels/:parcelId/proof-of-delivery')
+@Controller('parcels/:trackingNumber/proof-of-delivery')
 export class ProofOfDeliveryController {
   constructor(
     private readonly commandService: ProofOfDeliveryCommandService,
@@ -42,14 +41,13 @@ export class ProofOfDeliveryController {
     description: 'Proof of delivery recorded',
   })
   async record(
-    @Param('parcelId', ParseUUIDPipe) parcelId: string,
+    @Param('trackingNumber') trackingNumber: string,
     @Body() dto: RecordDeliveryDto,
   ): Promise<{ id: string }> {
     const principal = this.requestContext.getPrincipal();
 
-    return this.commandService.recordDelivery(parcelId, dto, {
+    return this.commandService.recordDelivery(trackingNumber, dto, {
       employeeId: principal.profileId ?? principal.subject.id,
-      employeeName: principal.subject.id,
     });
   }
 
@@ -63,8 +61,8 @@ export class ProofOfDeliveryController {
   @ApiOperation({ summary: 'Get the proof of delivery recorded for a parcel' })
   @ApiResponse({ status: HttpStatus.OK, type: ProofOfDeliveryResponseDto })
   async findByParcel(
-    @Param('parcelId', ParseUUIDPipe) parcelId: string,
+    @Param('trackingNumber') trackingNumber: string,
   ): Promise<ProofOfDeliveryResponseDto> {
-    return this.queryService.findByParcelId(parcelId);
+    return this.queryService.findByTrackingNumber(trackingNumber);
   }
 }

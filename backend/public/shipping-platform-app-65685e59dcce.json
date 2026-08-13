@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "shipping-platform-app",
+  "private_key_id": "65685e59dccee193525b81b2a65902f6a39b0ddc",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC/htESXQkvp8ib\nD/sK3IpoG8Adwxroltp8yYawK8k+/EypZcVAoF61UAWalsUfnoXMz8FUpGGkUFpG\nn3ahhf8oms3kQlM4TkD00abygRX9GkDXDn4QyN3mxBaIACY88mCCzUX0frgnmmeu\nNBbxcpURM2gZUTuTO9DOYvCeQiJ77FGEIzmLfnnIiE/W2jzNbXF6UkBLAFRPHgCL\nmAOAIcR/QEl29qufYn5AmzzG7AFizmk93s/QdiaQ8Qv+rpsGe1y8eZ31EjzIHBvE\n0l/dG0u1Ntd2tdCvQKcYaKLcRR5hG67AA1jLI8dQP4eY6taVhvpqrq3UUqqzWAgf\nbvh/wvWnAgMBAAECggEABencN7Rura2BCKSgLDAuB9PfhSu6f3b07Qht46+eaZbx\nqQNO6VVqRy/e1GyWToke+XlqrznaF/AxMWAIEimofLD27XbMyf7Ei6qTfIZWzvdK\nDDnS06LYEyF3zqAujhAvwaoj4E4vUm22iM7r7G2Mw7iyHKIA9GVS56RvaHuDRA80\nkUhnVA+4tvnry05NCKok17jEnBJaTjRHZ5MqaPVsF3EQqvIqVbEWzqKG+d4kTnoI\ntWLjcA02t8ObzzuuQGqRziia6CAuCLXn88oLJnxC9WTkMIK0scLBjcTgnScNilQH\n+Tg3SSPdq0iObb83poYeVRmPTaJNflzJ+0hV2QDOgQKBgQD+LmigNnYQbruc2GDB\nXCb3QnOtT4UdXdnTJXnUk/zPBSj5EgFfdE9a5s5t85aw2RKV2lZEP7aMtGt8akjW\nMaYEmmU2VrXCHkrUOKMb6QCjObvBljuwGJxAifaG0sEvHWaw6nYeAjHojYIpLb4U\nm273oyhosmXNpmJVYy/a1yuCJwKBgQDA5aRBWLIH+UCthnbosPPMyQeV+cczlSdh\nuxAUNl2hbQpVIyEJIlrfEYS+lPJ8S/O4pCtj6Tm3NyCYA0mvT9O8HPedW40adraw\n6JpuFC+6zp5/p48qdfHZrjWWb2afUrCWsalAbtkZAFLBH8EblMkl2/hVjgSBXuec\nliA651KggQKBgADgZBf5WBriZt85l8vS54d+wStd1NWvFys1O+BRylNkbym8uCh+\nHC/yD9AtQN3HQdsmb5m4poaBsMUzEKE8dpgZeDPhxKqwtA1bTKSx/wCRGGaof/gx\nfYhzcVgxrdzduxbtGA8ubsGgi0xdDgTALHfKJj+GLfexlTE6MFYO2+WNAoGAAvYD\ndXVVFkY/NeqwfJXqyCP119mDs0kA18E1V/oVqdqwo+nsIeXDG1V7gilrJ3lK/nSW\nrevwlN1lxK+YO/avu11+d43mNpfH6iNH65SnvuhZCoCZ8/7nfX3tGKgRHTT5vPZx\nMKoC7x1QJ+LC5hd8lvYvc7DAZPP9/itXx0+xtwECgYEAvf7qca28QfZq8rf4eD0H\nu653wgY0fFGug/FyPH/xoD75yAMDlA7Ut9Oz9GRAD8xJZ3MbNAww7mCFWGG4rQj7\nwd7YP3yIcfTaNEV4xbCVnX41U6i+bKYG+EFcdo++5akq1++97t+iazJ/v7NoyERK\nQ0FfIY+BMhLeAyVBQLYQ5eY=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@shipping-platform-app.iam.gserviceaccount.com",
+  "client_id": "103888708267381805317",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40shipping-platform-app.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

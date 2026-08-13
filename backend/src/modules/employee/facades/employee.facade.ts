@@ -19,4 +19,16 @@ export class EmployeeFacade {
   ): Promise<Partial<Principal> | null> {
     return this.employeeQueryService.getPrincipalByUserId(userId, tenantId);
   }
+
+  /**
+   * Retrieves the employee name by their ID.
+   */
+  async getEmployeeName(employeeId: string): Promise<string | null> {
+    try {
+      const employee = await this.employeeQueryService.findById(employeeId);
+      return employee.fullName;
+    } catch {
+      return null;
+    }
+  }
 }

@@ -29,11 +29,11 @@ export class ViewParcelStrategy implements ParcelAuthorizationStrategy<ParcelAct
     context: AuthorizationContext<Principal>,
     payload?: ParcelActionPayload,
   ): Promise<void> {
-    if (!payload?.parcelId) {
-      throw new BadRequestException('Parcel ID is required for authorization.');
+    if (!payload?.trackingNumber) {
+      throw new BadRequestException('Tracking Number is required for authorization');
     }
 
-    const entity = await this.queryRepository.findRawById(payload.parcelId);
+    const entity = await this.queryRepository.findRawByTrackingNumber(payload.trackingNumber);
     if (!entity) {
       throw new NotFoundException('Parcel not found');
     }

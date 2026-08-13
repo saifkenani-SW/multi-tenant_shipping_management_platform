@@ -45,9 +45,9 @@ export class CustomerShipmentFacade {
     return raw.map((row) => this.parcelMapper.toResponse(row));
   }
 
-  async getProofOfDelivery(
-    parcelId: string,
+  async getProofOfDeliveryByTrackingNumber(
+    trackingNumber: string,
   ): Promise<ProofOfDeliveryResponseDto> {
-    return this.podQueryService.findByParcelId(parcelId);
+    return this.podQueryService.findByTrackingNumber(trackingNumber);
   }
 }

@@ -54,16 +54,6 @@ export class ShipmentQueryService {
       throw new ForbiddenException('You can only filter by your own tenant.');
     }
 
-    if (
-      scope.shipment?.sender_customer_profile_id &&
-      filter.senderCustomerProfileId &&
-      filter.senderCustomerProfileId !==
-        scope.shipment.sender_customer_profile_id
-    ) {
-      throw new ForbiddenException(
-        'You can only filter by your own customer profile.',
-      );
-    }
 
     if (
       scope.shipment?.origin_org_unit_ids &&
@@ -78,15 +68,14 @@ export class ShipmentQueryService {
     // Scope wins wherever both sides set the same field.
     const merged: ShipmentMergedCriteria = {
       tenantId: scope.shipment?.tenant_id ?? filter.tenantId,
-      senderCustomerProfileId:
-        scope.shipment?.sender_customer_profile_id ??
-        filter.senderCustomerProfileId,
+      senderCustomerProfileId: scope.shipment?.sender_customer_profile_id,
       originOrgUnitId: filter.originOrgUnitId,
       originOrgUnitIds: filter.originOrgUnitId
         ? undefined
         : scope.shipment?.origin_org_unit_ids,
       destinationOrgUnitId: filter.destinationOrgUnitId,
       status: filter.status,
+      senderPhone: filter.senderPhone,
       receiverPhone: filter.receiverPhone,
       cursor: filter.cursor,
       limit: filter.limit,

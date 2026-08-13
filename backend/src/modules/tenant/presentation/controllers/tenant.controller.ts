@@ -339,7 +339,7 @@ export class TenantController {
 
   @Get(':id/settings')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.TENANT_ADMIN)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get all settings for a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,

@@ -4,13 +4,10 @@ import { ShipmentResponseDto } from './shipment.response.dto';
 
 export class ShipmentDetailsResponseDto extends ShipmentResponseDto {
   @ApiPropertyOptional({ nullable: true })
-  senderNationalId?: string | null;
+  senderNationalId: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  shipmentRequestId?: string | null;
-
-  @ApiPropertyOptional({ nullable: true })
-  approvedQuotationId?: string | null;
+  shipmentRequestId: string | null;
 
   @ApiProperty({ type: [ParcelResponseDto] })
   parcels: ParcelResponseDto[];

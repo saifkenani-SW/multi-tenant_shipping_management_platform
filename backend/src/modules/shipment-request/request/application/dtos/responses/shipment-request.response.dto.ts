@@ -7,8 +7,11 @@ export class ShipmentRequestResponseDto {
   @ApiProperty()
   customerProfileId: string;
 
-  @ApiProperty()
-  targetTenantId?: string;
+  @ApiProperty({ required: false, nullable: true })
+  targetTenantId: string | null;
+
+  @ApiProperty({ required: false, nullable: true })
+  targetTenantName: string | null;
 
   @ApiProperty()
   originGlobalLocationId: string;
@@ -43,8 +46,8 @@ export class ShipmentRequestResponseDto {
   @ApiProperty()
   status: string;
 
-  @ApiProperty()
-  approvedQuotationId?: string;
+  @ApiProperty({ required: false, nullable: true })
+  approvedQuotationId: string | null;
 
   @ApiProperty()
   createdAt: Date;

@@ -6,6 +6,7 @@ import { QuotationQueryDto } from '../../application/dtos/requests/quotation-que
 import { SubmitQuotationPriceDto } from '../../application/dtos/requests/submit-quotation-price.dto';
 import { Roles } from '../../../../../common/authorization';
 import { RoleType } from '../../../../authorization';
+import { ApiCursorPaginationQuery } from '../../../../../common/pagination/cursor/decorators/api-cursor-pagination-query.decorator';
 
 @ApiTags('Quotations')
 @Controller('quotations')
@@ -17,6 +18,7 @@ export class QuotationController {
 
   @Get()
   @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @ApiCursorPaginationQuery()
   async findMany(@Query() query: QuotationQueryDto) {
     return this.queryService.findMany(query);
   }

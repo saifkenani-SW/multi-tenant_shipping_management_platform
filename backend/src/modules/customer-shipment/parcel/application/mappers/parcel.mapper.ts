@@ -13,7 +13,6 @@ export class ParcelMapper {
       description: record.description ?? null,
       category: record.category ?? null,
       parcelType: record.parcel_type,
-      serviceLevel: record.service_level,
       actualWeightKg: Number(record.actual_weight_kg),
       lengthCm: Number(record.length_cm),
       widthCm: Number(record.width_cm),

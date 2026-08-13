@@ -29,12 +29,12 @@ export class ViewPodStrategy implements PodAuthorizationStrategy<PodActionPayloa
     context: AuthorizationContext<Principal>,
     payload?: PodActionPayload,
   ): Promise<void> {
-    if (!payload?.parcelId) {
-      throw new BadRequestException('Parcel ID is required for authorization.');
+    if (!payload?.trackingNumber) {
+      throw new BadRequestException('Tracking Number is required for authorization.');
     }
 
-    const parcel = await this.parcelQueryRepository.findRawById(
-      payload.parcelId,
+    const parcel = await this.parcelQueryRepository.findRawByTrackingNumber(
+      payload.trackingNumber,
     );
 
     if (!parcel) {

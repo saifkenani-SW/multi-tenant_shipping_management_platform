@@ -89,7 +89,7 @@ export class EmployeeController {
   async getEmployeeDetails(
     @Param() params: BaseUuidParamDto,
   ): Promise<EmployeeDetailsDto> {
-    return this.queryService.getEmployeeDetails(params.id);
+    return this.queryService.findDetailsById(params.id);
   }
 
   @Patch(':id')

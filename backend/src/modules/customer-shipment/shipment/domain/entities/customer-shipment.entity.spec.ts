@@ -11,7 +11,6 @@ const shipmentAt = (status: ShipmentStatus) =>
     receiverCustomerProfileId: null,
     senderNationalId: null,
     shipmentRequestId: null,
-    approvedQuotationId: null,
     originOrgUnitId: '01910b80-6e42-7000-8000-0000000000f1',
     destinationOrgUnitId: '01910b80-6e42-7000-8000-0000000000f2',
     serviceLevel: 'STANDARD',
@@ -22,6 +21,8 @@ const shipmentAt = (status: ShipmentStatus) =>
     status,
     createdAt: new Date(),
     updatedAt: new Date(),
+    createdByEmployeeId: '01910b80-6e42-7000-8000-0000000000e1',
+    createdByEmployeeName: 'John Doe',
   });
 
 describe('CustomerShipment', () => {

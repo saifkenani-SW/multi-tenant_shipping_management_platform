@@ -15,7 +15,6 @@ const PARCEL_COLUMNS = [
   'p.description',
   'p.category',
   'p.parcel_type',
-  'p.service_level',
   'p.is_fragile',
   'p.requires_upright_handling',
   'p.temperature_sensitive',
@@ -177,6 +176,32 @@ export class ParcelQueryRepository {
       labelKey: record.label_key,
     });
   }
+
+  /**
+   * Loads the aggregate by tracking number.
+   * Used by employee write operations (status update) where the scanning device
+   * provides the tracking number printed on the QR / barcode, never the UUID.
+   */
+  async findAggregateByTrackingNumber(
+    trackingNumber: string,
+  ): Promise<Parcel | null> {
+    const record = await this.findRawByTrackingNumber(trackingNumber);
+    if (!record) return null;
+
+    return Parcel.restore({
+      id: record.id,
+      version: record.version,
+      tenantId: record.tenant_id,
+      customerShipmentId: record.customer_shipment_id,
+      trackingNumber: record.tracking_number,
+      currentStatus: record.current_status,
+      currentCondition: record.current_condition,
+      currentOrgUnitId: record.current_org_unit_id,
+      destinationOrgUnitId: record.destination_org_unit_id,
+      labelKey: record.label_key,
+    });
+  }
+
 
   async existsByTrackingNumber(trackingNumber: string): Promise<boolean> {
     const record = await this.kysely

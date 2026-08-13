@@ -7,6 +7,7 @@ import { RoleType } from '../../../../authorization/domain/enums/role.enum';
 import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { ShipmentRequestQueryService } from '../../application/services/shipment-request.query.service';
 import { ShipmentRequestQueryDto } from '../../application/dtos/requests/shipment-request-query.dto';
+import { ApiCursorPaginationQuery } from '../../../../../common/pagination/cursor/decorators/api-cursor-pagination-query.decorator';
 
 @ApiTags('Shipment Requests')
 @ApiBearerAuth()
@@ -40,6 +41,7 @@ export class ShipmentRequestController {
     RoleType.TENANT_ADMIN,
     RoleType.EMPLOYEE,
   )
+  @ApiCursorPaginationQuery()
   async findMany(@Query() query: ShipmentRequestQueryDto) {
     return this.queryService.findMany(query);
   }

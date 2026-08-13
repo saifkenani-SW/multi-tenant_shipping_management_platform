@@ -38,11 +38,6 @@ export class CreateShipmentParcelDto {
   @IsOptional()
   parcelType?: ParcelType;
 
-  @ApiPropertyOptional({ enum: ServiceLevel, default: ServiceLevel.STANDARD })
-  @IsEnum(ServiceLevel)
-  @IsOptional()
-  serviceLevel?: ServiceLevel;
-
   @ApiProperty({ description: 'Actual weight in kilograms', example: 12.5 })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
@@ -116,6 +111,18 @@ export class CreateShipmentDto {
   @IsOptional()
   senderNationalId?: string;
 
+  @ApiProperty({ maxLength: 255 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  senderName: string;
+
+  @ApiProperty({ maxLength: 50 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(50)
+  senderPhone: string;
+
   @ApiPropertyOptional({
     description:
       'Shipment request being converted. When present it is marked converted in the same transaction.',
@@ -123,11 +130,6 @@ export class CreateShipmentDto {
   @IsUUID()
   @IsOptional()
   shipmentRequestId?: string;
-
-  @ApiPropertyOptional({ description: 'Quotation the customer approved' })
-  @IsUUID()
-  @IsOptional()
-  approvedQuotationId?: string;
 
   @ApiProperty({ description: 'Organization unit the shipment starts from' })
   @IsUUID()

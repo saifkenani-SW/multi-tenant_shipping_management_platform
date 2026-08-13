@@ -15,16 +15,14 @@ export class ParcelResponseDto {
   trackingNumber: string;
 
   @ApiPropertyOptional({ nullable: true })
-  description?: string | null;
+  description: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  category?: string | null;
+  category: string | null;
 
   @ApiProperty()
   parcelType: string;
 
-  @ApiProperty()
-  serviceLevel: string;
 
   @ApiProperty()
   actualWeightKg: number;
@@ -39,7 +37,7 @@ export class ParcelResponseDto {
   heightCm: number;
 
   @ApiPropertyOptional({ nullable: true })
-  volumetricWeightKg?: number | null;
+  volumetricWeightKg: number | null;
 
   @ApiProperty()
   isFragile: boolean;
@@ -57,17 +55,17 @@ export class ParcelResponseDto {
   currentCondition: ParcelCondition;
 
   @ApiPropertyOptional({ nullable: true })
-  currentOrgUnitId?: string | null;
+  currentOrgUnitId: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  destinationOrgUnitId?: string | null;
+  destinationOrgUnitId: string | null;
 
   @ApiPropertyOptional({
     description:
       'Storage key of the generated label. Resolve to a URL through the storage provider.',
     nullable: true,
   })
-  labelKey?: string | null;
+  labelKey: string | null;
 
   @ApiProperty({ description: 'Optimistic locking version' })
   version: number;

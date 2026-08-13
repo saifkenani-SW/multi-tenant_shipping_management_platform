@@ -11,6 +11,7 @@ export interface ShipmentMergedCriteria {
   originOrgUnitIds?: string[];
   destinationOrgUnitId?: string;
   status?: ShipmentStatus;
+  senderPhone?: string;
   receiverPhone?: string;
 
   // Pagination

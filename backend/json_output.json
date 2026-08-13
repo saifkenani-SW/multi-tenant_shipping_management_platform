@@ -1,0 +1,195 @@
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppConfigModule dependencies initialized[39m[38;5;3m +43ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPassportModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCaslModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCaslModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mPdfGeneratorModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mContextModule dependencies initialized[39m[38;5;3m +2ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigHostModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mJwtModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mThrottlerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLabelGeneratorModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStorageModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mConfigModule dependencies initialized[39m[38;5;3m +22ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEventEmitterModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLoggerModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMailModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCaslModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDatabaseModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthorizationModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCacheModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUserModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTrackingModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mSubscriptionPlanModule dependencies initialized[39m[38;5;3m +3ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mVehicleModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mGlobalLocationModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mCustomerModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthorizationModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAuthModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mTenantModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmployeeModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mOrganizationModule dependencies initialized[39m[38;5;3m +1ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mEmployee2Module dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mShipmentRequestModule dependencies initialized[39m[38;5;3m +0ms[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mConnecting to the database...[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mDatabase connected successfully.[39m
+🟢 Redis connected successfully!
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+prisma:query INSERT INTO "public"."permission" ("id","name","resource","action","description") VALUES ($1,$2,$3,$4,$5) ON CONFLICT ("name") DO UPDATE SET "resource" = $6, "action" = $7, "description" = $8 WHERE ("public"."permission"."name" = $9 AND 1=1) RETURNING "public"."permission"."id", "public"."permission"."name", "public"."permission"."resource", "public"."permission"."action", "public"."permission"."description"
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[PermissionSeederService] [39m[32mSynced 10 permissions from the code catalog[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:41 PM [32m    LOG[39m [38;5;3m[PdfGeneratorService] [39m[32mInitializing Chromium browser for PDF generation...[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [32m    LOG[39m [38;5;3m[PdfGeneratorService] [39m[32mChromium browser initialized successfully.[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[Cacheable] [39m[95mIntercept "findCandidatesByGlobalLocation"[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[CacheFacade] [39m[95mREMEMBER key="organization-unit:candidates:00000000-0000-7000-8000-000000000043:all"[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[Cacheable] [39m[95mIntercept "findCandidatesByGlobalLocation"[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[CacheFacade] [39m[95mREMEMBER key="organization-unit:candidates:00000000-0000-7000-8000-000000000046:all"[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[RedisCacheProvider] [39m[95mHIT key="organization-unit:candidates:00000000-0000-7000-8000-000000000043:all"[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[RedisCacheProvider] [39m[95mHIT key="organization-unit:candidates:00000000-0000-7000-8000-000000000046:all"[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[Cacheable] [39m[95mIntercept "getTenantPricingSettingsBatch"[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[CacheFacade] [39m[95mREMEMBER_MANY prefix="tenant:pricing_settings" requested=2[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[RedisCacheProvider] [39m[95mMGET requested=2 hit=2 miss=0[39m
+[95m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [95m  DEBUG[39m [38;5;3m[RedisCacheProvider] [39m[95mRETURN count=2[39m
+[
+  {
+    "id": "019fe0ce-924c-728d-9a58-853117c79373",
+    "tenantId": "00000000-0000-7000-8000-000000000101",
+    "originOrgUnitId": "00000000-0000-7000-8000-000000000501",
+    "destinationOrgUnitId": "00000000-0000-7000-8000-000000000502",
+    "serviceLevel": "STANDARD",
+    "quotationType": "AUTOMATIC",
+    "basePrice": 25,
+    "weightCharge": 12.5,
+    "extraFees": 0,
+    "amount": 37.5,
+    "currency": "USD",
+    "pricingSnapshot": {
+      "expectedTotalWeightKg": 10,
+      "expectedLengthCm": 20,
+      "expectedWidthCm": 20,
+      "expectedHeightCm": 20,
+      "volumetricDivisor": 5000,
+      "basePrice": 25,
+      "baseWeightKg": 5,
+      "pricePerExtraKg": 2.5,
+      "calculatedVolumetricWeightKg": 1.6,
+      "calculatedChargeableWeightKg": 10
+    },
+    "validUntil": null,
+    "status": "PENDING"
+  },
+  {
+    "id": "019fe0ce-924d-753b-a774-c2aa622de101",
+    "tenantId": "00000000-0000-7000-8000-000000000101",
+    "originOrgUnitId": "00000000-0000-7000-8000-000000000501",
+    "destinationOrgUnitId": "00000000-0000-7000-8000-000000000502",
+    "serviceLevel": "EXPRESS",
+    "quotationType": "AUTOMATIC",
+    "basePrice": 40,
+    "weightCharge": 12.5,
+    "extraFees": 0,
+    "amount": 52.5,
+    "currency": "USD",
+    "pricingSnapshot": {
+      "expectedTotalWeightKg": 10,
+      "expectedLengthCm": 20,
+      "expectedWidthCm": 20,
+      "expectedHeightCm": 20,
+      "volumetricDivisor": 5000,
+      "basePrice": 40,
+      "baseWeightKg": 5,
+      "pricePerExtraKg": 2.5,
+      "calculatedVolumetricWeightKg": 1.6,
+      "calculatedChargeableWeightKg": 10
+    },
+    "validUntil": null,
+    "status": "PENDING"
+  },
+  {
+    "id": "019fe0ce-924d-753b-a774-c4dfcc969d0a",
+    "tenantId": "00000000-0000-7000-8000-000000000101",
+    "originOrgUnitId": "00000000-0000-7000-8000-000000000504",
+    "destinationOrgUnitId": "00000000-0000-7000-8000-000000000502",
+    "serviceLevel": "STANDARD",
+    "quotationType": "AUTOMATIC",
+    "basePrice": 25,
+    "weightCharge": 12.5,
+    "extraFees": 0,
+    "amount": 37.5,
+    "currency": "USD",
+    "pricingSnapshot": {
+      "expectedTotalWeightKg": 10,
+      "expectedLengthCm": 20,
+      "expectedWidthCm": 20,
+      "expectedHeightCm": 20,
+      "volumetricDivisor": 5000,
+      "basePrice": 25,
+      "baseWeightKg": 5,
+      "pricePerExtraKg": 2.5,
+      "calculatedVolumetricWeightKg": 1.6,
+      "calculatedChargeableWeightKg": 10
+    },
+    "validUntil": null,
+    "status": "PENDING"
+  },
+  {
+    "id": "019fe0ce-924d-753b-a774-ca099ef62e3f",
+    "tenantId": "00000000-0000-7000-8000-000000000101",
+    "originOrgUnitId": "00000000-0000-7000-8000-000000000504",
+    "destinationOrgUnitId": "00000000-0000-7000-8000-000000000502",
+    "serviceLevel": "EXPRESS",
+    "quotationType": "AUTOMATIC",
+    "basePrice": 40,
+    "weightCharge": 12.5,
+    "extraFees": 0,
+    "amount": 52.5,
+    "currency": "USD",
+    "pricingSnapshot": {
+      "expectedTotalWeightKg": 10,
+      "expectedLengthCm": 20,
+      "expectedWidthCm": 20,
+      "expectedHeightCm": 20,
+      "volumetricDivisor": 5000,
+      "basePrice": 40,
+      "baseWeightKg": 5,
+      "pricePerExtraKg": 2.5,
+      "calculatedVolumetricWeightKg": 1.6,
+      "calculatedChargeableWeightKg": 10
+    },
+    "validUntil": null,
+    "status": "PENDING"
+  },
+  {
+    "id": "019fe0ce-924d-753b-a774-cd9a38766825",
+    "tenantId": "00000000-0000-7000-8000-000000000102",
+    "originOrgUnitId": "00000000-0000-7000-8000-000000001505",
+    "destinationOrgUnitId": "00000000-0000-7000-8000-000000001506",
+    "serviceLevel": "STANDARD",
+    "quotationType": "MANUAL",
+    "basePrice": null,
+    "weightCharge": null,
+    "extraFees": null,
+    "amount": null,
+    "currency": "USD",
+    "pricingSnapshot": null,
+    "validUntil": null,
+    "status": "WAITING_PRICING",
+    "notes": "Tenant volumetric settings are missing or divisor is zero"
+  }
+]
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [32m    LOG[39m [38;5;3m[PdfGeneratorService] [39m[32mClosing Chromium browser...[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [32m    LOG[39m [38;5;3m[PdfGeneratorService] [39m[32mChromium browser closed.[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [32m    LOG[39m [38;5;3m[RedisCacheProvider] [39m[32mRedis connection closed.[39m
+[32m[Nest] 268798  - [39m08/08/2026, 12:57:42 PM [32m    LOG[39m [38;5;3m[PrismaService] [39m[32mClosing database connection...[39m

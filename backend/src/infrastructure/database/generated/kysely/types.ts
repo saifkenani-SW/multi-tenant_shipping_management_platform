@@ -286,10 +286,11 @@ export type customer_shipment = {
     version: Generated<number>;
     tenant_id: string;
     sender_national_id: string | null;
+    sender_name: string;
+    sender_phone: string;
     sender_customer_profile_id: string;
     receiver_customer_profile_id: string | null;
     shipment_request_id: string | null;
-    approved_quotation_id: string | null;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
     service_level: Generated<ServiceLevel>;
@@ -300,6 +301,8 @@ export type customer_shipment = {
     status: Generated<ShipmentStatus>;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
+    created_by_employee_id: string | null;
+    created_by_employee_name: string | null;
 };
 export type customer_tenant = {
     id: string;
@@ -411,7 +414,6 @@ export type parcel = {
     description: string | null;
     category: string | null;
     parcel_type: Generated<ParcelType>;
-    service_level: Generated<ServiceLevel>;
     is_fragile: Generated<boolean>;
     requires_upright_handling: Generated<boolean>;
     temperature_sensitive: Generated<boolean>;
@@ -705,6 +707,19 @@ export type trip = {
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };
+export type user_device_token = {
+    id: string;
+    user_id: string;
+    /**
+     * الـ FCM token الذي يُرسله التطبيق عند تسجيل الدخول
+     */
+    fcm_token: string;
+    /**
+     * نوع الجهاز: android / ios / web
+     */
+    platform: string;
+    created_at: Generated<Timestamp>;
+};
 export type user_session = {
     id: string;
     user_id: string;
@@ -793,6 +808,7 @@ export type DB = {
     tenant_zone: tenant_zone;
     transport_manifest: transport_manifest;
     trip: trip;
+    user_device_token: user_device_token;
     user_session: user_session;
     users: users;
     vehicle: vehicle;

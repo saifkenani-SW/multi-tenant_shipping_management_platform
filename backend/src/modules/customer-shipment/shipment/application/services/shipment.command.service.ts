@@ -19,6 +19,7 @@ import { ShipmentPolicy } from '../../domain/authorization/policies/shipment.pol
 import { ShipmentAction } from '../../domain/authorization/actions/shipment.action';
 import { TenantFacade } from '../../../../tenant/application/facades/tenant.facade';
 import { CustomerFacade } from '../../../../customer/facades/customer.facade';
+import { EmployeeFacade } from '../../../../employee/facades/employee.facade';
 import { ShipmentRequestFacade } from '../../../../shipment-request/facades/shipment-request.facade';
 import { LabelGeneratorService } from '../../../../../packages/label-generator/services/label-generator.service';
 import { PdfGeneratorService } from '../../../../../packages/pdf-generator/services/pdf-generator.service';
@@ -65,6 +66,7 @@ export class ShipmentCommandService {
     private readonly queryService: ShipmentQueryService,
     private readonly tenantFacade: TenantFacade,
     private readonly customerFacade: CustomerFacade,
+    private readonly employeeFacade: EmployeeFacade,
     private readonly shipmentRequestFacade: ShipmentRequestFacade,
     private readonly labelGenerator: LabelGeneratorService,
     private readonly pdfGenerator: PdfGeneratorService,
@@ -88,6 +90,7 @@ export class ShipmentCommandService {
   async createShipment(
     tenantId: string,
     dto: CreateShipmentDto,
+    employeeId?: string,
   ): Promise<{ id: string }> {
     const settings = await this.tenantFacade.getTenantSettings(tenantId);
 
@@ -131,11 +134,17 @@ export class ShipmentCommandService {
       0,
     );
 
+    const employeeName = employeeId
+      ? await this.employeeFacade.getEmployeeName(employeeId)
+      : null;
+
     return this.persistShipment(
       tenantId,
       dto,
       prepared,
       totalChargeableWeightKg,
+      employeeId,
+      employeeName,
     );
   }
 
@@ -149,14 +158,17 @@ export class ShipmentCommandService {
     dto: CreateShipmentDto,
     prepared: PreparedParcel[],
     totalChargeableWeightKg: number,
+    employeeId?: string | null,
+    employeeName?: string | null,
   ): Promise<{ id: string }> {
     const shipment = await this.commandRepository.create({
       tenantId,
       senderCustomerProfileId: dto.senderCustomerProfileId,
+      senderName: dto.senderName,
+      senderPhone: dto.senderPhone,
       receiverCustomerProfileId: dto.receiverCustomerProfileId ?? null,
       senderNationalId: dto.senderNationalId ?? null,
       shipmentRequestId: dto.shipmentRequestId ?? null,
-      approvedQuotationId: dto.approvedQuotationId ?? null,
       originOrgUnitId: dto.originOrgUnitId,
       destinationOrgUnitId: dto.destinationOrgUnitId,
       serviceLevel: dto.serviceLevel ?? ServiceLevel.STANDARD,
@@ -166,6 +178,8 @@ export class ShipmentCommandService {
         dto.paymentResponsibility ?? PaymentResponsibility.SENDER,
       totalChargeableWeightKg,
       status: ShipmentStatus.PROCESSING,
+      createdByEmployeeId: employeeId,
+      createdByEmployeeName: employeeName,
     });
 
     for (const parcel of prepared) {
@@ -176,8 +190,6 @@ export class ShipmentCommandService {
         description: parcel.dto.description ?? null,
         category: parcel.dto.category ?? null,
         parcelType: parcel.dto.parcelType ?? ParcelType.PACKAGE,
-        serviceLevel:
-          parcel.dto.serviceLevel ?? dto.serviceLevel ?? ServiceLevel.STANDARD,
         isFragile: parcel.dto.isFragile ?? false,
         requiresUprightHandling: parcel.dto.requiresUprightHandling ?? false,
         temperatureSensitive: parcel.dto.temperatureSensitive ?? false,
@@ -336,7 +348,7 @@ export class ShipmentCommandService {
           },
           {
             label: 'Service',
-            value: parcel.serviceLevel ?? dto.serviceLevel ?? 'STANDARD',
+            value: dto.serviceLevel ?? 'STANDARD',
           },
         ],
       });

@@ -12,6 +12,7 @@ import { ProofOfDeliveryQueryRepository } from '../../infrastructure/repositorie
 import { ParcelQueryRepository } from '../../../parcel/infrastructure/repositories/parcel.query.repository';
 import { ParcelCommandRepository } from '../../../parcel/infrastructure/repositories/parcel.command.repository';
 import { ShipmentStatusRecalculator } from '../../../shipment/application/services/shipment-status.recalculator';
+import { EmployeeFacade } from '../../../../employee/facades/employee.facade';
 import { RecordDeliveryDto } from '../dtos/requests/record-delivery.dto';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class ProofOfDeliveryCommandService {
     private readonly parcelCommandRepository: ParcelCommandRepository,
     private readonly trackingFacade: TrackingFacade,
     private readonly shipmentRecalculator: ShipmentStatusRecalculator,
+    private readonly employeeFacade: EmployeeFacade,
   ) {}
 
   /**
@@ -35,24 +37,29 @@ export class ProofOfDeliveryCommandService {
    */
   @Authorize({
     policy: Policy(PodPolicy, PodAction.Record),
-    payloadResolver: (parcelId: string) => ({ parcelId }),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
   @Transactional()
   async recordDelivery(
-    parcelId: string,
+    trackingNumber: string,
     dto: RecordDeliveryDto,
-    actor: { employeeId: string; employeeName: string },
+    actor: { employeeId: string },
   ): Promise<{ id: string }> {
-    if (await this.queryRepository.existsForParcel(parcelId)) {
-      throw new ConflictException(
-        'This parcel already has a proof of delivery.',
+    // Resolve the tracking number to the aggregate carrying its optimistic-lock
+    // version. The UUID is only used internally from this point onward.
+    const parcel =
+      await this.parcelQueryRepository.findAggregateByTrackingNumber(
+        trackingNumber,
       );
-    }
-
-    const parcel = await this.parcelQueryRepository.findAggregateById(parcelId);
 
     if (!parcel) {
       throw new ConflictException('Parcel not found.');
+    }
+
+    if (await this.queryRepository.existsForParcel(parcel.id)) {
+      throw new ConflictException(
+        'This parcel already has a proof of delivery.',
+      );
     }
 
     // A parcel cannot be proven delivered before it is collectable.
@@ -63,7 +70,7 @@ export class ProofOfDeliveryCommandService {
 
     const created = await this.commandRepository.create({
       tenantId: parcel.tenantId,
-      parcelId,
+      parcelId: parcel.id,
       deliveredByEmployeeId: actor.employeeId,
       collectionMethod: dto.collectionMethod ?? CollectionMethod.CUSTOMER,
       receivedByName: dto.receivedByName,
@@ -84,21 +91,22 @@ export class ProofOfDeliveryCommandService {
       parcel.transitionTo(ParcelStatus.COLLECTED);
 
       await this.parcelCommandRepository.updateStatus(
-        parcelId,
+        parcel.id,
         parcel.currentStatus,
         parcel.version,
       );
 
       const movement: AppendParcelMovementCommand = {
         tenantId: parcel.tenantId,
-        parcelId,
+        parcelId: parcel.id,
         performedByEmployeeId: actor.employeeId,
         actionType: ActionType.POD_COMPLETED,
         previousStatus,
         newStatus: parcel.currentStatus,
         previousCondition: parcel.currentCondition,
         newCondition: parcel.currentCondition,
-        performedByName: actor.employeeName,
+        performedByName:
+          (await this.employeeFacade.getEmployeeName(actor.employeeId)) ?? '',
         notes: `Received by ${dto.receivedByName}`,
       };
 

@@ -21,34 +21,34 @@ export class ProofOfDeliveryResponseDto {
   receivedByName: string;
 
   @ApiPropertyOptional({ nullable: true })
-  receivedByNationalId?: string | null;
+  receivedByNationalId: string | null;
 
   @ApiProperty()
   otpVerified: boolean;
 
   @ApiPropertyOptional({ nullable: true })
-  otpVerifiedAt?: Date | null;
+  otpVerifiedAt: Date | null;
 
   @ApiPropertyOptional({
     description: 'Storage key, resolve to a URL through the storage provider',
     nullable: true,
   })
-  signatureKey?: string | null;
+  signatureKey: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  idPhotoKey?: string | null;
+  idPhotoKey: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  parcelPhotoKey?: string | null;
+  parcelPhotoKey: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  additionalPhotoKey?: string | null;
+  additionalPhotoKey: string | null;
 
   @ApiPropertyOptional({ nullable: true })
-  deliveryLat?: number | null;
+  deliveryLat: number | null;
 
   @ApiPropertyOptional({ nullable: true })
-  deliveryLng?: number | null;
+  deliveryLng: number | null;
 
   @ApiProperty()
   createdAt: Date;
