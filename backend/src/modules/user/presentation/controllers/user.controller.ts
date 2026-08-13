@@ -2,8 +2,8 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateUserDto } from '../../application/dtos/requests/create-user.dto';
 import { UserCommandService } from '../../application/services/user.command.service';
-import { Roles } from '../../../../common/authorization';
-import { RoleType } from '../../../authorization';
+import { RoleType } from '../../../authorization/domain/enums/role.enum';
+import { Roles } from '../../../../common/authorization/decorators/roles.decorator';
 
 @ApiTags('Users')
 @Controller('users')
