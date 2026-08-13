@@ -20,9 +20,7 @@ import {
 } from '@nestjs/swagger';
 
 import { BaseUuidParamDto } from '../../core/dtos/base-uuid-param.dto';
-import { RequireTypes } from '../auth/authorization/decorators/require-types.decorator';
 import { UserTypeGuard } from '../auth/authorization/guards/user-type.guard';
-import { UserLoginType } from '../auth/types/auth.types';
 
 import { CreateRoleDto } from './dtos/requests/create-role.dto';
 import { RoleQueryDto } from './dtos/requests/role-query.dto';
@@ -31,6 +29,8 @@ import { UpdateRoleDto } from './dtos/requests/update-role.dto';
 import { RoleDetailsDto } from './dtos/responses/role-details.dto';
 import { PaginatedRoleListDto } from './dtos/responses/role-list.dto';
 import { RoleService } from './services/role.service';
+import { Roles } from '../../common/authorization';
+import { RoleType } from './domain/enums/role.enum';
 
 @ApiTags('Roles')
 @ApiBearerAuth()
@@ -40,7 +40,7 @@ export class RoleController {
   constructor(private readonly roleService: RoleService) {}
 
   @Post()
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Create a role' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -52,7 +52,7 @@ export class RoleController {
   }
 
   @Get()
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'List roles' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -64,7 +64,7 @@ export class RoleController {
   }
 
   @Get(':id')
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get role details including its permissions' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -79,7 +79,7 @@ export class RoleController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update a role' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -94,7 +94,7 @@ export class RoleController {
 
   @Put(':id/permissions')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({
     summary: 'Replace the permissions granted to a role',
     description:
@@ -113,7 +113,7 @@ export class RoleController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({
     summary: 'Delete a role',
     description: 'Fails while the role is still assigned to employees.',

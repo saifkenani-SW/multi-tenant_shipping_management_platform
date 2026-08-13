@@ -4,7 +4,6 @@ import {
   HttpStatus,
   Param,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -14,24 +13,21 @@ import {
 } from '@nestjs/swagger';
 
 import { BaseUuidParamDto } from '../../core/dtos/base-uuid-param.dto';
-import { RequireTypes } from '../auth/authorization/decorators/require-types.decorator';
-import { UserTypeGuard } from '../auth/authorization/guards/user-type.guard';
-import { UserLoginType } from '../auth/types/auth.types';
-
 import { PermissionQueryDto } from './dtos/requests/permission-query.dto';
 import { PermissionDetailsDto } from './dtos/responses/permission-details.dto';
 import { PaginatedPermissionListDto } from './dtos/responses/permission-list.dto';
 import { PermissionService } from './services/permission.service';
+import { Roles } from '../../common/authorization';
+import { RoleType } from './domain/enums/role.enum';
 
 @ApiTags('Permissions')
 @ApiBearerAuth()
-@UseGuards(UserTypeGuard)
 @Controller('permissions')
 export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Get()
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'List the permission catalog' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -45,7 +41,7 @@ export class PermissionController {
   }
 
   @Get(':id')
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get permission details' })
   @ApiResponse({
     status: HttpStatus.OK,

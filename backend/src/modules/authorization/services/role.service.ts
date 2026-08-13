@@ -61,9 +61,10 @@ export class RoleService {
     keyBuilder: (id: string) => ['roles', 'details', id],
   })
   async updateRole(id: string, dto: UpdateRoleDto): Promise<void> {
+    const tenantId = this.resolveTenantId();
     const role = await this.roleRepository.findById(id);
 
-    if (!role) {
+    if (!role || role.tenantId !== tenantId) {
       throw new RoleNotFoundException();
     }
 
@@ -92,9 +93,10 @@ export class RoleService {
     keyBuilder: (id: string) => ['roles', 'details', id],
   })
   async deleteRole(id: string): Promise<void> {
+    const tenantId = this.resolveTenantId();
     const role = await this.roleRepository.findById(id);
 
-    if (!role) {
+    if (!role || role.tenantId !== tenantId) {
       throw new RoleNotFoundException();
     }
 
@@ -118,9 +120,10 @@ export class RoleService {
     id: string,
     dto: SetRolePermissionsDto,
   ): Promise<void> {
+    const tenantId = this.resolveTenantId();
     const role = await this.roleRepository.findById(id);
 
-    if (!role) {
+    if (!role || role.tenantId !== tenantId) {
       throw new RoleNotFoundException();
     }
 
@@ -130,7 +133,7 @@ export class RoleService {
   }
 
   async findRoles(query: RoleQueryDto): Promise<PaginatedRoleListDto> {
-    const tenantId = this.requestContext.getPrincipal()?.tenantId;
+    const tenantId = this.resolveTenantId();
     const [items, total] = await this.roleRepository.findMany(query, tenantId);
 
     const pagination = new Pagination({
@@ -142,9 +145,10 @@ export class RoleService {
   }
 
   async getRoleDetails(id: string): Promise<RoleDetailsDto> {
+    const tenantId = this.resolveTenantId();
     const role = await this.roleRepository.findByIdWithPermissions(id);
 
-    if (!role) {
+    if (!role || role.tenantId !== tenantId) {
       throw new RoleNotFoundException();
     }
 
