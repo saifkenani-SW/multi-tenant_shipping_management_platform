@@ -107,11 +107,16 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     return employeeId;
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.LIST, allEntries: true })
-  @CacheEvict({
-    keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict([
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
+      keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
+    },
+  ])
   @Authorize({
     policy: Policy(EmployeePolicy, EmployeeAction.Update),
     payloadResolver: (employeeId: string, dto: UpdateEmployeeDto) => ({
@@ -141,11 +146,16 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     });
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.LIST, allEntries: true })
-  @CacheEvict({
-    keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict([
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
+      keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
+    },
+  ])
   @Authorize({
     policy: Policy(EmployeePolicy, EmployeeAction.ChangeStatus),
     payloadResolver: (employeeId: string) => ({ employeeId }),
@@ -160,11 +170,16 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     await this.permissionCacheService.invalidateUserAccess(employee.userId);
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.LIST, allEntries: true })
-  @CacheEvict({
-    keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict([
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
+      keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
+    },
+  ])
   @Authorize({
     policy: Policy(EmployeePolicy, EmployeeAction.ChangeStatus),
     payloadResolver: (employeeId: string) => ({ employeeId }),
@@ -176,11 +191,16 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     await this.permissionCacheService.invalidateUserAccess(employee.userId);
   }
 
-  @CacheEvict({
-    keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
-  })
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.LIST, allEntries: true })
+  @CacheEvict([
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
+      keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
+    },
+  ])
   @Authorize({
     policy: Policy(EmployeePolicy, EmployeeAction.ManageAssignments),
     payloadResolver: (employeeId: string) => ({ employeeId }),
@@ -216,11 +236,16 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     return assignmentId;
   }
 
-  @CacheEvict({
-    keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
-  })
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.LIST, allEntries: true })
+  @CacheEvict([
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
+      keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
+    },
+  ])
   @Authorize({
     policy: Policy(EmployeePolicy, EmployeeAction.ManageAssignments),
     payloadResolver: (employeeId: string) => ({ employeeId }),
@@ -234,10 +259,12 @@ export class EmployeeCommandService implements IEmployeeCommandService {
     await this.permissionCacheService.invalidateUserAccess(employee.userId);
   }
 
-  @CacheEvict({
-    keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict([
+    {
+      keyPrefix: EMPLOYEE_CACHE_KEYS.DETAILS,
+      keyBuilder: (id: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
+    },
+  ])
   @Authorize({
     policy: Policy(EmployeePolicy, EmployeeAction.ManageAssignments),
     payloadResolver: (employeeId: string) => ({ employeeId }),

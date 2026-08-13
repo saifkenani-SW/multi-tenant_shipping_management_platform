@@ -89,7 +89,6 @@ export class ShipmentRequestSeeder implements Seeder {
       create: {
         id: shipmentId,
         tenant_id: tenant1.id,
-        sender_customer_profile_id: customer.id,
         shipment_request_id: request.id,
         origin_org_unit_id: orgUnit.id,
         destination_org_unit_id: orgUnit.id,

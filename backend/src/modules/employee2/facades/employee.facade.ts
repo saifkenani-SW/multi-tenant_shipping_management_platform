@@ -17,5 +17,12 @@ export class EmployeeFacade {
     }
   }
 
-  // Add more methods here as needed by other modules
+  async getEmployeeName(id: string): Promise<string> {
+    try {
+      const employee = await this.queryService.findById(id);
+      return employee.fullName;
+    } catch {
+      return 'Unknown';
+    }
+  }
 }

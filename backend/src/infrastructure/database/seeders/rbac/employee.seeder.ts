@@ -93,7 +93,6 @@ export class EmployeeSeeder implements Seeder {
       });
 
       if (orgUnit) {
-        const assignmentId = `00000000-0000-7000-8000-00000000065${i}`;
         const assignment = await this.prisma.employee_assignment.upsert({
           where: {
             employee_id_organization_unit_id: {
@@ -103,7 +102,6 @@ export class EmployeeSeeder implements Seeder {
           },
           update: { is_active: true },
           create: {
-            id: assignmentId,
             tenant_id: tenant1.id,
             employee_id: emp.id,
             organization_unit_id: orgUnit.id,
@@ -112,7 +110,6 @@ export class EmployeeSeeder implements Seeder {
         });
 
         if (empData.role) {
-          const assignRoleId = `00000000-0000-7000-8000-00000000067${i}`;
           await this.prisma.assignment_role.upsert({
             where: {
               assignment_id_role_id: {
@@ -122,7 +119,6 @@ export class EmployeeSeeder implements Seeder {
             },
             update: {},
             create: {
-              id: assignRoleId,
               assignment_id: assignment.id,
               role_id: empData.role.id,
             },

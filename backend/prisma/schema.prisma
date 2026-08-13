@@ -35,6 +35,8 @@ enum ParcelStatus {
 
   IN_TRANSIT
 
+  ARRIVED_AT_UNIT
+
   READY_FOR_COLLECTION
 
   COLLECTED
@@ -309,232 +311,10 @@ model customer_profile {
   updated_at         DateTime            @updatedAt
   customer_address   customer_address[]
   users              users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  sender_shipments   customer_shipment[] @relation("SenderShipments")
-  receiver_shipments customer_shipment[] @relation("ReceiverShipments")
   customer_tenant    customer_tenant[]
   invoice            invoice[]
   shipment_request   shipment_request[]
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 model customer_shipment {
   id                           String                @id @default(uuid(7)) @db.Uuid
@@ -543,8 +323,6 @@ model customer_shipment {
   sender_national_id           String?               @db.VarChar(50)
   sender_name                  String                @db.VarChar(255)
   sender_phone                 String                @db.VarChar(50)
-  sender_customer_profile_id   String                @db.Uuid
-  receiver_customer_profile_id String?               @db.Uuid
   shipment_request_id          String?               @db.Uuid
   origin_org_unit_id           String                @db.Uuid
   destination_org_unit_id      String                @db.Uuid
@@ -559,8 +337,6 @@ model customer_shipment {
   created_by_employee_id       String?               @db.Uuid
   created_by_employee_name     String?               @db.VarChar(255)
 
-  sender_profile       customer_profile  @relation("SenderShipments", fields: [sender_customer_profile_id], references: [id], onUpdate: NoAction)
-  receiver_profile     customer_profile? @relation("ReceiverShipments", fields: [receiver_customer_profile_id], references: [id], onUpdate: NoAction)
   shipment_request     shipment_request? @relation(fields: [shipment_request_id], references: [id], onUpdate: NoAction)
   tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   created_by_employee  employee?         @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
@@ -570,8 +346,6 @@ model customer_shipment {
   parcel               parcel[]
   support_ticket       support_ticket[]
 
-  @@index([sender_customer_profile_id], map: "idx_customer_shipment_sender")
-  @@index([receiver_customer_profile_id], map: "idx_customer_shipment_receiver")
   @@index([tenant_id], map: "idx_customer_shipment_tenant")
 }
 model customer_tenant {
@@ -897,12 +671,12 @@ model quotation {
   created_at               DateTime        @default(now()) @db.Timestamp(6)
   updated_at               DateTime        @updatedAt
 
-  shipment_request     shipment_request    @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  approved_for_request shipment_request?   @relation("ApprovedQuotation")
-  employee             employee?           @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
-  tenant               tenant              @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  origin_org_unit      organization_unit   @relation("quotation_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  destination_org_unit organization_unit   @relation("quotation_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  shipment_request     shipment_request  @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  approved_for_request shipment_request? @relation("ApprovedQuotation")
+  employee             employee?         @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
+  tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  origin_org_unit      organization_unit @relation("quotation_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  destination_org_unit organization_unit @relation("quotation_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
 
   @@index([shipment_request_id])
   @@index([tenant_id])

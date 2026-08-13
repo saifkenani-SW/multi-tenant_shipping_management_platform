@@ -11,8 +11,8 @@ describe('CacheEvict Decorator', () => {
       rememberMany: jest.fn(),
       evict: jest.fn(),
       evictByPrefix: jest.fn(),
-    } as unknown as jest.Mocked<ICacheFacade>;
-
+      evictMany: jest.fn(),
+    };
     jest.spyOn(CacheContainer, 'get').mockReturnValue(cacheFacade);
   });
 
@@ -21,78 +21,101 @@ describe('CacheEvict Decorator', () => {
   });
 
   it('should evict specific key using keyPrefix', async () => {
-    class TestService {
+    class TestClass {
       @CacheEvict({ keyPrefix: 'prefix' })
-      async updateData(id: string) {
-        return 'success';
+      async testMethod(id: string) {
+        return `result-${id}`;
       }
     }
 
-    const service = new TestService();
-    const result = await service.updateData('123');
+    const instance = new TestClass();
+    const result = await instance.testMethod('123');
 
-    expect(result).toBe('success');
+    expect(result).toBe('result-123');
     expect(cacheFacade.evict).toHaveBeenCalledWith(['prefix', '123']);
   });
 
   it('should evict using keyBuilder', async () => {
-    class TestService {
+    class TestClass {
       @CacheEvict({
         keyPrefix: 'prefix',
-        keyBuilder: (id: string) => ['custom', id],
+        keyBuilder: (id: string, name: string) => ['custom', id, name],
       })
-      async updateData(id: string) {
-        return 'success';
+      async testMethod(id: string, name: string) {
+        return `result-${id}-${name}`;
       }
     }
 
-    const service = new TestService();
-    await service.updateData('123');
+    const instance = new TestClass();
+    const result = await instance.testMethod('123', 'test');
 
-    expect(cacheFacade.evict).toHaveBeenCalledWith(['custom', '123']);
+    expect(result).toBe('result-123-test');
+    expect(cacheFacade.evict).toHaveBeenCalledWith(['custom', '123', 'test']);
   });
 
   it('should evictByPrefix when allEntries is true', async () => {
-    class TestService {
+    class TestClass {
       @CacheEvict({ keyPrefix: 'prefix', allEntries: true })
-      async updateAll() {
-        return 'done';
+      async testMethod() {
+        return 'result';
       }
     }
 
-    const service = new TestService();
-    await service.updateAll();
+    const instance = new TestClass();
+    const result = await instance.testMethod();
 
+    expect(result).toBe('result');
     expect(cacheFacade.evictByPrefix).toHaveBeenCalledWith('prefix');
   });
 
+  it('should support array of eviction options', async () => {
+    class TestClass {
+      @CacheEvict([
+        { keyPrefix: 'list', allEntries: true },
+        { keyPrefix: 'details', keyBuilder: (id: string) => ['details', id] },
+      ])
+      async testMethod(id: string) {
+        return `result-${id}`;
+      }
+    }
+
+    const instance = new TestClass();
+    const result = await instance.testMethod('123');
+
+    expect(result).toBe('result-123');
+    expect(cacheFacade.evictByPrefix).toHaveBeenCalledWith('list');
+    expect(cacheFacade.evict).toHaveBeenCalledWith(['details', '123']);
+  });
+
   it('should preserve original exception and not evict', async () => {
-    class TestService {
+    class TestClass {
       @CacheEvict({ keyPrefix: 'prefix' })
-      async updateData() {
+      async testMethod() {
         throw new Error('Business Error');
       }
     }
 
-    const service = new TestService();
-    await expect(service.updateData()).rejects.toThrow('Business Error');
+    const instance = new TestClass();
+
+    await expect(instance.testMethod()).rejects.toThrow('Business Error');
     expect(cacheFacade.evict).not.toHaveBeenCalled();
+    expect(cacheFacade.evictByPrefix).not.toHaveBeenCalled();
   });
 
   it('should not affect business result if eviction fails', async () => {
-    cacheFacade.evict.mockRejectedValue(new Error('Eviction Error'));
+    cacheFacade.evict.mockRejectedValue(new Error('Redis Error'));
 
-    class TestService {
+    class TestClass {
       @CacheEvict({ keyPrefix: 'prefix' })
-      async updateData() {
-        return 'business-result';
+      async testMethod(id: string) {
+        return `result-${id}`;
       }
     }
 
-    const service = new TestService();
-    const result = await service.updateData();
+    const instance = new TestClass();
+    const result = await instance.testMethod('123');
 
-    expect(result).toBe('business-result');
+    expect(result).toBe('result-123');
     expect(cacheFacade.evict).toHaveBeenCalled();
   });
 });

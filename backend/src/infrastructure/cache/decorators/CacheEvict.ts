@@ -30,7 +30,9 @@ export interface CacheEvictOptions {
  *
  * إذا فشل حذف الكاش فلن يفشل الـ Command.
  */
-export function CacheEvict(options: CacheEvictOptions): MethodDecorator {
+export function CacheEvict(
+  options: CacheEvictOptions | CacheEvictOptions[],
+): MethodDecorator {
   return (
     _target: object,
     _propertyKey: string | symbol,
@@ -42,17 +44,22 @@ export function CacheEvict(options: CacheEvictOptions): MethodDecorator {
       const result = await originalMethod.apply(this, args);
 
       const cacheFacade = CacheContainer.get<ICacheFacade>(CACHE_FACADE);
+      const optionsArray = Array.isArray(options) ? options : [options];
 
       try {
-        if (options.allEntries) {
-          await cacheFacade.evictByPrefix(options.keyPrefix);
-        } else {
-          const keyParts = options.keyBuilder
-            ? options.keyBuilder(...args)
-            : [options.keyPrefix, ...args];
+        await Promise.all(
+          optionsArray.map(async (opt) => {
+            if (opt.allEntries) {
+              await cacheFacade.evictByPrefix(opt.keyPrefix);
+            } else {
+              const keyParts = opt.keyBuilder
+                ? opt.keyBuilder(...args)
+                : [opt.keyPrefix, ...args];
 
-          await cacheFacade.evict(keyParts);
-        }
+              await cacheFacade.evict(keyParts);
+            }
+          }),
+        );
       } catch (err) {
         logger.warn(
           `Cache eviction failed: ${
