@@ -5,12 +5,10 @@ import {
   Get,
   HttpCode,
   HttpStatus,
-  Inject,
   Param,
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -28,37 +26,34 @@ import { TenantSettingsDto } from '../../application/dtos/responses/tenant-setti
 import { UpdateTenantDeliverySettingsDto } from '../../application/dtos/requests/update-tenant-delivery-settings.dto';
 import { UpdateTenantOperationalSettingsDto } from '../../application/dtos/requests/update-tenant-operational-settings.dto';
 import { UpdateTenantPricingSettingsDto } from '../../application/dtos/requests/update-tenant-pricing-settings.dto';
-import { Roles } from '../../../../common/authorization/decorators/roles.decorator';
-import { RoleType } from '../../../authorization/domain/enums/role.enum';
 import type { JwtPayload } from '../../../auth/types/auth.types';
-import { UserLoginType } from '../../../auth/types/auth.types';
-import { RequireTypes } from '../../../auth/authorization/decorators/require-types.decorator';
 import { CurrentUser } from '../../../auth/decorators/current-user.decorator';
-import { UserTypeGuard } from '../../../auth/authorization/guards/user-type.guard';
 import { TenantQueryDto } from '../../application/dtos/requests/tenant-query.dto';
 import { AssignSubscriptionDto } from '../../application/dtos/requests/assign-subscription.dto';
-import { RenewSubscriptionDto } from '../../application/dtos/requests/renew-subscription.dto';
 import {
+  CancelSubscriptionDto,
   ReasonDto,
   SuspendSubscriptionDto,
-  CancelSubscriptionDto,
 } from '../../application/dtos/requests/subscription-action.dto';
 import { TenantSubscriptionDto } from '../../application/dtos/responses/tenant-subscription.dto';
 import { TenantSubscriptionHistoryDto } from '../../application/dtos/responses/tenant-subscription-history.dto';
 import { BaseUuidParamDto } from '../../../../core/dtos/base-uuid-param.dto';
+import { Roles } from 'src/common/authorization';
+import { RoleType } from 'src/modules/authorization';
+import { RequestContextService } from '../../../../packages/context/services/request-context.service';
 
 @ApiTags('Tenants')
 @ApiBearerAuth()
-@UseGuards(UserTypeGuard)
 @Controller('tenants')
 export class TenantController {
   constructor(
     private readonly tenantCommandService: TenantCommandService,
     private readonly tenantQueryService: TenantQueryService,
+    private readonly requestContext: RequestContextService,
   ) {}
 
   @Post()
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Create a new tenant (Platform Admin only)' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -71,7 +66,7 @@ export class TenantController {
   }
 
   @Get()
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'List all tenants (Platform Admin only)' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -85,7 +80,7 @@ export class TenantController {
   }
 
   @Get(':id')
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get tenant details' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -96,12 +91,18 @@ export class TenantController {
     @Param() params: BaseUuidParamDto,
   ): Promise<TenantDetailsDto> {
     const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
     return this.tenantQueryService.getTenantDetails(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Update tenant details' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -117,7 +118,7 @@ export class TenantController {
 
   @Post(':id/suspend')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Suspend a tenant (Platform Admin only)' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -133,7 +134,7 @@ export class TenantController {
 
   @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Activate a suspended tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -145,7 +146,7 @@ export class TenantController {
   }
 
   @Get(':id/subscriptions/active')
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get active subscription for a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -156,11 +157,17 @@ export class TenantController {
     @Param() params: BaseUuidParamDto,
   ): Promise<TenantSubscriptionDto | null> {
     const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
     return this.tenantQueryService.getTenantSubscription(id);
   }
 
   @Get(':id/subscriptions/history')
-  @RequireTypes(UserLoginType.PLATFORM_OWNER, UserLoginType.EMPLOYEE)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get subscription history for a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -171,12 +178,18 @@ export class TenantController {
     @Param() params: BaseUuidParamDto,
   ): Promise<TenantSubscriptionHistoryDto[]> {
     const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
     return this.tenantQueryService.getTenantSubscriptionHistory(id);
   }
 
   @Post(':id/subscriptions/assign')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Assign a subscription to a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -193,7 +206,7 @@ export class TenantController {
 
   @Post(':id/subscriptions/renew')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Renew or upgrade a subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -209,7 +222,7 @@ export class TenantController {
   }*/
   @Post(':id/subscriptions/suspend')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Suspend an active subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -226,7 +239,7 @@ export class TenantController {
 
   @Post(':id/subscriptions/resume')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Resume a suspended subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -243,7 +256,7 @@ export class TenantController {
 
   @Post(':id/subscriptions/cancel')
   @HttpCode(HttpStatus.OK)
-  //  @RequireTypes(UserLoginType.PLATFORM_OWNER)
+  @Roles(RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Cancel an active subscription' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -260,7 +273,7 @@ export class TenantController {
 
   @Patch(':id/settings/delivery')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update tenant delivery settings' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -271,12 +284,18 @@ export class TenantController {
     @Body() dto: UpdateTenantDeliverySettingsDto,
   ): Promise<void> {
     const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
     await this.tenantCommandService.updateDeliverySettings(id, dto);
   }
 
   @Patch(':id/settings/operational')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update tenant operational settings' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -287,12 +306,18 @@ export class TenantController {
     @Body() dto: UpdateTenantOperationalSettingsDto,
   ): Promise<void> {
     const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
     await this.tenantCommandService.updateOperationalSettings(id, dto);
   }
 
   @Patch(':id/settings/pricing')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update tenant pricing settings' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -303,12 +328,18 @@ export class TenantController {
     @Body() dto: UpdateTenantPricingSettingsDto,
   ): Promise<void> {
     const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
     await this.tenantCommandService.updatePricingSettings(id, dto);
   }
 
   @Get(':id/settings')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get all settings for a tenant' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -319,6 +350,12 @@ export class TenantController {
     @Param() params: BaseUuidParamDto,
   ): Promise<TenantSettingsDto> {
     const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
     return this.tenantQueryService.getTenantSettings(id);
   }
 }
