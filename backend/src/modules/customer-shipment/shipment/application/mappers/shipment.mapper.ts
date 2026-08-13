@@ -10,10 +10,8 @@ export class ShipmentMapper {
     return {
       id: record.id,
       tenantId: record.tenant_id,
-      senderCustomerProfileId: record.sender_customer_profile_id,
       senderName: record.sender_name,
       senderPhone: record.sender_phone,
-      receiverCustomerProfileId: record.receiver_customer_profile_id ?? null,
       originOrgUnitId: record.origin_org_unit_id,
       destinationOrgUnitId: record.destination_org_unit_id,
       receiverName: record.receiver_name,

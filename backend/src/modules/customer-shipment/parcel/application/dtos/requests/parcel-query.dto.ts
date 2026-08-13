@@ -1,13 +1,15 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { ParcelCondition, ParcelStatus } from '@prisma/client';
 import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { CursorPaginationQueryDto } from '../../../../../../common/pagination/cursor/dtos/cursor-pagination-query.dto';
 
 export class ParcelQueryDto extends CursorPaginationQueryDto {
-  @ApiPropertyOptional({ enum: ParcelStatus })
-  @IsEnum(ParcelStatus)
+  @ApiPropertyOptional({ enum: ParcelStatus, isArray: true, type: [String], description: 'Comma separated list of statuses' })
+  @IsEnum(ParcelStatus, { each: true })
   @IsOptional()
-  status?: ParcelStatus;
+  @Transform(({ value }) => (typeof value === 'string' ? value.split(',') : value))
+  statuses?: ParcelStatus[];
 
   @ApiPropertyOptional({ enum: ParcelCondition })
   @IsEnum(ParcelCondition)

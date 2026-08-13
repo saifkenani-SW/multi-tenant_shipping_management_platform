@@ -14,6 +14,11 @@ import { ParcelCommandRepository } from '../../../parcel/infrastructure/reposito
 import { ShipmentStatusRecalculator } from '../../../shipment/application/services/shipment-status.recalculator';
 import { EmployeeFacade } from '../../../../employee/facades/employee.facade';
 import { RecordDeliveryDto } from '../dtos/requests/record-delivery.dto';
+import { CUSTOMER_SHIPMENT_CACHE_KEYS } from '../../../constants/customer-shipment.cache.constants';
+import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
+import { Inject } from '@nestjs/common';
+import type { ICacheFacade } from '../../../../../core/cache/interfaces/ICacheFacade';
+import { CACHE_FACADE } from '../../../../../core/cache/tokens/cache.tokens';
 
 @Injectable()
 export class ProofOfDeliveryCommandService {
@@ -25,6 +30,8 @@ export class ProofOfDeliveryCommandService {
     private readonly trackingFacade: TrackingFacade,
     private readonly shipmentRecalculator: ShipmentStatusRecalculator,
     private readonly employeeFacade: EmployeeFacade,
+    @Inject(CACHE_FACADE)
+    private readonly cache: ICacheFacade,
   ) {}
 
   /**
@@ -38,6 +45,10 @@ export class ProofOfDeliveryCommandService {
   @Authorize({
     policy: Policy(PodPolicy, PodAction.Record),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
+    allEntries: true,
   })
   @Transactional()
   async recordDelivery(
@@ -115,6 +126,20 @@ export class ProofOfDeliveryCommandService {
       await this.shipmentRecalculator.recalculateFromParcels(
         parcel.customerShipmentId,
       );
+
+      // Evict specific details since trackingNumber argument isn't enough for the decorator
+      await this.cache.evict([
+        CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+        parcel.id,
+      ]);
+      await this.cache.evict([
+        CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+        trackingNumber,
+      ]);
+      await this.cache.evict([
+        CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
+        parcel.customerShipmentId,
+      ]);
     }
 
     return created;

@@ -3,10 +3,10 @@ import { ParcelCondition, ParcelStatus } from '@prisma/client';
 export interface ParcelMergedCriteria {
   tenantId?: string;
   customerShipmentId?: string;
-  status?: ParcelStatus;
+  statuses?: ParcelStatus[];
   condition?: ParcelCondition;
   currentOrgUnitId?: string;
-  destinationOrgUnitIds?: string[];
+  scopeOrgUnitIds?: string[];
 
   cursor?: string;
   limit?: number;

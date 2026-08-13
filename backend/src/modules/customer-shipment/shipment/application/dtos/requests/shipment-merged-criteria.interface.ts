@@ -6,13 +6,13 @@ import { ShipmentStatus } from '@prisma/client';
  */
 export interface ShipmentMergedCriteria {
   tenantId?: string;
-  senderCustomerProfileId?: string;
   originOrgUnitId?: string;
-  originOrgUnitIds?: string[];
+  orgUnitIds?: string[];
   destinationOrgUnitId?: string;
   status?: ShipmentStatus;
   senderPhone?: string;
   receiverPhone?: string;
+  customerPhone?: string;
 
   // Pagination
   cursor?: string;

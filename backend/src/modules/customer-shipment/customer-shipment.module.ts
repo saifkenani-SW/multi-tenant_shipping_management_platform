@@ -9,6 +9,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { CustomerModule } from '../customer/customer.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { ShipmentRequestModule } from '../shipment-request/shipment-request.module';
+import { OrganizationModule } from '../organization/organization.module';
 
 // Shipment
 import { ShipmentController } from './shipment/presentation/controllers/shipment.controller';
@@ -19,11 +20,6 @@ import { ShipmentCommandRepository } from './shipment/infrastructure/repositorie
 import { ShipmentQueryRepository } from './shipment/infrastructure/repositories/shipment.query.repository';
 import { ShipmentMapper } from './shipment/application/mappers/shipment.mapper';
 import { ShipmentPolicy } from './shipment/domain/authorization/policies/shipment.policy';
-import { ShipmentStrategyRegistry } from './shipment/domain/authorization/policies/strategies/registry/shipment-strategy.registry';
-import { CreateShipmentStrategy } from './shipment/domain/authorization/policies/strategies/create-shipment.strategy';
-import { ViewShipmentStrategy } from './shipment/domain/authorization/policies/strategies/view-shipment.strategy';
-import { UpdateShipmentStrategy } from './shipment/domain/authorization/policies/strategies/update-shipment.strategy';
-import { CancelShipmentStrategy } from './shipment/domain/authorization/policies/strategies/cancel-shipment.strategy';
 import { ShipmentAbility } from './shipment/domain/authorization/abilities/shipment.ability';
 import { ShipmentVisibilityScope } from './shipment/domain/authorization/scopes/shipment-visibility.scope';
 
@@ -35,9 +31,6 @@ import { ParcelCommandRepository } from './parcel/infrastructure/repositories/pa
 import { ParcelQueryRepository } from './parcel/infrastructure/repositories/parcel.query.repository';
 import { ParcelMapper } from './parcel/application/mappers/parcel.mapper';
 import { ParcelPolicy } from './parcel/domain/authorization/policies/parcel.policy';
-import { ParcelStrategyRegistry } from './parcel/domain/authorization/policies/strategies/registry/parcel-strategy.registry';
-import { ViewParcelStrategy } from './parcel/domain/authorization/policies/strategies/view-parcel.strategy';
-import { UpdateParcelStatusStrategy } from './parcel/domain/authorization/policies/strategies/update-parcel-status.strategy';
 import { ParcelAbility } from './parcel/domain/authorization/abilities/parcel.ability';
 import { ParcelVisibilityScope } from './parcel/domain/authorization/scopes/parcel-visibility.scope';
 
@@ -49,9 +42,6 @@ import { ProofOfDeliveryCommandRepository } from './proof-of-delivery/infrastruc
 import { ProofOfDeliveryQueryRepository } from './proof-of-delivery/infrastructure/repositories/proof-of-delivery.query.repository';
 import { ProofOfDeliveryMapper } from './proof-of-delivery/application/mappers/proof-of-delivery.mapper';
 import { PodPolicy } from './proof-of-delivery/domain/authorization/policies/pod.policy';
-import { PodStrategyRegistry } from './proof-of-delivery/domain/authorization/policies/strategies/registry/pod-strategy.registry';
-import { RecordPodStrategy } from './proof-of-delivery/domain/authorization/policies/strategies/record-pod.strategy';
-import { ViewPodStrategy } from './proof-of-delivery/domain/authorization/policies/strategies/view-pod.strategy';
 import { PodAbility } from './proof-of-delivery/domain/authorization/abilities/pod.ability';
 import { PodVisibilityScope } from './proof-of-delivery/domain/authorization/scopes/pod-visibility.scope';
 
@@ -79,6 +69,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     CustomerModule,
     EmployeeModule,
     ShipmentRequestModule,
+    OrganizationModule,
   ],
   controllers: [
     ShipmentController,
@@ -94,11 +85,6 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     ShipmentQueryRepository,
     ShipmentMapper,
     ShipmentPolicy,
-    ShipmentStrategyRegistry,
-    CreateShipmentStrategy,
-    ViewShipmentStrategy,
-    UpdateShipmentStrategy,
-    CancelShipmentStrategy,
     ShipmentAbility,
     ShipmentVisibilityScope,
 
@@ -109,9 +95,6 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     ParcelQueryRepository,
     ParcelMapper,
     ParcelPolicy,
-    ParcelStrategyRegistry,
-    ViewParcelStrategy,
-    UpdateParcelStatusStrategy,
     ParcelAbility,
     ParcelVisibilityScope,
 
@@ -122,9 +105,6 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     ProofOfDeliveryQueryRepository,
     ProofOfDeliveryMapper,
     PodPolicy,
-    PodStrategyRegistry,
-    RecordPodStrategy,
-    ViewPodStrategy,
     PodAbility,
     PodVisibilityScope,
 
