@@ -50,6 +50,8 @@ export class BillingSeeder implements Seeder {
         tenant_id: tenant1.id,
         customer_profile_id: customer.id,
         customer_shipment_id: shipment.id,
+        origin_org_unit_id: shipment.origin_org_unit_id,
+        destination_org_unit_id: shipment.destination_org_unit_id,
         invoice_number: invoiceNumber,
         subtotal: 35.0,
         tax_amount: 5.25,

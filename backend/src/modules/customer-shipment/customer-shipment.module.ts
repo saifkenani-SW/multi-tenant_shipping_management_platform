@@ -9,6 +9,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { CustomerModule } from '../customer/customer.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { ShipmentRequestModule } from '../shipment-request/shipment-request.module';
+import { BillingModule } from '../billing/billing.module';
 
 // Shipment
 import { ShipmentController } from './shipment/presentation/controllers/shipment.controller';
@@ -79,6 +80,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     CustomerModule,
     EmployeeModule,
     ShipmentRequestModule,
+    BillingModule,
   ],
   controllers: [
     ShipmentController,

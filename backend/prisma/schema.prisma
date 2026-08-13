@@ -108,7 +108,6 @@ enum QuotationStatus {
 enum PaymentMethod {
   CASH
   ONLINE
-  COD
   BANK_TRANSFER
 }
 
@@ -645,10 +644,13 @@ model global_location {
   @@index([location], map: "idx_global_location_geom", type: Gist)
 }
 model invoice {
-  id                     String                @id @default(uuid(7)) @db.Uuid
-  tenant_id              String                @db.Uuid
-  customer_profile_id    String                @db.Uuid
-  customer_shipment_id   String?               @db.Uuid
+  id                      String                @id @default(uuid(7)) @db.Uuid
+  version                 Int                   @default(1)
+  tenant_id               String                @db.Uuid
+  customer_profile_id     String                @db.Uuid
+  customer_shipment_id    String?               @db.Uuid
+  origin_org_unit_id      String                @db.Uuid
+  destination_org_unit_id String                @db.Uuid
   invoice_number         String                @db.VarChar(100)
   subtotal               Decimal               @db.Decimal(10, 2)
   handling_fees          Decimal               @default(0) @db.Decimal(10, 2)
@@ -664,9 +666,30 @@ model invoice {
   customer_profile       customer_profile      @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
   customer_shipment      customer_shipment?    @relation(fields: [customer_shipment_id], references: [id], onUpdate: NoAction)
   tenant                 tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  origin_org_unit        organization_unit     @relation("invoice_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  destination_org_unit   organization_unit     @relation("invoice_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
   payment                payment[]
 
   @@unique([tenant_id, invoice_number], map: "uq_tenant_invoice")
+  @@index([tenant_id, status], map: "idx_invoice_tenant_status")
+  @@index([origin_org_unit_id], map: "idx_invoice_origin_org_unit")
+  @@index([destination_org_unit_id], map: "idx_invoice_destination_org_unit")
+}
+
+/// Per-tenant, per-year running number behind invoice_number.
+///
+/// Incremented with a single atomic upsert inside the same transaction that
+/// writes the invoice, so two concurrent invoices can never take the same
+/// number, and a rolled back invoice gives its number back instead of leaving
+/// a gap in the sequence.
+model invoice_counter {
+  tenant_id   String   @db.Uuid
+  year        Int
+  last_number Int      @default(0)
+  updated_at  DateTime @updatedAt
+  tenant      tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([tenant_id, year])
 }
 
 model manifest_item {
@@ -722,6 +745,8 @@ model organization_unit {
   tenant_zone                                                                      tenant_zone?                @relation(fields: [zone_id], references: [id], onUpdate: NoAction)
   parcel_parcel_current_org_unit_idToorganization_unit                             parcel[]                    @relation("parcel_current_org_unit_idToorganization_unit")
   parcel_destination_org_unit                                                      parcel[]                    @relation("parcel_destination_org_unit")
+  invoice_origin_org_unit                                                          invoice[]                   @relation("invoice_originToorganization_unit")
+  invoice_destination_org_unit                                                     invoice[]                   @relation("invoice_destinationToorganization_unit")
   parcel_movement                                                                  parcel_movement[]
   payment                                                                          payment[]
   transport_manifest_transport_manifest_destination_org_unit_idToorganization_unit transport_manifest[]        @relation("transport_manifest_destination_org_unit_idToorganization_unit")
@@ -1079,6 +1104,7 @@ model tenant {
   vehicle_assignment          vehicle_assignment[]
   vehicle                     vehicle[]
   zone_pricing_matrix         zone_pricing_matrix[]
+  invoice_counter             invoice_counter[]
 }
 
 model tenant_delivery_settings {
@@ -1107,7 +1133,7 @@ model tenant_operational_settings {
 model tenant_pricing_settings {
   tenant_id          String @id @db.Uuid
   volumetric_divisor Int    @default(5000)
-  default_currency   String @default("SR") @db.Char(3)
+  default_currency   String @default("SYP") @db.Char(3)
   tenant             tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
