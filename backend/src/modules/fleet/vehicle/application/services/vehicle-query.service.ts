@@ -9,6 +9,13 @@ import { PaginatedVehicleListDto } from '../dtos/responses/vehicle-list.dto';
 import { VehicleAssignmentDto } from '../dtos/responses/vehicle-assignment.dto';
 import { VehicleResponseMapper } from '../mappers/vehicle-response.mapper';
 
+/**
+ * Read side of the vehicle sub-domain.
+ *
+ * `tenantId` is optional throughout: a platform owner carries no tenant in the
+ * request context and reads across every tenant, while any other caller is
+ * always scoped to their own.
+ */
 @Injectable()
 export class VehicleQueryService {
   constructor(
@@ -18,7 +25,7 @@ export class VehicleQueryService {
   ) {}
 
   async findVehicles(
-    tenantId: string,
+    tenantId: string | undefined,
     query: VehicleQueryDto,
   ): Promise<PaginatedVehicleListDto> {
     const criteria = this.vehicleQueryCriteriaBuilder.build(query, tenantId);
@@ -33,7 +40,7 @@ export class VehicleQueryService {
   }
 
   async getVehicleDetails(
-    tenantId: string,
+    tenantId: string | undefined,
     id: string,
   ): Promise<VehicleDetailsDto> {
     const vehicle = await this.findVehicleOrThrow(tenantId, id);
@@ -41,7 +48,7 @@ export class VehicleQueryService {
   }
 
   async getVehicleAssignments(
-    tenantId: string,
+    tenantId: string | undefined,
     vehicleId: string,
   ): Promise<VehicleAssignmentDto[]> {
     await this.findVehicleOrThrow(tenantId, vehicleId);
@@ -59,9 +66,13 @@ export class VehicleQueryService {
 
   /**
    * Returns the domain entity. Used by sibling Fleet sub-domains (trip) that
-   * need to reason about the vehicle rather than render it.
+   * need to reason about the vehicle rather than render it; those callers
+   * always pass a tenant.
    */
-  async findVehicleOrThrow(tenantId: string, id: string): Promise<Vehicle> {
+  async findVehicleOrThrow(
+    tenantId: string | undefined,
+    id: string,
+  ): Promise<Vehicle> {
     const vehicle = await this.vehicleQueryRepository.findById(tenantId, id);
 
     if (!vehicle) {

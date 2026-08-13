@@ -56,27 +56,37 @@ export class VehicleController {
   }
 
   @Get()
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.DRIVER,
+  )
   @ApiOperation({ summary: 'List vehicles in the current tenant' })
   @ApiResponse({ status: HttpStatus.OK, type: PaginatedVehicleListDto })
   async findVehicles(
     @Query() query: VehicleQueryDto,
   ): Promise<PaginatedVehicleListDto> {
     return this.vehicleQueryService.findVehicles(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       query,
     );
   }
 
   @Get(':id')
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.DRIVER,
+  )
   @ApiOperation({ summary: 'Get vehicle details' })
   @ApiResponse({ status: HttpStatus.OK, type: VehicleDetailsDto })
   async getVehicleDetails(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<VehicleDetailsDto> {
     return this.vehicleQueryService.getVehicleDetails(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       id,
     );
   }
@@ -120,14 +130,14 @@ export class VehicleController {
   }
 
   @Get(':id/assignments')
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
   @ApiOperation({ summary: 'List driver assignments of a vehicle' })
   @ApiResponse({ status: HttpStatus.OK, type: [VehicleAssignmentDto] })
   async getVehicleAssignments(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<VehicleAssignmentDto[]> {
     return this.vehicleQueryService.getVehicleAssignments(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       id,
     );
   }

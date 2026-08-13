@@ -5,7 +5,7 @@ import { TripQueryCriteria } from './trip-query-criteria';
 
 @Injectable()
 export class TripQueryCriteriaBuilder {
-  build(query: TripQueryDto, tenantId: string): TripQueryCriteria {
+  build(query: TripQueryDto, tenantId: string | undefined): TripQueryCriteria {
     return new TripQueryCriteria(
       OffsetPaginationBuilder.build(query),
       tenantId,

@@ -61,13 +61,17 @@ export class TransportManifestQueryRepository {
           .select((inner) => inner.fn.count('mi.id').as('count'))
           .whereRef('mi.manifest_id', '=', 'tm.id')
           .as('item_count'),
-      )
-      .where('tm.tenant_id', '=', criteria.tenantId);
+      );
 
     let countQuery = this.kysely
       .selectFrom('transport_manifest as tm')
-      .select((eb) => eb.fn.count('tm.id').as('count'))
-      .where('tm.tenant_id', '=', criteria.tenantId);
+      .select((eb) => eb.fn.count('tm.id').as('count'));
+
+    // Omitted only for a platform owner, who reads across every tenant.
+    if (criteria.tenantId) {
+      query = query.where('tm.tenant_id', '=', criteria.tenantId);
+      countQuery = countQuery.where('tm.tenant_id', '=', criteria.tenantId);
+    }
 
     if (criteria.status) {
       query = query.where('tm.status', '=', criteria.status);
@@ -125,15 +129,19 @@ export class TransportManifestQueryRepository {
   }
 
   async findById(
-    tenantId: string,
+    tenantId: string | undefined,
     id: string,
   ): Promise<TransportManifest | null> {
-    const record = await this.kysely
+    let query = this.kysely
       .selectFrom('transport_manifest')
       .select(MANIFEST_COLUMNS)
-      .where('tenant_id', '=', tenantId)
-      .where('id', '=', id)
-      .executeTakeFirst();
+      .where('id', '=', id);
+
+    if (tenantId) {
+      query = query.where('tenant_id', '=', tenantId);
+    }
+
+    const record = await query.executeTakeFirst();
 
     return record ? this.persistenceMapper.toDomain(record) : null;
   }

@@ -5,7 +5,10 @@ import { VehicleQueryCriteria } from './vehicle-query-criteria';
 
 @Injectable()
 export class VehicleQueryCriteriaBuilder {
-  build(query: VehicleQueryDto, tenantId: string): VehicleQueryCriteria {
+  build(
+    query: VehicleQueryDto,
+    tenantId: string | undefined,
+  ): VehicleQueryCriteria {
     return new VehicleQueryCriteria(
       OffsetPaginationBuilder.build(query),
       tenantId,
