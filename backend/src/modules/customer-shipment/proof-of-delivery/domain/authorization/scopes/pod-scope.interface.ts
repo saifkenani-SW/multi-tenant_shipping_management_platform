@@ -4,6 +4,7 @@ export interface PodScopeInterface {
   };
 
   shipment?: {
-    sender_customer_profile_id?: string;
+    sender_phone?: string;
+    receiver_phone?: string;
   };
 }

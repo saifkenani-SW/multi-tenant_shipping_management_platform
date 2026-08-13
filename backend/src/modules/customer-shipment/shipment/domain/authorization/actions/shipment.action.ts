@@ -3,4 +3,5 @@ export enum ShipmentAction {
   View = 'view',
   Update = 'update',
   Cancel = 'cancel',
+  Return = 'return',
 }

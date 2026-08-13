@@ -26,17 +26,31 @@ export class ParcelVisibilityScope implements VisibilityScopeBuilder<ParcelScope
     if (type === SubjectType.CUSTOMER) {
       return {
         parcel: {},
-        shipment: { sender_customer_profile_id: principal.profileId },
+        shipment: {
+          sender_phone: principal.phone,
+          receiver_phone: principal.phone,
+        },
       };
     }
 
-    if (
-      type === SubjectType.TENANT_ADMIN ||
-      type === SubjectType.EMPLOYEE ||
-      type === SubjectType.DRIVER
-    ) {
+    if (type === SubjectType.TENANT_ADMIN) {
       return {
         parcel: { tenant_id: principal.tenantId },
+        shipment: {},
+      };
+    }
+
+    if (type === SubjectType.EMPLOYEE) {
+      const orgUnitIds = [
+        ...(principal.branches || []).map((b) => b.id),
+        ...(principal.warehouses || []).map((w) => w.id),
+      ];
+
+      return {
+        parcel: {
+          tenant_id: principal.tenantId,
+          org_unit_ids: orgUnitIds,
+        },
         shipment: {},
       };
     }

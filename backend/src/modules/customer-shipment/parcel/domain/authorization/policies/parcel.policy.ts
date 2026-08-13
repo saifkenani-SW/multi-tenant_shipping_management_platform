@@ -1,23 +1,55 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { subject } from '@casl/ability';
 
 import { ParcelAction } from '../actions/parcel.action';
-import { ParcelStrategyRegistry } from './strategies/registry/parcel-strategy.registry';
+import { ParcelSubject } from '../subjects/parcel.subject';
 import {
+  AccessDeniedException,
   AuthorizationContext,
   AuthorizationPolicy,
 } from '../../../../../../packages/authorization';
+import { CaslAbilityBuilder } from '../../../../../../packages/authorization-casl';
+import { Principal } from '../../../../../../packages/context/principal/principal/Principal';
+import { ParcelActionPayload } from './payloads/parcel-action.payload';
+import { ParcelQueryRepository } from '../../../infrastructure/repositories/parcel.query.repository';
 
 @Injectable()
 export class ParcelPolicy implements AuthorizationPolicy<ParcelAction> {
-  constructor(private readonly registry: ParcelStrategyRegistry) {}
+  constructor(
+    private readonly caslFactory: CaslAbilityBuilder<Principal>,
+    private readonly queryRepository: ParcelQueryRepository,
+  ) {}
 
   async authorize(
     action: ParcelAction,
-    context: AuthorizationContext,
-    payload?: unknown,
+    context: AuthorizationContext<Principal>,
+    payload?: ParcelActionPayload,
   ): Promise<void> {
-    const strategy = this.registry.get(action);
+    const ability = this.caslFactory.create(context.principal);
 
-    await strategy.authorize(context, payload);
+    if (payload?.trackingNumber || payload?.id) {
+      const entity = payload.trackingNumber
+        ? await this.queryRepository.findRawByTrackingNumber(payload.trackingNumber)
+        : await this.queryRepository.findRawById(payload.id!);
+
+      if (!entity) {
+        throw new NotFoundException('Parcel not found');
+      }
+
+      if (!ability.can(action, subject(ParcelSubject, entity))) {
+        throw new AccessDeniedException();
+      }
+
+      return;
+    }
+
+    // Fallback for actions that don't operate on a specific entity
+    if (!ability.can(action, ParcelSubject)) {
+      throw new AccessDeniedException();
+    }
   }
 }
