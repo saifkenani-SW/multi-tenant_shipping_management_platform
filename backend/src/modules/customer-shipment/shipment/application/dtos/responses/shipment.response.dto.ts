@@ -56,4 +56,7 @@ export class ShipmentResponseDto {
 
   @ApiPropertyOptional({ nullable: true })
   createdByEmployeeName: string | null;
+
+  @ApiPropertyOptional()
+  capabilities?: import('../../capabilities/shipment.capabilities.interface').ShipmentCapabilities;
 }

@@ -12,6 +12,11 @@ export interface ParcelSnapshot {
   currentOrgUnitId: string | null;
   destinationOrgUnitId: string | null;
   labelKey: string | null;
+
+  // Transient properties joined from customer_shipment for CASL authorization
+  senderPhone?: string;
+  receiverPhone?: string;
+  originOrgUnitId?: string;
 }
 
 /**
@@ -63,6 +68,9 @@ export class Parcel {
     private _currentOrgUnitId: string | null,
     public readonly destinationOrgUnitId: string | null,
     public readonly labelKey: string | null,
+    public readonly senderPhone?: string,
+    public readonly receiverPhone?: string,
+    public readonly originOrgUnitId?: string,
   ) {}
 
   get currentStatus(): ParcelStatus {
@@ -93,6 +101,9 @@ export class Parcel {
       snapshot.currentOrgUnitId,
       snapshot.destinationOrgUnitId,
       snapshot.labelKey,
+      snapshot.senderPhone,
+      snapshot.receiverPhone,
+      snapshot.originOrgUnitId,
     );
   }
 

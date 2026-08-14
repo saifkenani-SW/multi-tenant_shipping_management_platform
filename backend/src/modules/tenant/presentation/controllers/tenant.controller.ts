@@ -5,13 +5,20 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
   Query,
+  Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
+  ApiConsumes,
   ApiOperation,
   ApiResponse,
   ApiTags,
@@ -41,6 +48,13 @@ import { BaseUuidParamDto } from '../../../../core/dtos/base-uuid-param.dto';
 import { Roles } from 'src/common/authorization';
 import { RoleType } from 'src/modules/authorization';
 import { RequestContextService } from '../../../../packages/context/services/request-context.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { IStorageProvider } from '../../../../packages/storage/src';
+import {
+  createMemoryMulterOptions,
+  STORAGE_PROVIDER,
+} from '../../../../packages/storage/src';
+import type { Response } from 'express';
 
 @ApiTags('Tenants')
 @ApiBearerAuth()
@@ -50,6 +64,7 @@ export class TenantController {
     private readonly tenantCommandService: TenantCommandService,
     private readonly tenantQueryService: TenantQueryService,
     private readonly requestContext: RequestContextService,
+    @Inject(STORAGE_PROVIDER) private readonly storage: IStorageProvider,
   ) {}
 
   @Post()
@@ -357,5 +372,93 @@ export class TenantController {
       throw new ForbiddenException('You do not have permission to access');
     }
     return this.tenantQueryService.getTenantSettings(id);
+  }
+
+  @Post(':id/logo')
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'Upload tenant logo' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Logo uploaded successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          example: 'tenant-123/logos/123.png',
+        },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor(
+      'file',
+      createMemoryMulterOptions({ maxFileSizeBytes: 5 * 1024 * 1024 }),
+    ),
+  )
+  async uploadLogo(
+    @Param() params: BaseUuidParamDto,
+    @UploadedFile() file: any,
+  ): Promise<{ url: string }> {
+    const id = params.id;
+    if (
+      this.requestContext.getPrincipal().tenantId &&
+      id !== this.requestContext.getPrincipal().tenantId
+    ) {
+      throw new ForbiddenException('You do not have permission to access');
+    }
+    return this.tenantCommandService.uploadLogo(id, file);
+  }
+
+  @Get(':id/logo')
+  @ApiOperation({ summary: 'Get tenant logo' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Returns the logo image file',
+  })
+  async getLogo(
+    @Param() params: BaseUuidParamDto,
+    @Res() res: Response,
+  ): Promise<void> {
+    const id = params.id;
+    const tenant = await this.tenantQueryService.getTenantDetails(id);
+    if (!tenant.logoUrl) {
+      throw new NotFoundException('Logo not found for this tenant');
+    }
+
+    try {
+      const ext = tenant.logoUrl.split('.').pop()?.toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'svg': 'image/svg+xml',
+        'webp': 'image/webp'
+      };
+      
+      if (ext && mimeTypes[ext]) {
+        res.setHeader('Content-Type', mimeTypes[ext]);
+      } else {
+        res.setHeader('Content-Type', 'application/octet-stream');
+      }
+
+      const stream = await this.storage.get(tenant.logoUrl);
+      stream.pipe(res);
+    } catch (error) {
+      throw new NotFoundException('Logo file not found in storage');
+    }
   }
 }

@@ -26,6 +26,7 @@ describe('Parcel', () => {
 
       parcel.transitionTo(ParcelStatus.READY_FOR_DISPATCH);
       parcel.transitionTo(ParcelStatus.IN_TRANSIT);
+      parcel.transitionTo(ParcelStatus.ARRIVED_AT_UNIT);
       parcel.transitionTo(ParcelStatus.READY_FOR_COLLECTION);
       parcel.transitionTo(ParcelStatus.COLLECTED);
 

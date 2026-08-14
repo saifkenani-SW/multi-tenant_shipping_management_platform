@@ -3,6 +3,7 @@ export class CursorPaginationMeta {
   readonly previousCursor: string | null;
   readonly hasNextPage: boolean;
   readonly hasPreviousPage: boolean;
+  readonly scope?: any;
 }
 
 export class CursorPaginatedResponse<T> {

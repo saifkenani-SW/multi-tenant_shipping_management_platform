@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { TransportManifestQueryRepository } from '../../infrastructure/repositories/transport-manifest-query.repository';
 import { TransportManifest } from '../../domain/entities/transport-manifest.entity';
 import { ManifestItem } from '../../domain/entities/manifest-item.entity';
@@ -10,6 +10,13 @@ import { ManifestDetailsDto } from '../dtos/responses/manifest-details.dto';
 import { ManifestItemDto } from '../dtos/responses/manifest-item.dto';
 import { PaginatedManifestListDto } from '../dtos/responses/manifest-list.dto';
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
+import { PARCEL_LOOKUP } from '../../../contracts/parcel-lookup';
+// Type-only: a type named in a decorated constructor must not be emitted as a
+// value when isolatedModules and emitDecoratorMetadata are both on.
+import type {
+  ParcelLookup,
+  ParcelSummary,
+} from '../../../contracts/parcel-lookup';
 
 /**
  * Read side of the manifest sub-domain.
@@ -24,6 +31,7 @@ export class ManifestQueryService {
     private readonly queryRepository: TransportManifestQueryRepository,
     private readonly criteriaBuilder: ManifestQueryCriteriaBuilder,
     private readonly responseMapper: ManifestResponseMapper,
+    @Inject(PARCEL_LOOKUP) private readonly parcelLookup: ParcelLookup,
   ) {}
 
   async findManifests(
@@ -47,7 +55,11 @@ export class ManifestQueryService {
     const manifest = await this.findManifestOrThrow(tenantId, id);
     const items = await this.queryRepository.findItems(id);
 
-    return this.responseMapper.toDetailsDto(manifest, items);
+    return this.responseMapper.toDetailsDto(
+      manifest,
+      items,
+      await this.loadParcels(items),
+    );
   }
 
   async getManifestItems(
@@ -56,8 +68,35 @@ export class ManifestQueryService {
   ): Promise<ManifestItemDto[]> {
     await this.findManifestOrThrow(tenantId, manifestId);
     const items = await this.queryRepository.findItems(manifestId);
+    const parcels = await this.loadParcels(items);
 
-    return items.map((item) => this.responseMapper.toItemDto(item));
+    return items.map(
+      (item) => this.responseMapper.toItemDto(item, parcels.get(item.parcelId)),
+    );
+  }
+
+  /**
+   * Labels for the parcels on a manifest, keyed by parcel id.
+   *
+   * A manifest item stores nothing but a parcel id, so without this the list
+   * reads as a column of identifiers. Fetched through the Customer Shipment
+   * facade in one call — Fleet still owns no parcel query of its own — and a
+   * failure here costs the labels, not the manifest.
+   */
+  private async loadParcels(
+    items: ManifestItem[],
+  ): Promise<Map<string, ParcelSummary>> {
+    if (items.length === 0) return new Map();
+
+    try {
+      const parcels = await this.parcelLookup.getParcelsByIds(
+        items.map((item) => item.parcelId),
+      );
+
+      return new Map(parcels.map((parcel) => [parcel.id, parcel]));
+    } catch {
+      return new Map();
+    }
   }
 
   /** Returns the aggregate so callers can ask it to decide a transition. */

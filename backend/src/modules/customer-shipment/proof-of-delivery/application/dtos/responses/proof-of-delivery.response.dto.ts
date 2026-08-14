@@ -14,6 +14,9 @@ export class ProofOfDeliveryResponseDto {
   @ApiProperty()
   deliveredByEmployeeId: string;
 
+  @ApiProperty()
+  deliveredByEmployeeName: string;
+
   @ApiProperty({ enum: CollectionMethod })
   collectionMethod: CollectionMethod;
 

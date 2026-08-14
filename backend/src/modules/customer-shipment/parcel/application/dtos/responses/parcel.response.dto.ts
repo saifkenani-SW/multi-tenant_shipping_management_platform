@@ -1,5 +1,6 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { ParcelCondition, ParcelStatus } from '@prisma/client';
+import { Exclude } from 'class-transformer';
 
 export class ParcelResponseDto {
   @ApiProperty()
@@ -75,4 +76,16 @@ export class ParcelResponseDto {
 
   @ApiProperty()
   updatedAt: Date;
+
+  @Exclude()
+  @ApiHideProperty()
+  senderPhone?: string;
+
+  @Exclude()
+  @ApiHideProperty()
+  receiverPhone?: string;
+
+  @Exclude()
+  @ApiHideProperty()
+  originOrgUnitId?: string;
 }

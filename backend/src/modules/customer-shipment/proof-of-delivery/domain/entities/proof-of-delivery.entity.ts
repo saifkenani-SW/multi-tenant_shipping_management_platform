@@ -13,6 +13,7 @@ export class ProofOfDelivery {
     public readonly tenantId: string,
     public readonly parcelId: string,
     public readonly deliveredByEmployeeId: string,
+    public readonly deliveredByEmployeeName: string,
     public readonly collectionMethod: CollectionMethod,
     public readonly receivedByName: string,
     public readonly receivedByNationalId: string | null,

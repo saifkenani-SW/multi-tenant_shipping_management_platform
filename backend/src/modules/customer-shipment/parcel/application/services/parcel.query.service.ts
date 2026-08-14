@@ -11,7 +11,20 @@ import {ParcelResponseDto} from '../dtos/responses/parcel.response.dto';
 import { ParcelMapper } from '../mappers/parcel.mapper';
 import { Parcel } from '../../domain/entities/parcel.entity';
 import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-visibility.scope';
+import type { ParcelScopeInterface } from '../../domain/authorization/scopes/parcel-scope.interface';
 import {ShipmentQueryService} from '../../../shipment/application/services/shipment.query.service';
+
+import { ParcelTrackingResponseDto } from '../dtos/responses/parcel-tracking.response.dto';
+import { TrackingFacade } from '../../../../tracking/application/facades/tracking.facade';
+import { ProofOfDeliveryQueryService } from '../../../proof-of-delivery/application/services/proof-of-delivery.query.service';
+import { ProofOfDeliveryResponseDto } from '../../../proof-of-delivery/application/dtos/responses/proof-of-delivery.response.dto';
+import { CACHE_FACADE } from '../../../../../core/cache/tokens/cache.tokens';
+import {
+  ReturnCapabilities,
+} from '../../../../../packages/authorization';
+import { ParcelCapabilityBuilder } from '../capabilities/parcel-capability.builder';
+import { Readable } from 'stream';
+
 
 @Injectable()
 export class ParcelQueryService {
@@ -21,6 +34,8 @@ export class ParcelQueryService {
     private readonly queryRepository: ParcelQueryRepository,
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly mapper: ParcelMapper,
+    private readonly trackingFacade: TrackingFacade,
+    private readonly podQueryService: ProofOfDeliveryQueryService,
   ) {}
 
   /**
@@ -37,7 +52,11 @@ export class ParcelQueryService {
     // ShipmentQueryService.findById evaluates visibility scopes implicitly.
     await this.shipmentQueryService.findById(customerShipmentId);
 
-    // We no longer evaluate ParcelVisibilityScope because the shipment auth suffices.
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+
+    // We no longer apply ParcelVisibilityScope to the query because the shipment auth suffices.
     const merged: ParcelMergedCriteria = {
       customerShipmentId,
       statuses: filter.statuses,
@@ -51,10 +70,13 @@ export class ParcelQueryService {
 
     return new CursorPaginatedResponse(
       (result.data as any[]).map((row) => this.mapper.toResponse(row)),
-      result.meta,
+      { ...result.meta, scope },
     );
   }
 
+  @ReturnCapabilities({
+    policy: ParcelCapabilityBuilder,
+  })
   @Authorize({
     policy: Policy(ParcelPolicy, ParcelAction.View),
     payloadResolver: (id: string) => ({ id }),
@@ -81,6 +103,7 @@ export class ParcelQueryService {
     const merged: ParcelMergedCriteria = {
       tenantId: scope.parcel?.tenant_id || filter.tenantId,
       scopeOrgUnitIds: scope.parcel?.org_unit_ids,
+      customerPhone: scope.shipment?.sender_phone, // sender_phone and receiver_phone are identical in scope
       statuses: filter.statuses,
       condition: filter.condition,
       currentOrgUnitId: filter.currentOrgUnitId,
@@ -100,7 +123,7 @@ export class ParcelQueryService {
 
     return new CursorPaginatedResponse(
       (result.data as any[]).map((row) => this.mapper.toResponse(row)),
-      result.meta,
+      { ...result.meta, scope },
     );
   }
 
@@ -108,13 +131,16 @@ export class ParcelQueryService {
    * Tracking lookup. Authentication is required by the controller: shipment
    * data belongs to the company and is not public.
    */
+  @ReturnCapabilities({
+    policy: ParcelCapabilityBuilder,
+  })
   @Authorize({
     policy: Policy(ParcelPolicy, ParcelAction.View),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
   async findByTrackingNumber(
     trackingNumber: string,
-  ): Promise<ParcelResponseDto> {
+  ): Promise<ParcelTrackingResponseDto> {
     const record =
       await this.queryRepository.findRawByTrackingNumber(trackingNumber);
 
@@ -122,7 +148,84 @@ export class ParcelQueryService {
       throw new NotFoundException('Parcel not found');
     }
 
-    return this.mapper.toResponse(record);
+    const baseDto = this.mapper.toResponse(record);
+    const history = await this.trackingFacade.getParcelHistory(record.id);
+
+    return {
+      ...baseDto,
+      history,
+    };
+  }
+
+  /**
+   * Parcels for a set of ids, narrowed to what the caller may see.
+   *
+   * Batched on purpose: reading them one id at a time authorizes each row
+   * with its own extra query, so a forty-parcel manifest would cost eighty
+   * round trips. Rows outside the scope are dropped rather than throwing —
+   * one unreadable parcel should not blank out a whole manifest.
+   */
+  async getParcelsByIds(ids: string[]): Promise<ParcelResponseDto[]> {
+    if (ids.length === 0) return [];
+
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+    const records = await this.queryRepository.findRawByIds(ids);
+
+    return records
+      .filter((record) => this.isWithinScope(record, scope))
+      .map((record) => this.mapper.toResponse(record));
+  }
+
+  /** The same visibility rule the filtered queries apply, checked in memory. */
+  private isWithinScope(record: any, scope: ParcelScopeInterface): boolean {
+    const parcel = scope.parcel;
+
+    if (parcel?.tenant_id && record.tenant_id !== parcel.tenant_id) {
+      return false;
+    }
+
+    // An employee sees a parcel sitting at one of their units or heading to it.
+    if (parcel?.org_unit_ids?.length) {
+      const units = parcel.org_unit_ids;
+      const reachable =
+        units.includes(record.current_org_unit_id) ||
+        units.includes(record.destination_org_unit_id);
+
+      if (!reachable) return false;
+    }
+
+    const shipment = scope.shipment;
+    if (shipment?.sender_phone || shipment?.receiver_phone) {
+      const isParty =
+        record.sender_phone === shipment.sender_phone ||
+        record.receiver_phone === shipment.receiver_phone;
+
+      if (!isParty) return false;
+    }
+
+    return true;
+  }
+
+  @Authorize({
+    policy: Policy(ParcelPolicy, ParcelAction.View),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
+  async getProofOfDelivery(trackingNumber: string): Promise<ProofOfDeliveryResponseDto> {
+    return this.podQueryService.findByTrackingNumber(trackingNumber);
+  }
+
+  @Authorize({
+    policy: Policy(ParcelPolicy, ParcelAction.View),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
+  async getPhotoStream(
+    trackingNumber: string,
+    photoType: 'signature' | 'idPhoto' | 'parcelPhoto' | 'additionalPhoto',
+    index: number = 0,
+  ): Promise<{ stream: Readable; mimeType: string }> {
+    return this.podQueryService.getPhotoStream(trackingNumber, photoType, index);
   }
 
   async findAggregateOrThrow(id: string): Promise<Parcel> {

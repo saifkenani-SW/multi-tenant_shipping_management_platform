@@ -1,5 +1,10 @@
 import {Inject, Injectable} from '@nestjs/common';
-import {ActionType, ParcelCondition, ParcelStatus} from '@prisma/client';
+import {
+  ActionType,
+  OrgType,
+  ParcelCondition,
+  ParcelStatus,
+} from '@prisma/client';
 import {Transactional} from '../../../../../packages/transaction';
 import {Authorize} from '../../../../../packages/authorization';
 import {Policy} from '../../../../../packages/authorization/policy';
@@ -11,12 +16,15 @@ import {ParcelCommandRepository} from '../../infrastructure/repositories/parcel.
 import {ParcelQueryService} from './parcel.query.service';
 import {UpdateParcelStatusDto} from '../dtos/requests/update-parcel-status.dto';
 import {ShipmentStatusRecalculator} from '../../../shipment/application/services/shipment-status.recalculator';
+import { RecordDeliveryDto } from '../../../proof-of-delivery/application/dtos/requests/record-delivery.dto';
+import { ProofOfDeliveryCommandService } from '../../../proof-of-delivery/application/services/proof-of-delivery.command.service';
 import {RequestContextService} from '../../../../../packages/context/services/request-context.service';
 import {EmployeeFacade} from '../../../../employee/facades/employee.facade';
 import {CUSTOMER_SHIPMENT_CACHE_KEYS} from '../../../constants/customer-shipment.cache.constants';
 import {CacheEvict} from '../../../../../infrastructure/cache/decorators/CacheEvict';
 import type {ICacheFacade} from '../../../../../core/cache/interfaces/ICacheFacade';
 import {CACHE_FACADE} from '../../../../../core/cache/tokens/cache.tokens';
+import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
 
 @Injectable()
 export class ParcelCommandService {
@@ -25,10 +33,12 @@ export class ParcelCommandService {
     private readonly queryService: ParcelQueryService,
     private readonly trackingFacade: TrackingFacade,
     private readonly shipmentRecalculator: ShipmentStatusRecalculator,
+    private readonly podCommandService: ProofOfDeliveryCommandService,
     private readonly requestContext: RequestContextService,
     private readonly employeeFacade: EmployeeFacade,
     @Inject(CACHE_FACADE)
     private readonly cache: ICacheFacade,
+    private readonly organizationFacade: OrganizationFacade,
   ) {}
 
   /**
@@ -48,10 +58,11 @@ export class ParcelCommandService {
     { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
     { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
   ])
-  async receiveParcel(
-    trackingNumber: string,
-  ): Promise<void> {
-    const parcel = await this.queryService.findAggregateByTrackingNumberOrThrow(trackingNumber);
+  async receiveParcel(trackingNumber: string): Promise<void> {
+    const parcel =
+      await this.queryService.findAggregateByTrackingNumberOrThrow(
+        trackingNumber,
+      );
 
     await this._applyAndPersistUpdate(
       parcel,
@@ -69,10 +80,11 @@ export class ParcelCommandService {
     { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
     { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
   ])
-  async markReadyForDispatch(
-    trackingNumber: string,
-  ): Promise<void> {
-    const parcel = await this.queryService.findAggregateByTrackingNumberOrThrow(trackingNumber);
+  async markReadyForDispatch(trackingNumber: string): Promise<void> {
+    const parcel =
+      await this.queryService.findAggregateByTrackingNumberOrThrow(
+        trackingNumber,
+      );
 
     await this._applyAndPersistUpdate(
       parcel,
@@ -94,14 +106,20 @@ export class ParcelCommandService {
     trackingNumber: string,
     dto: UpdateParcelStatusDto,
   ): Promise<void> {
-    const parcel = await this.queryService.findAggregateByTrackingNumberOrThrow(trackingNumber);
-    
+    const parcel =
+      await this.queryService.findAggregateByTrackingNumberOrThrow(
+        trackingNumber,
+      );
+
     // Fallback logic for generic status update if it wasn't mapped through a specialized method
     let actionType: ActionType = ActionType.TRANSFERRED;
-    if (dto.status === ParcelStatus.COLLECTED) actionType = ActionType.COLLECTED;
-    else if (dto.status === ParcelStatus.RETURNED) actionType = ActionType.RETURN_COMPLETED;
-    else if (dto.status === ParcelStatus.CANCELLED) actionType = ActionType.CANCELLED;
-    
+    if (dto.status === ParcelStatus.COLLECTED)
+      actionType = ActionType.COLLECTED;
+    else if (dto.status === ParcelStatus.RETURNED)
+      actionType = ActionType.RETURN_COMPLETED;
+    else if (dto.status === ParcelStatus.CANCELLED)
+      actionType = ActionType.CANCELLED;
+
     await this._applyAndPersistUpdate(
       parcel,
       trackingNumber,
@@ -109,7 +127,84 @@ export class ParcelCommandService {
       (p) => {
         if (dto.status) p.transitionTo(dto.status);
       },
-      { condition: dto.condition, notes: dto.notes }
+      { condition: dto.condition, notes: dto.notes },
+    );
+  }
+
+  /**
+   * Called by the Fleet module (via ParcelFacade) when a driver picks up a parcel.
+   * Bypasses ParcelPolicy since Fleet validates driver authorization.
+   */
+  @CacheEvict([
+    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
+    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
+  ])
+  async pickUpParcel(parcelId: string, tripId: string): Promise<void> {
+    const parcel = await this.queryService.findAggregateOrThrow(parcelId);
+
+    await this._applyAndPersistUpdate(
+      parcel,
+      parcel.trackingNumber,
+      ActionType.LOADED_ON_TRIP,
+      (p) => p.transitionTo(ParcelStatus.IN_TRANSIT),
+      { tripId, notes: 'Parcel loaded on trip' },
+    );
+  }
+
+  /**
+   * Called by the Fleet module (via ParcelFacade) when a driver drops off a parcel.
+   * Bypasses ParcelPolicy since Fleet validates driver authorization.
+   */
+  @CacheEvict([
+    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
+    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
+  ])
+  async dropOffParcel(
+    parcelId: string,
+    orgUnitId: string,
+    tripId?: string,
+  ): Promise<void> {
+    const parcel = await this.queryService.findAggregateOrThrow(parcelId);
+
+    await this._applyAndPersistUpdate(
+      parcel,
+      parcel.trackingNumber,
+      ActionType.TRANSFERRED,
+      (p) => p.transitionTo(ParcelStatus.ARRIVED_AT_UNIT),
+      {
+        organizationUnitId: orgUnitId,
+        tripId,
+        notes: 'Parcel dropped off at unit',
+      },
+    );
+  }
+
+  @Authorize({
+    policy: Policy(ParcelPolicy, ParcelAction.Collect),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
+    allEntries: true,
+  })
+  async recordDelivery(
+    trackingNumber: string,
+    dto: RecordDeliveryDto,
+    files: {
+      signature?: any[];
+      idPhoto?: any[];
+      parcelPhoto?: any[];
+      additionalPhoto?: any[];
+    },
+  ): Promise<{ id: string }> {
+    const principal = this.requestContext.getPrincipal();
+    const employeeId = principal.profileId ?? principal.subject.id;
+
+    return this.podCommandService.recordDelivery(
+      trackingNumber,
+      dto,
+      files,
+      employeeId,
     );
   }
 
@@ -128,10 +223,12 @@ export class ParcelCommandService {
   ): Promise<void> {
     const principal = this.requestContext.getPrincipal();
     const employeeId = principal.profileId ?? principal.subject.id ?? 'system';
-    
+
     let employeeName = 'system';
     if (principal.profileId) {
-      employeeName = (await this.employeeFacade.getEmployeeName(principal.profileId)) || 'system';
+      employeeName =
+        (await this.employeeFacade.getEmployeeName(principal.profileId)) ||
+        'system';
     }
 
     const previousStatus = parcel.currentStatus;
@@ -159,11 +256,35 @@ export class ParcelCommandService {
       },
     );
 
+    const effectiveOrgUnitId =
+      options?.organizationUnitId ?? parcel.currentOrgUnitId;
+    let organizationUnitName: string | undefined;
+    let organizationType: OrgType | undefined;
+    let organizationLatitude: number | undefined;
+    let organizationLongitude: number | undefined;
+
+    if (effectiveOrgUnitId) {
+      const orgUnits = await this.organizationFacade.getOrganizationUnitsByIds([
+        effectiveOrgUnitId,
+      ]);
+      if (orgUnits.length > 0) {
+        const orgUnit = orgUnits[0];
+        organizationUnitName = orgUnit.name;
+        organizationType = orgUnit.orgType as unknown as OrgType;
+        organizationLatitude = orgUnit.location?.latitude;
+        organizationLongitude = orgUnit.location?.longitude;
+      }
+    }
+
     const movement: AppendParcelMovementCommand = {
       tenantId: parcel.tenantId,
       parcelId: parcel.id,
       tripId: options?.tripId,
-      organizationUnitId: options?.organizationUnitId,
+      organizationUnitId: effectiveOrgUnitId,
+      organizationUnitName,
+      organizationType,
+      organizationLatitude,
+      organizationLongitude,
       performedByEmployeeId: employeeId,
       actionType: actionType,
       previousStatus,
@@ -183,9 +304,18 @@ export class ParcelCommandService {
 
     // Evict specific details since trackingNumber argument isn't enough for the decorator
     await Promise.all([
-      this.cache.evict([CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS, parcel.id]),
-      this.cache.evict([CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS, trackingNumber]),
-      this.cache.evict([CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS, parcel.customerShipmentId]),
+      this.cache.evict([
+        CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+        parcel.id,
+      ]),
+      this.cache.evict([
+        CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+        trackingNumber,
+      ]),
+      this.cache.evict([
+        CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
+        parcel.customerShipmentId,
+      ]),
     ]);
   }
 

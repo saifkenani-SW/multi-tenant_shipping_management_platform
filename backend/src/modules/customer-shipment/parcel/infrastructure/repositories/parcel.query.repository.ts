@@ -52,6 +52,7 @@ export class ParcelQueryRepository {
       criteria.tenantId || 'none',
       criteria.customerShipmentId || 'none',
       (criteria.scopeOrgUnitIds || []).join(',') || 'none',
+      criteria.customerPhone || 'none',
       (criteria.statuses || []).join(',') || 'none',
       criteria.condition || 'none',
       criteria.currentOrgUnitId || 'none',
@@ -65,6 +66,21 @@ export class ParcelQueryRepository {
     let query: any = this.kysely
       .selectFrom('parcel as p')
       .select([...PARCEL_COLUMNS]);
+
+    if (criteria.customerPhone) {
+      query = query
+        .innerJoin(
+          'customer_shipment as cs',
+          'cs.id',
+          'p.customer_shipment_id',
+        )
+        .where((eb: any) =>
+          eb.or([
+            eb('cs.sender_phone', '=', criteria.customerPhone!),
+            eb('cs.receiver_phone', '=', criteria.customerPhone!),
+          ]),
+        );
+    }
 
     if (criteria.tenantId) {
       query = query.where('p.tenant_id', '=', criteria.tenantId);
@@ -185,6 +201,24 @@ export class ParcelQueryRepository {
       trackingNumber,
     ],
   })
+  /**
+   * Raw rows for a set of ids, joined like findRawById.
+   *
+   * One query for the whole set: reading a manifest's parcels one id at a
+   * time turns a forty-parcel screen into eighty round trips.
+   */
+  async findRawByIds(ids: string[]): Promise<any[]> {
+    if (ids.length === 0) return [];
+
+    return this.kysely
+      .selectFrom('parcel as p')
+      .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
+      .select([...PARCEL_COLUMNS])
+      .select(['cs.sender_phone', 'cs.receiver_phone', 'cs.origin_org_unit_id'])
+      .where('p.id', 'in', ids)
+      .execute();
+  }
+
   async findRawByTrackingNumber(trackingNumber: string): Promise<any | null> {
     const record = await this.kysely
       .selectFrom('parcel as p')
@@ -213,6 +247,9 @@ export class ParcelQueryRepository {
       currentOrgUnitId: record.current_org_unit_id,
       destinationOrgUnitId: record.destination_org_unit_id,
       labelKey: record.label_key,
+      senderPhone: record.sender_phone,
+      receiverPhone: record.receiver_phone,
+      originOrgUnitId: record.origin_org_unit_id,
     });
   }
 
@@ -238,6 +275,9 @@ export class ParcelQueryRepository {
       currentOrgUnitId: record.current_org_unit_id,
       destinationOrgUnitId: record.destination_org_unit_id,
       labelKey: record.label_key,
+      senderPhone: record.sender_phone,
+      receiverPhone: record.receiver_phone,
+      originOrgUnitId: record.origin_org_unit_id,
     });
   }
 

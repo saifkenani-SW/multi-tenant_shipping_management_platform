@@ -35,10 +35,10 @@ export class ParcelAbility implements CaslAbilityContributor<
     if (type === SubjectType.CUSTOMER) {
       if (principal.phone) {
         builder.can(ParcelAction.View, ParcelSubject, {
-          sender_phone: principal.phone,
+          senderPhone: principal.phone,
         } as any);
         builder.can(ParcelAction.View, ParcelSubject, {
-          receiver_phone: principal.phone,
+          receiverPhone: principal.phone,
         } as any);
       }
       return;
@@ -48,14 +48,41 @@ export class ParcelAbility implements CaslAbilityContributor<
       return;
     }
 
-    const ownTenant = { tenant_id: principal.tenantId } as any;
+    const ownTenant = { tenantId: principal.tenantId } as any;
 
     if (type === SubjectType.TENANT_ADMIN) {
       builder.can(ParcelAction.View, ParcelSubject, ownTenant);
       builder.can(ParcelAction.UpdateStatus, ParcelSubject, ownTenant);
-      builder.can(ParcelAction.Receive, ParcelSubject, ownTenant);
-      builder.can(ParcelAction.Dispatch, ParcelSubject, ownTenant);
-      builder.can(ParcelAction.Collect, ParcelSubject, ownTenant);
+      builder.can(ParcelAction.Receive, ParcelSubject, {
+        tenantId: principal.tenantId,
+        currentStatus: ParcelStatus.IN_TRANSIT,
+      } as any);
+      builder.can(ParcelAction.Dispatch, ParcelSubject, {
+        tenantId: principal.tenantId,
+        currentStatus: ParcelStatus.PROCESSING,
+      } as any);
+      builder.can(ParcelAction.Collect, ParcelSubject, {
+        tenantId: principal.tenantId,
+        currentStatus: {
+          $in: [
+            ParcelStatus.IN_TRANSIT, // Deliver uses collect permission logically, but must be in transit
+            ParcelStatus.READY_FOR_COLLECTION,
+            ParcelStatus.PROCESSING,
+          ],
+        },
+      } as any);
+      return;
+    }
+
+    // A driver reads parcels and never changes them: moving a parcel through
+    // its lifecycle is branch work. What a driver does change is the parcel's
+    // place on a manifest, which lives in Fleet and is guarded there.
+    //
+    // The scope is the tenant rather than an org unit, because a driver's job
+    // is to move between units — tying them to one would block scanning the
+    // parcels they are carrying to the next branch.
+    if (type === SubjectType.DRIVER) {
+      builder.can(ParcelAction.View, ParcelSubject, ownTenant);
       return;
     }
 
@@ -72,13 +99,13 @@ export class ParcelAbility implements CaslAbilityContributor<
         // OR destined for the employee's org unit.
 
         const currentOrgScope = {
-          tenant_id: principal.tenantId,
-          current_org_unit_id: orgUnit.id,
+          tenantId: principal.tenantId,
+          currentOrgUnitId: orgUnit.id,
         } as any;
 
         const destOrgScope = {
-          tenant_id: principal.tenantId,
-          destination_org_unit_id: orgUnit.id,
+          tenantId: principal.tenantId,
+          destinationOrgUnitId: orgUnit.id,
         } as any;
 
         if (perms.includes(Permission.READ_PARCEL)) {
