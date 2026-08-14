@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Pagination, PaginationMeta } from '../../../../../common/pagination';
 import { TransportManifest } from '../../domain/entities/transport-manifest.entity';
 import { ManifestItem } from '../../domain/entities/manifest-item.entity';
+import { ParcelSummary } from '../../../contracts/parcel-lookup';
 import { ManifestDetailsDto } from '../dtos/responses/manifest-details.dto';
 import { ManifestItemDto } from '../dtos/responses/manifest-item.dto';
 import {
@@ -11,7 +12,11 @@ import {
 
 @Injectable()
 export class ManifestResponseMapper {
-  toItemDto(item: ManifestItem): ManifestItemDto {
+  /**
+   * [parcel] is optional so callers that only need the manifest side keep
+   * working, and so a row whose parcel could not be read still renders.
+   */
+  toItemDto(item: ManifestItem, parcel?: ParcelSummary): ManifestItemDto {
     const dto = new ManifestItemDto();
     dto.id = item.id;
     dto.manifestId = item.manifestId;
@@ -19,6 +24,13 @@ export class ManifestResponseMapper {
     dto.status = item.status;
     dto.loadedAt = item.loadedAt;
     dto.unloadedAt = item.unloadedAt;
+
+    dto.trackingNumber = parcel?.trackingNumber ?? null;
+    dto.description = parcel?.description ?? null;
+    dto.actualWeightKg = parcel?.actualWeightKg ?? null;
+    dto.isFragile = parcel?.isFragile ?? null;
+    dto.destinationOrgUnitId = parcel?.destinationOrgUnitId ?? null;
+
     return dto;
   }
 
@@ -37,6 +49,7 @@ export class ManifestResponseMapper {
   toDetailsDto(
     manifest: TransportManifest,
     items: ManifestItem[],
+    parcels: Map<string, ParcelSummary> = new Map(),
   ): ManifestDetailsDto {
     const dto = new ManifestDetailsDto();
     dto.id = manifest.id;
@@ -47,7 +60,9 @@ export class ManifestResponseMapper {
     dto.status = manifest.status;
     dto.createdAt = manifest.createdAt;
     dto.updatedAt = manifest.updatedAt;
-    dto.items = items.map((item) => this.toItemDto(item));
+    dto.items = items.map(
+      (item) => this.toItemDto(item, parcels.get(item.parcelId)),
+    );
     return dto;
   }
 

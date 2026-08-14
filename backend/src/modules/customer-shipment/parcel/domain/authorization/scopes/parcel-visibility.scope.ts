@@ -40,6 +40,16 @@ export class ParcelVisibilityScope implements VisibilityScopeBuilder<ParcelScope
       };
     }
 
+    // Tenant-wide, unlike an employee: a driver carries parcels between org
+    // units, so narrowing them to one unit would hide the very parcels they
+    // are transporting. Reading is all they may do — see ParcelAbility.
+    if (type === SubjectType.DRIVER) {
+      return {
+        parcel: { tenant_id: principal.tenantId },
+        shipment: {},
+      };
+    }
+
     if (type === SubjectType.EMPLOYEE) {
       const orgUnitIds = [
         ...(principal.branches || []).map((b) => b.id),

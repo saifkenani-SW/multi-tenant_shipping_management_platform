@@ -6,6 +6,7 @@ import { ManifestQueryCriteriaBuilder } from '../builders/query/manifest-query-c
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 import { ManifestQueryDto } from '../dtos/requests/manifest-query.dto';
 import { ManifestQueryService } from './manifest-query.service';
+import { ParcelLookup } from '../../../contracts/parcel-lookup';
 
 /**
  * A platform owner carries no tenant in the request context, so every read
@@ -35,14 +36,21 @@ describe('ManifestQueryService — tenant scoping', () => {
     existsItemForParcel: jest.fn(),
   };
 
+  /** Parcel labels are decoration on these reads; the tenant scoping is not. */
+  const parcelLookup: ParcelLookup = {
+    getParcelsByIds: jest.fn().mockResolvedValue([]),
+  };
+
   let service: ManifestQueryService;
 
   beforeEach(() => {
     jest.resetAllMocks();
+    (parcelLookup.getParcelsByIds as jest.Mock).mockResolvedValue([]);
     service = new ManifestQueryService(
       queryRepository as unknown as TransportManifestQueryRepository,
       new ManifestQueryCriteriaBuilder(),
       new ManifestResponseMapper(),
+      parcelLookup,
     );
   });
 

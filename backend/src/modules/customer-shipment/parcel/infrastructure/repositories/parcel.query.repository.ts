@@ -185,6 +185,24 @@ export class ParcelQueryRepository {
       trackingNumber,
     ],
   })
+  /**
+   * Raw rows for a set of ids, joined like findRawById.
+   *
+   * One query for the whole set: reading a manifest's parcels one id at a
+   * time turns a forty-parcel screen into eighty round trips.
+   */
+  async findRawByIds(ids: string[]): Promise<any[]> {
+    if (ids.length === 0) return [];
+
+    return this.kysely
+      .selectFrom('parcel as p')
+      .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
+      .select([...PARCEL_COLUMNS])
+      .select(['cs.sender_phone', 'cs.receiver_phone', 'cs.origin_org_unit_id'])
+      .where('p.id', 'in', ids)
+      .execute();
+  }
+
   async findRawByTrackingNumber(trackingNumber: string): Promise<any | null> {
     const record = await this.kysely
       .selectFrom('parcel as p')

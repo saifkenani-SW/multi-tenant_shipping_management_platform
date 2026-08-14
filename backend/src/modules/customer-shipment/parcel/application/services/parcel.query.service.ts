@@ -11,6 +11,7 @@ import {ParcelResponseDto} from '../dtos/responses/parcel.response.dto';
 import { ParcelMapper } from '../mappers/parcel.mapper';
 import { Parcel } from '../../domain/entities/parcel.entity';
 import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-visibility.scope';
+import type { ParcelScopeInterface } from '../../domain/authorization/scopes/parcel-scope.interface';
 import {ShipmentQueryService} from '../../../shipment/application/services/shipment.query.service';
 
 @Injectable()
@@ -123,6 +124,57 @@ export class ParcelQueryService {
     }
 
     return this.mapper.toResponse(record);
+  }
+
+  /**
+   * Parcels for a set of ids, narrowed to what the caller may see.
+   *
+   * Batched on purpose: reading them one id at a time authorizes each row
+   * with its own extra query, so a forty-parcel manifest would cost eighty
+   * round trips. Rows outside the scope are dropped rather than throwing —
+   * one unreadable parcel should not blank out a whole manifest.
+   */
+  async getParcelsByIds(ids: string[]): Promise<ParcelResponseDto[]> {
+    if (ids.length === 0) return [];
+
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+    const records = await this.queryRepository.findRawByIds(ids);
+
+    return records
+      .filter((record) => this.isWithinScope(record, scope))
+      .map((record) => this.mapper.toResponse(record));
+  }
+
+  /** The same visibility rule the filtered queries apply, checked in memory. */
+  private isWithinScope(record: any, scope: ParcelScopeInterface): boolean {
+    const parcel = scope.parcel;
+
+    if (parcel?.tenant_id && record.tenant_id !== parcel.tenant_id) {
+      return false;
+    }
+
+    // An employee sees a parcel sitting at one of their units or heading to it.
+    if (parcel?.org_unit_ids?.length) {
+      const units = parcel.org_unit_ids;
+      const reachable =
+        units.includes(record.current_org_unit_id) ||
+        units.includes(record.destination_org_unit_id);
+
+      if (!reachable) return false;
+    }
+
+    const shipment = scope.shipment;
+    if (shipment?.sender_phone || shipment?.receiver_phone) {
+      const isParty =
+        record.sender_phone === shipment.sender_phone ||
+        record.receiver_phone === shipment.receiver_phone;
+
+      if (!isParty) return false;
+    }
+
+    return true;
   }
 
   async findAggregateOrThrow(id: string): Promise<Parcel> {

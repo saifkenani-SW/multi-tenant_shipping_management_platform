@@ -59,6 +59,18 @@ export class ParcelAbility implements CaslAbilityContributor<
       return;
     }
 
+    // A driver reads parcels and never changes them: moving a parcel through
+    // its lifecycle is branch work. What a driver does change is the parcel's
+    // place on a manifest, which lives in Fleet and is guarded there.
+    //
+    // The scope is the tenant rather than an org unit, because a driver's job
+    // is to move between units — tying them to one would block scanning the
+    // parcels they are carrying to the next branch.
+    if (type === SubjectType.DRIVER) {
+      builder.can(ParcelAction.View, ParcelSubject, ownTenant);
+      return;
+    }
+
     if (type === SubjectType.EMPLOYEE) {
       const orgUnits = [
         ...(principal.branches || []),
