@@ -9,6 +9,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { RequestContextService } from '../../../packages/context/services/request-context.service';
 import { SubjectType } from '../../../packages/context/principal/principal/SubjectType';
+import { CustomerFacade } from '../../customer/facades/customer.facade';
 import { EmployeeFacade } from '../../employee/facades/employee.facade';
 import { UserLoginType } from '../types/auth.types';
 
@@ -74,9 +75,15 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
 
     // 2. Customer
     if (user.type === UserLoginType.CUSTOMER) {
+      const customerFacade = this.moduleRef.get(CustomerFacade, {
+        strict: false,
+      });
+      const customer = await customerFacade.getProfileByUserId(user.sub);
+
       this.requestContext.setPrincipal({
         subject: { id: user.sub, type: SubjectType.CUSTOMER },
         profileId: user.profileId, // This is the customer_profile.id
+        phone: customer?.phone || undefined, // Set the phone number
         branches: [],
         warehouses: [],
       });

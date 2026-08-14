@@ -27,7 +27,7 @@ export class PermissionController {
   constructor(private readonly permissionService: PermissionService) {}
 
   @Get()
-  @Roles(RoleType.TENANT_ADMIN)
+  @Roles(RoleType.TENANT_ADMIN, RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'List the permission catalog' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -41,7 +41,7 @@ export class PermissionController {
   }
 
   @Get(':id')
-  @Roles(RoleType.TENANT_ADMIN)
+  @Roles(RoleType.TENANT_ADMIN, RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'Get permission details' })
   @ApiResponse({
     status: HttpStatus.OK,

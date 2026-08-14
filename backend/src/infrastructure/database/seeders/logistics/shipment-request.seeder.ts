@@ -23,7 +23,7 @@ export class ShipmentRequestSeeder implements Seeder {
       const tenant = SEEDED_TENANTS[i];
       const customer = await this.prisma.customer_profile.findFirst();
       const orgUnit = await this.prisma.organization_unit.findFirst({
-        where: { tenant_id: tenant.id },
+        where: { tenant_id: tenant.id, org_type: 'BRANCH' },
       });
       const employee = await this.prisma.employee.findFirst({
         where: { tenant_id: tenant.id },

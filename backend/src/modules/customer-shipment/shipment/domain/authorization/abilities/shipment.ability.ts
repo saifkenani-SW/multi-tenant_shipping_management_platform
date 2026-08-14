@@ -11,6 +11,7 @@ import { ApplicationAbility } from '../../../../../../authorization/application-
 import { Principal } from '../../../../../../packages/context/principal/principal/Principal';
 import { SubjectType } from '../../../../../../packages/context/principal/principal/SubjectType';
 import { Permission } from '../../../../../../core/security/Permission';
+import { ShipmentStatus } from '@prisma/client';
 
 @CaslContributor()
 @Injectable()
@@ -32,7 +33,7 @@ export class ShipmentAbility implements CaslAbilityContributor<
     if (type === SubjectType.TENANT_ADMIN) {
       if (principal.tenantId) {
         builder.can(ShipmentAction.View, ShipmentSubject, {
-          tenant_id: principal.tenantId,
+          tenantId: principal.tenantId,
         } as any);
       }
       return;
@@ -40,10 +41,10 @@ export class ShipmentAbility implements CaslAbilityContributor<
 
     if (type === SubjectType.CUSTOMER) {
       builder.can(ShipmentAction.View, ShipmentSubject, {
-        sender_phone: principal.phone,
+        senderPhone: principal.phone,
       } as any);
       builder.can(ShipmentAction.View, ShipmentSubject, {
-        receiver_phone: principal.phone,
+        receiverPhone: principal.phone,
       } as any);
 
       return;
@@ -58,8 +59,8 @@ export class ShipmentAbility implements CaslAbilityContributor<
       for (const orgUnit of orgUnits) {
         const perms = orgUnit.role?.permissions || [];
         const mutateScope = {
-          tenant_id: principal.tenantId,
-          origin_org_unit_id: orgUnit.id,
+          tenantId: principal.tenantId,
+          originOrgUnitId: orgUnit.id,
         } as any;
 
         if (perms.includes(Permission.CREATE_SHIPMENT)) {
@@ -68,25 +69,38 @@ export class ShipmentAbility implements CaslAbilityContributor<
 
         if (perms.includes(Permission.READ_SHIPMENT)) {
           builder.can(ShipmentAction.View, ShipmentSubject, {
-            tenant_id: principal.tenantId,
-            origin_org_unit_id: orgUnit.id,
+            tenantId: principal.tenantId,
+            originOrgUnitId: orgUnit.id,
           } as any);
           builder.can(ShipmentAction.View, ShipmentSubject, {
-            tenant_id: principal.tenantId,
-            destination_org_unit_id: orgUnit.id,
+            tenantId: principal.tenantId,
+            destinationOrgUnitId: orgUnit.id,
           } as any);
         }
 
         if (perms.includes(Permission.UPDATE_SHIPMENT)) {
-          builder.can(ShipmentAction.Update, ShipmentSubject, mutateScope);
+          builder.can(ShipmentAction.Update, ShipmentSubject, {
+            ...mutateScope,
+            status: {
+              $in: [ShipmentStatus.PENDING, ShipmentStatus.PROCESSING],
+            },
+          });
         }
 
         if (perms.includes(Permission.CANCEL_SHIPMENT)) {
-          builder.can(ShipmentAction.Cancel, ShipmentSubject, mutateScope);
+          builder.can(ShipmentAction.Cancel, ShipmentSubject, {
+            ...mutateScope,
+            status: {
+              $in: [ShipmentStatus.PENDING, ShipmentStatus.PROCESSING],
+            },
+          });
         }
 
         if (perms.includes(Permission.RETURN_SHIPMENT)) {
-          builder.can(ShipmentAction.Return, ShipmentSubject, mutateScope);
+          builder.can(ShipmentAction.Return, ShipmentSubject, {
+            ...mutateScope,
+            status: ShipmentStatus.IN_TRANSIT,
+          });
         }
       }
     }

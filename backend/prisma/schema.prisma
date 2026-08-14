@@ -1,6 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions", "partialIndexes"]
+  previewFeatures = ["partialIndexes", "postgresqlExtensions"]
 }
 
 generator kysely {
@@ -12,12 +12,864 @@ generator kysely {
 
 datasource db {
   provider   = "postgresql"
-  extensions = [postgis, ltree]
+  extensions = [ltree, postgis]
 }
 
-// =========================================================================
-// ENUMS (الموحدة)
-// =========================================================================
+model assignment_role {
+  id                  String              @id @default(uuid(7)) @db.Uuid
+  assignment_id       String              @db.Uuid
+  role_id             String              @db.Uuid
+  granted_at          DateTime            @default(now()) @db.Timestamp(6)
+  employee_assignment employee_assignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  role                role                @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([assignment_id, role_id], map: "uq_assignment_role")
+}
+
+model audit_log {
+  id               String   @id @default(uuid(7)) @db.Uuid
+  tenant_id        String?  @db.Uuid
+  actor_user_id    String?  @db.Uuid
+  actor_ip         String?  @db.Inet
+  actor_user_agent String?
+  event_type       String   @db.VarChar(50)
+  entity_type      String?  @db.VarChar(50)
+  entity_id        String?  @db.Uuid
+  old_values       Json?
+  new_values       Json?
+  metadata         Json?
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  users            users?   @relation(fields: [actor_user_id], references: [id], onUpdate: NoAction)
+  tenant           tenant?  @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
+}
+
+model customer_address {
+  id               String                   @id @default(uuid(7)) @db.Uuid
+  customer_id      String                   @db.Uuid
+  label            String?                  @db.VarChar(100)
+  address_line     String                   @db.VarChar(500)
+  location         Unsupported("geometry")?
+  is_default       Boolean                  @default(false)
+  created_at       DateTime                 @default(now()) @db.Timestamp(6)
+  customer_profile customer_profile         @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([location], map: "idx_customer_address_location", type: Gist)
+}
+
+model customer_profile {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  user_id           String             @unique @db.Uuid
+  full_name         String             @db.VarChar(255)
+  phone             String             @db.VarChar(50)
+  profile_image_key String?            @db.VarChar(500)
+  created_at        DateTime           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime           @updatedAt
+  customer_address  customer_address[]
+  users             users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  customer_tenant   customer_tenant[]
+  shipment_request  shipment_request[]
+}
+
+model customer_shipment {
+  id                         String                @id @default(uuid(7)) @db.Uuid
+  tenant_id                  String                @db.Uuid
+  sender_national_id         String?               @db.VarChar(50)
+  shipment_request_id        String?               @db.Uuid
+  origin_org_unit_id         String                @db.Uuid
+  destination_org_unit_id    String                @db.Uuid
+  receiver_name              String                @db.VarChar(255)
+  receiver_phone             String                @db.VarChar(50)
+  payment_responsibility     PaymentResponsibility @default(SENDER)
+  total_chargeable_weight_kg Decimal?              @default(0) @db.Decimal(10, 2)
+  status                     ShipmentStatus        @default(PROCESSING)
+  created_at                 DateTime              @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime              @updatedAt
+  service_level              ServiceLevel          @default(STANDARD)
+  version                    Int                   @default(1)
+  sender_name                String                @db.VarChar(255)
+  sender_phone               String                @db.VarChar(50)
+  created_by_employee_id     String?               @db.Uuid
+  created_by_employee_name   String?               @db.VarChar(255)
+  created_by_employee        employee?             @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
+  destination_org_unit       organization_unit     @relation("customer_shipment_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  origin_org_unit            organization_unit     @relation("customer_shipment_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  shipment_request           shipment_request?     @relation(fields: [shipment_request_id], references: [id], onUpdate: NoAction)
+  tenant                     tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  invoice                    invoice[]
+  parcel                     parcel[]
+  support_ticket             support_ticket[]
+
+  @@index([tenant_id], map: "idx_customer_shipment_tenant")
+}
+
+model customer_tenant {
+  id                   String           @id @default(uuid(7)) @db.Uuid
+  tenant_id            String           @db.Uuid
+  customer_profile_id  String           @db.Uuid
+  first_interaction_at DateTime         @default(now()) @db.Timestamp(6)
+  customer_profile     customer_profile @relation(fields: [customer_profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant               tenant           @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([tenant_id, customer_profile_id], map: "uq_customer_tenant")
+}
+
+model employee {
+  id                  String                @id @default(uuid(7)) @db.Uuid
+  tenant_id           String                @db.Uuid
+  user_id             String                @db.Uuid
+  employee_code       String                @db.VarChar(50)
+  national_id         String?               @db.VarChar(50)
+  full_name           String                @db.VarChar(255)
+  is_active           Boolean               @default(true)
+  deactivated_at      DateTime?             @db.Timestamp(6)
+  created_at          DateTime              @default(now()) @db.Timestamp(6)
+  updated_at          DateTime              @updatedAt
+  customer_shipment   customer_shipment[]
+  tenant              tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employee_assignment employee_assignment[]
+  parcel_movement     parcel_movement[]
+  payment             payment[]
+  proof_of_delivery   proof_of_delivery[]
+  quotation           quotation[]
+  shipment_request    shipment_request[]
+  support_ticket      support_ticket[]
+  trip                trip[]
+  vehicle_assignment  vehicle_assignment[]
+
+  @@unique([tenant_id, employee_code], map: "uq_tenant_emp_code")
+  @@unique([tenant_id, user_id], map: "uq_tenant_user")
+}
+
+model employee_assignment {
+  id                   String            @id @default(uuid(7)) @db.Uuid
+  tenant_id            String            @db.Uuid
+  employee_id          String            @db.Uuid
+  organization_unit_id String            @db.Uuid
+  is_active            Boolean           @default(true)
+  created_at           DateTime          @default(now()) @db.Timestamp(6)
+  assignment_role      assignment_role[]
+  employee             employee          @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organization_unit    organization_unit @relation(fields: [organization_unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([employee_id, organization_unit_id], map: "uq_employee_org_unit")
+}
+
+model global_location {
+  id                            String                      @id @default(uuid(7)) @db.Uuid
+  parent_id                     String?                     @db.Uuid
+  name                          String                      @db.VarChar(255)
+  type                          LocationType
+  location                      Unsupported("geometry")?
+  global_location               global_location?            @relation("global_locationToglobal_location", fields: [parent_id], references: [id], onUpdate: NoAction)
+  other_global_location         global_location[]           @relation("global_locationToglobal_location")
+  org_unit_location_mapping     org_unit_location_mapping[]
+  destination_shipment_requests shipment_request[]          @relation("shipment_request_destinationToglobal_location")
+  origin_shipment_requests      shipment_request[]          @relation("shipment_request_originToglobal_location")
+
+  @@index([location], map: "idx_global_location_geom", type: Gist)
+}
+
+model invoice {
+  id                      String                @id @default(uuid(7)) @db.Uuid
+  version                 Int                   @default(1)
+  tenant_id               String                @db.Uuid
+  customer_shipment_id    String?               @db.Uuid
+  sender_name             String                @db.VarChar(255)
+  sender_phone            String                @db.VarChar(50)
+  receiver_name           String                @db.VarChar(255)
+  receiver_phone          String                @db.VarChar(50)
+  origin_org_unit_id      String                @db.Uuid
+  destination_org_unit_id String                @db.Uuid
+  invoice_number          String                @db.VarChar(100)
+  subtotal                Decimal               @db.Decimal(10, 2)
+  handling_fees           Decimal               @default(0) @db.Decimal(10, 2)
+  tax_amount              Decimal               @default(0) @db.Decimal(10, 2)
+  discount_amount         Decimal               @default(0) @db.Decimal(10, 2)
+  total_amount            Decimal               @db.Decimal(10, 2)
+  payment_responsibility  PaymentResponsibility @default(SENDER)
+  currency                String                @default("USD") @db.Char(3)
+  status                  InvoiceStatus         @default(UNPAID)
+  due_date                DateTime?             @db.Timestamp(6)
+  created_at              DateTime              @default(now()) @db.Timestamp(6)
+  updated_at              DateTime              @updatedAt
+  customer_shipment       customer_shipment?    @relation(fields: [customer_shipment_id], references: [id], onUpdate: NoAction)
+  tenant                  tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  origin_org_unit         organization_unit     @relation("invoice_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  destination_org_unit    organization_unit     @relation("invoice_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  payment                 payment[]
+
+  @@unique([tenant_id, invoice_number], map: "uq_tenant_invoice")
+  @@index([tenant_id, status], map: "idx_invoice_tenant_status")
+  @@index([tenant_id, sender_phone], map: "idx_invoice_sender_phone")
+  @@index([origin_org_unit_id], map: "idx_invoice_origin_org_unit")
+  @@index([destination_org_unit_id], map: "idx_invoice_destination_org_unit")
+}
+
+model invoice_counter {
+  tenant_id   String   @db.Uuid
+  year        Int
+  last_number Int      @default(0)
+  updated_at  DateTime @updatedAt
+  tenant      tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([tenant_id, year])
+}
+
+model manifest_item {
+  id                 String             @id @default(uuid(7)) @db.Uuid
+  manifest_id        String             @db.Uuid
+  parcel_id          String             @db.Uuid
+  status             ManifestItemStatus @default(PENDING_LOAD)
+  loaded_at          DateTime?          @db.Timestamp(6)
+  unloaded_at        DateTime?          @db.Timestamp(6)
+  transport_manifest transport_manifest @relation(fields: [manifest_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  parcel             parcel             @relation(fields: [parcel_id], references: [id], onUpdate: NoAction)
+
+  @@unique([manifest_id, parcel_id], map: "uq_manifest_parcel")
+}
+
+model notification {
+  id                String              @id @default(uuid(7)) @db.Uuid
+  tenant_id         String?             @db.Uuid
+  recipient_user_id String              @db.Uuid
+  notification_type NotificationType
+  title             String              @db.VarChar(255)
+  body              String
+  data              Json?
+  channel           NotificationChannel
+  is_read           Boolean             @default(false)
+  read_at           DateTime?           @db.Timestamp(6)
+  sent_at           DateTime?           @db.Timestamp(6)
+  status            NotificationStatus  @default(PENDING)
+  created_at        DateTime            @default(now()) @db.Timestamp(6)
+  users             users               @relation(fields: [recipient_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant            tenant?             @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model organization_unit {
+  id                                                                               String                      @id @default(uuid(7)) @db.Uuid
+  tenant_id                                                                        String                      @db.Uuid
+  parent_id                                                                        String?                     @db.Uuid
+  zone_id                                                                          String?                     @db.Uuid
+  tree_path                                                                        Unsupported("ltree")?
+  name                                                                             String                      @db.VarChar(255)
+  org_type                                                                         OrgType
+  address_line                                                                     String?                     @db.VarChar(500)
+  location                                                                         Unsupported("geometry")?
+  is_active                                                                        Boolean                     @default(true)
+  created_at                                                                       DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                                                                       DateTime                    @updatedAt
+  customer_shipment_destination                                                    customer_shipment[]         @relation("customer_shipment_destinationToorganization_unit")
+  customer_shipment_origin                                                         customer_shipment[]         @relation("customer_shipment_originToorganization_unit")
+  employee_assignment                                                              employee_assignment[]
+  org_unit_location_mapping                                                        org_unit_location_mapping[]
+  organization_unit                                                                organization_unit?          @relation("organization_unitToorganization_unit", fields: [parent_id], references: [id], onUpdate: NoAction)
+  other_organization_unit                                                          organization_unit[]         @relation("organization_unitToorganization_unit")
+  tenant                                                                           tenant                      @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant_zone                                                                      tenant_zone?                @relation(fields: [zone_id], references: [id], onUpdate: NoAction)
+  parcel_parcel_current_org_unit_idToorganization_unit                             parcel[]                    @relation("parcel_current_org_unit_idToorganization_unit")
+  parcel_destination_org_unit                                                      parcel[]                    @relation("parcel_destination_org_unit")
+  parcel_movement                                                                  parcel_movement[]
+  payment                                                                          payment[]
+  quotation_destination                                                            quotation[]                 @relation("quotation_destinationToorganization_unit")
+  quotation_origin                                                                 quotation[]                 @relation("quotation_originToorganization_unit")
+  transport_manifest_transport_manifest_destination_org_unit_idToorganization_unit transport_manifest[]        @relation("transport_manifest_destination_org_unit_idToorganization_unit")
+  transport_manifest_transport_manifest_origin_org_unit_idToorganization_unit      transport_manifest[]        @relation("transport_manifest_origin_org_unit_idToorganization_unit")
+  trip_trip_destination_org_unit_idToorganization_unit                             trip[]                      @relation("trip_destination_org_unit_idToorganization_unit")
+  trip_trip_origin_org_unit_idToorganization_unit                                  trip[]                      @relation("trip_origin_org_unit_idToorganization_unit")
+  invoice_origin_org_unit                                                          invoice[]                   @relation("invoice_originToorganization_unit")
+  invoice_destination_org_unit                                                     invoice[]                   @relation("invoice_destinationToorganization_unit")
+
+  @@index([location], map: "idx_org_unit_location", type: Gist)
+}
+
+model parcel {
+  id                                                              String             @id @default(uuid(7)) @db.Uuid
+  tenant_id                                                       String             @db.Uuid
+  customer_shipment_id                                            String             @db.Uuid
+  tracking_number                                                 String             @unique(map: "uq_tracking") @db.VarChar(50)
+  description                                                     String?            @db.VarChar(500)
+  category                                                        String?            @db.VarChar(100)
+  parcel_type                                                     ParcelType         @default(PACKAGE)
+  is_fragile                                                      Boolean            @default(false)
+  requires_upright_handling                                       Boolean            @default(false)
+  temperature_sensitive                                           Boolean            @default(false)
+  actual_weight_kg                                                Decimal            @db.Decimal(10, 2)
+  length_cm                                                       Decimal            @db.Decimal(10, 2)
+  width_cm                                                        Decimal            @db.Decimal(10, 2)
+  height_cm                                                       Decimal            @db.Decimal(10, 2)
+  volumetric_weight_kg                                            Decimal?           @db.Decimal(10, 2)
+  current_status                                                  ParcelStatus       @default(PROCESSING)
+  current_condition                                               ParcelCondition    @default(NORMAL)
+  current_org_unit_id                                             String?            @db.Uuid
+  created_at                                                      DateTime           @default(now()) @db.Timestamp(6)
+  updated_at                                                      DateTime           @updatedAt
+  destination_org_unit_id                                         String?            @db.Uuid
+  label_key                                                       String?            @db.VarChar(500)
+  version                                                         Int                @default(1)
+  manifest_item                                                   manifest_item[]
+  organization_unit_parcel_current_org_unit_idToorganization_unit organization_unit? @relation("parcel_current_org_unit_idToorganization_unit", fields: [current_org_unit_id], references: [id], onUpdate: NoAction)
+  customer_shipment                                               customer_shipment  @relation(fields: [customer_shipment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  destination_org_unit                                            organization_unit? @relation("parcel_destination_org_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  tenant                                                          tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  parcel_movement                                                 parcel_movement[]
+  proof_of_delivery                                               proof_of_delivery?
+  support_ticket                                                  support_ticket[]
+
+  @@index([current_org_unit_id])
+  @@index([customer_shipment_id])
+}
+
+model parcel_movement {
+  id                       String             @id @default(uuid(7)) @db.Uuid
+  tenant_id                String             @db.Uuid
+  parcel_id                String             @db.Uuid
+  trip_id                  String?            @db.Uuid
+  organization_unit_id     String?            @db.Uuid
+  performed_by_employee_id String             @db.Uuid
+  action_type              ActionType
+  previous_status          ParcelStatus?
+  new_status               ParcelStatus
+  previous_condition       ParcelCondition?
+  new_condition            ParcelCondition
+  organization_unit_name   String?
+  organization_type        OrgType?
+  organization_latitude    Decimal?           @db.Decimal(10, 7)
+  organization_longitude   Decimal?           @db.Decimal(10, 7)
+  trip_number              String?
+  performed_by_name        String
+  metadata                 Json?
+  notes                    String?
+  created_at               DateTime           @default(now()) @db.Timestamp(6)
+  organization_unit        organization_unit? @relation(fields: [organization_unit_id], references: [id])
+  parcel                   parcel             @relation(fields: [parcel_id], references: [id], onDelete: Cascade)
+  employee                 employee           @relation(fields: [performed_by_employee_id], references: [id])
+  tenant                   tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  trip                     trip?              @relation(fields: [trip_id], references: [id])
+
+  @@index([organization_unit_id, created_at])
+  @@index([parcel_id, created_at])
+}
+
+model payment {
+  id                       String             @id @default(uuid(7)) @db.Uuid
+  tenant_id                String             @db.Uuid
+  invoice_id               String             @db.Uuid
+  collected_by_employee_id String?            @db.Uuid
+  organization_unit_id     String?            @db.Uuid
+  amount                   Decimal            @db.Decimal(10, 2)
+  payment_method           PaymentMethod
+  transaction_reference    String?            @db.VarChar(255)
+  gateway_response         Json?
+  status                   PaymentStatus      @default(COMPLETED)
+  created_at               DateTime           @default(now()) @db.Timestamp(6)
+  employee                 employee?          @relation(fields: [collected_by_employee_id], references: [id], onUpdate: NoAction)
+  invoice                  invoice            @relation(fields: [invoice_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organization_unit        organization_unit? @relation(fields: [organization_unit_id], references: [id], onUpdate: NoAction)
+  tenant                   tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model permission {
+  id              String            @id @default(uuid(7)) @db.Uuid
+  name            String            @unique @db.VarChar(150)
+  resource        String            @db.VarChar(100)
+  action          String            @db.VarChar(50)
+  description     String?           @db.VarChar(255)
+  role_permission role_permission[]
+}
+
+model proof_of_delivery {
+  id                         String           @id @default(uuid(7)) @db.Uuid
+  tenant_id                  String           @db.Uuid
+  parcel_id                  String           @unique(map: "uq_parcel_pod") @db.Uuid
+  delivered_by_employee_id   String           @db.Uuid
+  delivered_by_employee_name String           @db.VarChar(255)
+  collection_method          CollectionMethod @default(CUSTOMER)
+  received_by_name           String           @db.VarChar(255)
+  received_by_national_id    String?          @db.VarChar(50)
+  otp_verified               Boolean          @default(false)
+  otp_verified_at            DateTime?        @db.Timestamp(6)
+  signature_key              String?          @db.VarChar(500)
+  id_photo_key               String?          @db.VarChar(500)
+  parcel_photo_key           String?          @db.VarChar(500)
+  additional_photo_key       String?          @db.VarChar(500)
+  delivery_lat               Decimal?         @db.Decimal(10, 8)
+  delivery_lng               Decimal?         @db.Decimal(11, 8)
+  created_at                 DateTime         @default(now()) @db.Timestamp(6)
+  employee                   employee         @relation(fields: [delivered_by_employee_id], references: [id], onUpdate: NoAction)
+  parcel                     parcel           @relation(fields: [parcel_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant                     tenant           @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model quotation {
+  id                       String            @id @default(uuid(7)) @db.Uuid
+  tenant_id                String            @db.Uuid
+  shipment_request_id      String            @db.Uuid
+  origin_org_unit_id       String            @db.Uuid
+  destination_org_unit_id  String            @db.Uuid
+  quotation_type           QuotationType     @default(AUTOMATIC)
+  base_price               Decimal?          @db.Decimal(10, 2)
+  weight_charge            Decimal?          @db.Decimal(10, 2)
+  extra_fees               Decimal?          @default(0) @db.Decimal(10, 2)
+  amount                   Decimal?          @db.Decimal(10, 2)
+  pricing_snapshot         Json?
+  notes                    String?
+  valid_until              DateTime?         @db.Timestamp(6)
+  status                   QuotationStatus   @default(PENDING)
+  submitted_by_employee_id String?           @db.Uuid
+  created_at               DateTime          @default(now()) @db.Timestamp(6)
+  updated_at               DateTime          @updatedAt
+  service_level            ServiceLevel      @default(STANDARD)
+  destination_org_unit     organization_unit @relation("quotation_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  origin_org_unit          organization_unit @relation("quotation_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  shipment_request         shipment_request  @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  employee                 employee?         @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
+  tenant                   tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  approved_for_request     shipment_request? @relation("ApprovedQuotation")
+
+  @@index([shipment_request_id])
+  @@index([tenant_id])
+}
+
+model role {
+  id              String            @id @default(uuid(7)) @db.Uuid
+  tenant_id       String            @db.Uuid
+  name            String            @db.VarChar(100)
+  description     String?           @db.VarChar(255)
+  is_active       Boolean           @default(true)
+  created_at      DateTime          @default(now()) @db.Timestamp(6)
+  assignment_role assignment_role[]
+  tenant          tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  role_permission role_permission[]
+
+  @@unique([tenant_id, name], map: "uq_tenant_role_name")
+}
+
+model role_permission {
+  id            String     @id @default(uuid(7)) @db.Uuid
+  role_id       String     @db.Uuid
+  permission_id String     @db.Uuid
+  permission    permission @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  role          role       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([role_id, permission_id], map: "uq_role_permission")
+}
+
+model shipment_request {
+  id                             String              @id @default(uuid(7)) @db.Uuid
+  customer_profile_id            String              @db.Uuid
+  target_tenant_id               String?             @db.Uuid
+  origin_global_location_id      String              @db.Uuid
+  destination_global_location_id String              @db.Uuid
+  sender_name                    String              @db.VarChar(255)
+  sender_phone                   String              @db.VarChar(50)
+  sender_lat                     Decimal?            @db.Decimal(10, 8)
+  sender_lng                     Decimal?            @db.Decimal(11, 8)
+  receiver_name                  String              @db.VarChar(255)
+  receiver_phone                 String              @db.VarChar(50)
+  receiver_lat                   Decimal?            @db.Decimal(10, 8)
+  receiver_lng                   Decimal?            @db.Decimal(11, 8)
+  expected_pieces_count          Int                 @default(1)
+  expected_total_weight_kg       Decimal             @db.Decimal(10, 2)
+  notes                          String?
+  status                         RequestStatus       @default(PENDING)
+  cancelled_at                   DateTime?           @db.Timestamp(6)
+  cancellation_reason            String?
+  expires_at                     DateTime?           @db.Timestamp(6)
+  created_by_employee_id         String?             @db.Uuid
+  created_at                     DateTime            @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime            @updatedAt
+  approved_quotation_id          String?             @unique @db.Uuid
+  expected_height_cm             Decimal             @default(0) @db.Decimal(10, 2)
+  expected_length_cm             Decimal             @default(0) @db.Decimal(10, 2)
+  expected_width_cm              Decimal             @default(0) @db.Decimal(10, 2)
+  customer_shipment              customer_shipment[]
+  quotation                      quotation[]
+  approved_quotation             quotation?          @relation("ApprovedQuotation", fields: [approved_quotation_id], references: [id], onUpdate: NoAction)
+  employee                       employee?           @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
+  customer_profile               customer_profile    @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
+  destination_global_location    global_location     @relation("shipment_request_destinationToglobal_location", fields: [destination_global_location_id], references: [id])
+  origin_global_location         global_location     @relation("shipment_request_originToglobal_location", fields: [origin_global_location_id], references: [id])
+  tenant                         tenant?             @relation(fields: [target_tenant_id], references: [id], onUpdate: NoAction)
+}
+
+model subscription_plan {
+  id                    String                        @id @default(uuid(7)) @db.Uuid
+  name                  String                        @db.VarChar(100)
+  description           String?
+  max_branches          Int                           @default(5)
+  max_warehouses        Int                           @default(2)
+  max_employees         Int                           @default(20)
+  max_vehicles          Int                           @default(10)
+  max_zones             Int                           @default(3)
+  max_monthly_shipments Int?
+  max_monthly_parcels   Int?
+  price_monthly         Decimal                       @default(0) @db.Decimal(10, 2)
+  price_yearly          Decimal?                      @db.Decimal(10, 2)
+  is_active             Boolean                       @default(true)
+  created_at            DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at            DateTime                      @updatedAt
+  tenant_subscription   tenant_subscription[]
+  history_as_plan       tenant_subscription_history[] @relation("tenant_subscription_history_plan_idTosubscription_plan")
+  history_as_prev_plan  tenant_subscription_history[] @relation("tenant_subscription_history_previous_plan_idTosubscription_plan")
+}
+
+model support_ticket {
+  id                      String                   @id @default(uuid(7)) @db.Uuid
+  tenant_id               String?                  @db.Uuid
+  submitted_by_user_id    String                   @db.Uuid
+  assigned_to_employee_id String?                  @db.Uuid
+  subject                 String                   @db.VarChar(255)
+  category                TicketCategory           @default(GENERAL)
+  priority                TicketPriority           @default(MEDIUM)
+  parcel_id               String?                  @db.Uuid
+  shipment_id             String?                  @db.Uuid
+  status                  TicketStatus             @default(OPEN)
+  closed_at               DateTime?                @db.Timestamp(6)
+  created_at              DateTime                 @default(now()) @db.Timestamp(6)
+  updated_at              DateTime                 @updatedAt
+  employee                employee?                @relation(fields: [assigned_to_employee_id], references: [id], onUpdate: NoAction)
+  parcel                  parcel?                  @relation(fields: [parcel_id], references: [id], onUpdate: NoAction)
+  customer_shipment       customer_shipment?       @relation(fields: [shipment_id], references: [id], onUpdate: NoAction)
+  users                   users                    @relation(fields: [submitted_by_user_id], references: [id], onUpdate: NoAction)
+  tenant                  tenant?                  @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  support_ticket_message  support_ticket_message[]
+}
+
+model support_ticket_message {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  ticket_id      String         @db.Uuid
+  sender_user_id String         @db.Uuid
+  message        String
+  attachments    Json?
+  created_at     DateTime       @default(now()) @db.Timestamp(6)
+  users          users          @relation(fields: [sender_user_id], references: [id], onUpdate: NoAction)
+  support_ticket support_ticket @relation(fields: [ticket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model org_unit_location_mapping {
+  id                   String            @id @default(uuid(7)) @db.Uuid
+  tenant_id            String            @db.Uuid
+  organization_unit_id String            @db.Uuid
+  global_location_id   String            @db.Uuid
+  coverage_type        CoverageType      @default(DELIVERY_AREA)
+  global_location      global_location   @relation(fields: [global_location_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  organization_unit    organization_unit @relation(fields: [organization_unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([organization_unit_id, global_location_id], map: "uq_org_location")
+}
+
+model tenant {
+  id                          String                        @id @default(uuid(7)) @db.Uuid
+  name                        String                        @db.VarChar(255)
+  email                       String?                       @db.VarChar(255)
+  phone                       String?                       @db.VarChar(50)
+  logo_url                    String?                       @db.VarChar(500)
+  tax_number                  String?                       @db.VarChar(100)
+  is_active                   Boolean                       @default(true)
+  suspended_at                DateTime?                     @db.Timestamp(6)
+  suspended_reason            String?
+  created_at                  DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at                  DateTime                      @updatedAt
+  audit_log                   audit_log[]
+  customer_shipment           customer_shipment[]
+  customer_tenant             customer_tenant[]
+  employee                    employee[]
+  employee_assignment         employee_assignment[]
+  handling_fee_rules          handling_fee_rule[]
+  invoice                     invoice[]
+  notification                notification[]
+  org_unit_location_mapping   org_unit_location_mapping[]
+  organization_unit           organization_unit[]
+  parcel                      parcel[]
+  parcel_movement             parcel_movement[]
+  payment                     payment[]
+  proof_of_delivery           proof_of_delivery[]
+  quotation                   quotation[]
+  role                        role[]
+  shipment_request            shipment_request[]
+  support_ticket              support_ticket[]
+  tenant_delivery_settings    tenant_delivery_settings?
+  tenant_operational_settings tenant_operational_settings?
+  owned_tenants               tenant_owner[]
+  tenant_pricing_settings     tenant_pricing_settings?
+  tenant_subscription         tenant_subscription[]
+  tenant_subscription_history tenant_subscription_history[]
+  tenant_zone                 tenant_zone[]
+  transport_manifest          transport_manifest[]
+  trip                        trip[]
+  vehicle                     vehicle[]
+  vehicle_assignment          vehicle_assignment[]
+  zone_pricing_matrix         zone_pricing_matrix[]
+  invoice_counter             invoice_counter[]
+}
+
+model tenant_delivery_settings {
+  tenant_id            String  @id @db.Uuid
+  require_otp          Boolean @default(true)
+  require_signature    Boolean @default(true)
+  require_proof_photo  Boolean @default(true)
+  require_id_photo     Boolean @default(false)
+  allow_representative Boolean @default(true)
+  tenant               tenant  @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tenant_operational_settings {
+  tenant_id                             String  @id @db.Uuid
+  tracking_prefix                       String? @db.VarChar(10)
+  auto_close_shipment_after_collection  Boolean @default(true)
+  allow_shipment_reopen                 Boolean @default(false)
+  allow_trip_cancellation_after_loading Boolean @default(false)
+  require_manager_before_trip_departure Boolean @default(false)
+  allow_return_after_collection         Boolean @default(false)
+  require_sender_national_id            Boolean @default(true)
+  quotation_validity_hours              Int     @default(48)
+  tenant                                tenant  @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tenant_pricing_settings {
+  tenant_id          String @id @db.Uuid
+  volumetric_divisor Int    @default(5000)
+  default_currency   String @default("SR") @db.Char(3)
+  tenant             tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tenant_subscription {
+  id                             String                        @id @default(uuid(7)) @db.Uuid
+  tenant_id                      String                        @db.Uuid
+  plan_id                        String                        @db.Uuid
+  status                         SubscriptionStatus            @default(ACTIVE)
+  started_at                     DateTime                      @default(now()) @db.Timestamp(6)
+  expires_at                     DateTime                      @db.Timestamp(6)
+  cancelled_at                   DateTime?                     @db.Timestamp(6)
+  cancellation_reason            String?
+  snapshot_max_branches          Int
+  snapshot_max_warehouses        Int
+  snapshot_max_employees         Int
+  snapshot_max_vehicles          Int
+  snapshot_max_zones             Int
+  snapshot_max_monthly_shipments Int?
+  snapshot_max_monthly_parcels   Int?
+  snapshot_features              Json                          @default("{}")
+  created_at                     DateTime                      @default(now()) @db.Timestamp(6)
+  updated_at                     DateTime                      @updatedAt
+  subscription_plan              subscription_plan             @relation(fields: [plan_id], references: [id], onUpdate: NoAction)
+  tenant                         tenant                        @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant_subscription_history    tenant_subscription_history[]
+}
+
+model tenant_subscription_history {
+  id                  String              @id @default(uuid(7)) @db.Uuid
+  tenant_id           String              @db.Uuid
+  subscription_id     String              @db.Uuid
+  plan_id             String              @db.Uuid
+  action              String              @db.VarChar(30)
+  previous_plan_id    String?             @db.Uuid
+  notes               String?
+  performed_by        String?             @db.Uuid
+  performed_at        DateTime            @default(now()) @db.Timestamp(6)
+  plan                subscription_plan   @relation("tenant_subscription_history_plan_idTosubscription_plan", fields: [plan_id], references: [id], onUpdate: NoAction)
+  previous_plan       subscription_plan?  @relation("tenant_subscription_history_previous_plan_idTosubscription_plan", fields: [previous_plan_id], references: [id], onUpdate: NoAction)
+  tenant_subscription tenant_subscription @relation(fields: [subscription_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant              tenant              @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tenant_zone {
+  id                                                                       String                @id @default(uuid(7)) @db.Uuid
+  tenant_id                                                                String                @db.Uuid
+  name                                                                     String                @db.VarChar(255)
+  description                                                              String?
+  is_active                                                                Boolean               @default(true)
+  created_at                                                               DateTime              @default(now()) @db.Timestamp(6)
+  organization_unit                                                        organization_unit[]
+  tenant                                                                   tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  zone_pricing_matrix_zone_pricing_matrix_destination_zone_idTotenant_zone zone_pricing_matrix[] @relation("zone_pricing_matrix_destination_zone_idTotenant_zone")
+  zone_pricing_matrix_zone_pricing_matrix_origin_zone_idTotenant_zone      zone_pricing_matrix[] @relation("zone_pricing_matrix_origin_zone_idTotenant_zone")
+}
+
+model transport_manifest {
+  id                                                                              String            @id @default(uuid(7)) @db.Uuid
+  tenant_id                                                                       String            @db.Uuid
+  trip_id                                                                         String            @db.Uuid
+  origin_org_unit_id                                                              String            @db.Uuid
+  destination_org_unit_id                                                         String            @db.Uuid
+  status                                                                          ManifestStatus    @default(PENDING)
+  created_at                                                                      DateTime          @default(now()) @db.Timestamp(6)
+  updated_at                                                                      DateTime          @updatedAt
+  manifest_item                                                                   manifest_item[]
+  organization_unit_transport_manifest_destination_org_unit_idToorganization_unit organization_unit @relation("transport_manifest_destination_org_unit_idToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  organization_unit_transport_manifest_origin_org_unit_idToorganization_unit      organization_unit @relation("transport_manifest_origin_org_unit_idToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  tenant                                                                          tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  trip                                                                            trip              @relation(fields: [trip_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model trip {
+  id                                                                String               @id @default(uuid(7)) @db.Uuid
+  tenant_id                                                         String               @db.Uuid
+  driver_id                                                         String               @db.Uuid
+  vehicle_id                                                        String?              @db.Uuid
+  origin_org_unit_id                                                String               @db.Uuid
+  destination_org_unit_id                                           String               @db.Uuid
+  status                                                            TripStatus           @default(SCHEDULED)
+  scheduled_at                                                      DateTime?            @db.Timestamp(6)
+  started_at                                                        DateTime?            @db.Timestamp(6)
+  ended_at                                                          DateTime?            @db.Timestamp(6)
+  notes                                                             String?
+  created_at                                                        DateTime             @default(now()) @db.Timestamp(6)
+  updated_at                                                        DateTime             @updatedAt
+  parcel_movement                                                   parcel_movement[]
+  transport_manifest                                                transport_manifest[]
+  organization_unit_trip_destination_org_unit_idToorganization_unit organization_unit    @relation("trip_destination_org_unit_idToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  employee                                                          employee             @relation(fields: [driver_id], references: [id], onUpdate: NoAction)
+  organization_unit_trip_origin_org_unit_idToorganization_unit      organization_unit    @relation("trip_origin_org_unit_idToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  tenant                                                            tenant               @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  vehicle                                                           vehicle?             @relation(fields: [vehicle_id], references: [id], onUpdate: NoAction)
+}
+
+model users {
+  id                     String                   @id @default(uuid(7)) @db.Uuid
+  email                  String                   @unique @db.VarChar(255)
+  phone                  String?                  @unique @db.VarChar(50)
+  password_hash          String                   @db.VarChar(255)
+  created_at             DateTime                 @default(now()) @db.Timestamp(6)
+  updated_at             DateTime                 @updatedAt
+  audit_log              audit_log[]
+  customer_profile       customer_profile?
+  employee               employee[]
+  notification           notification[]
+  platform_admin         platform_admin?
+  support_ticket         support_ticket[]
+  support_ticket_message support_ticket_message[]
+  owned_tenants          tenant_owner[]
+  device_tokens          user_device_token[]
+  userSessions           user_session[]
+}
+
+model user_session {
+  id                   String   @id @default(uuid(7)) @db.Uuid
+  user_id              String   @db.Uuid
+  hashed_refresh_token String   @db.VarChar(255)
+  device_info          String?  @db.VarChar(255)
+  ip_address           String?  @db.Inet
+  expires_at           DateTime @db.Timestamp(6)
+  created_at           DateTime @default(now()) @db.Timestamp(6)
+  users                users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+/// توكنات أجهزة المستخدمين لإشعارات Firebase — يُخزَّن هنا FCM token لكل جهاز
+model user_device_token {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  user_id    String   @db.Uuid
+  /// الـ FCM token الذي يُرسله التطبيق عند تسجيل الدخول
+  fcm_token  String   @db.VarChar(512)
+  /// نوع الجهاز: android / ios / web
+  platform   String   @db.VarChar(20)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  users      users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, fcm_token])
+  @@index([user_id])
+}
+
+model platform_admin {
+  id         String       @id @default(uuid(7)) @db.Uuid
+  user_id    String       @unique @db.Uuid
+  full_name  String       @db.VarChar(255)
+  role       PlatformRole @default(SUPER_ADMIN)
+  is_active  Boolean      @default(true)
+  created_at DateTime     @default(now()) @db.Timestamp(6)
+  updated_at DateTime     @updatedAt
+  users      users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model tenant_owner {
+  id         String   @id @default(uuid(7)) @db.Uuid
+  tenant_id  String   @db.Uuid
+  user_id    String   @db.Uuid
+  is_primary Boolean  @default(false)
+  created_at DateTime @default(now()) @db.Timestamp(6)
+  tenant     tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([tenant_id, user_id], map: "uq_tenant_owner")
+  @@index([user_id])
+}
+
+model vehicle {
+  id                 String               @id @default(uuid(7)) @db.Uuid
+  tenant_id          String               @db.Uuid
+  plate_number       String               @db.VarChar(50)
+  type               VehicleType?
+  capacity_kg        Decimal?             @db.Decimal(10, 2)
+  status             VehicleStatus        @default(ACTIVE)
+  created_at         DateTime             @default(now()) @db.Timestamp(6)
+  updated_at         DateTime             @updatedAt
+  trip               trip[]
+  tenant             tenant               @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  vehicle_assignment vehicle_assignment[]
+
+  @@unique([tenant_id, plate_number], map: "uq_plate_tenant")
+}
+
+model zone_pricing_matrix {
+  id                                                               String       @id @default(uuid(7)) @db.Uuid
+  tenant_id                                                        String       @db.Uuid
+  origin_zone_id                                                   String       @db.Uuid
+  destination_zone_id                                              String       @db.Uuid
+  base_price                                                       Decimal      @db.Decimal(10, 2)
+  base_weight_kg                                                   Decimal      @db.Decimal(10, 2)
+  price_per_extra_kg                                               Decimal      @default(0) @db.Decimal(10, 2)
+  is_active                                                        Boolean      @default(true)
+  created_at                                                       DateTime     @default(now()) @db.Timestamp(6)
+  updated_at                                                       DateTime     @updatedAt
+  service_level                                                    ServiceLevel @default(STANDARD)
+  tenant_zone_zone_pricing_matrix_destination_zone_idTotenant_zone tenant_zone  @relation("zone_pricing_matrix_destination_zone_idTotenant_zone", fields: [destination_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant_zone_zone_pricing_matrix_origin_zone_idTotenant_zone      tenant_zone  @relation("zone_pricing_matrix_origin_zone_idTotenant_zone", fields: [origin_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant                                                           tenant       @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([tenant_id, origin_zone_id, destination_zone_id, service_level], map: "uq_pricing_route_service")
+}
+
+model vehicle_assignment {
+  id          String    @id @default(uuid(7)) @db.Uuid
+  tenant_id   String    @db.Uuid
+  employee_id String    @db.Uuid
+  vehicle_id  String    @db.Uuid
+  is_active   Boolean   @default(true)
+  assigned_at DateTime  @default(now()) @db.Timestamp(6)
+  removed_at  DateTime? @db.Timestamp(6)
+  employee    employee  @relation(fields: [employee_id], references: [id], onDelete: Cascade)
+  tenant      tenant    @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
+  vehicle     vehicle   @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
+
+  @@index([employee_id, is_active])
+}
+
+model handling_fee_rule {
+  id        String          @id @default(uuid(7)) @db.Uuid
+  tenant_id String          @db.Uuid
+  fee_type  HandlingFeeType
+  amount    Decimal         @db.Decimal(10, 2)
+  is_active Boolean         @default(true)
+  tenant    tenant          @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([tenant_id, fee_type], map: "uq_tenant_handling_fee")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model spatial_ref_sys {
+  srid      Int     @id
+  auth_name String? @db.VarChar(256)
+  auth_srid Int?
+  srtext    String? @db.VarChar(2048)
+  proj4text String? @db.VarChar(2048)
+}
+
 enum RequestStatus {
   PENDING
   CUSTOMER_APPROVED
@@ -30,20 +882,13 @@ enum RequestStatus {
 
 enum ParcelStatus {
   PROCESSING
-
   READY_FOR_DISPATCH
-
   IN_TRANSIT
-
-  ARRIVED_AT_UNIT
-
   READY_FOR_COLLECTION
-
   COLLECTED
-
   RETURNED
-
   CANCELLED
+  ARRIVED_AT_UNIT
 }
 
 enum ParcelCondition {
@@ -55,21 +900,14 @@ enum ParcelCondition {
 }
 
 enum ShipmentStatus {
-  PENDING // تم إنشاء الشحنة ولم تبدأ المعالجة
-
-  PROCESSING // تجهيز الطرود والتحقق منها
-
-  READY_FOR_DISPATCH // جاهزة للنقل لأول مرة
-
-  IN_TRANSIT // يوجد طرد واحد على الأقل في النقل
-
-  READY_FOR_COLLECTION // جميع الطرود وصلت إلى فرع الوجهة
-
-  DELIVERED // استلمت جميع الطرود
-
-  CANCELLED // ألغيت قبل التنفيذ ربما بسبب تغيير الشحنه لشحنه امكبر او عدد بارسلات اكثر لان الفاتوره الخاصه به يجب ان تلتغي ايضا!
-
-  RETURNED // اكتمل الإرجاعالفاتوره الخاصه به يجب ان ترجع ايضا!
+  PENDING
+  PROCESSING
+  READY_FOR_DISPATCH
+  IN_TRANSIT
+  READY_FOR_COLLECTION
+  DELIVERED
+  CANCELLED
+  RETURNED
 }
 
 enum TripStatus {
@@ -98,18 +936,19 @@ enum QuotationType {
 }
 
 enum QuotationStatus {
-  WAITING_PRICING_REQUEST
-  WAITING_PRICING
   PENDING
   APPROVED
   REJECTED
   EXPIRED
   WITHDRAWN
+  WAITING_PRICING
+  WAITING_PRICING_REQUEST
 }
 
 enum PaymentMethod {
   CASH
   ONLINE
+  COD
   BANK_TRANSFER
 }
 
@@ -233,11 +1072,8 @@ enum PaymentResponsibility {
 
 enum VehicleType {
   Bike
-
   Car
-
   Van
-
   Truck
 }
 
@@ -247,896 +1083,12 @@ enum CollectionMethod {
 }
 
 enum ParcelType {
-  DOCUMENT // مستندات — لا وزن حقيقي، غالبًا لا حاجة لقياس دقيق
-  PACKAGE // طرد عادي
-  FRAGILE // قابل للكسر — يحتاج عناية خاصة بالتحميل/التخزين
-  PERISHABLE // قابل للتلف — قد يحتاج قيود زمنية (SLA أضيق)
-  HAZARDOUS // مواد خطرة — قيود قانونية ونقل خاص
-  LIQUID // سوائل — قيود تكديس
-}
-
-// =========================================================================
-// MODELS
-// =========================================================================
-
-model assignment_role {
-  id                  String              @id @default(uuid(7)) @db.Uuid
-  assignment_id       String              @db.Uuid
-  role_id             String              @db.Uuid
-  granted_at          DateTime            @default(now()) @db.Timestamp(6)
-  employee_assignment employee_assignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  role                role                @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([assignment_id, role_id], map: "uq_assignment_role")
-}
-
-model audit_log {
-  id               String   @id @default(uuid(7)) @db.Uuid
-  tenant_id        String?  @db.Uuid
-  actor_user_id    String?  @db.Uuid
-  actor_ip         String?  @db.Inet
-  actor_user_agent String?
-  event_type       String   @db.VarChar(50)
-  entity_type      String?  @db.VarChar(50)
-  entity_id        String?  @db.Uuid
-  old_values       Json?
-  new_values       Json?
-  metadata         Json?
-  created_at       DateTime @default(now()) @db.Timestamp(6)
-  users            users?   @relation(fields: [actor_user_id], references: [id], onUpdate: NoAction)
-  tenant           tenant?  @relation(fields: [tenant_id], references: [id], onUpdate: NoAction)
-}
-
-model customer_address {
-  id               String                                @id @default(uuid(7)) @db.Uuid
-  customer_id      String                                @db.Uuid
-  label            String?                               @db.VarChar(100)
-  address_line     String                                @db.VarChar(500)
-  location         Unsupported("geometry(Point, 4326)")?
-  is_default       Boolean                               @default(false)
-  created_at       DateTime                              @default(now()) @db.Timestamp(6)
-  customer_profile customer_profile                      @relation(fields: [customer_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([location], map: "idx_customer_address_location", type: Gist)
-}
-
-model customer_profile {
-  id                String             @id @default(uuid(7)) @db.Uuid
-  user_id           String             @unique @db.Uuid
-  full_name         String             @db.VarChar(255)
-  phone             String             @db.VarChar(50)
-  profile_image_key String?            @db.VarChar(500)
-  created_at        DateTime           @default(now()) @db.Timestamp(6)
-  updated_at        DateTime           @updatedAt
-  customer_address  customer_address[]
-  users             users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  customer_tenant   customer_tenant[]
-  shipment_request  shipment_request[]
-}
-
-model customer_shipment {
-  id                         String                @id @default(uuid(7)) @db.Uuid
-  version                    Int                   @default(1)
-  tenant_id                  String                @db.Uuid
-  sender_national_id         String?               @db.VarChar(50)
-  sender_name                String                @db.VarChar(255)
-  sender_phone               String                @db.VarChar(50)
-  shipment_request_id        String?               @db.Uuid
-  origin_org_unit_id         String                @db.Uuid
-  destination_org_unit_id    String                @db.Uuid
-  service_level              ServiceLevel          @default(STANDARD)
-  receiver_name              String                @db.VarChar(255)
-  receiver_phone             String                @db.VarChar(50)
-  payment_responsibility     PaymentResponsibility @default(SENDER)
-  total_chargeable_weight_kg Decimal?              @default(0) @db.Decimal(10, 2)
-  status                     ShipmentStatus        @default(PROCESSING)
-  created_at                 DateTime              @default(now()) @db.Timestamp(6)
-  updated_at                 DateTime              @updatedAt
-  created_by_employee_id     String?               @db.Uuid
-  created_by_employee_name   String?               @db.VarChar(255)
-
-  shipment_request     shipment_request? @relation(fields: [shipment_request_id], references: [id], onUpdate: NoAction)
-  tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  created_by_employee  employee?         @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
-  origin_org_unit      organization_unit @relation("customer_shipment_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  destination_org_unit organization_unit @relation("customer_shipment_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
-  invoice              invoice[]
-  parcel               parcel[]
-  support_ticket       support_ticket[]
-
-  @@index([tenant_id], map: "idx_customer_shipment_tenant")
-}
-
-model customer_tenant {
-  id                   String           @id @default(uuid(7)) @db.Uuid
-  tenant_id            String           @db.Uuid
-  customer_profile_id  String           @db.Uuid
-  first_interaction_at DateTime         @default(now()) @db.Timestamp(6)
-  customer_profile     customer_profile @relation(fields: [customer_profile_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant               tenant           @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([tenant_id, customer_profile_id], map: "uq_customer_tenant")
-}
-
-model employee {
-  id                  String                @id @default(uuid(7)) @db.Uuid
-  tenant_id           String                @db.Uuid
-  user_id             String                @db.Uuid
-  employee_code       String                @db.VarChar(50)
-  national_id         String?               @db.VarChar(50)
-  full_name           String                @db.VarChar(255)
-  is_active           Boolean               @default(true)
-  deactivated_at      DateTime?             @db.Timestamp(6)
-  created_at          DateTime              @default(now()) @db.Timestamp(6)
-  updated_at          DateTime              @updatedAt
-  tenant              tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users               users                 @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  employee_assignment employee_assignment[]
-  parcel_movement     parcel_movement[]
-  payment             payment[]
-  proof_of_delivery   proof_of_delivery[]
-  quotation           quotation[]
-  shipment_request    shipment_request[]
-  support_ticket      support_ticket[]
-  trip                trip[]
-  vehicle_assignment  vehicle_assignment[]
-  customer_shipment   customer_shipment[]
-
-  @@unique([tenant_id, employee_code], map: "uq_tenant_emp_code")
-  @@unique([tenant_id, user_id], map: "uq_tenant_user")
-}
-
-model employee_assignment {
-  id                   String            @id @default(uuid(7)) @db.Uuid
-  tenant_id            String            @db.Uuid
-  employee_id          String            @db.Uuid
-  organization_unit_id String            @db.Uuid
-  is_active            Boolean           @default(true)
-  created_at           DateTime          @default(now()) @db.Timestamp(6)
-  assignment_role      assignment_role[]
-  employee             employee          @relation(fields: [employee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  organization_unit    organization_unit @relation(fields: [organization_unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([employee_id, organization_unit_id], map: "uq_employee_org_unit")
-}
-
-model global_location {
-  id        String                                @id @default(uuid(7)) @db.Uuid
-  parent_id String?                               @db.Uuid
-  name      String                                @db.VarChar(255)
-  type      LocationType
-  location  Unsupported("geometry(Point, 4326)")?
-
-  global_location           global_location?            @relation("global_locationToglobal_location", fields: [parent_id], references: [id], onUpdate: NoAction)
-  other_global_location     global_location[]           @relation("global_locationToglobal_location")
-  org_unit_location_mapping org_unit_location_mapping[]
-
-  origin_shipment_requests      shipment_request[] @relation("shipment_request_originToglobal_location")
-  destination_shipment_requests shipment_request[] @relation("shipment_request_destinationToglobal_location")
-
-  @@index([location], map: "idx_global_location_geom", type: Gist)
-}
-
-model invoice {
-  id                      String                @id @default(uuid(7)) @db.Uuid
-  version                 Int                   @default(1)
-  tenant_id               String                @db.Uuid
-  customer_shipment_id    String?               @db.Uuid
-  sender_name             String                @db.VarChar(255)
-  sender_phone            String                @db.VarChar(50)
-  receiver_name           String                @db.VarChar(255)
-  receiver_phone          String                @db.VarChar(50)
-  origin_org_unit_id      String                @db.Uuid
-  destination_org_unit_id String                @db.Uuid
-  invoice_number          String                @db.VarChar(100)
-  subtotal                Decimal               @db.Decimal(10, 2)
-  handling_fees           Decimal               @default(0) @db.Decimal(10, 2)
-  tax_amount              Decimal               @default(0) @db.Decimal(10, 2)
-  discount_amount         Decimal               @default(0) @db.Decimal(10, 2)
-  total_amount            Decimal               @db.Decimal(10, 2)
-  payment_responsibility  PaymentResponsibility @default(SENDER)
-  currency                String                @default("USD") @db.Char(3)
-  status                  InvoiceStatus         @default(UNPAID)
-  due_date                DateTime?             @db.Timestamp(6)
-  created_at              DateTime              @default(now()) @db.Timestamp(6)
-  updated_at              DateTime              @updatedAt
-  customer_shipment       customer_shipment?    @relation(fields: [customer_shipment_id], references: [id], onUpdate: NoAction)
-  tenant                  tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  origin_org_unit         organization_unit     @relation("invoice_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  destination_org_unit    organization_unit     @relation("invoice_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
-  payment                 payment[]
-
-  @@unique([tenant_id, invoice_number], map: "uq_tenant_invoice")
-  @@index([tenant_id, status], map: "idx_invoice_tenant_status")
-  @@index([tenant_id, sender_phone], map: "idx_invoice_sender_phone")
-  @@index([origin_org_unit_id], map: "idx_invoice_origin_org_unit")
-  @@index([destination_org_unit_id], map: "idx_invoice_destination_org_unit")
-}
-
-/// Per-tenant, per-year running number behind invoice_number.
-///
-/// Incremented with a single atomic upsert inside the same transaction that
-/// writes the invoice, so two concurrent invoices can never take the same
-/// number, and a rolled back invoice gives its number back instead of leaving
-/// a gap in the sequence.
-model invoice_counter {
-  tenant_id   String   @db.Uuid
-  year        Int
-  last_number Int      @default(0)
-  updated_at  DateTime @updatedAt
-  tenant      tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([tenant_id, year])
-}
-
-model manifest_item {
-  id                 String             @id @default(uuid(7)) @db.Uuid
-  manifest_id        String             @db.Uuid
-  parcel_id          String             @db.Uuid
-  status             ManifestItemStatus @default(PENDING_LOAD)
-  loaded_at          DateTime?          @db.Timestamp(6)
-  unloaded_at        DateTime?          @db.Timestamp(6)
-  transport_manifest transport_manifest @relation(fields: [manifest_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  parcel             parcel             @relation(fields: [parcel_id], references: [id], onUpdate: NoAction)
-
-  @@unique([manifest_id, parcel_id], map: "uq_manifest_parcel")
-}
-
-model notification {
-  id                String              @id @default(uuid(7)) @db.Uuid
-  tenant_id         String?             @db.Uuid
-  recipient_user_id String              @db.Uuid
-  notification_type NotificationType
-  title             String              @db.VarChar(255)
-  body              String
-  data              Json?
-  channel           NotificationChannel
-  is_read           Boolean             @default(false)
-  read_at           DateTime?           @db.Timestamp(6)
-  sent_at           DateTime?           @db.Timestamp(6)
-  status            NotificationStatus  @default(PENDING)
-  created_at        DateTime            @default(now()) @db.Timestamp(6)
-  users             users               @relation(fields: [recipient_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant            tenant?             @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model organization_unit {
-  id           String                                @id @default(uuid(7)) @db.Uuid
-  tenant_id    String                                @db.Uuid
-  parent_id    String?                               @db.Uuid
-  zone_id      String?                               @db.Uuid
-  tree_path    Unsupported("ltree")?
-  name         String                                @db.VarChar(255)
-  org_type     OrgType
-  address_line String?                               @db.VarChar(500)
-  location     Unsupported("geometry(Point, 4326)")?
-  is_active    Boolean                               @default(true)
-  created_at   DateTime                              @default(now()) @db.Timestamp(6)
-  updated_at   DateTime                              @updatedAt
-
-  employee_assignment                                                              employee_assignment[]
-  org_unit_location_mapping                                                        org_unit_location_mapping[]
-  organization_unit                                                                organization_unit?          @relation("organization_unitToorganization_unit", fields: [parent_id], references: [id], onUpdate: NoAction)
-  other_organization_unit                                                          organization_unit[]         @relation("organization_unitToorganization_unit")
-  tenant                                                                           tenant                      @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant_zone                                                                      tenant_zone?                @relation(fields: [zone_id], references: [id], onUpdate: NoAction)
-  parcel_parcel_current_org_unit_idToorganization_unit                             parcel[]                    @relation("parcel_current_org_unit_idToorganization_unit")
-  parcel_destination_org_unit                                                      parcel[]                    @relation("parcel_destination_org_unit")
-  invoice_origin_org_unit                                                          invoice[]                   @relation("invoice_originToorganization_unit")
-  invoice_destination_org_unit                                                     invoice[]                   @relation("invoice_destinationToorganization_unit")
-  parcel_movement                                                                  parcel_movement[]
-  payment                                                                          payment[]
-  transport_manifest_transport_manifest_destination_org_unit_idToorganization_unit transport_manifest[]        @relation("transport_manifest_destination_org_unit_idToorganization_unit")
-  transport_manifest_transport_manifest_origin_org_unit_idToorganization_unit      transport_manifest[]        @relation("transport_manifest_origin_org_unit_idToorganization_unit")
-  trip_trip_destination_org_unit_idToorganization_unit                             trip[]                      @relation("trip_destination_org_unit_idToorganization_unit")
-  trip_trip_origin_org_unit_idToorganization_unit                                  trip[]                      @relation("trip_origin_org_unit_idToorganization_unit")
-
-  quotation_origin      quotation[] @relation("quotation_originToorganization_unit")
-  quotation_destination quotation[] @relation("quotation_destinationToorganization_unit")
-
-  customer_shipment_origin      customer_shipment[] @relation("customer_shipment_originToorganization_unit")
-  customer_shipment_destination customer_shipment[] @relation("customer_shipment_destinationToorganization_unit")
-
-  @@index([location], map: "idx_org_unit_location", type: Gist)
-}
-
-model parcel {
-  id                                                              String             @id @default(uuid(7)) @db.Uuid
-  version                                                         Int                @default(1)
-  tenant_id                                                       String             @db.Uuid
-  customer_shipment_id                                            String             @db.Uuid
-  organization_unit_parcel_current_org_unit_idToorganization_unit organization_unit? @relation("parcel_current_org_unit_idToorganization_unit", fields: [current_org_unit_id], references: [id], onUpdate: NoAction)
-  destination_org_unit_id                                         String?            @db.Uuid
-  destination_org_unit                                            organization_unit? @relation("parcel_destination_org_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
-  label_key                                                       String?            @db.VarChar(500)
-  tracking_number                                                 String             @db.VarChar(50)
-  description                                                     String?            @db.VarChar(500)
-  category                                                        String?            @db.VarChar(100)
-  parcel_type                                                     ParcelType         @default(PACKAGE)
-  is_fragile                                                      Boolean            @default(false)
-  requires_upright_handling                                       Boolean            @default(false) // ممنوع القلب/التكديس فوقه
-  temperature_sensitive                                           Boolean            @default(false) // يحتاج تبريد/تجنب حرارة
-  actual_weight_kg                                                Decimal            @db.Decimal(10, 2)
-  length_cm                                                       Decimal            @db.Decimal(10, 2)
-  width_cm                                                        Decimal            @db.Decimal(10, 2)
-  height_cm                                                       Decimal            @db.Decimal(10, 2)
-  volumetric_weight_kg                                            Decimal?           @db.Decimal(10, 2)
-  current_status                                                  ParcelStatus       @default(PROCESSING)
-  current_condition                                               ParcelCondition    @default(NORMAL)
-  current_org_unit_id                                             String?            @db.Uuid
-  created_at                                                      DateTime           @default(now()) @db.Timestamp(6)
-  updated_at                                                      DateTime           @updatedAt
-  manifest_item                                                   manifest_item[]
-  customer_shipment                                               customer_shipment  @relation(fields: [customer_shipment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant                                                          tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  parcel_movement                                                 parcel_movement[]
-  proof_of_delivery                                               proof_of_delivery?
-  support_ticket                                                  support_ticket[]
-
-  @@unique([tracking_number], map: "uq_tracking")
-  @@index([current_org_unit_id])
-  @@index([customer_shipment_id])
-}
-
-model parcel_movement {
-  id String @id @default(uuid(7)) @db.Uuid
-
-  tenant_id String @db.Uuid
-  parcel_id String @db.Uuid
-
-  // Reference IDs
-  trip_id                  String? @db.Uuid
-  organization_unit_id     String? @db.Uuid
-  performed_by_employee_id String  @db.Uuid
-
-  // Timeline
-  action_type ActionType
-
-  // Status Transition
-  previous_status ParcelStatus?
-  new_status      ParcelStatus
-
-  previous_condition ParcelCondition?
-  new_condition      ParcelCondition
-
-  // Organization Snapshot
-  organization_unit_name String?
-  organization_type      OrgType?
-
-  organization_latitude  Decimal? @db.Decimal(10, 7)
-  organization_longitude Decimal? @db.Decimal(10, 7)
-
-  // Trip Snapshot
-  trip_number String?
-
-  // Employee Snapshot
-  performed_by_name String
-
-  // Extra event data
-  metadata Json?
-
-  notes String?
-
-  created_at DateTime @default(now()) @db.Timestamp(6)
-
-  tenant   tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-  parcel   parcel   @relation(fields: [parcel_id], references: [id], onDelete: Cascade)
-  employee employee @relation(fields: [performed_by_employee_id], references: [id])
-
-  // هذه العلاقات يمكنك حذفها لاحقًا إذا أصبح Tracking موديولًا مستقلاً
-  trip              trip?              @relation(fields: [trip_id], references: [id])
-  organization_unit organization_unit? @relation(fields: [organization_unit_id], references: [id])
-
-  @@index([organization_unit_id, created_at])
-  @@index([parcel_id, created_at])
-}
-
-model payment {
-  id                       String             @id @default(uuid(7)) @db.Uuid
-  tenant_id                String             @db.Uuid
-  invoice_id               String             @db.Uuid
-  collected_by_employee_id String?            @db.Uuid
-  organization_unit_id     String?            @db.Uuid
-  amount                   Decimal            @db.Decimal(10, 2)
-  payment_method           PaymentMethod
-  transaction_reference    String?            @db.VarChar(255)
-  gateway_response         Json?
-  status                   PaymentStatus      @default(COMPLETED)
-  created_at               DateTime           @default(now()) @db.Timestamp(6)
-  employee                 employee?          @relation(fields: [collected_by_employee_id], references: [id], onUpdate: NoAction)
-  invoice                  invoice            @relation(fields: [invoice_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  organization_unit        organization_unit? @relation(fields: [organization_unit_id], references: [id], onUpdate: NoAction)
-  tenant                   tenant             @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model permission {
-  id              String            @id @default(uuid(7)) @db.Uuid
-  name            String            @unique @db.VarChar(150)
-  resource        String            @db.VarChar(100)
-  action          String            @db.VarChar(50)
-  description     String?           @db.VarChar(255)
-  role_permission role_permission[]
-}
-
-model proof_of_delivery {
-  id                       String           @id @default(uuid(7)) @db.Uuid
-  tenant_id                String           @db.Uuid
-  parcel_id                String           @unique(map: "uq_parcel_pod") @db.Uuid
-  delivered_by_employee_id String           @db.Uuid
-  collection_method        CollectionMethod @default(CUSTOMER)
-  received_by_name         String           @db.VarChar(255)
-  received_by_national_id  String?          @db.VarChar(50)
-  otp_verified             Boolean          @default(false)
-  otp_verified_at          DateTime?        @db.Timestamp(6)
-  signature_key            String?          @db.VarChar(500)
-  id_photo_key             String?          @db.VarChar(500)
-  parcel_photo_key         String?          @db.VarChar(500)
-  additional_photo_key     String?          @db.VarChar(500)
-  delivery_lat             Decimal?         @db.Decimal(10, 8)
-  delivery_lng             Decimal?         @db.Decimal(11, 8)
-  created_at               DateTime         @default(now()) @db.Timestamp(6)
-  employee                 employee         @relation(fields: [delivered_by_employee_id], references: [id], onUpdate: NoAction)
-  parcel                   parcel           @relation(fields: [parcel_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant                   tenant           @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model quotation {
-  id                       String          @id @default(uuid(7)) @db.Uuid
-  tenant_id                String          @db.Uuid
-  shipment_request_id      String          @db.Uuid
-  origin_org_unit_id       String          @db.Uuid
-  destination_org_unit_id  String          @db.Uuid
-  service_level            ServiceLevel    @default(STANDARD)
-  quotation_type           QuotationType   @default(AUTOMATIC)
-  base_price               Decimal?        @db.Decimal(10, 2)
-  weight_charge            Decimal?        @db.Decimal(10, 2)
-  extra_fees               Decimal?        @default(0) @db.Decimal(10, 2)
-  amount                   Decimal         @db.Decimal(10, 2)
-  pricing_snapshot         Json?
-  notes                    String?
-  valid_until              DateTime?       @db.Timestamp(6)
-  status                   QuotationStatus @default(PENDING)
-  submitted_by_employee_id String?         @db.Uuid
-  created_at               DateTime        @default(now()) @db.Timestamp(6)
-  updated_at               DateTime        @updatedAt
-
-  shipment_request     shipment_request  @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  approved_for_request shipment_request? @relation("ApprovedQuotation")
-  employee             employee?         @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
-  tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  origin_org_unit      organization_unit @relation("quotation_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  destination_org_unit organization_unit @relation("quotation_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
-
-  @@index([shipment_request_id])
-  @@index([tenant_id])
-}
-
-model role {
-  id              String            @id @default(uuid(7)) @db.Uuid
-  tenant_id       String            @db.Uuid
-  name            String            @db.VarChar(100)
-  description     String?           @db.VarChar(255)
-  is_active       Boolean           @default(true)
-  created_at      DateTime          @default(now()) @db.Timestamp(6)
-  assignment_role assignment_role[]
-  tenant          tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  role_permission role_permission[]
-
-  @@unique([tenant_id, name], map: "uq_tenant_role_name")
-}
-
-model role_permission {
-  id            String     @id @default(uuid(7)) @db.Uuid
-  role_id       String     @db.Uuid
-  permission_id String     @db.Uuid
-  permission    permission @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  role          role       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([role_id, permission_id], map: "uq_role_permission")
-}
-
-model shipment_request {
-  id                             String        @id @default(uuid(7)) @db.Uuid
-  customer_profile_id            String        @db.Uuid
-  target_tenant_id               String?       @db.Uuid
-  origin_global_location_id      String        @db.Uuid
-  destination_global_location_id String        @db.Uuid
-  sender_name                    String        @db.VarChar(255)
-  sender_phone                   String        @db.VarChar(50)
-  sender_lat                     Decimal?      @db.Decimal(10, 8)
-  sender_lng                     Decimal?      @db.Decimal(11, 8)
-  receiver_name                  String        @db.VarChar(255)
-  receiver_phone                 String        @db.VarChar(50)
-  receiver_lat                   Decimal?      @db.Decimal(10, 8)
-  receiver_lng                   Decimal?      @db.Decimal(11, 8)
-  expected_pieces_count          Int           @default(1)
-  expected_total_weight_kg       Decimal       @db.Decimal(10, 2)
-  expected_length_cm             Decimal       @default(0) @db.Decimal(10, 2)
-  expected_width_cm              Decimal       @default(0) @db.Decimal(10, 2)
-  expected_height_cm             Decimal       @default(0) @db.Decimal(10, 2)
-  notes                          String?
-  status                         RequestStatus @default(PENDING)
-  cancelled_at                   DateTime?     @db.Timestamp(6)
-  cancellation_reason            String?
-  expires_at                     DateTime?     @db.Timestamp(6)
-  approved_quotation_id          String?       @unique @db.Uuid
-  created_by_employee_id         String?       @db.Uuid
-  created_at                     DateTime      @default(now()) @db.Timestamp(6)
-  updated_at                     DateTime      @updatedAt
-
-  customer_shipment           customer_shipment[]
-  quotation                   quotation[]
-  approved_quotation          quotation?          @relation("ApprovedQuotation", fields: [approved_quotation_id], references: [id], onUpdate: NoAction)
-  employee                    employee?           @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
-  customer_profile            customer_profile    @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
-  tenant                      tenant?             @relation(fields: [target_tenant_id], references: [id], onUpdate: NoAction)
-  origin_global_location      global_location     @relation("shipment_request_originToglobal_location", fields: [origin_global_location_id], references: [id])
-  destination_global_location global_location     @relation("shipment_request_destinationToglobal_location", fields: [destination_global_location_id], references: [id])
-}
-
-model subscription_plan {
-  id                    String                        @id @default(uuid(7)) @db.Uuid
-  name                  String                        @db.VarChar(100)
-  description           String?
-  max_branches          Int                           @default(5)
-  max_warehouses        Int                           @default(2)
-  max_employees         Int                           @default(20)
-  max_vehicles          Int                           @default(10)
-  max_zones             Int                           @default(3)
-  max_monthly_shipments Int?
-  max_monthly_parcels   Int?
-  price_monthly         Decimal                       @default(0) @db.Decimal(10, 2)
-  price_yearly          Decimal?                      @db.Decimal(10, 2)
-  is_active             Boolean                       @default(true)
-  created_at            DateTime                      @default(now()) @db.Timestamp(6)
-  updated_at            DateTime                      @updatedAt
-  tenant_subscription   tenant_subscription[]
-  history_as_plan       tenant_subscription_history[] @relation("tenant_subscription_history_plan_idTosubscription_plan")
-  history_as_prev_plan  tenant_subscription_history[] @relation("tenant_subscription_history_previous_plan_idTosubscription_plan")
-}
-
-model support_ticket {
-  id                      String                   @id @default(uuid(7)) @db.Uuid
-  tenant_id               String?                  @db.Uuid
-  submitted_by_user_id    String                   @db.Uuid
-  assigned_to_employee_id String?                  @db.Uuid
-  subject                 String                   @db.VarChar(255)
-  category                TicketCategory           @default(GENERAL)
-  priority                TicketPriority           @default(MEDIUM)
-  parcel_id               String?                  @db.Uuid
-  shipment_id             String?                  @db.Uuid
-  status                  TicketStatus             @default(OPEN)
-  closed_at               DateTime?                @db.Timestamp(6)
-  created_at              DateTime                 @default(now()) @db.Timestamp(6)
-  updated_at              DateTime                 @updatedAt
-  employee                employee?                @relation(fields: [assigned_to_employee_id], references: [id], onUpdate: NoAction)
-  parcel                  parcel?                  @relation(fields: [parcel_id], references: [id], onUpdate: NoAction)
-  customer_shipment       customer_shipment?       @relation(fields: [shipment_id], references: [id], onUpdate: NoAction)
-  users                   users                    @relation(fields: [submitted_by_user_id], references: [id], onUpdate: NoAction)
-  tenant                  tenant?                  @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  support_ticket_message  support_ticket_message[]
-}
-
-model support_ticket_message {
-  id             String         @id @default(uuid(7)) @db.Uuid
-  ticket_id      String         @db.Uuid
-  sender_user_id String         @db.Uuid
-  message        String
-  attachments    Json?
-  created_at     DateTime       @default(now()) @db.Timestamp(6)
-  users          users          @relation(fields: [sender_user_id], references: [id], onUpdate: NoAction)
-  support_ticket support_ticket @relation(fields: [ticket_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model org_unit_location_mapping {
-  id                   String       @id @default(uuid(7)) @db.Uuid
-  tenant_id            String       @db.Uuid
-  organization_unit_id String       @db.Uuid
-  global_location_id   String       @db.Uuid
-  coverage_type        CoverageType @default(DELIVERY_AREA)
-
-  global_location   global_location   @relation(fields: [global_location_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  organization_unit organization_unit @relation(fields: [organization_unit_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant            tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([organization_unit_id, global_location_id], map: "uq_org_location")
-}
-
-model tenant {
-  id                          String                        @id @default(uuid(7)) @db.Uuid
-  name                        String                        @db.VarChar(255)
-  email                       String?                       @db.VarChar(255)
-  phone                       String?                       @db.VarChar(50)
-  logo_url                    String?                       @db.VarChar(500)
-  handling_fee_rules          handling_fee_rule[]
-  tax_number                  String?                       @db.VarChar(100)
-  is_active                   Boolean                       @default(true)
-  suspended_at                DateTime?                     @db.Timestamp(6)
-  suspended_reason            String?
-  created_at                  DateTime                      @default(now()) @db.Timestamp(6)
-  updated_at                  DateTime                      @updatedAt
-  owned_tenants               tenant_owner[]
-  audit_log                   audit_log[]
-  customer_shipment           customer_shipment[]
-  customer_tenant             customer_tenant[]
-  employee                    employee[]
-  employee_assignment         employee_assignment[]
-  invoice                     invoice[]
-  notification                notification[]
-  org_unit_location_mapping   org_unit_location_mapping[]
-  organization_unit           organization_unit[]
-  parcel                      parcel[]
-  parcel_movement             parcel_movement[]
-  payment                     payment[]
-  proof_of_delivery           proof_of_delivery[]
-  quotation                   quotation[]
-  role                        role[]
-  shipment_request            shipment_request[]
-  support_ticket              support_ticket[]
-  tenant_delivery_settings    tenant_delivery_settings?
-  tenant_operational_settings tenant_operational_settings?
-  tenant_pricing_settings     tenant_pricing_settings?
-  tenant_subscription         tenant_subscription[]
-  tenant_subscription_history tenant_subscription_history[]
-  tenant_zone                 tenant_zone[]
-  transport_manifest          transport_manifest[]
-  trip                        trip[]
-  vehicle_assignment          vehicle_assignment[]
-  vehicle                     vehicle[]
-  zone_pricing_matrix         zone_pricing_matrix[]
-  invoice_counter             invoice_counter[]
-}
-
-model tenant_delivery_settings {
-  tenant_id            String  @id @db.Uuid
-  require_otp          Boolean @default(true)
-  require_signature    Boolean @default(true)
-  require_proof_photo  Boolean @default(true)
-  require_id_photo     Boolean @default(false)
-  allow_representative Boolean @default(true)
-  tenant               tenant  @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model tenant_operational_settings {
-  tenant_id                             String  @id @db.Uuid
-  tracking_prefix                       String? @db.VarChar(10)
-  auto_close_shipment_after_collection  Boolean @default(true)
-  allow_shipment_reopen                 Boolean @default(false)
-  allow_trip_cancellation_after_loading Boolean @default(false)
-  require_manager_before_trip_departure Boolean @default(false)
-  allow_return_after_collection         Boolean @default(false)
-  require_sender_national_id            Boolean @default(true)
-  quotation_validity_hours              Int     @default(48)
-  tenant                                tenant  @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model tenant_pricing_settings {
-  tenant_id          String @id @db.Uuid
-  volumetric_divisor Int    @default(5000)
-  default_currency   String @default("SYP") @db.Char(3)
-  tenant             tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model tenant_subscription {
-  id                             String                        @id @default(uuid(7)) @db.Uuid
-  tenant_id                      String                        @db.Uuid
-  plan_id                        String                        @db.Uuid
-  status                         SubscriptionStatus            @default(ACTIVE)
-  started_at                     DateTime                      @default(now()) @db.Timestamp(6)
-  expires_at                     DateTime                      @db.Timestamp(6)
-  cancelled_at                   DateTime?                     @db.Timestamp(6)
-  cancellation_reason            String?
-  snapshot_max_branches          Int
-  snapshot_max_warehouses        Int
-  snapshot_max_employees         Int
-  snapshot_max_vehicles          Int
-  snapshot_max_zones             Int
-  snapshot_max_monthly_shipments Int?
-  snapshot_max_monthly_parcels   Int?
-  snapshot_features              Json                          @default("{}")
-  created_at                     DateTime                      @default(now()) @db.Timestamp(6)
-  updated_at                     DateTime                      @updatedAt
-  subscription_plan              subscription_plan             @relation(fields: [plan_id], references: [id], onUpdate: NoAction)
-  tenant                         tenant                        @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant_subscription_history    tenant_subscription_history[]
-}
-
-model tenant_subscription_history {
-  id               String   @id @default(uuid(7)) @db.Uuid
-  tenant_id        String   @db.Uuid
-  subscription_id  String   @db.Uuid
-  plan_id          String   @db.Uuid
-  action           String   @db.VarChar(30)
-  previous_plan_id String?  @db.Uuid
-  notes            String?
-  performed_by     String?  @db.Uuid
-  performed_at     DateTime @default(now()) @db.Timestamp(6)
-
-  plan                subscription_plan   @relation("tenant_subscription_history_plan_idTosubscription_plan", fields: [plan_id], references: [id], onUpdate: NoAction)
-  previous_plan       subscription_plan?  @relation("tenant_subscription_history_previous_plan_idTosubscription_plan", fields: [previous_plan_id], references: [id], onUpdate: NoAction)
-  tenant_subscription tenant_subscription @relation(fields: [subscription_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant              tenant              @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model tenant_zone {
-  id          String   @id @default(uuid(7)) @db.Uuid
-  tenant_id   String   @db.Uuid
-  name        String   @db.VarChar(255)
-  description String?
-  is_active   Boolean  @default(true)
-  created_at  DateTime @default(now()) @db.Timestamp(6)
-
-  organization_unit                                                        organization_unit[]
-  tenant                                                                   tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  zone_pricing_matrix_zone_pricing_matrix_destination_zone_idTotenant_zone zone_pricing_matrix[] @relation("zone_pricing_matrix_destination_zone_idTotenant_zone")
-  zone_pricing_matrix_zone_pricing_matrix_origin_zone_idTotenant_zone      zone_pricing_matrix[] @relation("zone_pricing_matrix_origin_zone_idTotenant_zone")
-}
-
-model transport_manifest {
-  id                                                                              String            @id @default(uuid(7)) @db.Uuid
-  tenant_id                                                                       String            @db.Uuid
-  trip_id                                                                         String            @db.Uuid
-  origin_org_unit_id                                                              String            @db.Uuid
-  destination_org_unit_id                                                         String            @db.Uuid
-  status                                                                          ManifestStatus    @default(PENDING)
-  created_at                                                                      DateTime          @default(now()) @db.Timestamp(6)
-  updated_at                                                                      DateTime          @updatedAt
-  manifest_item                                                                   manifest_item[]
-  organization_unit_transport_manifest_destination_org_unit_idToorganization_unit organization_unit @relation("transport_manifest_destination_org_unit_idToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
-  organization_unit_transport_manifest_origin_org_unit_idToorganization_unit      organization_unit @relation("transport_manifest_origin_org_unit_idToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  tenant                                                                          tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  trip                                                                            trip              @relation(fields: [trip_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model trip {
-  id                                                                String               @id @default(uuid(7)) @db.Uuid
-  tenant_id                                                         String               @db.Uuid
-  driver_id                                                         String               @db.Uuid
-  vehicle_id                                                        String?              @db.Uuid
-  origin_org_unit_id                                                String               @db.Uuid
-  destination_org_unit_id                                           String               @db.Uuid
-  status                                                            TripStatus           @default(SCHEDULED)
-  scheduled_at                                                      DateTime?            @db.Timestamp(6)
-  started_at                                                        DateTime?            @db.Timestamp(6)
-  ended_at                                                          DateTime?            @db.Timestamp(6)
-  notes                                                             String?
-  created_at                                                        DateTime             @default(now()) @db.Timestamp(6)
-  updated_at                                                        DateTime             @updatedAt
-  parcel_movement                                                   parcel_movement[]
-  transport_manifest                                                transport_manifest[]
-  organization_unit_trip_destination_org_unit_idToorganization_unit organization_unit    @relation("trip_destination_org_unit_idToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
-  employee                                                          employee             @relation(fields: [driver_id], references: [id], onUpdate: NoAction)
-  organization_unit_trip_origin_org_unit_idToorganization_unit      organization_unit    @relation("trip_origin_org_unit_idToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  tenant                                                            tenant               @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  vehicle                                                           vehicle?             @relation(fields: [vehicle_id], references: [id], onUpdate: NoAction)
-}
-
-model users {
-  id                     String                   @id @default(uuid(7)) @db.Uuid
-  email                  String                   @unique @db.VarChar(255)
-  phone                  String?                  @unique @db.VarChar(50)
-  password_hash          String                   @db.VarChar(255)
-  created_at             DateTime                 @default(now()) @db.Timestamp(6)
-  updated_at             DateTime                 @updatedAt
-  audit_log              audit_log[]
-  customer_profile       customer_profile?
-  employee               employee[]
-  notification           notification[]
-  support_ticket         support_ticket[]
-  support_ticket_message support_ticket_message[]
-  platform_admin         platform_admin?
-  userSessions           user_session[]
-  device_tokens          user_device_token[]
-  owned_tenants          tenant_owner[]
-}
-
-model user_session {
-  id                   String   @id @default(uuid(7)) @db.Uuid
-  user_id              String   @db.Uuid
-  hashed_refresh_token String   @db.VarChar(255)
-  device_info          String?  @db.VarChar(255) // مثلاً: Chrome on Windows أو iPhone 14
-  ip_address           String?  @db.Inet
-  expires_at           DateTime @db.Timestamp(6)
-  created_at           DateTime @default(now()) @db.Timestamp(6)
-
-  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id])
-}
-
-/// توكنات أجهزة المستخدمين لإشعارات Firebase — يُخزَّن هنا FCM token لكل جهاز
-model user_device_token {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  user_id    String   @db.Uuid
-  /// الـ FCM token الذي يُرسله التطبيق عند تسجيل الدخول
-  fcm_token  String   @db.VarChar(512)
-  /// نوع الجهاز: android / ios / web
-  platform   String   @db.VarChar(20)
-  created_at DateTime @default(now()) @db.Timestamp(6)
-
-  users users @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  /// توكن واحد لكل مستخدم × جهاز — لا يتكرر نفس التوكن لنفس المستخدم
-  @@unique([user_id, fcm_token])
-  @@index([user_id])
-}
-
-model platform_admin {
-  id         String       @id @default(uuid(7)) @db.Uuid
-  user_id    String       @unique @db.Uuid
-  full_name  String       @db.VarChar(255)
-  role       PlatformRole @default(SUPER_ADMIN)
-  is_active  Boolean      @default(true)
-  created_at DateTime     @default(now()) @db.Timestamp(6)
-  updated_at DateTime     @updatedAt
-  users      users        @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-}
-
-model tenant_owner {
-  id         String   @id @default(uuid(7)) @db.Uuid
-  tenant_id  String   @db.Uuid
-  user_id    String   @db.Uuid
-  is_primary Boolean  @default(false)
-  created_at DateTime @default(now()) @db.Timestamp(6)
-
-  tenant tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  user   users  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([tenant_id, user_id], map: "uq_tenant_owner")
-  @@index([user_id])
-}
-
-model vehicle {
-  id                 String               @id @default(uuid(7)) @db.Uuid
-  tenant_id          String               @db.Uuid
-  plate_number       String               @db.VarChar(50)
-  type               VehicleType?
-  capacity_kg        Decimal?             @db.Decimal(10, 2)
-  status             VehicleStatus        @default(ACTIVE)
-  created_at         DateTime             @default(now()) @db.Timestamp(6)
-  updated_at         DateTime             @updatedAt
-  trip               trip[]
-  vehicle_assignment vehicle_assignment[]
-  tenant             tenant               @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([tenant_id, plate_number], map: "uq_plate_tenant")
-}
-
-model zone_pricing_matrix {
-  id                  String       @id @default(uuid(7)) @db.Uuid
-  tenant_id           String       @db.Uuid
-  origin_zone_id      String       @db.Uuid
-  destination_zone_id String       @db.Uuid
-  service_level       ServiceLevel @default(STANDARD)
-  base_price          Decimal      @db.Decimal(10, 2)
-  base_weight_kg      Decimal      @db.Decimal(10, 2)
-  price_per_extra_kg  Decimal      @default(0) @db.Decimal(10, 2)
-  is_active           Boolean      @default(true)
-  created_at          DateTime     @default(now()) @db.Timestamp(6)
-  updated_at          DateTime     @updatedAt
-
-  tenant_zone_zone_pricing_matrix_destination_zone_idTotenant_zone tenant_zone @relation("zone_pricing_matrix_destination_zone_idTotenant_zone", fields: [destination_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant_zone_zone_pricing_matrix_origin_zone_idTotenant_zone      tenant_zone @relation("zone_pricing_matrix_origin_zone_idTotenant_zone", fields: [origin_zone_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenant                                                           tenant      @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([tenant_id, origin_zone_id, destination_zone_id, service_level], map: "uq_pricing_route_service")
-}
-
-model vehicle_assignment {
-  id          String    @id @default(uuid(7)) @db.Uuid
-  tenant_id   String    @db.Uuid
-  employee_id String    @db.Uuid
-  vehicle_id  String    @db.Uuid
-  is_active   Boolean   @default(true)
-  assigned_at DateTime  @default(now()) @db.Timestamp(6)
-  removed_at  DateTime? @db.Timestamp(6)
-
-  employee employee @relation(fields: [employee_id], references: [id], onDelete: Cascade)
-  vehicle  vehicle  @relation(fields: [vehicle_id], references: [id], onDelete: Cascade)
-  tenant   tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade)
-
-  @@index([employee_id, is_active])
+  DOCUMENT
+  PACKAGE
+  FRAGILE
+  PERISHABLE
+  HAZARDOUS
+  LIQUID
 }
 
 enum HandlingFeeType {
@@ -1146,18 +1098,6 @@ enum HandlingFeeType {
   TEMPERATURE_SENSITIVE
 }
 
-model handling_fee_rule {
-  id        String          @id @default(uuid(7)) @db.Uuid
-  tenant_id String          @db.Uuid
-  fee_type  HandlingFeeType
-  amount    Decimal         @db.Decimal(10, 2)
-  is_active Boolean         @default(true)
-
-  tenant tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([tenant_id, fee_type], map: "uq_tenant_handling_fee")
-}
-
 enum CoverageType {
   DELIVERY_AREA
   PICKUP_AREA
@@ -1165,8 +1105,8 @@ enum CoverageType {
 }
 
 enum ServiceLevel {
-  STANDARD // شحن عادي
-  EXPRESS // شحن سريع
-  SAME_DAY // شحن في نفس اليوم
-  REFRIGERATED // شحن مبرد (إن لزم)
+  STANDARD
+  EXPRESS
+  SAME_DAY
+  REFRIGERATED
 }

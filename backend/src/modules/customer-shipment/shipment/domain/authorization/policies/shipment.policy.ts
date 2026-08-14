@@ -35,8 +35,8 @@ export class ShipmentPolicy implements AuthorizationPolicy<ShipmentAction> {
       case ShipmentAction.Create: {
         const principal = context.principal as Principal;
         const candidate = subject(ShipmentSubject, {
-          tenant_id: principal.tenantId,
-          origin_org_unit_id: payload?.originOrgUnitId,
+          tenantId: principal.tenantId,
+          originOrgUnitId: payload?.originOrgUnitId,
         } as any);
 
         if (!ability.can(action, candidate)) {
@@ -53,7 +53,7 @@ export class ShipmentPolicy implements AuthorizationPolicy<ShipmentAction> {
           throw new AccessDeniedException('Missing shipment ID.');
         }
 
-        const shipment = await this.queryRepo.findRawById(payload.shipmentId);
+        const shipment = await this.queryRepo.findAggregateById(payload.shipmentId);
         if (!shipment) {
           throw new AccessDeniedException('Shipment not found.');
         }

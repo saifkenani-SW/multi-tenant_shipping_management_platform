@@ -52,6 +52,7 @@ export class ParcelQueryRepository {
       criteria.tenantId || 'none',
       criteria.customerShipmentId || 'none',
       (criteria.scopeOrgUnitIds || []).join(',') || 'none',
+      criteria.customerPhone || 'none',
       (criteria.statuses || []).join(',') || 'none',
       criteria.condition || 'none',
       criteria.currentOrgUnitId || 'none',
@@ -65,6 +66,21 @@ export class ParcelQueryRepository {
     let query: any = this.kysely
       .selectFrom('parcel as p')
       .select([...PARCEL_COLUMNS]);
+
+    if (criteria.customerPhone) {
+      query = query
+        .innerJoin(
+          'customer_shipment as cs',
+          'cs.id',
+          'p.customer_shipment_id',
+        )
+        .where((eb: any) =>
+          eb.or([
+            eb('cs.sender_phone', '=', criteria.customerPhone!),
+            eb('cs.receiver_phone', '=', criteria.customerPhone!),
+          ]),
+        );
+    }
 
     if (criteria.tenantId) {
       query = query.where('p.tenant_id', '=', criteria.tenantId);
@@ -231,6 +247,9 @@ export class ParcelQueryRepository {
       currentOrgUnitId: record.current_org_unit_id,
       destinationOrgUnitId: record.destination_org_unit_id,
       labelKey: record.label_key,
+      senderPhone: record.sender_phone,
+      receiverPhone: record.receiver_phone,
+      originOrgUnitId: record.origin_org_unit_id,
     });
   }
 
@@ -256,6 +275,9 @@ export class ParcelQueryRepository {
       currentOrgUnitId: record.current_org_unit_id,
       destinationOrgUnitId: record.destination_org_unit_id,
       labelKey: record.label_key,
+      senderPhone: record.sender_phone,
+      receiverPhone: record.receiver_phone,
+      originOrgUnitId: record.origin_org_unit_id,
     });
   }
 

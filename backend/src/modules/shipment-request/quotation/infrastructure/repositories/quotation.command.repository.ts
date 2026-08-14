@@ -22,9 +22,9 @@ export class QuotationCommandRepository {
         base_price: q.basePrice,
         weight_charge: q.weightCharge,
         extra_fees: q.extraFees,
-        amount: q.amount ?? 0,
+        amount: q.amount,
         pricing_snapshot: q.pricingSnapshot ?? undefined,
-        status: QuotationStatus.PENDING,
+        status: q.status,
       })),
     });
 

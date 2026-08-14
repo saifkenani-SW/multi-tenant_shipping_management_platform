@@ -14,6 +14,18 @@ import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-
 import type { ParcelScopeInterface } from '../../domain/authorization/scopes/parcel-scope.interface';
 import {ShipmentQueryService} from '../../../shipment/application/services/shipment.query.service';
 
+import { ParcelTrackingResponseDto } from '../dtos/responses/parcel-tracking.response.dto';
+import { TrackingFacade } from '../../../../tracking/application/facades/tracking.facade';
+import { ProofOfDeliveryQueryService } from '../../../proof-of-delivery/application/services/proof-of-delivery.query.service';
+import { ProofOfDeliveryResponseDto } from '../../../proof-of-delivery/application/dtos/responses/proof-of-delivery.response.dto';
+import { CACHE_FACADE } from '../../../../../core/cache/tokens/cache.tokens';
+import {
+  ReturnCapabilities,
+} from '../../../../../packages/authorization';
+import { ParcelCapabilityBuilder } from '../capabilities/parcel-capability.builder';
+import { Readable } from 'stream';
+
+
 @Injectable()
 export class ParcelQueryService {
   constructor(
@@ -22,6 +34,8 @@ export class ParcelQueryService {
     private readonly queryRepository: ParcelQueryRepository,
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly mapper: ParcelMapper,
+    private readonly trackingFacade: TrackingFacade,
+    private readonly podQueryService: ProofOfDeliveryQueryService,
   ) {}
 
   /**
@@ -38,7 +52,11 @@ export class ParcelQueryService {
     // ShipmentQueryService.findById evaluates visibility scopes implicitly.
     await this.shipmentQueryService.findById(customerShipmentId);
 
-    // We no longer evaluate ParcelVisibilityScope because the shipment auth suffices.
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+
+    // We no longer apply ParcelVisibilityScope to the query because the shipment auth suffices.
     const merged: ParcelMergedCriteria = {
       customerShipmentId,
       statuses: filter.statuses,
@@ -52,10 +70,13 @@ export class ParcelQueryService {
 
     return new CursorPaginatedResponse(
       (result.data as any[]).map((row) => this.mapper.toResponse(row)),
-      result.meta,
+      { ...result.meta, scope },
     );
   }
 
+  @ReturnCapabilities({
+    policy: ParcelCapabilityBuilder,
+  })
   @Authorize({
     policy: Policy(ParcelPolicy, ParcelAction.View),
     payloadResolver: (id: string) => ({ id }),
@@ -82,6 +103,7 @@ export class ParcelQueryService {
     const merged: ParcelMergedCriteria = {
       tenantId: scope.parcel?.tenant_id || filter.tenantId,
       scopeOrgUnitIds: scope.parcel?.org_unit_ids,
+      customerPhone: scope.shipment?.sender_phone, // sender_phone and receiver_phone are identical in scope
       statuses: filter.statuses,
       condition: filter.condition,
       currentOrgUnitId: filter.currentOrgUnitId,
@@ -101,7 +123,7 @@ export class ParcelQueryService {
 
     return new CursorPaginatedResponse(
       (result.data as any[]).map((row) => this.mapper.toResponse(row)),
-      result.meta,
+      { ...result.meta, scope },
     );
   }
 
@@ -109,13 +131,16 @@ export class ParcelQueryService {
    * Tracking lookup. Authentication is required by the controller: shipment
    * data belongs to the company and is not public.
    */
+  @ReturnCapabilities({
+    policy: ParcelCapabilityBuilder,
+  })
   @Authorize({
     policy: Policy(ParcelPolicy, ParcelAction.View),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
   async findByTrackingNumber(
     trackingNumber: string,
-  ): Promise<ParcelResponseDto> {
+  ): Promise<ParcelTrackingResponseDto> {
     const record =
       await this.queryRepository.findRawByTrackingNumber(trackingNumber);
 
@@ -123,7 +148,13 @@ export class ParcelQueryService {
       throw new NotFoundException('Parcel not found');
     }
 
-    return this.mapper.toResponse(record);
+    const baseDto = this.mapper.toResponse(record);
+    const history = await this.trackingFacade.getParcelHistory(record.id);
+
+    return {
+      ...baseDto,
+      history,
+    };
   }
 
   /**
@@ -175,6 +206,26 @@ export class ParcelQueryService {
     }
 
     return true;
+  }
+
+  @Authorize({
+    policy: Policy(ParcelPolicy, ParcelAction.View),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
+  async getProofOfDelivery(trackingNumber: string): Promise<ProofOfDeliveryResponseDto> {
+    return this.podQueryService.findByTrackingNumber(trackingNumber);
+  }
+
+  @Authorize({
+    policy: Policy(ParcelPolicy, ParcelAction.View),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
+  async getPhotoStream(
+    trackingNumber: string,
+    photoType: 'signature' | 'idPhoto' | 'parcelPhoto' | 'additionalPhoto',
+    index: number = 0,
+  ): Promise<{ stream: Readable; mimeType: string }> {
+    return this.podQueryService.getPhotoStream(trackingNumber, photoType, index);
   }
 
   async findAggregateOrThrow(id: string): Promise<Parcel> {

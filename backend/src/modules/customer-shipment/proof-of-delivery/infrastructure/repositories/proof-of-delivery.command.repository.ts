@@ -6,6 +6,7 @@ export interface CreateProofOfDeliveryData {
   tenantId: string;
   parcelId: string;
   deliveredByEmployeeId: string;
+  deliveredByEmployeeName: string;
   collectionMethod: CollectionMethod;
   receivedByName: string;
   receivedByNationalId: string | null;
@@ -33,6 +34,7 @@ export class ProofOfDeliveryCommandRepository {
         tenant_id: data.tenantId,
         parcel_id: data.parcelId,
         delivered_by_employee_id: data.deliveredByEmployeeId,
+        delivered_by_employee_name: data.deliveredByEmployeeName,
         collection_method: data.collectionMethod,
         received_by_name: data.receivedByName,
         received_by_national_id: data.receivedByNationalId,

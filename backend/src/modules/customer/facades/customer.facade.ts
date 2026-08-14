@@ -27,4 +27,11 @@ export class CustomerFacade {
       return false;
     }
   }
+
+  /**
+   * Retrieves the customer profile by their user ID.
+   */
+  async getProfileByUserId(userId: string) {
+    return await this.queryRepository.findProfileByUserId(userId);
+  }
 }
