@@ -20,4 +20,9 @@ export class ParcelQueryDto extends CursorPaginationQueryDto {
   @IsUUID()
   @IsOptional()
   currentOrgUnitId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by tenant ID' })
+  @IsUUID()
+  @IsOptional()
+  tenantId?: string;
 }
