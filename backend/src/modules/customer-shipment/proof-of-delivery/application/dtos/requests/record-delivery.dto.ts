@@ -1,8 +1,10 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { CollectionMethod } from '@prisma/client';
+import { CollectionMethod, PaymentMethod } from '@prisma/client';
 import { Type, Transform } from 'class-transformer';
 import {
   IsBoolean,
+  Min,
+  ValidateNested,
   IsEnum,
   IsLatitude,
   IsLongitude,
@@ -12,6 +14,33 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
+
+/**
+ * Money taken as the parcel is handed over.
+ *
+ * Optional: it is only present when this handover is also the moment of
+ * payment, which is the case when the receiver is the paying party. A shipment
+ * paid by the sender at the origin branch is handed over with nothing to
+ * collect.
+ */
+export class CollectPaymentDto {
+  @ApiProperty({ description: 'Amount collected', example: 40.25 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
+  amount: number;
+
+  @ApiProperty({ enum: PaymentMethod, default: PaymentMethod.CASH })
+  @IsEnum(PaymentMethod)
+  @IsOptional()
+  paymentMethod?: PaymentMethod;
+
+  @ApiPropertyOptional({ description: 'Gateway or receipt reference' })
+  @IsString()
+  @MaxLength(255)
+  @IsOptional()
+  transactionReference?: string;
+}
 
 export class RecordDeliveryDto {
   @ApiProperty({ description: 'Name of the person who received the parcel' })
@@ -84,4 +113,14 @@ export class RecordDeliveryDto {
   @IsLongitude()
   @IsOptional()
   deliveryLng?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Payment taken at this handover, when the receiver is the paying party. Recorded against the shipment invoice.',
+    type: CollectPaymentDto,
+  })
+  @ValidateNested()
+  @Type(() => CollectPaymentDto)
+  @IsOptional()
+  payment?: CollectPaymentDto;
 }

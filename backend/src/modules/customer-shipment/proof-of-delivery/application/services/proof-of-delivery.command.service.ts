@@ -1,5 +1,14 @@
-import { ConflictException, Injectable, BadRequestException } from '@nestjs/common';
-import { ActionType, CollectionMethod, ParcelStatus } from '@prisma/client';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+} from '@nestjs/common';
+import {
+  ActionType,
+  CollectionMethod,
+  ParcelStatus,
+  PaymentMethod,
+} from '@prisma/client';
 import { Transactional } from '../../../../../packages/transaction';
 import { Authorize } from '../../../../../packages/authorization';
 import { Policy } from '../../../../../packages/authorization/policy';
@@ -12,6 +21,7 @@ import { ProofOfDeliveryQueryRepository } from '../../infrastructure/repositorie
 import { ParcelQueryRepository } from '../../../parcel/infrastructure/repositories/parcel.query.repository';
 import { ParcelCommandRepository } from '../../../parcel/infrastructure/repositories/parcel.command.repository';
 import { ShipmentStatusRecalculator } from '../../../shipment/application/services/shipment-status.recalculator';
+import { BillingFacade } from '../../../../billing/facades/billing.facade';
 import { EmployeeFacade } from '../../../../employee/facades/employee.facade';
 import { TenantFacade } from '../../../../tenant/application/facades/tenant.facade';
 import { RecordDeliveryDto } from '../dtos/requests/record-delivery.dto';
@@ -32,6 +42,7 @@ export class ProofOfDeliveryCommandService {
     private readonly parcelCommandRepository: ParcelCommandRepository,
     private readonly trackingFacade: TrackingFacade,
     private readonly shipmentRecalculator: ShipmentStatusRecalculator,
+    private readonly billingFacade: BillingFacade,
     private readonly employeeFacade: EmployeeFacade,
     private readonly tenantFacade: TenantFacade,
     @Inject(CACHE_FACADE)
@@ -215,6 +226,23 @@ export class ProofOfDeliveryCommandService {
           parcel.customerShipmentId,
         ]),
       ]);
+    }
+
+    // Handover at the branch is where a receiver-paid shipment is settled, so
+    // the money is recorded in the same transaction as the proof of it.
+    if (dto.payment) {
+      const invoice = await this.billingFacade.getInvoiceForShipment(
+        parcel.customerShipmentId,
+      );
+
+      await this.billingFacade.recordPayment({
+        invoiceId: invoice.id,
+        amount: dto.payment.amount,
+        paymentMethod: dto.payment.paymentMethod ?? PaymentMethod.CASH,
+        collectedByEmployeeId: employeeId,
+        organizationUnitId: parcel.currentOrgUnitId,
+        transactionReference: dto.payment.transactionReference ?? null,
+      });
     }
 
     return created;

@@ -30,6 +30,7 @@ import { PdfGeneratorModule } from './packages/pdf-generator';
 import { StorageModule } from './packages/storage/src';
 import { ShipmentRequestModule } from './modules/shipment-request/shipment-request.module';
 import { CustomerShipmentModule } from './modules/customer-shipment/customer-shipment.module';
+import { BillingModule } from './modules/billing/billing.module';
 import { FirebaseNotificationModule } from './packages/firebase-notifications';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ProfileModule } from './modules/profile/profile.module';
@@ -75,6 +76,7 @@ import { ProfileModule } from './modules/profile/profile.module';
     StorageModule.forRoot(),
     ShipmentRequestModule,
     CustomerShipmentModule,
+    BillingModule,
     FirebaseNotificationModule.forRoot({
       projectId: process.env.FIREBASE_PROJECT_ID!,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL!,
