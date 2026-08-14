@@ -61,6 +61,29 @@ export class FleetFacade {
     );
   }
 
+  /**
+   * The vehicle a driver is currently assigned to, or null when unassigned.
+   *
+   * Resolved live rather than read from the driver's token, so a reassignment
+   * made after they signed in is reflected without asking them to sign in
+   * again.
+   */
+  async getActiveVehicleForDriver(
+    tenantId: string,
+    employeeId: string,
+  ): Promise<VehicleDetailsDto | null> {
+    const vehicleId = await this.vehicleQueryService.getActiveVehicleIdForDriver(
+      tenantId,
+      employeeId,
+    );
+
+    if (!vehicleId) {
+      return null;
+    }
+
+    return this.vehicleQueryService.getVehicleDetails(tenantId, vehicleId);
+  }
+
   async getTripDetails(
     tenantId: string,
     tripId: string,

@@ -29,15 +29,17 @@ export class TripQueryRepository {
   ) {}
 
   async findMany(criteria: TripQueryCriteria): Promise<[Trip[], number]> {
-    let query = this.kysely
-      .selectFrom('trip')
-      .select(TRIP_COLUMNS)
-      .where('tenant_id', '=', criteria.tenantId);
+    let query = this.kysely.selectFrom('trip').select(TRIP_COLUMNS);
 
     let countQuery = this.kysely
       .selectFrom('trip')
-      .select((eb) => eb.fn.count('id').as('count'))
-      .where('tenant_id', '=', criteria.tenantId);
+      .select((eb) => eb.fn.count('id').as('count'));
+
+    // Omitted only for a platform owner, who reads across every tenant.
+    if (criteria.tenantId) {
+      query = query.where('tenant_id', '=', criteria.tenantId);
+      countQuery = countQuery.where('tenant_id', '=', criteria.tenantId);
+    }
 
     if (criteria.status) {
       query = query.where('status', '=', criteria.status);
@@ -92,13 +94,20 @@ export class TripQueryRepository {
     ];
   }
 
-  async findById(tenantId: string, id: string): Promise<Trip | null> {
-    const record = await this.kysely
+  async findById(
+    tenantId: string | undefined,
+    id: string,
+  ): Promise<Trip | null> {
+    let query = this.kysely
       .selectFrom('trip')
       .select(TRIP_COLUMNS)
-      .where('tenant_id', '=', tenantId)
-      .where('id', '=', id)
-      .executeTakeFirst();
+      .where('id', '=', id);
+
+    if (tenantId) {
+      query = query.where('tenant_id', '=', tenantId);
+    }
+
+    const record = await query.executeTakeFirst();
 
     return record ? this.tripPersistenceMapper.toDomain(record) : null;
   }

@@ -41,15 +41,17 @@ export class VehicleQueryRepository {
    * Such a join is one read operation, not repository-to-repository communication.
    */
   async findMany(criteria: VehicleQueryCriteria): Promise<[Vehicle[], number]> {
-    let query = this.kysely
-      .selectFrom('vehicle')
-      .select(VEHICLE_COLUMNS)
-      .where('tenant_id', '=', criteria.tenantId);
+    let query = this.kysely.selectFrom('vehicle').select(VEHICLE_COLUMNS);
 
     let countQuery = this.kysely
       .selectFrom('vehicle')
-      .select((eb) => eb.fn.count('id').as('count'))
-      .where('tenant_id', '=', criteria.tenantId);
+      .select((eb) => eb.fn.count('id').as('count'));
+
+    // Omitted only for a platform owner, who reads across every tenant.
+    if (criteria.tenantId) {
+      query = query.where('tenant_id', '=', criteria.tenantId);
+      countQuery = countQuery.where('tenant_id', '=', criteria.tenantId);
+    }
 
     if (criteria.search) {
       const keyword = `${criteria.search}%`;
@@ -83,13 +85,20 @@ export class VehicleQueryRepository {
     ];
   }
 
-  async findById(tenantId: string, id: string): Promise<Vehicle | null> {
-    const record = await this.kysely
+  async findById(
+    tenantId: string | undefined,
+    id: string,
+  ): Promise<Vehicle | null> {
+    let query = this.kysely
       .selectFrom('vehicle')
       .select(VEHICLE_COLUMNS)
-      .where('tenant_id', '=', tenantId)
-      .where('id', '=', id)
-      .executeTakeFirst();
+      .where('id', '=', id);
+
+    if (tenantId) {
+      query = query.where('tenant_id', '=', tenantId);
+    }
+
+    const record = await query.executeTakeFirst();
 
     return record ? this.vehiclePersistenceMapper.toDomain(record) : null;
   }
@@ -113,16 +122,20 @@ export class VehicleQueryRepository {
   }
 
   async findAssignmentsByVehicle(
-    tenantId: string,
+    tenantId: string | undefined,
     vehicleId: string,
   ): Promise<VehicleAssignment[]> {
-    const records = await this.kysely
+    let query = this.kysely
       .selectFrom('vehicle_assignment')
       .select(ASSIGNMENT_COLUMNS)
-      .where('tenant_id', '=', tenantId)
       .where('vehicle_id', '=', vehicleId)
-      .orderBy('assigned_at', 'desc')
-      .execute();
+      .orderBy('assigned_at', 'desc');
+
+    if (tenantId) {
+      query = query.where('tenant_id', '=', tenantId);
+    }
+
+    const records = await query.execute();
 
     return records.map((record) =>
       this.assignmentPersistenceMapper.toDomain(record),

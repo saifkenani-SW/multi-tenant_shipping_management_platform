@@ -60,27 +60,37 @@ export class TransportManifestController {
   }
 
   @Get()
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.DRIVER,
+  )
   @ApiOperation({ summary: 'List manifests in the current tenant' })
   @ApiResponse({ status: HttpStatus.OK, type: PaginatedManifestListDto })
   async findManifests(
     @Query() query: ManifestQueryDto,
   ): Promise<PaginatedManifestListDto> {
     return this.manifestQueryService.findManifests(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       query,
     );
   }
 
   @Get(':id')
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.DRIVER,
+  )
   @ApiOperation({ summary: 'Get a manifest with all its parcels' })
   @ApiResponse({ status: HttpStatus.OK, type: ManifestDetailsDto })
   async getManifestDetails(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ManifestDetailsDto> {
     return this.manifestQueryService.getManifestDetails(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       id,
     );
   }
@@ -100,14 +110,19 @@ export class TransportManifestController {
   }
 
   @Get(':id/items')
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.DRIVER,
+  )
   @ApiOperation({ summary: 'List the parcels on a manifest' })
   @ApiResponse({ status: HttpStatus.OK, type: [ManifestItemDto] })
   async getManifestItems(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ManifestItemDto[]> {
     return this.manifestQueryService.getManifestItems(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       id,
     );
   }
