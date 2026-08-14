@@ -22,6 +22,7 @@ import { ParcelQueryService } from '../../application/services/parcel.query.serv
 import { ParcelQueryDto } from '../../application/dtos/requests/parcel-query.dto';
 import { UpdateParcelStatusDto } from '../../application/dtos/requests/update-parcel-status.dto';
 import { ParcelResponseDto } from '../../application/dtos/responses/parcel.response.dto';
+import { ParcelTrackingResponseDto } from '../../application/dtos/responses/parcel-tracking.response.dto';
 
 @ApiTags('Customer Shipments - Parcels')
 @ApiBearerAuth()
@@ -74,10 +75,10 @@ export class ParcelController {
   @ApiOperation({
     summary: 'Track a parcel by its tracking number. Requires authentication.',
   })
-  @ApiResponse({ status: HttpStatus.OK, type: ParcelResponseDto })
+  @ApiResponse({ status: HttpStatus.OK, type: ParcelTrackingResponseDto })
   async track(
     @Param('trackingNumber') trackingNumber: string,
-  ): Promise<ParcelResponseDto> {
+  ): Promise<ParcelTrackingResponseDto> {
     return this.queryService.findByTrackingNumber(trackingNumber);
   }
 

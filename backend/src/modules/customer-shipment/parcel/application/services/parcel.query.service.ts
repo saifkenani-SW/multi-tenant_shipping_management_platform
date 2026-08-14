@@ -14,6 +14,9 @@ import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-
 import type { ParcelScopeInterface } from '../../domain/authorization/scopes/parcel-scope.interface';
 import {ShipmentQueryService} from '../../../shipment/application/services/shipment.query.service';
 
+import { ParcelTrackingResponseDto } from '../dtos/responses/parcel-tracking.response.dto';
+import { TrackingFacade } from '../../../../tracking/application/facades/tracking.facade';
+
 @Injectable()
 export class ParcelQueryService {
   constructor(
@@ -22,6 +25,7 @@ export class ParcelQueryService {
     private readonly queryRepository: ParcelQueryRepository,
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly mapper: ParcelMapper,
+    private readonly trackingFacade: TrackingFacade,
   ) {}
 
   /**
@@ -115,7 +119,7 @@ export class ParcelQueryService {
   })
   async findByTrackingNumber(
     trackingNumber: string,
-  ): Promise<ParcelResponseDto> {
+  ): Promise<ParcelTrackingResponseDto> {
     const record =
       await this.queryRepository.findRawByTrackingNumber(trackingNumber);
 
@@ -123,7 +127,13 @@ export class ParcelQueryService {
       throw new NotFoundException('Parcel not found');
     }
 
-    return this.mapper.toResponse(record);
+    const baseDto = this.mapper.toResponse(record);
+    const history = await this.trackingFacade.getParcelHistory(record.id);
+
+    return {
+      ...baseDto,
+      history,
+    };
   }
 
   /**
