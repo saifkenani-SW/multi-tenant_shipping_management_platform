@@ -9,7 +9,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
-    "db:reset": "prisma migrate reset",
+    "db:reset": "node -e \"if(process.env.NODE_ENV==='production'){console.error('db:reset wipes the database and is blocked when NODE_ENV=production.');process.exit(1)}\" && prisma migrate reset",
     "db:seed": "node -r ts-node/register -r reflect-metadata src/infrastructure/database/seeders/seed.ts",
     "seed": "npm run db:seed",
     "build": "nest build",
