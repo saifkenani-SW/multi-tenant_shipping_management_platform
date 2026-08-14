@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { QuotationStatus } from '@prisma/client';
 
 export class QuotationResponseDto {
@@ -32,17 +32,17 @@ export class QuotationResponseDto {
   @ApiProperty()
   quotationType: string;
 
-  @ApiProperty()
-  basePrice: number;
+  @ApiPropertyOptional({ nullable: true })
+  basePrice: number | null;
 
-  @ApiProperty()
-  weightCharge: number;
+  @ApiPropertyOptional({ nullable: true })
+  weightCharge: number | null;
 
-  @ApiProperty()
-  extraFees: number;
+  @ApiPropertyOptional({ nullable: true })
+  extraFees: number | null;
 
-  @ApiProperty()
-  amount: number;
+  @ApiPropertyOptional({ nullable: true })
+  amount: number | null;
 
   @ApiProperty()
   pricingSnapshot: any;

@@ -19,7 +19,7 @@ export class ParcelSeeder implements Seeder {
         where: { tenant_id: tenant.id },
       });
       const orgUnit = await this.prisma.organization_unit.findFirst({
-        where: { tenant_id: tenant.id },
+        where: { tenant_id: tenant.id, org_type: 'BRANCH' },
       });
 
       if (!shipment || !orgUnit) {

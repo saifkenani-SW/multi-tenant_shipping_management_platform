@@ -33,8 +33,8 @@ export class ParcelPolicy implements AuthorizationPolicy<ParcelAction> {
 
     if (payload?.trackingNumber || payload?.id) {
       const entity = payload.trackingNumber
-        ? await this.queryRepository.findRawByTrackingNumber(payload.trackingNumber)
-        : await this.queryRepository.findRawById(payload.id!);
+        ? await this.queryRepository.findAggregateByTrackingNumber(payload.trackingNumber)
+        : await this.queryRepository.findAggregateById(payload.id!);
 
       if (!entity) {
         throw new NotFoundException('Parcel not found');

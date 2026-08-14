@@ -19,6 +19,8 @@ import { Authorize } from '../../../../packages/authorization';
 
 import { Policy } from '../../../../packages/authorization/policy';
 import { TenantNotFoundException } from '../../domain/exceptions/tenant-not-found.exception';
+import { STORAGE_PROVIDER } from '../../../../packages/storage/src';
+import type { IStorageProvider } from '../../../../packages/storage/src';
 import { AssignSubscriptionDto } from '../dtos/requests/assign-subscription.dto';
 import {
   CancelSubscriptionDto,
@@ -40,6 +42,8 @@ export class TenantCommandService {
     private readonly userFacade: UserFacade,
     @Inject(SUBSCRIPTION_PLAN_QUERY_SERVICE)
     private readonly planQueryService: ISubscriptionPlanQueryService,
+    @Inject(STORAGE_PROVIDER)
+    private readonly storage: IStorageProvider,
   ) {}
 
   private async validateOwnerUserExistsAndActive(
@@ -450,5 +454,32 @@ export class TenantCommandService {
     const tenant = await this.tenantRepository.findById(tenantId);
     if (!tenant) throw new TenantNotFoundException();
     await this.settingsCommandRepository.updatePricingSettings(tenantId, dto);
+  }
+
+  @CacheEvict({
+    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
+    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
+  })
+  async uploadLogo(tenantId: string, file: any): Promise<{ url: string }> {
+    const tenant = await this.tenantRepository.findById(tenantId);
+    if (!tenant) throw new TenantNotFoundException();
+
+    // Map Express.Multer.File to StorageFile interface
+    const storageFile = {
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      buffer: file.buffer,
+      path: file.path,
+    };
+
+    // Slugify tenant name to use as folder name
+    const companyNameFolder = tenant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    const { storage_key } = await this.storage.save(storageFile, companyNameFolder, 'logos');
+    
+    await this.tenantRepository.updateLogoUrl(tenantId, storage_key);
+    
+    return { url: storage_key };
   }
 }

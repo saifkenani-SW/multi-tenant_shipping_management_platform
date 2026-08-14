@@ -7,6 +7,7 @@ export interface ParcelMergedCriteria {
   condition?: ParcelCondition;
   currentOrgUnitId?: string;
   scopeOrgUnitIds?: string[];
+  customerPhone?: string;
 
   cursor?: string;
   limit?: number;

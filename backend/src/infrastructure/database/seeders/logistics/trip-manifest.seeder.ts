@@ -127,6 +127,7 @@ export class TripManifestSeeder implements Seeder {
         tenant_id: tenant1.id,
         parcel_id: parcel1.id,
         delivered_by_employee_id: driver.id,
+        delivered_by_employee_name: 'Driver 1',
         collection_method: CollectionMethod.CUSTOMER,
         received_by_name: 'Jane Receiver',
         otp_verified: true,

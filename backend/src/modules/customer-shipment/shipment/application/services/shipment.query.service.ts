@@ -6,9 +6,11 @@ import {
 import {
   AuthorizationFacade,
   Authorize,
+  ReturnCapabilities,
 } from '../../../../../packages/authorization';
 import { Policy } from '../../../../../packages/authorization/policy';
 import { ShipmentPolicy } from '../../domain/authorization/policies/shipment.policy';
+import { ShipmentCapabilityBuilder } from '../capabilities/shipment-capability.builder';
 import { ShipmentAction } from '../../domain/authorization/actions/shipment.action';
 import { CursorPaginatedResponse } from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
 import { ShipmentQueryRepository } from '../../infrastructure/repositories/shipment.query.repository';
@@ -71,10 +73,13 @@ export class ShipmentQueryService {
 
     return new CursorPaginatedResponse(
       (result.data as any[]).map((row) => this.mapper.toResponse(row)),
-      result.meta,
+      { ...result.meta, scope },
     );
   }
 
+  @ReturnCapabilities({
+    policy: ShipmentCapabilityBuilder,
+  })
   @Authorize({
     policy: Policy(ShipmentPolicy, ShipmentAction.View),
     payloadResolver: (id: string) => ({ shipmentId: id }),
@@ -90,6 +95,13 @@ export class ShipmentQueryService {
     );
   }
 
+  @ReturnCapabilities({
+    policy: ShipmentCapabilityBuilder,
+  })
+  @Authorize({
+    policy: Policy(ShipmentPolicy, ShipmentAction.View),
+    payloadResolver: (id: string) => ({ shipmentId: id }),
+  })
   async findById(id: string): Promise<ShipmentResponseDto> {
     const record = await this.findRawOrThrow(id);
     return this.mapper.toResponse(record);

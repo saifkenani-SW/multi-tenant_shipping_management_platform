@@ -76,6 +76,13 @@ export class TenantCommandRepository {
     });
   }
 
+  async updateLogoUrl(id: string, logoUrl: string): Promise<void> {
+    await this.prisma.client.tenant.update({
+      where: { id },
+      data: { logo_url: logoUrl },
+    });
+  }
+
   async updateStatus(
     id: string,
     status: TenantStatus,

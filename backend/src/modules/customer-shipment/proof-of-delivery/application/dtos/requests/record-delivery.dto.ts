@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { CollectionMethod } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -34,37 +34,42 @@ export class RecordDeliveryDto {
   @IsOptional()
   collectionMethod?: CollectionMethod;
 
-  @ApiPropertyOptional({ default: false })
+  @ApiPropertyOptional({
+    description: 'Whether OTP was verified (send as string "true" or "false" in form-data)',
+    default: false,
+  })
+  @Transform(({ value }) => value === 'true' || value === true)
   @IsBoolean()
   @IsOptional()
   otpVerified?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Storage key of the captured signature, not a URL',
-    maxLength: 500,
+    type: 'string',
+    format: 'binary',
+    description: 'Captured signature image file',
   })
-  @IsString()
-  @MaxLength(500)
-  @IsOptional()
-  signatureKey?: string;
+  signature?: any;
 
-  @ApiPropertyOptional({ description: 'Storage key of the id photo' })
-  @IsString()
-  @MaxLength(500)
-  @IsOptional()
-  idPhotoKey?: string;
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'ID photo image file',
+  })
+  idPhoto?: any;
 
-  @ApiPropertyOptional({ description: 'Storage key of the parcel photo' })
-  @IsString()
-  @MaxLength(500)
-  @IsOptional()
-  parcelPhotoKey?: string;
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Parcel photo image file',
+  })
+  parcelPhoto?: any;
 
-  @ApiPropertyOptional({ description: 'Storage key of any extra photo' })
-  @IsString()
-  @MaxLength(500)
-  @IsOptional()
-  additionalPhotoKey?: string;
+  @ApiPropertyOptional({
+    type: 'array',
+    items: { type: 'string', format: 'binary' },
+    description: 'Up to 3 additional photos (optional)',
+  })
+  additionalPhoto?: any[];
 
   @ApiPropertyOptional({ description: 'Latitude where delivery happened' })
   @Type(() => Number)

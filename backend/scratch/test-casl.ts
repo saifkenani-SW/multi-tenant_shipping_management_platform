@@ -1,21 +1,8 @@
-import { AbilityBuilder, createMongoAbility, subject } from '@casl/ability';
+import { AbilityBuilder, createMongoAbility } from '@casl/ability';
 
-const builder = new AbilityBuilder(createMongoAbility);
-builder.can('view', 'Shipment', {
-  tenant_id: '101',
-  $or: [
-    { origin_org_unit_id: '502' },
-    { destination_org_unit_id: '502' },
-  ],
-} as any);
+const { can, build } = new AbilityBuilder(createMongoAbility);
+can('view', 'CustomerShipment');
+const ability = build();
 
-const ability = builder.build();
-
-const shipment = {
-  tenant_id: '101',
-  origin_org_unit_id: '502',
-  destination_org_unit_id: '501'
-};
-
-const result = ability.can('view', subject('Shipment', shipment));
-console.log('Result:', result);
+import { subject } from '@casl/ability';
+console.log(ability.can('view', subject('CustomerShipment', { id: 1 })));

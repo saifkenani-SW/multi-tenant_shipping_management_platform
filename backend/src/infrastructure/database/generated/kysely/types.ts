@@ -18,11 +18,11 @@ export const ParcelStatus = {
     PROCESSING: "PROCESSING",
     READY_FOR_DISPATCH: "READY_FOR_DISPATCH",
     IN_TRANSIT: "IN_TRANSIT",
-    ARRIVED_AT_UNIT: "ARRIVED_AT_UNIT",
     READY_FOR_COLLECTION: "READY_FOR_COLLECTION",
     COLLECTED: "COLLECTED",
     RETURNED: "RETURNED",
-    CANCELLED: "CANCELLED"
+    CANCELLED: "CANCELLED",
+    ARRIVED_AT_UNIT: "ARRIVED_AT_UNIT"
 } as const;
 export type ParcelStatus = (typeof ParcelStatus)[keyof typeof ParcelStatus];
 export const ParcelCondition = {
@@ -70,13 +70,13 @@ export const QuotationType = {
 } as const;
 export type QuotationType = (typeof QuotationType)[keyof typeof QuotationType];
 export const QuotationStatus = {
-    WAITING_PRICING_REQUEST: "WAITING_PRICING_REQUEST",
-    WAITING_PRICING: "WAITING_PRICING",
     PENDING: "PENDING",
     APPROVED: "APPROVED",
     REJECTED: "REJECTED",
     EXPIRED: "EXPIRED",
-    WITHDRAWN: "WITHDRAWN"
+    WITHDRAWN: "WITHDRAWN",
+    WAITING_PRICING: "WAITING_PRICING",
+    WAITING_PRICING_REQUEST: "WAITING_PRICING_REQUEST"
 } as const;
 export type QuotationStatus = (typeof QuotationStatus)[keyof typeof QuotationStatus];
 export const PaymentMethod = {
@@ -284,15 +284,11 @@ export type customer_profile = {
 };
 export type customer_shipment = {
     id: string;
-    version: Generated<number>;
     tenant_id: string;
     sender_national_id: string | null;
-    sender_name: string;
-    sender_phone: string;
     shipment_request_id: string | null;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
-    service_level: Generated<ServiceLevel>;
     receiver_name: string;
     receiver_phone: string;
     payment_responsibility: Generated<PaymentResponsibility>;
@@ -300,6 +296,10 @@ export type customer_shipment = {
     status: Generated<ShipmentStatus>;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
+    service_level: Generated<ServiceLevel>;
+    version: Generated<number>;
+    sender_name: string;
+    sender_phone: string;
     created_by_employee_id: string | null;
     created_by_employee_name: string | null;
 };
@@ -404,11 +404,8 @@ export type organization_unit = {
 };
 export type parcel = {
     id: string;
-    version: Generated<number>;
     tenant_id: string;
     customer_shipment_id: string;
-    destination_org_unit_id: string | null;
-    label_key: string | null;
     tracking_number: string;
     description: string | null;
     category: string | null;
@@ -426,6 +423,9 @@ export type parcel = {
     current_org_unit_id: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
+    destination_org_unit_id: string | null;
+    label_key: string | null;
+    version: Generated<number>;
 };
 export type parcel_movement = {
     id: string;
@@ -483,6 +483,7 @@ export type proof_of_delivery = {
     tenant_id: string;
     parcel_id: string;
     delivered_by_employee_id: string;
+    delivered_by_employee_name: string;
     collection_method: Generated<CollectionMethod>;
     received_by_name: string;
     received_by_national_id: string | null;
@@ -502,12 +503,11 @@ export type quotation = {
     shipment_request_id: string;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
-    service_level: Generated<ServiceLevel>;
     quotation_type: Generated<QuotationType>;
     base_price: string | null;
     weight_charge: string | null;
     extra_fees: Generated<string | null>;
-    amount: string;
+    amount: string | null;
     pricing_snapshot: unknown | null;
     notes: string | null;
     valid_until: Timestamp | null;
@@ -515,6 +515,7 @@ export type quotation = {
     submitted_by_employee_id: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
+    service_level: Generated<ServiceLevel>;
 };
 export type role = {
     id: string;
@@ -545,18 +546,25 @@ export type shipment_request = {
     receiver_lng: string | null;
     expected_pieces_count: Generated<number>;
     expected_total_weight_kg: string;
-    expected_length_cm: Generated<string>;
-    expected_width_cm: Generated<string>;
-    expected_height_cm: Generated<string>;
     notes: string | null;
     status: Generated<RequestStatus>;
     cancelled_at: Timestamp | null;
     cancellation_reason: string | null;
     expires_at: Timestamp | null;
-    approved_quotation_id: string | null;
     created_by_employee_id: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
+    approved_quotation_id: string | null;
+    expected_height_cm: Generated<string>;
+    expected_length_cm: Generated<string>;
+    expected_width_cm: Generated<string>;
+};
+export type spatial_ref_sys = {
+    srid: number;
+    auth_name: string | null;
+    auth_srid: number | null;
+    srtext: string | null;
+    proj4text: string | null;
 };
 export type subscription_plan = {
     id: string;
@@ -760,13 +768,13 @@ export type zone_pricing_matrix = {
     tenant_id: string;
     origin_zone_id: string;
     destination_zone_id: string;
-    service_level: Generated<ServiceLevel>;
     base_price: string;
     base_weight_kg: string;
     price_per_extra_kg: Generated<string>;
     is_active: Generated<boolean>;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
+    service_level: Generated<ServiceLevel>;
 };
 export type DB = {
     assignment_role: assignment_role;
@@ -794,6 +802,7 @@ export type DB = {
     role: role;
     role_permission: role_permission;
     shipment_request: shipment_request;
+    spatial_ref_sys: spatial_ref_sys;
     subscription_plan: subscription_plan;
     support_ticket: support_ticket;
     support_ticket_message: support_ticket_message;

@@ -5,13 +5,17 @@ meta {
 }
 
 get {
-  url: {{url}}/tenants/{{tenantId}}
+  url: http://localhost:3000/tenants/00000000-0000-7000-8000-000000000101/logo
   body: none
   auth: bearer
 }
 
 auth:bearer {
   token: {{token}}
+}
+
+vars:pre-request {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwMDAwMDAwMC0wMDAwLTcwMDAtODAwMC0wMDAwMDAwMDAwMTAiLCJzZXNzaW9uSWQiOiIwMTlmZmY2Yi00MTNhLTczMGUtYmNmNS1mMWJkNjA0Yzk1YmQiLCJ0eXBlIjoiUExBVEZPUk1fT1dORVIiLCJpYXQiOjE3ODY2OTY2NDYsImV4cCI6MTc4Njc4MzA0Nn0.uig1TM3jI43pt1M0W6fAmaw7zYFzehh4eIrzc59IJPY
 }
 
 docs {

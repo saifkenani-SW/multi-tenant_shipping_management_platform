@@ -24,9 +24,9 @@ export class ShipmentMapper {
           ? null
           : Number(record.total_chargeable_weight_kg),
       status: record.status,
-      createdByEmployeeId: record.created_by_employee_id ?? null,
-      createdByEmployeeName: record.created_by_employee_name ?? null,
-      parcelCount: Number(record.parcel_count ?? 0),
+      createdByEmployeeId: record.created_by_employee_id || null,
+      createdByEmployeeName: record.created_by_employee_name || null,
+      parcelCount: Number(record.parcel_count || 0),
       createdAt: record.created_at,
       updatedAt: record.updated_at,
     };
@@ -38,8 +38,8 @@ export class ShipmentMapper {
   ): ShipmentDetailsResponseDto {
     return {
       ...this.toResponse(record),
-      senderNationalId: record.sender_national_id ?? null,
-      shipmentRequestId: record.shipment_request_id ?? null,
+      senderNationalId: record.sender_national_id || null,
+      shipmentRequestId: record.shipment_request_id || null,
       parcels,
     };
   }

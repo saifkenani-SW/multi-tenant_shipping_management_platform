@@ -10,6 +10,7 @@ import { CustomerModule } from '../customer/customer.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { ShipmentRequestModule } from '../shipment-request/shipment-request.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { StorageModule } from '../../packages/storage/src/storage.module';
 
 // Shipment
 import { ShipmentController } from './shipment/presentation/controllers/shipment.controller';
@@ -30,20 +31,18 @@ import { ParcelQueryService } from './parcel/application/services/parcel.query.s
 import { ParcelCommandRepository } from './parcel/infrastructure/repositories/parcel.command.repository';
 import { ParcelQueryRepository } from './parcel/infrastructure/repositories/parcel.query.repository';
 import { ParcelMapper } from './parcel/application/mappers/parcel.mapper';
+import { ParcelCapabilityBuilder } from './parcel/application/capabilities/parcel-capability.builder';
+import { ShipmentCapabilityBuilder } from './shipment/application/capabilities/shipment-capability.builder';
 import { ParcelPolicy } from './parcel/domain/authorization/policies/parcel.policy';
 import { ParcelAbility } from './parcel/domain/authorization/abilities/parcel.ability';
 import { ParcelVisibilityScope } from './parcel/domain/authorization/scopes/parcel-visibility.scope';
 
 // Proof of Delivery
-import { ProofOfDeliveryController } from './proof-of-delivery/presentation/controllers/proof-of-delivery.controller';
 import { ProofOfDeliveryCommandService } from './proof-of-delivery/application/services/proof-of-delivery.command.service';
 import { ProofOfDeliveryQueryService } from './proof-of-delivery/application/services/proof-of-delivery.query.service';
 import { ProofOfDeliveryCommandRepository } from './proof-of-delivery/infrastructure/repositories/proof-of-delivery.command.repository';
 import { ProofOfDeliveryQueryRepository } from './proof-of-delivery/infrastructure/repositories/proof-of-delivery.query.repository';
 import { ProofOfDeliveryMapper } from './proof-of-delivery/application/mappers/proof-of-delivery.mapper';
-import { PodPolicy } from './proof-of-delivery/domain/authorization/policies/pod.policy';
-import { PodAbility } from './proof-of-delivery/domain/authorization/abilities/pod.ability';
-import { PodVisibilityScope } from './proof-of-delivery/domain/authorization/scopes/pod-visibility.scope';
 
 import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
 
@@ -61,7 +60,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
 @Module({
   imports: [
     DatabaseModule,
-    CaslModule.forFeature([ShipmentAbility, ParcelAbility, PodAbility]),
+    CaslModule.forFeature([ShipmentAbility, ParcelAbility]),
     LabelGeneratorModule,
     PdfGeneratorModule,
     TrackingModule,
@@ -70,11 +69,11 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     EmployeeModule,
     ShipmentRequestModule,
     OrganizationModule,
+    StorageModule,
   ],
   controllers: [
     ShipmentController,
     ParcelController,
-    ProofOfDeliveryController,
   ],
   providers: [
     // Shipment
@@ -87,6 +86,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     ShipmentPolicy,
     ShipmentAbility,
     ShipmentVisibilityScope,
+    ShipmentCapabilityBuilder,
 
     // Parcel
     ParcelCommandService,
@@ -97,6 +97,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     ParcelPolicy,
     ParcelAbility,
     ParcelVisibilityScope,
+    ParcelCapabilityBuilder,
 
     // Proof of Delivery
     ProofOfDeliveryCommandService,
@@ -104,9 +105,6 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     ProofOfDeliveryCommandRepository,
     ProofOfDeliveryQueryRepository,
     ProofOfDeliveryMapper,
-    PodPolicy,
-    PodAbility,
-    PodVisibilityScope,
 
     CustomerShipmentFacade,
   ],
