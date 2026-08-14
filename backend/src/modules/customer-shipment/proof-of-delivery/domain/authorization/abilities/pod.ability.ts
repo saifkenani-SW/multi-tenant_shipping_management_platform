@@ -31,9 +31,12 @@ export class PodAbility implements CaslAbilityContributor<
 
     // A customer may see the proof for their own shipment but never record it.
     if (type === SubjectType.CUSTOMER) {
-      if (principal.profileId) {
+      if (principal.phone) {
         builder.can(PodAction.View, PodSubject, {
-          sender_customer_profile_id: principal.profileId,
+          sender_phone: principal.phone,
+        } as any);
+        builder.can(PodAction.View, PodSubject, {
+          receiver_phone: principal.phone,
         } as any);
       }
       return;

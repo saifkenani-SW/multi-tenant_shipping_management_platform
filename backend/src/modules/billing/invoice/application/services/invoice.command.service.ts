@@ -74,8 +74,11 @@ export class InvoiceCommandService {
 
     const created = await this.commandRepository.create({
       tenantId: command.tenantId,
-      customerProfileId: command.customerProfileId,
       customerShipmentId: command.customerShipmentId,
+      senderName: command.senderName,
+      senderPhone: command.senderPhone,
+      receiverName: command.receiverName,
+      receiverPhone: command.receiverPhone,
       originOrgUnitId: command.originOrgUnitId,
       destinationOrgUnitId: command.destinationOrgUnitId,
       invoiceNumber,

@@ -17,5 +17,29 @@ export class EmployeeFacade {
     }
   }
 
-  // Add more methods here as needed by other modules
+  async getEmployeeName(id: string): Promise<string> {
+    try {
+      const employee = await this.queryService.findById(id);
+      return employee.fullName;
+    } catch {
+      return 'Unknown';
+    }
+  }
+
+  /**
+   * The user account behind an employee.
+   *
+   * Notifications are addressed to users, not employees, so any module that
+   * wants to reach an employee's phone has to cross that boundary here.
+   * Returns null rather than throwing: the callers are advisory (a push), and
+   * a missing employee must not fail the operation that triggered it.
+   */
+  async getUserId(id: string, tenantId?: string): Promise<string | null> {
+    try {
+      const employee = await this.queryService.findById(id, tenantId);
+      return employee.userId;
+    } catch {
+      return null;
+    }
+  }
 }

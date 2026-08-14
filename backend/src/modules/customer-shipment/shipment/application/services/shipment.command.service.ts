@@ -12,6 +12,7 @@ import {
   ServiceLevel,
   ShipmentStatus,
 } from '@prisma/client';
+import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { Transactional } from '../../../../../packages/transaction';
 import { Authorize } from '../../../../../packages/authorization';
 import { Policy } from '../../../../../packages/authorization/policy';
@@ -22,13 +23,14 @@ import { CustomerFacade } from '../../../../customer/facades/customer.facade';
 import { EmployeeFacade } from '../../../../employee/facades/employee.facade';
 import { ShipmentRequestFacade } from '../../../../shipment-request/facades/shipment-request.facade';
 import { BillingFacade } from '../../../../billing/facades/billing.facade';
+import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
 import { LabelGeneratorService } from '../../../../../packages/label-generator/services/label-generator.service';
 import { PdfGeneratorService } from '../../../../../packages/pdf-generator/services/pdf-generator.service';
-import { STORAGE_PROVIDER } from '../../../../../packages/storage/src';
 import type {
   IStorageProvider,
   StorageFile,
 } from '../../../../../packages/storage/src';
+import { STORAGE_PROVIDER } from '../../../../../packages/storage/src';
 import { ShipmentCommandRepository } from '../../infrastructure/repositories/shipment.command.repository';
 import { ParcelCommandRepository } from '../../../parcel/infrastructure/repositories/parcel.command.repository';
 import { ParcelQueryRepository } from '../../../parcel/infrastructure/repositories/parcel.query.repository';
@@ -42,7 +44,8 @@ import {
   CustomerShipmentCreatedPayload,
   CustomerShipmentLifecyclePayload,
 } from '../../../constants/customer-shipment.events';
-import { PARCEL_LABEL_STORAGE_CATEGORY } from '../../../constants/customer-shipment.cache.constants';
+import { CUSTOMER_SHIPMENT_CACHE_KEYS, PARCEL_LABEL_STORAGE_CATEGORY } from '../../../constants/customer-shipment.cache.constants';
+import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
 
 /** A parcel with everything computed before the transaction opens. */
 interface PreparedParcel {
@@ -70,11 +73,13 @@ export class ShipmentCommandService {
     private readonly employeeFacade: EmployeeFacade,
     private readonly shipmentRequestFacade: ShipmentRequestFacade,
     private readonly billingFacade: BillingFacade,
+    private readonly organizationFacade: OrganizationFacade,
     private readonly labelGenerator: LabelGeneratorService,
     private readonly pdfGenerator: PdfGeneratorService,
     @Inject(STORAGE_PROVIDER)
     private readonly storageProvider: IStorageProvider,
     private readonly eventEmitter: EventEmitter2,
+    private readonly requestContext: RequestContextService,
   ) {}
 
   /**
@@ -87,13 +92,46 @@ export class ShipmentCommandService {
    */
   @Authorize({
     policy: Policy(ShipmentPolicy, ShipmentAction.Create),
-    payloadResolver: (tenantId: string) => ({ tenantId }),
+    payloadResolver: (dto: CreateShipmentDto) => ({
+      originOrgUnitId: dto.originOrgUnitId,
+    }),
   })
-  async createShipment(
-    tenantId: string,
-    dto: CreateShipmentDto,
-    employeeId?: string,
-  ): Promise<{ id: string }> {
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
+    allEntries: true,
+  })
+  async createShipment(dto: CreateShipmentDto): Promise<{ id: string }> {
+    const principal = this.requestContext.getPrincipal();
+    const tenantId = principal.tenantId;
+
+    if (!tenantId) {
+      throw new BadRequestException('Tenant ID is missing from context.');
+    }
+    const employeeId = principal.profileId;
+
+    if (dto.originOrgUnitId === dto.destinationOrgUnitId) {
+      throw new BadRequestException(
+        'Origin and destination cannot be the same organization unit.',
+      );
+    }
+
+    const orgUnitIds = new Set<string>();
+    if (dto.originOrgUnitId) orgUnitIds.add(dto.originOrgUnitId);
+    if (dto.destinationOrgUnitId) orgUnitIds.add(dto.destinationOrgUnitId);
+
+    if (orgUnitIds.size > 0) {
+      const areValid =
+        await this.organizationFacade.validateOrganizationUnitsExist(
+          tenantId,
+          Array.from(orgUnitIds),
+        );
+      if (!areValid) {
+        throw new BadRequestException(
+          'One or more organization units do not exist or do not belong to this tenant.',
+        );
+      }
+    }
+
     const settings = await this.tenantFacade.getTenantSettings(tenantId);
 
     if (
@@ -102,19 +140,6 @@ export class ShipmentCommandService {
     ) {
       throw new BadRequestException(
         'This tenant requires the sender national id.',
-      );
-    }
-
-    if (!(await this.customerFacade.exists(dto.senderCustomerProfileId))) {
-      throw new BadRequestException('Sender customer profile does not exist.');
-    }
-
-    if (
-      dto.receiverCustomerProfileId &&
-      !(await this.customerFacade.exists(dto.receiverCustomerProfileId))
-    ) {
-      throw new BadRequestException(
-        'Receiver customer profile does not exist.',
       );
     }
 
@@ -165,10 +190,8 @@ export class ShipmentCommandService {
   ): Promise<{ id: string }> {
     const shipment = await this.commandRepository.create({
       tenantId,
-      senderCustomerProfileId: dto.senderCustomerProfileId,
       senderName: dto.senderName,
       senderPhone: dto.senderPhone,
-      receiverCustomerProfileId: dto.receiverCustomerProfileId ?? null,
       senderNationalId: dto.senderNationalId ?? null,
       shipmentRequestId: dto.shipmentRequestId ?? null,
       originOrgUnitId: dto.originOrgUnitId,
@@ -200,8 +223,7 @@ export class ShipmentCommandService {
         widthCm: parcel.dto.widthCm,
         heightCm: parcel.dto.heightCm,
         volumetricWeightKg: parcel.volumetricWeightKg,
-        destinationOrgUnitId:
-          parcel.dto.destinationOrgUnitId ?? dto.destinationOrgUnitId,
+        destinationOrgUnitId: dto.destinationOrgUnitId,
         currentOrgUnitId: dto.originOrgUnitId,
         labelKey: parcel.labelKey,
       });
@@ -213,11 +235,10 @@ export class ShipmentCommandService {
     await this.billingFacade.createInvoiceForShipment({
       tenantId,
       customerShipmentId: shipment.id,
-      customerProfileId:
-        (dto.paymentResponsibility ?? PaymentResponsibility.SENDER) ===
-        PaymentResponsibility.RECEIVER
-          ? (dto.receiverCustomerProfileId ?? dto.senderCustomerProfileId)
-          : dto.senderCustomerProfileId,
+      senderName: dto.senderName,
+      senderPhone: dto.senderPhone,
+      receiverName: dto.receiverName,
+      receiverPhone: dto.receiverPhone,
       originOrgUnitId: dto.originOrgUnitId,
       destinationOrgUnitId: dto.destinationOrgUnitId,
       paymentResponsibility:
@@ -249,11 +270,25 @@ export class ShipmentCommandService {
     return { id: shipment.id };
   }
 
+
   /** PENDING or PROCESSING -> CANCELLED. The aggregate refuses it after dispatch. */
   @Authorize({
     policy: Policy(ShipmentPolicy, ShipmentAction.Cancel),
     payloadResolver: (shipmentId: string) => ({ shipmentId }),
   })
+  @CacheEvict([
+    {
+      keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
+      keyBuilder: (shipmentId: string) => [
+        CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
+        shipmentId,
+      ],
+    },
+  ])
   @Transactional()
   async cancelShipment(shipmentId: string): Promise<void> {
     const shipment = await this.queryService.findAggregateOrThrow(shipmentId);

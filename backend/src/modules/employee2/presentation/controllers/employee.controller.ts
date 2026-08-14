@@ -122,6 +122,17 @@ export class EmployeeController {
     return this.queryService.findMany(query, tenantId);
   }
 
+  @Get('me')
+  @Roles(RoleType.EMPLOYEE, RoleType.TENANT_ADMIN)
+  @ApiOperation({ summary: 'جلب بيانات الموظف الحالي (استناداً إلى التوكن)' })
+  async findMe() {
+    const tenantId = this.requestContext.getTenantId();
+    const principal = this.requestContext.getPrincipal();
+    // جلب معرف الموظف من السياق (Profile ID أو Subject ID)
+    const employeeId = principal.profileId ?? principal.subject.id;
+    return this.queryService.findById(employeeId, tenantId);
+  }
+
   @Get(':id')
   @Roles(RoleType.TENANT_ADMIN, RoleType.PLATFORM_OWNER)
   @ApiOperation({ summary: 'جلب بيانات موظف بواسطة المعرف' })

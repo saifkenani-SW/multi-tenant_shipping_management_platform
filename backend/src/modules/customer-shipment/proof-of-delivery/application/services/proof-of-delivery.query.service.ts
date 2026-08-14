@@ -41,11 +41,14 @@ export class ProofOfDeliveryQueryService {
     }
 
     if (
-      scope.shipment?.sender_customer_profile_id &&
-      record.sender_customer_profile_id !==
-        scope.shipment.sender_customer_profile_id
+      scope.shipment?.sender_phone || scope.shipment?.receiver_phone
     ) {
-      throw new NotFoundException('Proof of delivery not found');
+      const matchesSender = scope.shipment.sender_phone && record.sender_phone === scope.shipment.sender_phone;
+      const matchesReceiver = scope.shipment.receiver_phone && record.receiver_phone === scope.shipment.receiver_phone;
+
+      if (!matchesSender && !matchesReceiver) {
+        throw new NotFoundException('Proof of delivery not found');
+      }
     }
 
     return this.mapper.toResponse(record);

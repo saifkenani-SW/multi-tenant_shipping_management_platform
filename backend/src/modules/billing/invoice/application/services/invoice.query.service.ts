@@ -91,7 +91,7 @@ export class InvoiceQueryService {
 
     const base: InvoiceMergedCriteria = {
       status: filter.status,
-      customerProfileId: filter.customerProfileId,
+      senderPhone: filter.senderPhone,
       customerShipmentId: filter.customerShipmentId,
       paymentResponsibility: filter.paymentResponsibility,
       orgUnitId: filter.orgUnitId,

@@ -7,7 +7,7 @@ import { InvoiceStatus, PaymentResponsibility } from '@prisma/client';
 export interface InvoiceMergedCriteria {
   tenantId?: string;
   status?: InvoiceStatus;
-  customerProfileId?: string;
+  senderPhone?: string;
   customerShipmentId?: string;
   paymentResponsibility?: PaymentResponsibility;
 

@@ -1,6 +1,10 @@
 import { Module } from '@nestjs/common';
 import { Employee2Module } from '../employee2/employee2.module';
+import { NotificationModule } from '../notification/notification.module';
 import { OrganizationModule } from '../organization/organization.module';
+import { CustomerShipmentModule } from '../customer-shipment/customer-shipment.module';
+import { CustomerShipmentFacade } from '../customer-shipment/facades/customer-shipment.facade';
+import { PARCEL_LOOKUP } from './contracts/parcel-lookup';
 
 import { FleetFacade } from './facades/fleet.facade';
 
@@ -40,12 +44,19 @@ import { TransportManifestPersistenceMapper } from './transport_manifest/infrast
  * manifest items).
  *
  * Only FleetFacade is exported: nothing inside is reachable from other modules.
- * Conversely, Fleet reaches employees and organization units solely through
- * their own facades, and never touches the parcel table — the manifest_item
- * foreign key is what validates a parcel id.
+ * Conversely, Fleet reaches employees, organization units, parcels and
+ * notifications solely through their own facades, and never queries their
+ * tables — the
+ * manifest_item foreign key is what validates a parcel id, and parcel labels
+ * for a manifest come from CustomerShipmentFacade.
  */
 @Module({
-  imports: [Employee2Module, OrganizationModule],
+  imports: [
+    Employee2Module,
+    OrganizationModule,
+    CustomerShipmentModule,
+    NotificationModule,
+  ],
   controllers: [VehicleController, TripController, TransportManifestController],
   providers: [
     // vehicle
@@ -75,6 +86,10 @@ import { TransportManifestPersistenceMapper } from './transport_manifest/infrast
     ManifestQueryCriteriaBuilder,
     ManifestResponseMapper,
     TransportManifestPersistenceMapper,
+
+    // Customer Shipment implements the parcel contract Fleet declares. Binding
+    // it here keeps the concrete facade out of the services themselves.
+    { provide: PARCEL_LOOKUP, useExisting: CustomerShipmentFacade },
 
     FleetFacade,
   ],

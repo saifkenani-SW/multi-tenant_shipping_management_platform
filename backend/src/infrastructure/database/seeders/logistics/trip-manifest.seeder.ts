@@ -89,7 +89,6 @@ export class TripManifestSeeder implements Seeder {
         status: ManifestItemStatus.LOADED,
       },
       create: {
-        id: itemId,
         manifest_id: manifest.id,
         parcel_id: parcel1.id,
         status: ManifestItemStatus.LOADED,
@@ -104,7 +103,6 @@ export class TripManifestSeeder implements Seeder {
         action_type: ActionType.LOADED_ON_TRIP,
       },
       create: {
-        id: movementId,
         tenant_id: tenant1.id,
         parcel_id: parcel1.id,
         organization_unit_id: orgUnit.id,
@@ -126,7 +124,6 @@ export class TripManifestSeeder implements Seeder {
         otp_verified: true,
       },
       create: {
-        id: podId,
         tenant_id: tenant1.id,
         parcel_id: parcel1.id,
         delivered_by_employee_id: driver.id,

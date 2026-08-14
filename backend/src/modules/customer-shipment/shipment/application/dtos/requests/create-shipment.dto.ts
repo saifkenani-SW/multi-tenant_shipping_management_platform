@@ -77,13 +77,6 @@ export class CreateShipmentParcelDto {
   @IsOptional()
   temperatureSensitive?: boolean;
 
-  @ApiPropertyOptional({
-    description:
-      'Organization unit this parcel is finally bound for. Defaults to the shipment destination.',
-  })
-  @IsUUID()
-  @IsOptional()
-  destinationOrgUnitId?: string;
 }
 
 /**
@@ -127,18 +120,6 @@ export class ShipmentBillingDto {
 }
 
 export class CreateShipmentDto {
-  @ApiProperty({ description: 'Sending customer profile' })
-  @IsUUID()
-  @IsNotEmpty()
-  senderCustomerProfileId: string;
-
-  @ApiPropertyOptional({
-    description: 'Receiving customer profile, when known',
-  })
-  @IsUUID()
-  @IsOptional()
-  receiverCustomerProfileId?: string;
-
   @ApiPropertyOptional({
     description:
       "Sender's national id. Required when the tenant enables requireSenderNationalId.",

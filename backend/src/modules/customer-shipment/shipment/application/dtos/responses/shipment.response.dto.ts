@@ -9,7 +9,6 @@ export class ShipmentResponseDto {
   tenantId: string;
 
   @ApiProperty()
-  senderCustomerProfileId: string;
 
   @ApiProperty()
   senderName: string;
@@ -18,7 +17,6 @@ export class ShipmentResponseDto {
   senderPhone: string;
 
   @ApiPropertyOptional({ nullable: true })
-  receiverCustomerProfileId: string | null;
 
   @ApiProperty()
   originOrgUnitId: string;

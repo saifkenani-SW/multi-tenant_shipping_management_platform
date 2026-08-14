@@ -35,6 +35,8 @@ enum ParcelStatus {
 
   IN_TRANSIT
 
+  ARRIVED_AT_UNIT
+
   READY_FOR_COLLECTION
 
   COLLECTED
@@ -299,267 +301,40 @@ model customer_address {
 }
 
 model customer_profile {
-  id                 String              @id @default(uuid(7)) @db.Uuid
-  user_id            String              @unique @db.Uuid
-  full_name          String              @db.VarChar(255)
-  phone              String              @db.VarChar(50)
-  profile_image_key  String?             @db.VarChar(500)
-  created_at         DateTime            @default(now()) @db.Timestamp(6)
-  updated_at         DateTime            @updatedAt
-  customer_address   customer_address[]
-  users              users               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  sender_shipments   customer_shipment[] @relation("SenderShipments")
-  receiver_shipments customer_shipment[] @relation("ReceiverShipments")
-  customer_tenant    customer_tenant[]
-  invoice            invoice[]
-  shipment_request   shipment_request[]
+  id                String             @id @default(uuid(7)) @db.Uuid
+  user_id           String             @unique @db.Uuid
+  full_name         String             @db.VarChar(255)
+  phone             String             @db.VarChar(50)
+  profile_image_key String?            @db.VarChar(500)
+  created_at        DateTime           @default(now()) @db.Timestamp(6)
+  updated_at        DateTime           @updatedAt
+  customer_address  customer_address[]
+  users             users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  customer_tenant   customer_tenant[]
+  shipment_request  shipment_request[]
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 model customer_shipment {
-  id                           String                @id @default(uuid(7)) @db.Uuid
-  version                      Int                   @default(1)
-  tenant_id                    String                @db.Uuid
-  sender_national_id           String?               @db.VarChar(50)
-  sender_name                  String                @db.VarChar(255)
-  sender_phone                 String                @db.VarChar(50)
-  sender_customer_profile_id   String                @db.Uuid
-  receiver_customer_profile_id String?               @db.Uuid
-  shipment_request_id          String?               @db.Uuid
-  origin_org_unit_id           String                @db.Uuid
-  destination_org_unit_id      String                @db.Uuid
-  service_level                ServiceLevel          @default(STANDARD)
-  receiver_name                String                @db.VarChar(255)
-  receiver_phone               String                @db.VarChar(50)
-  payment_responsibility       PaymentResponsibility @default(SENDER)
-  total_chargeable_weight_kg   Decimal?              @default(0) @db.Decimal(10, 2)
-  status                       ShipmentStatus        @default(PROCESSING)
-  created_at                   DateTime              @default(now()) @db.Timestamp(6)
-  updated_at                   DateTime              @updatedAt
-  created_by_employee_id       String?               @db.Uuid
-  created_by_employee_name     String?               @db.VarChar(255)
+  id                         String                @id @default(uuid(7)) @db.Uuid
+  version                    Int                   @default(1)
+  tenant_id                  String                @db.Uuid
+  sender_national_id         String?               @db.VarChar(50)
+  sender_name                String                @db.VarChar(255)
+  sender_phone               String                @db.VarChar(50)
+  shipment_request_id        String?               @db.Uuid
+  origin_org_unit_id         String                @db.Uuid
+  destination_org_unit_id    String                @db.Uuid
+  service_level              ServiceLevel          @default(STANDARD)
+  receiver_name              String                @db.VarChar(255)
+  receiver_phone             String                @db.VarChar(50)
+  payment_responsibility     PaymentResponsibility @default(SENDER)
+  total_chargeable_weight_kg Decimal?              @default(0) @db.Decimal(10, 2)
+  status                     ShipmentStatus        @default(PROCESSING)
+  created_at                 DateTime              @default(now()) @db.Timestamp(6)
+  updated_at                 DateTime              @updatedAt
+  created_by_employee_id     String?               @db.Uuid
+  created_by_employee_name   String?               @db.VarChar(255)
 
-  sender_profile       customer_profile  @relation("SenderShipments", fields: [sender_customer_profile_id], references: [id], onUpdate: NoAction)
-  receiver_profile     customer_profile? @relation("ReceiverShipments", fields: [receiver_customer_profile_id], references: [id], onUpdate: NoAction)
   shipment_request     shipment_request? @relation(fields: [shipment_request_id], references: [id], onUpdate: NoAction)
   tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   created_by_employee  employee?         @relation(fields: [created_by_employee_id], references: [id], onUpdate: NoAction)
@@ -569,10 +344,9 @@ model customer_shipment {
   parcel               parcel[]
   support_ticket       support_ticket[]
 
-  @@index([sender_customer_profile_id], map: "idx_customer_shipment_sender")
-  @@index([receiver_customer_profile_id], map: "idx_customer_shipment_receiver")
   @@index([tenant_id], map: "idx_customer_shipment_tenant")
 }
+
 model customer_tenant {
   id                   String           @id @default(uuid(7)) @db.Uuid
   tenant_id            String           @db.Uuid
@@ -643,35 +417,39 @@ model global_location {
 
   @@index([location], map: "idx_global_location_geom", type: Gist)
 }
+
 model invoice {
   id                      String                @id @default(uuid(7)) @db.Uuid
   version                 Int                   @default(1)
   tenant_id               String                @db.Uuid
-  customer_profile_id     String                @db.Uuid
   customer_shipment_id    String?               @db.Uuid
+  sender_name             String                @db.VarChar(255)
+  sender_phone            String                @db.VarChar(50)
+  receiver_name           String                @db.VarChar(255)
+  receiver_phone          String                @db.VarChar(50)
   origin_org_unit_id      String                @db.Uuid
   destination_org_unit_id String                @db.Uuid
-  invoice_number         String                @db.VarChar(100)
-  subtotal               Decimal               @db.Decimal(10, 2)
-  handling_fees          Decimal               @default(0) @db.Decimal(10, 2)
-  tax_amount             Decimal               @default(0) @db.Decimal(10, 2)
-  discount_amount        Decimal               @default(0) @db.Decimal(10, 2)
-  total_amount           Decimal               @db.Decimal(10, 2)
-  payment_responsibility PaymentResponsibility @default(SENDER)
-  currency               String                @default("USD") @db.Char(3)
-  status                 InvoiceStatus         @default(UNPAID)
-  due_date               DateTime?             @db.Timestamp(6)
-  created_at             DateTime              @default(now()) @db.Timestamp(6)
-  updated_at             DateTime              @updatedAt
-  customer_profile       customer_profile      @relation(fields: [customer_profile_id], references: [id], onUpdate: NoAction)
-  customer_shipment      customer_shipment?    @relation(fields: [customer_shipment_id], references: [id], onUpdate: NoAction)
-  tenant                 tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  origin_org_unit        organization_unit     @relation("invoice_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  destination_org_unit   organization_unit     @relation("invoice_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
-  payment                payment[]
+  invoice_number          String                @db.VarChar(100)
+  subtotal                Decimal               @db.Decimal(10, 2)
+  handling_fees           Decimal               @default(0) @db.Decimal(10, 2)
+  tax_amount              Decimal               @default(0) @db.Decimal(10, 2)
+  discount_amount         Decimal               @default(0) @db.Decimal(10, 2)
+  total_amount            Decimal               @db.Decimal(10, 2)
+  payment_responsibility  PaymentResponsibility @default(SENDER)
+  currency                String                @default("USD") @db.Char(3)
+  status                  InvoiceStatus         @default(UNPAID)
+  due_date                DateTime?             @db.Timestamp(6)
+  created_at              DateTime              @default(now()) @db.Timestamp(6)
+  updated_at              DateTime              @updatedAt
+  customer_shipment       customer_shipment?    @relation(fields: [customer_shipment_id], references: [id], onUpdate: NoAction)
+  tenant                  tenant                @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  origin_org_unit         organization_unit     @relation("invoice_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  destination_org_unit    organization_unit     @relation("invoice_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  payment                 payment[]
 
   @@unique([tenant_id, invoice_number], map: "uq_tenant_invoice")
   @@index([tenant_id, status], map: "idx_invoice_tenant_status")
+  @@index([tenant_id, sender_phone], map: "idx_invoice_sender_phone")
   @@index([origin_org_unit_id], map: "idx_invoice_origin_org_unit")
   @@index([destination_org_unit_id], map: "idx_invoice_destination_org_unit")
 }
@@ -762,6 +540,7 @@ model organization_unit {
 
   @@index([location], map: "idx_org_unit_location", type: Gist)
 }
+
 model parcel {
   id                                                              String             @id @default(uuid(7)) @db.Uuid
   version                                                         Int                @default(1)
@@ -922,16 +701,17 @@ model quotation {
   created_at               DateTime        @default(now()) @db.Timestamp(6)
   updated_at               DateTime        @updatedAt
 
-  shipment_request     shipment_request    @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  approved_for_request shipment_request?   @relation("ApprovedQuotation")
-  employee             employee?           @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
-  tenant               tenant              @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  origin_org_unit      organization_unit   @relation("quotation_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
-  destination_org_unit organization_unit   @relation("quotation_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
+  shipment_request     shipment_request  @relation(fields: [shipment_request_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  approved_for_request shipment_request? @relation("ApprovedQuotation")
+  employee             employee?         @relation(fields: [submitted_by_employee_id], references: [id], onUpdate: NoAction)
+  tenant               tenant            @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  origin_org_unit      organization_unit @relation("quotation_originToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
+  destination_org_unit organization_unit @relation("quotation_destinationToorganization_unit", fields: [destination_org_unit_id], references: [id], onUpdate: NoAction)
 
   @@index([shipment_request_id])
   @@index([tenant_id])
 }
+
 model role {
   id              String            @id @default(uuid(7)) @db.Uuid
   tenant_id       String            @db.Uuid
@@ -1062,6 +842,7 @@ model org_unit_location_mapping {
 
   @@unique([organization_unit_id, global_location_id], map: "uq_org_location")
 }
+
 model tenant {
   id                          String                        @id @default(uuid(7)) @db.Uuid
   name                        String                        @db.VarChar(255)
@@ -1191,6 +972,7 @@ model tenant_zone {
   zone_pricing_matrix_zone_pricing_matrix_destination_zone_idTotenant_zone zone_pricing_matrix[] @relation("zone_pricing_matrix_destination_zone_idTotenant_zone")
   zone_pricing_matrix_zone_pricing_matrix_origin_zone_idTotenant_zone      zone_pricing_matrix[] @relation("zone_pricing_matrix_origin_zone_idTotenant_zone")
 }
+
 model transport_manifest {
   id                                                                              String            @id @default(uuid(7)) @db.Uuid
   tenant_id                                                                       String            @db.Uuid
@@ -1340,6 +1122,7 @@ model zone_pricing_matrix {
 
   @@unique([tenant_id, origin_zone_id, destination_zone_id, service_level], map: "uq_pricing_route_service")
 }
+
 model vehicle_assignment {
   id          String    @id @default(uuid(7)) @db.Uuid
   tenant_id   String    @db.Uuid
@@ -1374,11 +1157,13 @@ model handling_fee_rule {
 
   @@unique([tenant_id, fee_type], map: "uq_tenant_handling_fee")
 }
+
 enum CoverageType {
   DELIVERY_AREA
   PICKUP_AREA
   BOTH
 }
+
 enum ServiceLevel {
   STANDARD // شحن عادي
   EXPRESS // شحن سريع

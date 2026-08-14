@@ -54,25 +54,11 @@ export class ShipmentQueryService {
       throw new ForbiddenException('You can only filter by your own tenant.');
     }
 
-
-    if (
-      scope.shipment?.origin_org_unit_ids &&
-      filter.originOrgUnitId &&
-      !scope.shipment.origin_org_unit_ids.includes(filter.originOrgUnitId)
-    ) {
-      throw new ForbiddenException(
-        'You can only filter by an organization unit you are assigned to.',
-      );
-    }
-
-    // Scope wins wherever both sides set the same field.
     const merged: ShipmentMergedCriteria = {
       tenantId: scope.shipment?.tenant_id ?? filter.tenantId,
-      senderCustomerProfileId: scope.shipment?.sender_customer_profile_id,
+      orgUnitIds: scope.shipment?.org_unit_ids,
+      customerPhone: scope.shipment?.customer_phone,
       originOrgUnitId: filter.originOrgUnitId,
-      originOrgUnitIds: filter.originOrgUnitId
-        ? undefined
-        : scope.shipment?.origin_org_unit_ids,
       destinationOrgUnitId: filter.destinationOrgUnitId,
       status: filter.status,
       senderPhone: filter.senderPhone,
@@ -128,32 +114,6 @@ export class ShipmentQueryService {
     const record = await this.queryRepository.findRawById(id);
 
     if (!record) {
-      throw new NotFoundException('Shipment not found');
-    }
-
-    const scope = this.authorizationFacade.buildScope({
-      builder: ShipmentVisibilityScope,
-    });
-
-    if (
-      scope.shipment?.tenant_id &&
-      record.tenant_id !== scope.shipment.tenant_id
-    ) {
-      throw new NotFoundException('Shipment not found');
-    }
-
-    if (
-      scope.shipment?.sender_customer_profile_id &&
-      record.sender_customer_profile_id !==
-        scope.shipment.sender_customer_profile_id
-    ) {
-      throw new NotFoundException('Shipment not found');
-    }
-
-    if (
-      scope.shipment?.origin_org_unit_ids &&
-      !scope.shipment.origin_org_unit_ids.includes(record.origin_org_unit_id)
-    ) {
       throw new NotFoundException('Shipment not found');
     }
 

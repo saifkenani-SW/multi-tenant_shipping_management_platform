@@ -24,7 +24,7 @@ export class InvoiceQueryDto extends CursorPaginationQueryDto {
   @ApiPropertyOptional({ description: 'Filter by the customer who owes it' })
   @IsUUID()
   @IsOptional()
-  customerProfileId?: string;
+  senderPhone?: string;
 
   @ApiPropertyOptional({ description: 'Filter by the shipment it belongs to' })
   @IsUUID()

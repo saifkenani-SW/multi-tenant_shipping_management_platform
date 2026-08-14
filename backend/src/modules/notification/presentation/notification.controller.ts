@@ -19,6 +19,7 @@ export class NotificationController {
   @Roles(
     RoleType.CUSTOMER,
     RoleType.EMPLOYEE,
+    RoleType.DRIVER,
     RoleType.TENANT_ADMIN,
     RoleType.PLATFORM_OWNER,
   )
@@ -33,6 +34,7 @@ export class NotificationController {
   @Roles(
     RoleType.CUSTOMER,
     RoleType.EMPLOYEE,
+    RoleType.DRIVER,
     RoleType.TENANT_ADMIN,
     RoleType.PLATFORM_OWNER,
   )

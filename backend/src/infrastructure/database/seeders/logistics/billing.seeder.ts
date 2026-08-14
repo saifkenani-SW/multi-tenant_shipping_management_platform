@@ -48,8 +48,11 @@ export class BillingSeeder implements Seeder {
       create: {
         id: invoiceId,
         tenant_id: tenant1.id,
-        customer_profile_id: customer.id,
         customer_shipment_id: shipment.id,
+        sender_name: shipment.sender_name,
+        sender_phone: shipment.sender_phone,
+        receiver_name: shipment.receiver_name,
+        receiver_phone: shipment.receiver_phone,
         origin_org_unit_id: shipment.origin_org_unit_id,
         destination_org_unit_id: shipment.destination_org_unit_id,
         invoice_number: invoiceNumber,

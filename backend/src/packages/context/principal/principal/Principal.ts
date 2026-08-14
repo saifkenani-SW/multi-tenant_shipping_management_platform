@@ -8,6 +8,8 @@ export interface Principal {
 
   profileId?: string;
 
+  phone?: string;
+
   vehicleId?: string;
 
   branches: ScopeAccess[];

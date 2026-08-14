@@ -26,17 +26,41 @@ export class ParcelVisibilityScope implements VisibilityScopeBuilder<ParcelScope
     if (type === SubjectType.CUSTOMER) {
       return {
         parcel: {},
-        shipment: { sender_customer_profile_id: principal.profileId },
+        shipment: {
+          sender_phone: principal.phone,
+          receiver_phone: principal.phone,
+        },
       };
     }
 
-    if (
-      type === SubjectType.TENANT_ADMIN ||
-      type === SubjectType.EMPLOYEE ||
-      type === SubjectType.DRIVER
-    ) {
+    if (type === SubjectType.TENANT_ADMIN) {
       return {
         parcel: { tenant_id: principal.tenantId },
+        shipment: {},
+      };
+    }
+
+    // Tenant-wide, unlike an employee: a driver carries parcels between org
+    // units, so narrowing them to one unit would hide the very parcels they
+    // are transporting. Reading is all they may do — see ParcelAbility.
+    if (type === SubjectType.DRIVER) {
+      return {
+        parcel: { tenant_id: principal.tenantId },
+        shipment: {},
+      };
+    }
+
+    if (type === SubjectType.EMPLOYEE) {
+      const orgUnitIds = [
+        ...(principal.branches || []).map((b) => b.id),
+        ...(principal.warehouses || []).map((w) => w.id),
+      ];
+
+      return {
+        parcel: {
+          tenant_id: principal.tenantId,
+          org_unit_ids: orgUnitIds,
+        },
         shipment: {},
       };
     }

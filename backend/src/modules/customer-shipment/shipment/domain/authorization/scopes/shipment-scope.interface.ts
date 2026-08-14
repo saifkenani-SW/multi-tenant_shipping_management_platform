@@ -1,8 +1,8 @@
 export interface ShipmentScopeInterface {
   shipment?: {
     tenant_id?: string;
-    sender_customer_profile_id?: string;
-    origin_org_unit_ids?: string[];
+    customer_phone?: string;
+    org_unit_ids?: string[];
   };
 
   parcel?: {

@@ -8,10 +8,8 @@ import { TransactionalPrismaService } from '../../../../../packages/transaction'
 
 export interface CreateShipmentData {
   tenantId: string;
-  senderCustomerProfileId: string;
   senderName: string;
   senderPhone: string;
-  receiverCustomerProfileId: string | null;
   senderNationalId: string | null;
   shipmentRequestId: string | null;
   originOrgUnitId: string;
@@ -34,10 +32,8 @@ export class ShipmentCommandRepository {
     const created = await this.prisma.client.customer_shipment.create({
       data: {
         tenant_id: data.tenantId,
-        sender_customer_profile_id: data.senderCustomerProfileId,
         sender_name: data.senderName,
         sender_phone: data.senderPhone,
-        receiver_customer_profile_id: data.receiverCustomerProfileId,
         sender_national_id: data.senderNationalId,
         shipment_request_id: data.shipmentRequestId,
         origin_org_unit_id: data.originOrgUnitId,

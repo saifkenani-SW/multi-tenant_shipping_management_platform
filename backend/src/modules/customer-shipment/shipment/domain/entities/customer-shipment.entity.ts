@@ -5,10 +5,8 @@ export interface CustomerShipmentSnapshot {
   id: string;
   version: number;
   tenantId: string;
-  senderCustomerProfileId: string;
   senderName: string;
   senderPhone: string;
-  receiverCustomerProfileId: string | null;
   senderNationalId: string | null;
   shipmentRequestId: string | null;
   originOrgUnitId: string;
@@ -44,6 +42,7 @@ const ALLOWED_TRANSITIONS: Record<ShipmentStatus, ShipmentStatus[]> = {
   ],
   [ShipmentStatus.READY_FOR_DISPATCH]: [ShipmentStatus.IN_TRANSIT],
   [ShipmentStatus.IN_TRANSIT]: [
+    ShipmentStatus.PROCESSING,
     ShipmentStatus.READY_FOR_COLLECTION,
     ShipmentStatus.RETURNED,
   ],
@@ -66,10 +65,8 @@ export class CustomerShipment {
     public readonly id: string,
     public readonly version: number,
     public readonly tenantId: string,
-    public readonly senderCustomerProfileId: string,
     public readonly senderName: string,
     public readonly senderPhone: string,
-    public readonly receiverCustomerProfileId: string | null,
     public readonly senderNationalId: string | null,
     public readonly shipmentRequestId: string | null,
     public readonly originOrgUnitId: string,
@@ -95,10 +92,8 @@ export class CustomerShipment {
       snapshot.id,
       snapshot.version,
       snapshot.tenantId,
-      snapshot.senderCustomerProfileId,
       snapshot.senderName,
       snapshot.senderPhone,
-      snapshot.receiverCustomerProfileId,
       snapshot.senderNationalId,
       snapshot.shipmentRequestId,
       snapshot.originOrgUnitId,

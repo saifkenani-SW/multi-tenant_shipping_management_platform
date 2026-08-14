@@ -53,25 +53,35 @@ export class TripController {
   }
 
   @Get()
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.DRIVER,
+  )
   @ApiOperation({ summary: 'List trips in the current tenant' })
   @ApiResponse({ status: HttpStatus.OK, type: PaginatedTripListDto })
   async findTrips(@Query() query: TripQueryDto): Promise<PaginatedTripListDto> {
     return this.tripQueryService.findTrips(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       query,
     );
   }
 
   @Get(':id')
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.DRIVER,
+  )
   @ApiOperation({ summary: 'Get trip details' })
   @ApiResponse({ status: HttpStatus.OK, type: TripDetailsDto })
   async getTripDetails(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<TripDetailsDto> {
     return this.tripQueryService.getTripDetails(
-      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getTenantId(),
       id,
     );
   }

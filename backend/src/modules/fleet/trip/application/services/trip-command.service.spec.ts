@@ -13,7 +13,9 @@ import { TripQueryService } from './trip-query.service';
 import { ManifestCommandService } from '../../../transport_manifest/application/services/manifest-command.service';
 import { VehicleQueryService } from '../../../vehicle/application/services/vehicle-query.service';
 import { EmployeeFacade } from '../../../../employee2/facades/employee.facade';
+import { NotificationFacade } from '../../../../notification/facades/notification.facade';
 import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
+import { NotificationType } from '../../../../../packages/firebase-notifications';
 import { TripCommandService } from './trip-command.service';
 import { installTransactionTestContainer } from '../../../../../packages/transaction/testing/transaction-test-container';
 
@@ -88,9 +90,13 @@ describe('TripCommandService', () => {
   };
   const employeeFacade = {
     validateEmployeeExists: jest.fn(),
+    getUserId: jest.fn(),
   };
   const organizationFacade = {
     validateOrganizationUnitsExist: jest.fn(),
+  };
+  const notificationFacade = {
+    notifyUser: jest.fn(),
   };
 
   let service: TripCommandService;
@@ -108,6 +114,7 @@ describe('TripCommandService', () => {
       vehicleQueryService as unknown as VehicleQueryService,
       employeeFacade as unknown as EmployeeFacade,
       organizationFacade as unknown as OrganizationFacade,
+      notificationFacade as unknown as NotificationFacade,
     );
   });
 
@@ -193,6 +200,81 @@ describe('TripCommandService', () => {
       });
 
       expect(vehicleQueryService.findVehicleOrThrow).not.toHaveBeenCalled();
+    });
+
+    it('notifies the assigned driver once the trip exists', async () => {
+      const userId = '01910b80-6e42-7000-8000-0000000000e1';
+      employeeFacade.validateEmployeeExists.mockResolvedValue(true);
+      organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
+      vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
+      commandRepository.create.mockResolvedValue(scheduledTrip());
+      employeeFacade.getUserId.mockResolvedValue(userId);
+
+      await service.createTrip(tenantId, validDto);
+
+      expect(employeeFacade.getUserId).toHaveBeenCalledWith(driverId, tenantId);
+      expect(notificationFacade.notifyUser).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          data: { type: NotificationType.TRIP_ASSIGNED, tripId },
+        }),
+      );
+    });
+
+    it('does not notify when the trip was never created', async () => {
+      employeeFacade.validateEmployeeExists.mockResolvedValue(false);
+
+      await expect(
+        service.createTrip(tenantId, validDto),
+      ).rejects.toBeInstanceOf(DriverNotFoundException);
+
+      expect(notificationFacade.notifyUser).not.toHaveBeenCalled();
+    });
+
+    it('still creates the trip when the driver has no user account', async () => {
+      employeeFacade.validateEmployeeExists.mockResolvedValue(true);
+      organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
+      vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
+      commandRepository.create.mockResolvedValue(scheduledTrip());
+      employeeFacade.getUserId.mockResolvedValue(null);
+
+      await expect(service.createTrip(tenantId, validDto)).resolves.toBe(
+        tripId,
+      );
+
+      expect(notificationFacade.notifyUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateTrip', () => {
+    const newDriverId = '01910b80-6e42-7000-8000-00000000000b';
+
+    it('notifies the new driver when the trip changes hands', async () => {
+      const userId = '01910b80-6e42-7000-8000-0000000000e2';
+      tripQueryService.findTripOrThrow.mockResolvedValue(scheduledTrip());
+      employeeFacade.validateEmployeeExists.mockResolvedValue(true);
+      employeeFacade.getUserId.mockResolvedValue(userId);
+
+      await service.updateTrip(tenantId, tripId, { driverId: newDriverId });
+
+      expect(employeeFacade.getUserId).toHaveBeenCalledWith(
+        newDriverId,
+        tenantId,
+      );
+      expect(notificationFacade.notifyUser).toHaveBeenCalledWith(
+        userId,
+        expect.objectContaining({
+          data: { type: NotificationType.TRIP_ASSIGNED, tripId },
+        }),
+      );
+    });
+
+    it('stays silent when the driver is unchanged', async () => {
+      tripQueryService.findTripOrThrow.mockResolvedValue(scheduledTrip());
+
+      await service.updateTrip(tenantId, tripId, { notes: 'حمولة مبرّدة' });
+
+      expect(notificationFacade.notifyUser).not.toHaveBeenCalled();
     });
   });
 

@@ -1,27 +1,24 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import {
-  AuthorizationFacade,
-  Authorize,
-} from '../../../../../packages/authorization';
-import { Policy } from '../../../../../packages/authorization/policy';
-import { ParcelPolicy } from '../../domain/authorization/policies/parcel.policy';
-import { ParcelAction } from '../../domain/authorization/actions/parcel.action';
-import { CursorPaginatedResponse } from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
-import { ParcelQueryRepository } from '../../infrastructure/repositories/parcel.query.repository';
-import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-visibility.scope';
-import { ParcelQueryDto } from '../dtos/requests/parcel-query.dto';
-import type { ParcelMergedCriteria } from '../dtos/requests/parcel-merged-criteria.interface';
-import { ParcelResponseDto } from '../dtos/responses/parcel.response.dto';
+import {ForbiddenException, forwardRef, Inject, Injectable, NotFoundException,} from '@nestjs/common';
+import {AuthorizationFacade, Authorize,} from '../../../../../packages/authorization';
+import {Policy} from '../../../../../packages/authorization/policy';
+import {ParcelPolicy} from '../../domain/authorization/policies/parcel.policy';
+import {ParcelAction} from '../../domain/authorization/actions/parcel.action';
+import {CursorPaginatedResponse} from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
+import {ParcelQueryRepository} from '../../infrastructure/repositories/parcel.query.repository';
+import {ParcelQueryDto} from '../dtos/requests/parcel-query.dto';
+import type {ParcelMergedCriteria} from '../dtos/requests/parcel-merged-criteria.interface';
+import {ParcelResponseDto} from '../dtos/responses/parcel.response.dto';
 import { ParcelMapper } from '../mappers/parcel.mapper';
 import { Parcel } from '../../domain/entities/parcel.entity';
+import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-visibility.scope';
+import type { ParcelScopeInterface } from '../../domain/authorization/scopes/parcel-scope.interface';
+import {ShipmentQueryService} from '../../../shipment/application/services/shipment.query.service';
 
 @Injectable()
 export class ParcelQueryService {
   constructor(
+    @Inject(forwardRef(() => ShipmentQueryService))
+    private readonly shipmentQueryService: ShipmentQueryService,
     private readonly queryRepository: ParcelQueryRepository,
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly mapper: ParcelMapper,
@@ -37,15 +34,14 @@ export class ParcelQueryService {
     customerShipmentId: string,
     filter: ParcelQueryDto,
   ): Promise<CursorPaginatedResponse<ParcelResponseDto>> {
-    const scope = this.authorizationFacade.buildScope({
-      builder: ParcelVisibilityScope,
-    });
+    // Authorize by fetching the shipment.
+    // ShipmentQueryService.findById evaluates visibility scopes implicitly.
+    await this.shipmentQueryService.findById(customerShipmentId);
 
+    // We no longer evaluate ParcelVisibilityScope because the shipment auth suffices.
     const merged: ParcelMergedCriteria = {
-      tenantId: scope.parcel?.tenant_id,
-      destinationOrgUnitIds: scope.parcel?.destination_org_unit_ids,
       customerShipmentId,
-      status: filter.status,
+      statuses: filter.statuses,
       condition: filter.condition,
       currentOrgUnitId: filter.currentOrgUnitId,
       cursor: filter.cursor,
@@ -62,7 +58,7 @@ export class ParcelQueryService {
 
   @Authorize({
     policy: Policy(ParcelPolicy, ParcelAction.View),
-    payloadResolver: (id: string) => ({ parcelId: id }),
+    payloadResolver: (id: string) => ({ id }),
   })
   async findById(id: string): Promise<ParcelResponseDto> {
     const record = await this.findRawOrThrow(id);
@@ -70,9 +66,53 @@ export class ParcelQueryService {
   }
 
   /**
+   * Lists all parcels subject to the caller's visibility scope.
+   * Useful for branch employees viewing parcels currently at their unit,
+   * or tenant admins viewing all parcels.
+   */
+  async findAll(
+    filter: ParcelQueryDto,
+  ): Promise<CursorPaginatedResponse<ParcelResponseDto>> {
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+
+    this.assertFilterAllowed(filter.tenantId, scope.parcel?.tenant_id, 'tenant');
+
+    const merged: ParcelMergedCriteria = {
+      tenantId: scope.parcel?.tenant_id || filter.tenantId,
+      scopeOrgUnitIds: scope.parcel?.org_unit_ids,
+      statuses: filter.statuses,
+      condition: filter.condition,
+      currentOrgUnitId: filter.currentOrgUnitId,
+      cursor: filter.cursor,
+      limit: filter.limit,
+    };
+
+    if (scope.parcel?.org_unit_ids && filter.currentOrgUnitId) {
+      if (!scope.parcel.org_unit_ids.includes(filter.currentOrgUnitId)) {
+        throw new ForbiddenException(
+          'You can only filter by an organization unit within your scope',
+        );
+      }
+    }
+
+    const result = await this.queryRepository.findMany(merged);
+
+    return new CursorPaginatedResponse(
+      (result.data as any[]).map((row) => this.mapper.toResponse(row)),
+      result.meta,
+    );
+  }
+
+  /**
    * Tracking lookup. Authentication is required by the controller: shipment
    * data belongs to the company and is not public.
    */
+  @Authorize({
+    policy: Policy(ParcelPolicy, ParcelAction.View),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
   async findByTrackingNumber(
     trackingNumber: string,
   ): Promise<ParcelResponseDto> {
@@ -83,9 +123,58 @@ export class ParcelQueryService {
       throw new NotFoundException('Parcel not found');
     }
 
-    this.assertWithinScope(record);
-
     return this.mapper.toResponse(record);
+  }
+
+  /**
+   * Parcels for a set of ids, narrowed to what the caller may see.
+   *
+   * Batched on purpose: reading them one id at a time authorizes each row
+   * with its own extra query, so a forty-parcel manifest would cost eighty
+   * round trips. Rows outside the scope are dropped rather than throwing —
+   * one unreadable parcel should not blank out a whole manifest.
+   */
+  async getParcelsByIds(ids: string[]): Promise<ParcelResponseDto[]> {
+    if (ids.length === 0) return [];
+
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+    const records = await this.queryRepository.findRawByIds(ids);
+
+    return records
+      .filter((record) => this.isWithinScope(record, scope))
+      .map((record) => this.mapper.toResponse(record));
+  }
+
+  /** The same visibility rule the filtered queries apply, checked in memory. */
+  private isWithinScope(record: any, scope: ParcelScopeInterface): boolean {
+    const parcel = scope.parcel;
+
+    if (parcel?.tenant_id && record.tenant_id !== parcel.tenant_id) {
+      return false;
+    }
+
+    // An employee sees a parcel sitting at one of their units or heading to it.
+    if (parcel?.org_unit_ids?.length) {
+      const units = parcel.org_unit_ids;
+      const reachable =
+        units.includes(record.current_org_unit_id) ||
+        units.includes(record.destination_org_unit_id);
+
+      if (!reachable) return false;
+    }
+
+    const shipment = scope.shipment;
+    if (shipment?.sender_phone || shipment?.receiver_phone) {
+      const isParty =
+        record.sender_phone === shipment.sender_phone ||
+        record.receiver_phone === shipment.receiver_phone;
+
+      if (!isParty) return false;
+    }
+
+    return true;
   }
 
   async findAggregateOrThrow(id: string): Promise<Parcel> {
@@ -116,7 +205,6 @@ export class ParcelQueryService {
     return parcel;
   }
 
-
   async findRawOrThrow(id: string): Promise<any> {
     const record = await this.queryRepository.findRawById(id);
 
@@ -124,36 +212,9 @@ export class ParcelQueryService {
       throw new NotFoundException('Parcel not found');
     }
 
-    this.assertWithinScope(record);
-
     return record;
   }
 
-  /**
-   * A row fetched by id bypasses the list filters, so the scope is re-checked
-   * here. Not-found is returned rather than forbidden so the endpoint does not
-   * confirm that a parcel of another tenant exists.
-   */
-  private assertWithinScope(record: any): void {
-    const scope = this.authorizationFacade.buildScope({
-      builder: ParcelVisibilityScope,
-    });
-
-    if (
-      scope.parcel?.tenant_id &&
-      record.tenant_id !== scope.parcel.tenant_id
-    ) {
-      throw new NotFoundException('Parcel not found');
-    }
-
-    if (
-      scope.shipment?.sender_customer_profile_id &&
-      record.sender_customer_profile_id !==
-        scope.shipment.sender_customer_profile_id
-    ) {
-      throw new NotFoundException('Parcel not found');
-    }
-  }
 
   /** Used by the shipment side to derive a shipment status from its parcels. */
   async getStatusesForShipment(customerShipmentId: string) {

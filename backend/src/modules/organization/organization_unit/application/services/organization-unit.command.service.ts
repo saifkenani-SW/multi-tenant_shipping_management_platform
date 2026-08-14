@@ -24,13 +24,12 @@ export class OrganizationUnitCommandService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @CacheEvict({
-    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
-    keyBuilder: (tenantId: string, dto: CreateOrganizationUnitDto) => [
-      ORG_UNIT_CACHE_KEYS.LIST,
-      tenantId,
-    ],
-  })
+  @CacheEvict([
+    {
+      keyPrefix: ORG_UNIT_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+  ])
   @Transactional()
   async create(tenantId: string, dto: CreateOrganizationUnitDto) {
     if (dto.orgType === 'BRANCH') {
@@ -87,22 +86,20 @@ export class OrganizationUnitCommandService {
     return { id };
   }
 
-  @CacheEvict({
-    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
-    keyBuilder: (
-      tenantId: string,
-      id: string,
-      dto: UpdateOrganizationUnitDto,
-    ) => [ORG_UNIT_CACHE_KEYS.DETAILS, id],
-  })
-  @CacheEvict({
-    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
-    keyBuilder: (
-      tenantId: string,
-      id: string,
-      dto: UpdateOrganizationUnitDto,
-    ) => [ORG_UNIT_CACHE_KEYS.LIST, tenantId],
-  })
+  @CacheEvict([
+    {
+      keyPrefix: ORG_UNIT_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: ORG_UNIT_CACHE_KEYS.DETAILS,
+      keyBuilder: (
+        tenantId: string,
+        id: string,
+        dto: UpdateOrganizationUnitDto,
+      ) => [ORG_UNIT_CACHE_KEYS.DETAILS, id],
+    },
+  ])
   @Transactional()
   async update(tenantId: string, id: string, dto: UpdateOrganizationUnitDto) {
     const existing = await this.queryService.findById(id, tenantId);
@@ -141,20 +138,19 @@ export class OrganizationUnitCommandService {
     return { id };
   }
 
-  @CacheEvict({
-    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
-    keyBuilder: (tenantId: string, id: string, dto: AddLocationsDto) => [
-      ORG_UNIT_CACHE_KEYS.DETAILS,
-      id,
-    ],
-  })
-  @CacheEvict({
-    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
-    keyBuilder: (tenantId: string, id: string, dto: AddLocationsDto) => [
-      ORG_UNIT_CACHE_KEYS.LIST,
-      tenantId,
-    ],
-  })
+  @CacheEvict([
+    {
+      keyPrefix: ORG_UNIT_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: ORG_UNIT_CACHE_KEYS.DETAILS,
+      keyBuilder: (tenantId: string, id: string, dto: AddLocationsDto) => [
+        ORG_UNIT_CACHE_KEYS.DETAILS,
+        id,
+      ],
+    },
+  ])
   async addLocations(tenantId: string, id: string, dto: AddLocationsDto) {
     const existing = await this.queryService.findById(id, tenantId);
 

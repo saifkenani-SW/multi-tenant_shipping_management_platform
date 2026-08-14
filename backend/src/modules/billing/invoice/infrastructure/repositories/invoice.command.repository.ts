@@ -4,8 +4,11 @@ import { TransactionalPrismaService } from '../../../../../packages/transaction'
 
 export interface CreateInvoiceData {
   tenantId: string;
-  customerProfileId: string;
   customerShipmentId: string | null;
+  senderName: string;
+  senderPhone: string;
+  receiverName: string;
+  receiverPhone: string;
   originOrgUnitId: string;
   destinationOrgUnitId: string;
   invoiceNumber: string;
@@ -28,8 +31,11 @@ export class InvoiceCommandRepository {
     return this.prisma.client.invoice.create({
       data: {
         tenant_id: data.tenantId,
-        customer_profile_id: data.customerProfileId,
         customer_shipment_id: data.customerShipmentId,
+        sender_name: data.senderName,
+        sender_phone: data.senderPhone,
+        receiver_name: data.receiverName,
+        receiver_phone: data.receiverPhone,
         origin_org_unit_id: data.originOrgUnitId,
         destination_org_unit_id: data.destinationOrgUnitId,
         invoice_number: data.invoiceNumber,

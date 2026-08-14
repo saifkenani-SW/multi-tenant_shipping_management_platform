@@ -23,24 +23,6 @@ export class UpdateParcelStatusDto {
   @IsOptional()
   condition?: ParcelCondition;
 
-  @ApiProperty({
-    enum: ActionType,
-    description: 'Movement type recorded in the tracking history',
-  })
-  @IsEnum(ActionType)
-  @IsNotEmpty()
-  actionType: ActionType;
-
-  @ApiPropertyOptional({ description: 'Organization unit where this happened' })
-  @IsUUID()
-  @IsOptional()
-  organizationUnitId?: string;
-
-  @ApiPropertyOptional({ description: 'Trip this movement belongs to' })
-  @IsUUID()
-  @IsOptional()
-  tripId?: string;
-
   @ApiPropertyOptional({ maxLength: 1000 })
   @IsString()
   @MaxLength(1000)

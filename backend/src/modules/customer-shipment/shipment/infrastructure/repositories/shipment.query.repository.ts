@@ -15,10 +15,8 @@ const SHIPMENT_COLUMNS = [
   'cs.version',
   'cs.tenant_id',
   'cs.sender_national_id',
-  'cs.sender_customer_profile_id',
   'cs.sender_name',
   'cs.sender_phone',
-  'cs.receiver_customer_profile_id',
   'cs.shipment_request_id',
   'cs.origin_org_unit_id',
   'cs.destination_org_unit_id',
@@ -47,13 +45,13 @@ export class ShipmentQueryRepository {
     keyBuilder: (criteria: ShipmentMergedCriteria) => [
       CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
       criteria.tenantId || 'none',
-      criteria.senderCustomerProfileId || 'none',
       criteria.originOrgUnitId || 'none',
-      (criteria.originOrgUnitIds || []).join(',') || 'none',
+      (criteria.orgUnitIds || []).join(',') || 'none',
       criteria.destinationOrgUnitId || 'none',
       criteria.status || 'none',
       criteria.senderPhone || 'none',
       criteria.receiverPhone || 'none',
+      criteria.customerPhone || 'none',
       criteria.limit || 20,
       criteria.cursor || 'none',
     ],
@@ -76,13 +74,7 @@ export class ShipmentQueryRepository {
       query = query.where('cs.tenant_id', '=', criteria.tenantId);
     }
 
-    if (criteria.senderCustomerProfileId) {
-      query = query.where(
-        'cs.sender_customer_profile_id',
-        '=',
-        criteria.senderCustomerProfileId,
-      );
-    }
+
 
     if (criteria.originOrgUnitId) {
       query = query.where(
@@ -92,12 +84,15 @@ export class ShipmentQueryRepository {
       );
     }
 
-    // An employee is limited to the org units they are assigned to. An empty
-    // list means no assignment at all, which must match nothing rather than
-    // silently matching everything.
-    if (criteria.originOrgUnitIds) {
-      query = criteria.originOrgUnitIds.length
-        ? query.where('cs.origin_org_unit_id', 'in', criteria.originOrgUnitIds)
+    // An employee is limited to the org units they are assigned to.
+    if (criteria.orgUnitIds) {
+      query = criteria.orgUnitIds.length
+        ? query.where((eb: any) =>
+            eb.or([
+              eb('cs.origin_org_unit_id', 'in', criteria.orgUnitIds!),
+              eb('cs.destination_org_unit_id', 'in', criteria.orgUnitIds!),
+            ]),
+          )
         : query.where((eb: any) => eb.val(false));
     }
 
@@ -119,6 +114,15 @@ export class ShipmentQueryRepository {
 
     if (criteria.senderPhone) {
       query = query.where('cs.sender_phone', '=', criteria.senderPhone);
+    }
+
+    if (criteria.customerPhone) {
+      query = query.where((eb: any) =>
+        eb.or([
+          eb('cs.sender_phone', '=', criteria.customerPhone!),
+          eb('cs.receiver_phone', '=', criteria.customerPhone!),
+        ]),
+      );
     }
 
     if (criteria.cursor) {
@@ -174,10 +178,8 @@ export class ShipmentQueryRepository {
       id: record.id,
       version: record.version,
       tenantId: record.tenant_id,
-      senderCustomerProfileId: record.sender_customer_profile_id,
       senderName: record.sender_name,
       senderPhone: record.sender_phone,
-      receiverCustomerProfileId: record.receiver_customer_profile_id,
       senderNationalId: record.sender_national_id,
       shipmentRequestId: record.shipment_request_id,
       originOrgUnitId: record.origin_org_unit_id,

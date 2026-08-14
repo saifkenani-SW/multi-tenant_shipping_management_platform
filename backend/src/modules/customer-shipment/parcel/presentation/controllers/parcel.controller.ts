@@ -17,7 +17,6 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from '../../../../../common/authorization/decorators/roles.decorator';
 import { RoleType } from '../../../../authorization/domain/enums/role.enum';
-import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { ParcelCommandService } from '../../application/services/parcel.command.service';
 import { ParcelQueryService } from '../../application/services/parcel.query.service';
 import { ParcelQueryDto } from '../../application/dtos/requests/parcel-query.dto';
@@ -31,7 +30,6 @@ export class ParcelController {
   constructor(
     private readonly commandService: ParcelCommandService,
     private readonly queryService: ParcelQueryService,
-    private readonly requestContext: RequestContextService,
   ) {}
 
   @Get('shipments/:shipmentId/parcels')
@@ -47,6 +45,15 @@ export class ParcelController {
     @Query() query: ParcelQueryDto,
   ) {
     return this.queryService.findByShipment(shipmentId, query);
+  }
+
+  @Get('parcels')
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @ApiOperation({
+    summary: 'List parcels globally (subject to visibility scope)',
+  })
+  async findAll(@Query() query: ParcelQueryDto) {
+    return this.queryService.findAll(query);
   }
 
   /**
@@ -86,11 +93,37 @@ export class ParcelController {
     @Param('trackingNumber') trackingNumber: string,
     @Body() dto: UpdateParcelStatusDto,
   ): Promise<void> {
-    const principal = this.requestContext.getPrincipal();
+    await this.commandService.updateStatus(trackingNumber, dto);
+  }
 
-    await this.commandService.updateStatus(trackingNumber, dto, {
-      employeeId: principal.profileId ?? principal.subject.id,
-      employeeName: principal.subject.id,
-    });
+  @Patch('parcels/:trackingNumber/receive')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.EMPLOYEE)
+  @ApiOperation({
+    summary:
+      'Receive a parcel that has arrived at the branch (transitions to PROCESSING or READY_FOR_COLLECTION)',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Parcel received' })
+  async receiveParcel(
+    @Param('trackingNumber') trackingNumber: string,
+  ): Promise<void> {
+    await this.commandService.receiveParcel(trackingNumber);
+  }
+
+  @Patch('parcels/:trackingNumber/dispatch')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.EMPLOYEE)
+  @ApiOperation({
+    summary:
+      'Mark a parcel as ready for dispatch (transitions from PROCESSING to READY_FOR_DISPATCH)',
+  })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Parcel ready for dispatch',
+  })
+  async markReadyForDispatch(
+    @Param('trackingNumber') trackingNumber: string,
+  ): Promise<void> {
+    await this.commandService.markReadyForDispatch(trackingNumber);
   }
 }

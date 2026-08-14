@@ -22,7 +22,10 @@ export class PodVisibilityScope implements VisibilityScopeBuilder<PodScopeInterf
     if (type === SubjectType.CUSTOMER) {
       return {
         pod: {},
-        shipment: { sender_customer_profile_id: principal.profileId },
+        shipment: { 
+          sender_phone: principal.phone,
+          receiver_phone: principal.phone 
+        },
       };
     }
 

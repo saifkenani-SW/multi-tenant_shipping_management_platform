@@ -18,6 +18,7 @@ export const ParcelStatus = {
     PROCESSING: "PROCESSING",
     READY_FOR_DISPATCH: "READY_FOR_DISPATCH",
     IN_TRANSIT: "IN_TRANSIT",
+    ARRIVED_AT_UNIT: "ARRIVED_AT_UNIT",
     READY_FOR_COLLECTION: "READY_FOR_COLLECTION",
     COLLECTED: "COLLECTED",
     RETURNED: "RETURNED",
@@ -287,8 +288,6 @@ export type customer_shipment = {
     sender_national_id: string | null;
     sender_name: string;
     sender_phone: string;
-    sender_customer_profile_id: string;
-    receiver_customer_profile_id: string | null;
     shipment_request_id: string | null;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
@@ -346,8 +345,11 @@ export type invoice = {
     id: string;
     version: Generated<number>;
     tenant_id: string;
-    customer_profile_id: string;
     customer_shipment_id: string | null;
+    sender_name: string;
+    sender_phone: string;
+    receiver_name: string;
+    receiver_phone: string;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
     invoice_number: string;

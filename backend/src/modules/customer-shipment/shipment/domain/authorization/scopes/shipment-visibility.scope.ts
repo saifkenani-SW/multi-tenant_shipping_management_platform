@@ -26,17 +26,17 @@ export class ShipmentVisibilityScope implements VisibilityScopeBuilder<ShipmentS
       return { shipment: {}, parcel: {} };
     }
 
-    if (type === SubjectType.CUSTOMER) {
-      return {
-        shipment: { sender_customer_profile_id: principal.profileId },
-        parcel: {},
-      };
-    }
-
     if (type === SubjectType.TENANT_ADMIN) {
       return {
         shipment: { tenant_id: principal.tenantId },
         parcel: { tenant_id: principal.tenantId },
+      };
+    }
+
+    if (type === SubjectType.CUSTOMER) {
+      return {
+        shipment: { customer_phone: principal.phone },
+        parcel: {},
       };
     }
 
@@ -49,7 +49,7 @@ export class ShipmentVisibilityScope implements VisibilityScopeBuilder<ShipmentS
       return {
         shipment: {
           tenant_id: principal.tenantId,
-          origin_org_unit_ids: orgUnitIds,
+          org_unit_ids: orgUnitIds,
         },
         parcel: { tenant_id: principal.tenantId },
       };

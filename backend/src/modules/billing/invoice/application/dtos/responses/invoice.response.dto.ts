@@ -13,8 +13,17 @@ export class InvoiceResponseDto {
   })
   invoiceNumber: string;
 
+  @ApiProperty({ description: 'Sender as named on the shipment' })
+  senderName: string;
+
   @ApiProperty()
-  customerProfileId: string;
+  senderPhone: string;
+
+  @ApiProperty({ description: 'Receiver as named on the shipment' })
+  receiverName: string;
+
+  @ApiProperty()
+  receiverPhone: string;
 
   @ApiPropertyOptional({ nullable: true })
   customerShipmentId?: string | null;

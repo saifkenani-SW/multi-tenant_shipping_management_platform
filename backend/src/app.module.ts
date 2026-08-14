@@ -33,6 +33,7 @@ import { CustomerShipmentModule } from './modules/customer-shipment/customer-shi
 import { BillingModule } from './modules/billing/billing.module';
 import { FirebaseNotificationModule } from './packages/firebase-notifications';
 import { NotificationModule } from './modules/notification/notification.module';
+import { ProfileModule } from './modules/profile/profile.module';
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { NotificationModule } from './modules/notification/notification.module';
       privateKey: process.env.FIREBASE_PRIVATE_KEY!,
     }),
     NotificationModule,
+    ProfileModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

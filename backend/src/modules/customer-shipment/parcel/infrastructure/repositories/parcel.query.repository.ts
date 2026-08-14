@@ -3,6 +3,11 @@ import { Kysely } from 'kysely';
 import { ParcelStatus } from '@prisma/client';
 import { DB } from '../../../../../infrastructure/database/generated/kysely/types';
 import { CursorPaginatedResponse } from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
+import { Cacheable } from '../../../../../infrastructure/cache/decorators/Cacheable';
+import {
+  CUSTOMER_SHIPMENT_CACHE_KEYS,
+  CUSTOMER_SHIPMENT_CACHE_TTL,
+} from '../../../constants/customer-shipment.cache.constants';
 import type { ParcelMergedCriteria } from '../../application/dtos/requests/parcel-merged-criteria.interface';
 import { Parcel } from '../../domain/entities/parcel.entity';
 
@@ -39,6 +44,21 @@ export class ParcelQueryRepository {
     private readonly kysely: Kysely<DB>,
   ) {}
 
+  @Cacheable({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST,
+    ttl: CUSTOMER_SHIPMENT_CACHE_TTL.LIST,
+    keyBuilder: (criteria: ParcelMergedCriteria) => [
+      CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST,
+      criteria.tenantId || 'none',
+      criteria.customerShipmentId || 'none',
+      (criteria.scopeOrgUnitIds || []).join(',') || 'none',
+      (criteria.statuses || []).join(',') || 'none',
+      criteria.condition || 'none',
+      criteria.currentOrgUnitId || 'none',
+      criteria.limit || 20,
+      criteria.cursor || 'none',
+    ],
+  })
   async findMany(
     criteria: ParcelMergedCriteria,
   ): Promise<CursorPaginatedResponse<any>> {
@@ -58,8 +78,8 @@ export class ParcelQueryRepository {
       );
     }
 
-    if (criteria.status) {
-      query = query.where('p.current_status', '=', criteria.status);
+    if (criteria.statuses && criteria.statuses.length > 0) {
+      query = query.where('p.current_status', 'in', criteria.statuses);
     }
 
     if (criteria.condition) {
@@ -74,14 +94,17 @@ export class ParcelQueryRepository {
       );
     }
 
-    if (criteria.destinationOrgUnitIds) {
-      query = criteria.destinationOrgUnitIds.length
-        ? query.where(
-            'p.destination_org_unit_id',
-            'in',
-            criteria.destinationOrgUnitIds,
-          )
-        : query.where((eb: any) => eb.val(false));
+    if (criteria.scopeOrgUnitIds) {
+      if (criteria.scopeOrgUnitIds.length > 0) {
+        query = query.where((eb: any) =>
+          eb.or([
+            eb('p.current_org_unit_id', 'in', criteria.scopeOrgUnitIds),
+            eb('p.destination_org_unit_id', 'in', criteria.scopeOrgUnitIds),
+          ]),
+        );
+      } else {
+        query = query.where((eb: any) => eb.val(false));
+      }
     }
 
     if (criteria.cursor) {
@@ -134,16 +157,50 @@ export class ParcelQueryRepository {
    * Raw row joined with the owning shipment so a CASL condition can check
    * either the tenant or the sending customer without a second query.
    */
+  @Cacheable({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+    ttl: CUSTOMER_SHIPMENT_CACHE_TTL.DETAILS,
+    keyBuilder: (id: string) => [
+      CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+      id,
+    ],
+  })
   async findRawById(id: string): Promise<any | null> {
     const record = await this.kysely
       .selectFrom('parcel as p')
       .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
       .select([...PARCEL_COLUMNS])
-      .select(['cs.sender_customer_profile_id', 'cs.origin_org_unit_id'])
+      .select(['cs.sender_phone', 'cs.receiver_phone', 'cs.origin_org_unit_id'])
       .where('p.id', '=', id)
       .executeTakeFirst();
 
     return record ?? null;
+  }
+
+  @Cacheable({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+    ttl: CUSTOMER_SHIPMENT_CACHE_TTL.DETAILS,
+    keyBuilder: (trackingNumber: string) => [
+      CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
+      trackingNumber,
+    ],
+  })
+  /**
+   * Raw rows for a set of ids, joined like findRawById.
+   *
+   * One query for the whole set: reading a manifest's parcels one id at a
+   * time turns a forty-parcel screen into eighty round trips.
+   */
+  async findRawByIds(ids: string[]): Promise<any[]> {
+    if (ids.length === 0) return [];
+
+    return this.kysely
+      .selectFrom('parcel as p')
+      .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
+      .select([...PARCEL_COLUMNS])
+      .select(['cs.sender_phone', 'cs.receiver_phone', 'cs.origin_org_unit_id'])
+      .where('p.id', 'in', ids)
+      .execute();
   }
 
   async findRawByTrackingNumber(trackingNumber: string): Promise<any | null> {
@@ -151,7 +208,7 @@ export class ParcelQueryRepository {
       .selectFrom('parcel as p')
       .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
       .select([...PARCEL_COLUMNS])
-      .select(['cs.sender_customer_profile_id', 'cs.origin_org_unit_id'])
+      .select(['cs.sender_phone', 'cs.receiver_phone', 'cs.origin_org_unit_id'])
       .where('p.tracking_number', '=', trackingNumber)
       .executeTakeFirst();
 

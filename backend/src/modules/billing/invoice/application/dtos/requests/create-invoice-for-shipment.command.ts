@@ -17,8 +17,17 @@ export interface CreateInvoiceForShipmentCommand {
   tenantId: string;
   customerShipmentId: string;
 
-  /** Who owes the money — the party named by paymentResponsibility. */
-  customerProfileId: string;
+  /**
+   * The two parties, copied from the shipment as plain contact details.
+   *
+   * No customer account is involved: a sender usually walks into a branch and
+   * pays at the counter without ever registering. `paymentResponsibility` says
+   * which of the two owes the money.
+   */
+  senderName: string;
+  senderPhone: string;
+  receiverName: string;
+  receiverPhone: string;
 
   /** Both ends of the route: staff at either branch handle this invoice. */
   originOrgUnitId: string;

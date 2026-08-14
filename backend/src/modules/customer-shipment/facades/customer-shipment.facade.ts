@@ -31,6 +31,16 @@ export class CustomerShipmentFacade {
     return this.parcelQueryService.findById(parcelId);
   }
 
+  /**
+   * Parcels for a set of ids, scope-filtered, in one round trip.
+   *
+   * Lets another module label rows that only hold a parcel id — Fleet's
+   * manifest items — without reading the parcel table itself.
+   */
+  async getParcelsByIds(parcelIds: string[]): Promise<ParcelResponseDto[]> {
+    return this.parcelQueryService.getParcelsByIds(parcelIds);
+  }
+
   async getParcelByTrackingNumber(
     trackingNumber: string,
   ): Promise<ParcelResponseDto> {

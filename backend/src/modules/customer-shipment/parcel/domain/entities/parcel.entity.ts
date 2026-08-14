@@ -25,19 +25,20 @@ export interface ParcelSnapshot {
 const ALLOWED_TRANSITIONS: Record<ParcelStatus, ParcelStatus[]> = {
   [ParcelStatus.PROCESSING]: [
     ParcelStatus.READY_FOR_DISPATCH,
-    ParcelStatus.CANCELLED,
+    ParcelStatus.RETURNED,
   ],
   [ParcelStatus.READY_FOR_DISPATCH]: [
     ParcelStatus.IN_TRANSIT,
-    ParcelStatus.CANCELLED,
   ],
   [ParcelStatus.IN_TRANSIT]: [
+    ParcelStatus.ARRIVED_AT_UNIT,
+  ],
+  [ParcelStatus.ARRIVED_AT_UNIT]: [
+    ParcelStatus.PROCESSING,
     ParcelStatus.READY_FOR_COLLECTION,
-    ParcelStatus.RETURNED,
   ],
   [ParcelStatus.READY_FOR_COLLECTION]: [
     ParcelStatus.COLLECTED,
-    ParcelStatus.RETURNED,
   ],
   [ParcelStatus.COLLECTED]: [],
   [ParcelStatus.RETURNED]: [],
@@ -76,6 +77,10 @@ export class Parcel {
     return this._currentOrgUnitId;
   }
 
+  get isFinalDestination(): boolean {
+    return this._currentOrgUnitId === this.destinationOrgUnitId;
+  }
+
   static restore(snapshot: ParcelSnapshot): Parcel {
     return new Parcel(
       snapshot.id,
@@ -104,6 +109,23 @@ export class Parcel {
     }
 
     this._currentStatus = target;
+  }
+
+  receive(): void {
+    if (this._currentStatus !== ParcelStatus.ARRIVED_AT_UNIT) {
+      throw new ConflictException('Parcel must be ARRIVED_AT_UNIT to be received.');
+    }
+    const nextStatus = this.isFinalDestination
+      ? ParcelStatus.READY_FOR_COLLECTION
+      : ParcelStatus.PROCESSING;
+    this.transitionTo(nextStatus);
+  }
+
+  markReadyForDispatch(): void {
+    if (this._currentStatus !== ParcelStatus.PROCESSING) {
+      throw new ConflictException('Parcel must be PROCESSING to be dispatched.');
+    }
+    this.transitionTo(ParcelStatus.READY_FOR_DISPATCH);
   }
 
   /**

@@ -5,8 +5,11 @@ export interface InvoiceSnapshot {
   id: string;
   version: number;
   tenantId: string;
-  customerProfileId: string;
   customerShipmentId: string | null;
+  senderName: string;
+  senderPhone: string;
+  receiverName: string;
+  receiverPhone: string;
   originOrgUnitId: string;
   destinationOrgUnitId: string;
   invoiceNumber: string;
@@ -59,14 +62,25 @@ const ALLOWED_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
  * guarded by `version`: the repository writes only while the stored version
  * still matches the one this aggregate was loaded with, so two payments taken
  * at two counters at the same moment cannot overwrite each other.
+ *
+ * The invoice belongs to a shipment, not to a customer account. Its parties are
+ * recorded as the sender and receiver names and phones copied from the shipment
+ * at the moment it was billed. Most senders walk into a branch and pay there
+ * without ever holding an account, so requiring a registered customer would
+ * have made the common case unbillable. Copying rather than referencing also
+ * means a later edit to someone's profile cannot silently rewrite what an
+ * issued invoice says.
  */
 export class Invoice {
   private constructor(
     public readonly id: string,
     public readonly version: number,
     public readonly tenantId: string,
-    public readonly customerProfileId: string,
     public readonly customerShipmentId: string | null,
+    public readonly senderName: string,
+    public readonly senderPhone: string,
+    public readonly receiverName: string,
+    public readonly receiverPhone: string,
     public readonly originOrgUnitId: string,
     public readonly destinationOrgUnitId: string,
     public readonly invoiceNumber: string,
@@ -92,8 +106,11 @@ export class Invoice {
       snapshot.id,
       snapshot.version,
       snapshot.tenantId,
-      snapshot.customerProfileId,
       snapshot.customerShipmentId,
+      snapshot.senderName,
+      snapshot.senderPhone,
+      snapshot.receiverName,
+      snapshot.receiverPhone,
       snapshot.originOrgUnitId,
       snapshot.destinationOrgUnitId,
       snapshot.invoiceNumber,

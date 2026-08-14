@@ -10,8 +10,11 @@ const INVOICE_COLUMNS = [
   'i.id',
   'i.version',
   'i.tenant_id',
-  'i.customer_profile_id',
   'i.customer_shipment_id',
+  'i.sender_name',
+  'i.sender_phone',
+  'i.receiver_name',
+  'i.receiver_phone',
   'i.origin_org_unit_id',
   'i.destination_org_unit_id',
   'i.invoice_number',
@@ -68,12 +71,10 @@ export class InvoiceQueryRepository {
       query = query.where('i.status', '=', criteria.status);
     }
 
-    if (criteria.customerProfileId) {
-      query = query.where(
-        'i.customer_profile_id',
-        '=',
-        criteria.customerProfileId,
-      );
+    // Invoices carry contact details, not a customer account, so the caller
+    // searches by phone rather than by profile id.
+    if (criteria.senderPhone) {
+      query = query.where('i.sender_phone', '=', criteria.senderPhone);
     }
 
     if (criteria.customerShipmentId) {
@@ -229,8 +230,11 @@ export class InvoiceQueryRepository {
       id: record.id,
       version: record.version,
       tenantId: record.tenant_id,
-      customerProfileId: record.customer_profile_id,
       customerShipmentId: record.customer_shipment_id,
+      senderName: record.sender_name,
+      senderPhone: record.sender_phone,
+      receiverName: record.receiver_name,
+      receiverPhone: record.receiver_phone,
       originOrgUnitId: record.origin_org_unit_id,
       destinationOrgUnitId: record.destination_org_unit_id,
       invoiceNumber: record.invoice_number,
