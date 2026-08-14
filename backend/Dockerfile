@@ -16,7 +16,7 @@ FROM base AS dependencies
 
 COPY package*.json ./
 
-RUN npm ci
+RUN npm install
 
 ############################################
 # Builder
@@ -36,7 +36,7 @@ FROM base AS production-dependencies
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 ############################################
 # Runtime

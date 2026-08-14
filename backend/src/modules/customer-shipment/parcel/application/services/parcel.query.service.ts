@@ -77,8 +77,10 @@ export class ParcelQueryService {
       builder: ParcelVisibilityScope,
     });
 
+    this.assertFilterAllowed(filter.tenantId, scope.parcel?.tenant_id, 'tenant');
+
     const merged: ParcelMergedCriteria = {
-      tenantId: scope.parcel?.tenant_id,
+      tenantId: scope.parcel?.tenant_id || filter.tenantId,
       scopeOrgUnitIds: scope.parcel?.org_unit_ids,
       statuses: filter.statuses,
       condition: filter.condition,
