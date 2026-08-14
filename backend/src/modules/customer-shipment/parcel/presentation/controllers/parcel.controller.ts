@@ -68,6 +68,7 @@ export class ParcelController {
     RoleType.PLATFORM_OWNER,
     RoleType.TENANT_ADMIN,
     RoleType.EMPLOYEE,
+    RoleType.DRIVER,
     RoleType.CUSTOMER,
   )
   @ApiOperation({
