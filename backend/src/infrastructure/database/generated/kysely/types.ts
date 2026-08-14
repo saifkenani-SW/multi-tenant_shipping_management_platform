@@ -344,9 +344,15 @@ export type handling_fee_rule = {
 };
 export type invoice = {
     id: string;
+    version: Generated<number>;
     tenant_id: string;
-    customer_profile_id: string;
     customer_shipment_id: string | null;
+    sender_name: string;
+    sender_phone: string;
+    receiver_name: string;
+    receiver_phone: string;
+    origin_org_unit_id: string;
+    destination_org_unit_id: string;
     invoice_number: string;
     subtotal: string;
     handling_fees: Generated<string>;
@@ -358,6 +364,12 @@ export type invoice = {
     status: Generated<InvoiceStatus>;
     due_date: Timestamp | null;
     created_at: Generated<Timestamp>;
+    updated_at: Timestamp;
+};
+export type invoice_counter = {
+    tenant_id: string;
+    year: number;
+    last_number: Generated<number>;
     updated_at: Timestamp;
 };
 export type manifest_item = {
@@ -788,6 +800,7 @@ export type DB = {
     global_location: global_location;
     handling_fee_rule: handling_fee_rule;
     invoice: invoice;
+    invoice_counter: invoice_counter;
     manifest_item: manifest_item;
     notification: notification;
     org_unit_location_mapping: org_unit_location_mapping;

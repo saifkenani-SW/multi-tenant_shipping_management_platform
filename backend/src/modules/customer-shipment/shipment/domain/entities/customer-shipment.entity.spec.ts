@@ -7,6 +7,8 @@ const shipmentAt = (status: ShipmentStatus) =>
     id: '01910b80-6e42-7000-8000-000000000001',
     version: 1,
     tenantId: '01910b80-6e42-7000-8000-000000000000',
+    senderName: 'Sender',
+    senderPhone: '+963900000000',
     senderNationalId: null,
     shipmentRequestId: null,
     originOrgUnitId: '01910b80-6e42-7000-8000-0000000000f1',

@@ -53,4 +53,7 @@ export enum NotificationType {
 
   // الطرد — Parcel
   PARCEL_STATUS_CHANGED = 'PARCEL_STATUS_CHANGED',
+
+  // الرحلة — Trip
+  TRIP_ASSIGNED = 'TRIP_ASSIGNED',
 }

@@ -79,6 +79,46 @@ export class CreateShipmentParcelDto {
 
 }
 
+/**
+ * What the customer is charged for this shipment.
+ *
+ * Pricing is decided on the shipping side — from the approved quotation when
+ * the shipment came from a request, or entered by the member of staff for a
+ * customer who walks into a branch. Billing records these figures and does not
+ * recalculate them.
+ */
+export class ShipmentBillingDto {
+  @ApiProperty({
+    description: 'Charge before fees, tax and discount',
+    example: 35.0,
+  })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  subtotal: number;
+
+  @ApiPropertyOptional({ description: 'Handling fees', default: 0 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @IsOptional()
+  handlingFees?: number;
+
+  @ApiPropertyOptional({ description: 'Tax applied', default: 0 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @IsOptional()
+  taxAmount?: number;
+
+  @ApiPropertyOptional({ description: 'Discount granted', default: 0 })
+  @Type(() => Number)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @IsOptional()
+  discountAmount?: number;
+}
+
 export class CreateShipmentDto {
   @ApiPropertyOptional({
     description:
@@ -146,6 +186,15 @@ export class CreateShipmentDto {
   @IsEnum(PaymentResponsibility)
   @IsOptional()
   paymentResponsibility?: PaymentResponsibility;
+
+  @ApiProperty({
+    description:
+      'Charges for this shipment. An invoice is raised from these figures in the same transaction.',
+    type: ShipmentBillingDto,
+  })
+  @ValidateNested()
+  @Type(() => ShipmentBillingDto)
+  billing: ShipmentBillingDto;
 
   @ApiProperty({
     description: 'Parcels making up this shipment. At least one is required.',
