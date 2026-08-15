@@ -15,11 +15,8 @@ export class TenantZoneCommandService {
   ) {}
 
   @CacheEvict({
-    keyPrefix: TENANT_ZONE_CACHE_KEYS.PREFIX,
-    keyBuilder: (tenantId: string, dto: CreateTenantZoneDto) => [
-      TENANT_ZONE_CACHE_KEYS.LIST,
-      tenantId,
-    ],
+    keyPrefix: TENANT_ZONE_CACHE_KEYS.LIST,
+    allEntries: true,
   })
   @Transactional()
   async create(tenantId: string, dto: CreateTenantZoneDto) {
@@ -28,7 +25,19 @@ export class TenantZoneCommandService {
   }
 
   // مسح كاش التفاصيل لضمان تحديث بيانات المنطقة
-  @CacheEvict({ keyPrefix: TENANT_ZONE_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict([
+    {
+      keyPrefix: TENANT_ZONE_CACHE_KEYS.LIST,
+      allEntries: true,
+    },
+    {
+      keyPrefix: TENANT_ZONE_CACHE_KEYS.DETAILS,
+      keyBuilder: (tenantId: string, id: string) => [
+        TENANT_ZONE_CACHE_KEYS.DETAILS,
+        id,
+      ],
+    },
+  ])
   @Transactional()
   async update(tenantId: string, id: string, dto: UpdateTenantZoneDto) {
     await this.queryService.findById(id, tenantId);
