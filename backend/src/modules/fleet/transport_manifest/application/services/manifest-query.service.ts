@@ -40,8 +40,9 @@ export class ManifestQueryService {
     }
 
     const criteria: ManifestQueryCriteria = {
-      tenantId: scope?.tenantId || tenantId,
+      tenantId: scope?.tenantId || tenantId || query.tenantId,
       scopeOrgUnitIds: scope?.orgUnitIds,
+      driverId: scope?.driverId || query.driverId,
       status: query.status,
       tripId: query.tripId,
       originOrgUnitId: query.originOrgUnitId,
