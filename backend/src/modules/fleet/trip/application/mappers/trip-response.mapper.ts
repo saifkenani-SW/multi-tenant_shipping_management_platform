@@ -18,6 +18,8 @@ export class TripResponseMapper {
     dto.destinationOrgUnitId = trip.destinationOrgUnitId;
     dto.status = trip.status;
     dto.scheduledAt = trip.scheduledAt;
+    dto.createdByEmployeeId = trip.createdByEmployeeId;
+    dto.createdByEmployeeName = trip.createdByEmployeeName;
     return dto;
   }
 
@@ -34,6 +36,8 @@ export class TripResponseMapper {
     dto.startedAt = trip.startedAt;
     dto.endedAt = trip.endedAt;
     dto.notes = trip.notes;
+    dto.createdByEmployeeId = trip.createdByEmployeeId;
+    dto.createdByEmployeeName = trip.createdByEmployeeName;
     dto.createdAt = trip.createdAt;
     dto.updatedAt = trip.updatedAt;
     return dto;

@@ -197,4 +197,32 @@ export class EmployeeQueryRepository {
 
     return Number(result?.count || 0);
   }
+
+  async findBasicDetailsByIds(ids: string[]) {
+    if (!ids.length) return [];
+    return this.db
+      .selectFrom('employee')
+      .select(['id', 'full_name', 'employee_code'])
+      .where('id', 'in', ids)
+      .execute();
+  }
+
+  /**
+   * Checks whether a specific employee has an active assignment to the given
+   * organization unit. Used by ManifestCommandService for scope enforcement.
+   */
+  async isAssignedToOrgUnit(
+    employeeId: string,
+    orgUnitId: string,
+  ): Promise<boolean> {
+    const record = await this.db
+      .selectFrom('employee_assignment')
+      .select('id')
+      .where('employee_id', '=', employeeId)
+      .where('organization_unit_id', '=', orgUnitId)
+      .where('is_active', '=', true)
+      .executeTakeFirst();
+
+    return Boolean(record);
+  }
 }

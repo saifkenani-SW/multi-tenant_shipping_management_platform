@@ -8,6 +8,8 @@ export interface ManifestItemSnapshot {
   status: ManifestItemStatus;
   loadedAt: Date | null;
   unloadedAt: Date | null;
+  addedByEmployeeId: string | null;
+  addedByEmployeeName: string | null;
 }
 
 /**
@@ -24,6 +26,8 @@ export class ManifestItem {
     private _status: ManifestItemStatus,
     private _loadedAt: Date | null,
     private _unloadedAt: Date | null,
+    public readonly addedByEmployeeId: string | null,
+    public readonly addedByEmployeeName: string | null,
   ) {}
 
   get status(): ManifestItemStatus {
@@ -38,7 +42,12 @@ export class ManifestItem {
     return this._unloadedAt;
   }
 
-  static create(props: { manifestId: string; parcelId: string }): ManifestItem {
+  static create(props: {
+    manifestId: string;
+    parcelId: string;
+    addedByEmployeeId?: string | null;
+    addedByEmployeeName?: string | null;
+  }): ManifestItem {
     return new ManifestItem(
       '',
       props.manifestId,
@@ -46,6 +55,8 @@ export class ManifestItem {
       ManifestItemStatus.PENDING_LOAD,
       null,
       null,
+      props.addedByEmployeeId ?? null,
+      props.addedByEmployeeName ?? null,
     );
   }
 
@@ -57,6 +68,8 @@ export class ManifestItem {
       snapshot.status,
       snapshot.loadedAt,
       snapshot.unloadedAt,
+      snapshot.addedByEmployeeId,
+      snapshot.addedByEmployeeName,
     );
   }
 

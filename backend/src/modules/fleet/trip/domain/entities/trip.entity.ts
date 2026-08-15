@@ -18,6 +18,8 @@ export interface TripSnapshot {
   startedAt: Date | null;
   endedAt: Date | null;
   notes: string | null;
+  createdByEmployeeId: string | null;
+  createdByEmployeeName: string | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -42,6 +44,8 @@ export class Trip {
     private _startedAt: Date | null,
     private _endedAt: Date | null,
     public readonly notes: string | null,
+    public readonly createdByEmployeeId: string | null,
+    public readonly createdByEmployeeName: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
@@ -71,6 +75,8 @@ export class Trip {
     destinationOrgUnitId: string;
     scheduledAt: Date | null;
     notes: string | null;
+    createdByEmployeeId: string | null;
+    createdByEmployeeName: string | null;
   }): Trip {
     Trip.assertRouteIsValid(props.originOrgUnitId, props.destinationOrgUnitId);
 
@@ -88,6 +94,8 @@ export class Trip {
       null,
       null,
       props.notes,
+      props.createdByEmployeeId,
+      props.createdByEmployeeName,
       now,
       now,
     );
@@ -110,6 +118,8 @@ export class Trip {
       snapshot.startedAt,
       snapshot.endedAt,
       snapshot.notes,
+      snapshot.createdByEmployeeId,
+      snapshot.createdByEmployeeName,
       snapshot.createdAt,
       snapshot.updatedAt,
     );

@@ -42,4 +42,26 @@ export class EmployeeFacade {
       return null;
     }
   }
+
+  async getEmployeesBasicDetails(ids: string[]) {
+    try {
+      return await this.queryService.findBasicDetailsByIds(ids);
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Returns true when the employee has an active assignment to the given
+   * organization unit. Used by manifest services for scope enforcement.
+   *
+   * Throws rather than swallowing errors: a missing DB connection must not
+   * silently grant access.
+   */
+  async isAssignedToOrgUnit(
+    employeeId: string,
+    orgUnitId: string,
+  ): Promise<boolean> {
+    return this.queryService.isAssignedToOrgUnit(employeeId, orgUnitId);
+  }
 }

@@ -52,7 +52,8 @@ export const TripStatus = {
 } as const;
 export type TripStatus = (typeof TripStatus)[keyof typeof TripStatus];
 export const ManifestStatus = {
-    PENDING: "PENDING",
+    OPEN: "OPEN",
+    READY_FOR_DISPATCH: "READY_FOR_DISPATCH",
     IN_TRANSIT: "IN_TRANSIT",
     COMPLETED: "COMPLETED"
 } as const;
@@ -379,6 +380,8 @@ export type manifest_item = {
     status: Generated<ManifestItemStatus>;
     loaded_at: Timestamp | null;
     unloaded_at: Timestamp | null;
+    added_by_employee_id: string | null;
+    added_by_employee_name: string | null;
 };
 export type notification = {
     id: string;
@@ -704,10 +707,12 @@ export type tenant_zone = {
 export type transport_manifest = {
     id: string;
     tenant_id: string;
-    trip_id: string;
+    trip_id: string | null;
     origin_org_unit_id: string;
     destination_org_unit_id: string;
     status: Generated<ManifestStatus>;
+    created_by_employee_id: string | null;
+    created_by_employee_name: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };
@@ -723,6 +728,8 @@ export type trip = {
     started_at: Timestamp | null;
     ended_at: Timestamp | null;
     notes: string | null;
+    created_by_employee_id: string | null;
+    created_by_employee_name: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };

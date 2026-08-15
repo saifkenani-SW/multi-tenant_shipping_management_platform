@@ -49,6 +49,7 @@ export class VehicleController {
     description: 'Vehicle created successfully',
   })
   async createVehicle(@Body() dto: CreateVehicleDto): Promise<{ id: string }> {
+    console.log('PRINCEPAL_ =', this.requestContext.getPrincipal());
     const id = await this.vehicleCommandService.createVehicle(
       this.requestContext.getTenantIdOrThrow(),
       dto,

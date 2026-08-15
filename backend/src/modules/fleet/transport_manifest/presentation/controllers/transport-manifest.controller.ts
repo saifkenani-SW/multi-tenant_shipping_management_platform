@@ -18,7 +18,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Roles } from '../../../../../common/authorization/decorators/roles.decorator';
+import { Permissions } from '../../../../../common/authorization/decorators/permissions.decorator';
 import { RoleType } from '../../../../authorization/domain/enums/role.enum';
+import { PermissionAction, PermissionResource } from '../../../../authorization/domain/enums/permission.enum';
 import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { ManifestCommandService } from '../../application/services/manifest-command.service';
 import { ManifestQueryService } from '../../application/services/manifest-query.service';
@@ -40,24 +42,7 @@ export class TransportManifestController {
     private readonly requestContext: RequestContextService,
   ) {}
 
-  @Post()
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
-  @ApiOperation({
-    summary: 'Create a manifest for a trip that has not departed',
-  })
-  @ApiResponse({
-    status: HttpStatus.CREATED,
-    description: 'Manifest created successfully',
-  })
-  async createManifest(
-    @Body() dto: CreateManifestDto,
-  ): Promise<{ id: string }> {
-    const id = await this.manifestCommandService.createManifest(
-      this.requestContext.getTenantIdOrThrow(),
-      dto,
-    );
-    return { id };
-  }
+  // ──────────────────────────── QUERIES ────────────────────────────────────
 
   @Get()
   @Roles(
@@ -66,6 +51,7 @@ export class TransportManifestController {
     RoleType.EMPLOYEE,
     RoleType.DRIVER,
   )
+  @Permissions(PermissionAction.READ, PermissionResource.MANIFEST)
   @ApiOperation({ summary: 'List manifests in the current tenant' })
   @ApiResponse({ status: HttpStatus.OK, type: PaginatedManifestListDto })
   async findManifests(
@@ -77,6 +63,20 @@ export class TransportManifestController {
     );
   }
 
+  @Get('available')
+  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Permissions(PermissionAction.READ, PermissionResource.MANIFEST)
+  @ApiOperation({
+    summary:
+      'List manifests in READY_FOR_DISPATCH status that are not yet assigned to a trip',
+  })
+  @ApiResponse({ status: HttpStatus.OK })
+  async findAvailable() {
+    return this.manifestQueryService.findAvailableForBooking(
+      this.requestContext.getTenantIdOrThrow(),
+    );
+  }
+
   @Get(':id')
   @Roles(
     RoleType.PLATFORM_OWNER,
@@ -84,6 +84,7 @@ export class TransportManifestController {
     RoleType.EMPLOYEE,
     RoleType.DRIVER,
   )
+  @Permissions(PermissionAction.READ, PermissionResource.MANIFEST)
   @ApiOperation({ summary: 'Get a manifest with all its parcels' })
   @ApiResponse({ status: HttpStatus.OK, type: ManifestDetailsDto })
   async getManifestDetails(
@@ -95,20 +96,6 @@ export class TransportManifestController {
     );
   }
 
-  @Post(':id/complete')
-  @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
-  @ApiOperation({ summary: 'Complete a manifest that is in transit' })
-  @ApiResponse({ status: HttpStatus.OK, description: 'Manifest completed' })
-  async completeManifest(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
-    await this.manifestCommandService.completeManifest(
-      this.requestContext.getTenantIdOrThrow(),
-      id,
-    );
-  }
-
   @Get(':id/items')
   @Roles(
     RoleType.PLATFORM_OWNER,
@@ -116,6 +103,7 @@ export class TransportManifestController {
     RoleType.EMPLOYEE,
     RoleType.DRIVER,
   )
+  @Permissions(PermissionAction.READ, PermissionResource.MANIFEST)
   @ApiOperation({ summary: 'List the parcels on a manifest' })
   @ApiResponse({ status: HttpStatus.OK, type: [ManifestItemDto] })
   async getManifestItems(
@@ -127,9 +115,70 @@ export class TransportManifestController {
     );
   }
 
+  // ──────────────────────────── COMMANDS ───────────────────────────────────
+
+  @Post()
+  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Permissions(PermissionAction.CREATE, PermissionResource.MANIFEST)
+  @ApiOperation({
+    summary: 'Create a standalone OPEN manifest (not yet assigned to a trip)',
+  })
+  @ApiResponse({
+    status: HttpStatus.CREATED,
+    description: 'Manifest created successfully',
+  })
+  async createManifest(
+    @Body() dto: CreateManifestDto,
+  ): Promise<{ id: string }> {
+    const id = await this.manifestCommandService.createManifest(
+      this.requestContext.getTenantIdOrThrow(),
+      this.requestContext.getPrincipal()?.profileId,
+      dto,
+    );
+    return { id };
+  }
+
+  @Post(':id/finalize')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
+  @ApiOperation({
+    summary: 'Finalize a manifest (OPEN → READY_FOR_DISPATCH). Must have ≥1 item.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Manifest finalized' })
+  async finalizeManifest(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    await this.manifestCommandService.finalizeManifest(
+      this.requestContext.getTenantIdOrThrow(),
+      id,
+      this.requestContext.getPrincipal()?.profileId,
+    );
+  }
+
+  @Post(':id/reopen')
+  @HttpCode(HttpStatus.OK)
+  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
+  @ApiOperation({
+    summary:
+      'Reopen a manifest (READY_FOR_DISPATCH → OPEN). Only allowed when no trip is linked.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'Manifest reopened' })
+  async reopenManifest(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<void> {
+    await this.manifestCommandService.reopenManifest(
+      this.requestContext.getTenantIdOrThrow(),
+      id,
+      this.requestContext.getPrincipal()?.profileId,
+    );
+  }
+
   @Post(':id/items')
   @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
-  @ApiOperation({ summary: 'Add a parcel to a manifest' })
+  @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
+  @ApiOperation({ summary: 'Add a parcel to an OPEN manifest' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Parcel added to the manifest',
@@ -141,6 +190,7 @@ export class TransportManifestController {
     const itemId = await this.manifestCommandService.addItem(
       this.requestContext.getTenantIdOrThrow(),
       id,
+      this.requestContext.getPrincipal()?.profileId,
       dto,
     );
     return { id: itemId };
@@ -149,6 +199,7 @@ export class TransportManifestController {
   @Patch(':id/items/:itemId')
   @HttpCode(HttpStatus.OK)
   @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
   @ApiOperation({
     summary: 'Mark a parcel on the manifest as loaded, unloaded or missing',
   })
@@ -169,8 +220,9 @@ export class TransportManifestController {
   @Delete(':id/items/:itemId')
   @HttpCode(HttpStatus.OK)
   @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
   @ApiOperation({
-    summary: 'Remove a parcel from a manifest still being loaded',
+    summary: 'Remove a parcel from an OPEN manifest',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Parcel removed' })
   async removeItem(
@@ -181,6 +233,7 @@ export class TransportManifestController {
       this.requestContext.getTenantIdOrThrow(),
       id,
       itemId,
+      this.requestContext.getPrincipal()?.profileId,
     );
   }
 }

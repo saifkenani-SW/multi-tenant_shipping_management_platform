@@ -2,7 +2,6 @@ import { TransportManifest } from '../../domain/entities/transport-manifest.enti
 import { ManifestStatus } from '../../domain/enums/manifest-status.enum';
 import { ManifestNotFoundException } from '../../domain/exceptions/manifest-not-found.exception';
 import { TransportManifestQueryRepository } from '../../infrastructure/repositories/transport-manifest-query.repository';
-import { ManifestQueryCriteriaBuilder } from '../builders/query/manifest-query-criteria.builder';
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 import { ManifestQueryDto } from '../dtos/requests/manifest-query.dto';
 import { ManifestQueryService } from './manifest-query.service';
@@ -22,7 +21,9 @@ describe('ManifestQueryService — tenant scoping', () => {
     tripId: '01910b80-6e42-7000-8000-0000000000c1',
     originOrgUnitId: '01910b80-6e42-7000-8000-0000000000f1',
     destinationOrgUnitId: '01910b80-6e42-7000-8000-0000000000f2',
-    status: ManifestStatus.PENDING,
+    status: ManifestStatus.OPEN,
+    createdByEmployeeId: null,
+    createdByEmployeeName: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -48,7 +49,6 @@ describe('ManifestQueryService — tenant scoping', () => {
     (parcelLookup.getParcelsByIds as jest.Mock).mockResolvedValue([]);
     service = new ManifestQueryService(
       queryRepository as unknown as TransportManifestQueryRepository,
-      new ManifestQueryCriteriaBuilder(),
       new ManifestResponseMapper(),
       parcelLookup,
     );

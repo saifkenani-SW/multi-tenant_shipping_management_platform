@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
 import {
+  IsArray,
   IsDate,
   IsNotEmpty,
   IsOptional,
@@ -17,14 +18,6 @@ export class CreateTripDto {
   @IsUUID()
   @IsNotEmpty()
   driverId: string;
-
-  @ApiPropertyOptional({
-    description: 'Vehicle used for this trip. Must be ACTIVE when provided.',
-    format: 'uuid',
-  })
-  @IsUUID()
-  @IsOptional()
-  vehicleId?: string;
 
   @ApiProperty({
     description: 'Organization unit the trip departs from',
@@ -56,4 +49,16 @@ export class CreateTripDto {
   @MaxLength(1000)
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'IDs of READY_FOR_DISPATCH manifests to attach to this trip at creation time',
+    type: [String],
+    format: 'uuid',
+  })
+  @IsArray()
+  @IsUUID('all', { each: true })
+  @IsOptional()
+  manifestIds?: string[];
 }
+

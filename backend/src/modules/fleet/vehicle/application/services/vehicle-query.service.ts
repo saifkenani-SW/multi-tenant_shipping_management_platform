@@ -9,6 +9,8 @@ import { PaginatedVehicleListDto } from '../dtos/responses/vehicle-list.dto';
 import { VehicleAssignmentDto } from '../dtos/responses/vehicle-assignment.dto';
 import { VehicleResponseMapper } from '../mappers/vehicle-response.mapper';
 
+import { EmployeeFacade } from '../../../../employee2/facades/employee.facade';
+
 /**
  * Read side of the vehicle sub-domain.
  *
@@ -22,6 +24,7 @@ export class VehicleQueryService {
     private readonly vehicleQueryRepository: VehicleQueryRepository,
     private readonly vehicleQueryCriteriaBuilder: VehicleQueryCriteriaBuilder,
     private readonly vehicleResponseMapper: VehicleResponseMapper,
+    private readonly employeeFacade: EmployeeFacade,
   ) {}
 
   async findVehicles(
@@ -51,7 +54,7 @@ export class VehicleQueryService {
     tenantId: string | undefined,
     vehicleId: string,
   ): Promise<VehicleAssignmentDto[]> {
-    await this.findVehicleOrThrow(tenantId, vehicleId);
+    const vehicle = await this.findVehicleOrThrow(tenantId, vehicleId);
 
     const assignments =
       await this.vehicleQueryRepository.findAssignmentsByVehicle(
@@ -59,9 +62,20 @@ export class VehicleQueryService {
         vehicleId,
       );
 
-    return assignments.map((assignment) =>
-      this.vehicleResponseMapper.toAssignmentDto(assignment),
-    );
+    const employeeIds = assignments.map((a) => a.employeeId);
+    const employeesDetails =
+      await this.employeeFacade.getEmployeesBasicDetails(employeeIds);
+
+    return assignments.map((assignment) => {
+      const dto = this.vehicleResponseMapper.toAssignmentDto(assignment);
+      const employee = employeesDetails.find((e) => e.id === dto.employeeId);
+      if (employee) {
+        dto.employeeName = employee.full_name;
+        dto.employeeCode = employee.employee_code;
+      }
+      dto.vehiclePlateNumber = vehicle.plateNumber;
+      return dto;
+    });
   }
 
   /**

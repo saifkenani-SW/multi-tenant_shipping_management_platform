@@ -17,10 +17,12 @@ export class TransportManifestCommandRepository {
     const record = await this.prisma.client.transport_manifest.create({
       data: {
         tenant_id: manifest.tenantId,
-        trip_id: manifest.tripId,
+        trip_id: manifest.tripId ?? undefined,
         origin_org_unit_id: manifest.originOrgUnitId,
         destination_org_unit_id: manifest.destinationOrgUnitId,
         status: manifest.status,
+        created_by_employee_id: manifest.createdByEmployeeId ?? undefined,
+        created_by_employee_name: manifest.createdByEmployeeName ?? undefined,
       },
     });
 
@@ -36,8 +38,8 @@ export class TransportManifestCommandRepository {
   }
 
   /**
-   * Moves every PENDING manifest of a trip to IN_TRANSIT in one statement.
-   * Called when the owning trip departs.
+   * Moves every READY_FOR_DISPATCH manifest of a trip to IN_TRANSIT in one
+   * statement. Called when the owning trip departs.
    */
   async markTripManifestsInTransit(
     tenantId: string,
@@ -47,10 +49,51 @@ export class TransportManifestCommandRepository {
       where: {
         tenant_id: tenantId,
         trip_id: tripId,
-        status: ManifestStatus.PENDING,
+        status: ManifestStatus.READY_FOR_DISPATCH,
       },
       data: { status: ManifestStatus.IN_TRANSIT },
     });
+  }
+
+  /**
+   * Moves every IN_TRANSIT manifest of a completed trip to COMPLETED.
+   * Called when the owning trip completes.
+   */
+  async markTripManifestsCompleted(
+    tenantId: string,
+    tripId: string,
+  ): Promise<void> {
+    await this.prisma.client.transport_manifest.updateMany({
+      where: {
+        tenant_id: tenantId,
+        trip_id: tripId,
+        status: ManifestStatus.IN_TRANSIT,
+      },
+      data: { status: ManifestStatus.COMPLETED },
+    });
+  }
+
+  /**
+   * Atomically links a list of READY_FOR_DISPATCH + unlinked manifests to a
+   * trip. Returns the count of rows actually updated for the caller to verify
+   * against the requested set (race-condition guard).
+   */
+  async linkToTrip(
+    manifestIds: string[],
+    tripId: string,
+    tenantId: string,
+  ): Promise<number> {
+    const result = await this.prisma.client.transport_manifest.updateMany({
+      where: {
+        id: { in: manifestIds },
+        tenant_id: tenantId,
+        status: ManifestStatus.READY_FOR_DISPATCH,
+        trip_id: null,
+      },
+      data: { trip_id: tripId },
+    });
+
+    return result.count;
   }
 
   async createItem(item: ManifestItem): Promise<ManifestItem> {
@@ -59,6 +102,8 @@ export class TransportManifestCommandRepository {
         manifest_id: item.manifestId,
         parcel_id: item.parcelId,
         status: item.status,
+        added_by_employee_id: item.addedByEmployeeId ?? undefined,
+        added_by_employee_name: item.addedByEmployeeName ?? undefined,
       },
     });
 

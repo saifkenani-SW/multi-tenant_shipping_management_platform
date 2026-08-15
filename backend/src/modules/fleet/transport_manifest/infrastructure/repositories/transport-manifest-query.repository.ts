@@ -15,6 +15,8 @@ const MANIFEST_COLUMNS = [
   'origin_org_unit_id',
   'destination_org_unit_id',
   'status',
+  'created_by_employee_id',
+  'created_by_employee_name',
   'created_at',
   'updated_at',
 ] as const;
@@ -26,6 +28,8 @@ const ITEM_COLUMNS = [
   'status',
   'loaded_at',
   'unloaded_at',
+  'added_by_employee_id',
+  'added_by_employee_name',
 ] as const;
 
 /** States in which a parcel is still committed to a manifest. */
@@ -36,7 +40,8 @@ const OCCUPYING_ITEM_STATUSES: ManifestItemStatus[] = [
 
 /** Manifest states that are not yet finished. */
 const ACTIVE_MANIFEST_STATUSES: ManifestStatus[] = [
-  ManifestStatus.PENDING,
+  ManifestStatus.OPEN,
+  ManifestStatus.READY_FOR_DISPATCH,
   ManifestStatus.IN_TRANSIT,
 ];
 
@@ -107,6 +112,32 @@ export class TransportManifestQueryRepository {
         '=',
         criteria.destinationOrgUnitId,
       );
+    }
+
+    if (criteria.scopeOrgUnitIds && criteria.scopeOrgUnitIds.length > 0) {
+      query = query.where((eb) =>
+        eb.or([
+          eb('tm.origin_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+          eb('tm.destination_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+        ]),
+      );
+      countQuery = countQuery.where((eb) =>
+        eb.or([
+          eb('tm.origin_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+          eb('tm.destination_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+        ]),
+      );
+    }
+
+    if (criteria.driverId) {
+      query = query
+        .innerJoin('trip', 'trip.id', 'tm.trip_id')
+        .where('trip.driver_id', '=', criteria.driverId);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      countQuery = (countQuery as any)
+        .innerJoin('trip', 'trip.id', 'tm.trip_id')
+        .where('trip.driver_id', '=', criteria.driverId);
     }
 
     query = query
@@ -211,5 +242,65 @@ export class TransportManifestQueryRepository {
       .executeTakeFirst();
 
     return Boolean(record);
+  }
+
+  /**
+   * Returns manifests with status READY_FOR_DISPATCH that are not yet linked
+   * to any trip. Used by Fleet to find bookable manifests.
+   */
+  async findAvailable(
+    tenantId: string,
+  ): Promise<Array<{ manifest: TransportManifest; itemCount: number }>> {
+    const records = await this.kysely
+      .selectFrom('transport_manifest')
+      .select(MANIFEST_COLUMNS)
+      .where('tenant_id', '=', tenantId)
+      .where('status', '=', ManifestStatus.READY_FOR_DISPATCH)
+      .where('trip_id', 'is', null)
+      .orderBy('created_at', 'asc')
+      .execute();
+
+    if (!records.length) return [];
+
+    const manifestIds = records.map((r) => r.id);
+    const counts = await this.kysely
+      .selectFrom('manifest_item')
+      .select(['manifest_id'])
+      .select((eb) => eb.fn.count('id').as('item_count'))
+      .where('manifest_id', 'in', manifestIds)
+      .groupBy('manifest_id')
+      .execute();
+
+    const countMap = new Map(
+      counts.map((c) => [c.manifest_id, Number(c.item_count)]),
+    );
+
+    return records.map((record) => ({
+      manifest: this.persistenceMapper.toDomain(record),
+      itemCount: countMap.get(record.id) ?? 0,
+    }));
+  }
+
+
+  /**
+   * Fetches only the manifests that are bookable (READY_FOR_DISPATCH, no trip)
+   * from the given id set. Used by assignManifestsToTrip for validation.
+   */
+  async findBookableByIdsAndTenant(
+    manifestIds: string[],
+    tenantId: string,
+  ): Promise<TransportManifest[]> {
+    if (!manifestIds.length) return [];
+
+    const records = await this.kysely
+      .selectFrom('transport_manifest')
+      .select(MANIFEST_COLUMNS)
+      .where('id', 'in', manifestIds)
+      .where('tenant_id', '=', tenantId)
+      .where('status', '=', ManifestStatus.READY_FOR_DISPATCH)
+      .where('trip_id', 'is', null)
+      .execute();
+
+    return records.map((r) => this.persistenceMapper.toDomain(r));
   }
 }

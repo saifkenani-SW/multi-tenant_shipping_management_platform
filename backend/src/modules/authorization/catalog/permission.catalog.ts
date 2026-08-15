@@ -128,6 +128,72 @@ export const PERMISSION_CATALOG: Record<Permission, PermissionCatalogEntry> = {
     action: 'manage',
     description: 'Manage invoices and payments',
   },
+
+  // Fleet — Manifests
+  [Permission.CREATE_MANIFEST]: {
+    name: Permission.CREATE_MANIFEST,
+    resource: 'manifest',
+    action: 'create',
+    description: 'Create transport manifests',
+  },
+  [Permission.READ_MANIFEST]: {
+    name: Permission.READ_MANIFEST,
+    resource: 'manifest',
+    action: 'read',
+    description: 'View transport manifests',
+  },
+  [Permission.UPDATE_MANIFEST]: {
+    name: Permission.UPDATE_MANIFEST,
+    resource: 'manifest',
+    action: 'update',
+    description: 'Add items, finalize or reopen manifests',
+  },
+
+  // Fleet — Trips
+  [Permission.CREATE_TRIP]: {
+    name: Permission.CREATE_TRIP,
+    resource: 'trip',
+    action: 'create',
+    description: 'Create trips',
+  },
+  [Permission.READ_TRIP]: {
+    name: Permission.READ_TRIP,
+    resource: 'trip',
+    action: 'read',
+    description: 'View trips',
+  },
+  [Permission.UPDATE_TRIP]: {
+    name: Permission.UPDATE_TRIP,
+    resource: 'trip',
+    action: 'update',
+    description: 'Update, start, complete or cancel trips',
+  },
+
+  // Fleet — Vehicles
+  [Permission.CREATE_VEHICLE]: {
+    name: Permission.CREATE_VEHICLE,
+    resource: 'vehicle',
+    action: 'create',
+    description: 'Register vehicles',
+  },
+  [Permission.READ_VEHICLE]: {
+    name: Permission.READ_VEHICLE,
+    resource: 'vehicle',
+    action: 'read',
+    description: 'View vehicles and their assignments',
+  },
+  [Permission.UPDATE_VEHICLE]: {
+    name: Permission.UPDATE_VEHICLE,
+    resource: 'vehicle',
+    action: 'update',
+    description: 'Update vehicle details and driver assignments',
+  },
+  [Permission.DELETE_VEHICLE]: {
+    name: Permission.DELETE_VEHICLE,
+    resource: 'vehicle',
+    action: 'delete',
+    description: 'Release vehicle driver assignments',
+  },
 };
 
 export const PERMISSION_CATALOG_ENTRIES: readonly PermissionCatalogEntry[] =

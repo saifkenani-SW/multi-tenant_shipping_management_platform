@@ -37,7 +37,9 @@ export class ManifestResponseMapper {
   toListDto(manifest: TransportManifest, itemCount: number): ManifestListDto {
     const dto = new ManifestListDto();
     dto.id = manifest.id;
-    dto.tripId = manifest.tripId;
+    if (manifest.tripId) {
+      dto.tripId = manifest.tripId;
+    }
     dto.originOrgUnitId = manifest.originOrgUnitId;
     dto.destinationOrgUnitId = manifest.destinationOrgUnitId;
     dto.status = manifest.status;
@@ -54,7 +56,9 @@ export class ManifestResponseMapper {
     const dto = new ManifestDetailsDto();
     dto.id = manifest.id;
     dto.tenantId = manifest.tenantId;
-    dto.tripId = manifest.tripId;
+    if (manifest.tripId) {
+      dto.tripId = manifest.tripId;
+    }
     dto.originOrgUnitId = manifest.originOrgUnitId;
     dto.destinationOrgUnitId = manifest.destinationOrgUnitId;
     dto.status = manifest.status;

@@ -21,4 +21,13 @@ export class VehicleAssignmentDto {
     nullable: true,
   })
   removedAt: Date | null;
+
+  @ApiProperty({ description: 'Employee full name', required: false })
+  employeeName?: string;
+
+  @ApiProperty({ description: 'Employee code', required: false })
+  employeeCode?: string;
+
+  @ApiProperty({ description: 'Vehicle plate number', required: false })
+  vehiclePlateNumber?: string;
 }
