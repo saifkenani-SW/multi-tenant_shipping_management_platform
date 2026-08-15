@@ -5,6 +5,7 @@ import { ParcelQueryService } from '../parcel/application/services/parcel.query.
 import { ProofOfDeliveryQueryService } from '../proof-of-delivery/application/services/proof-of-delivery.query.service';
 import { ShipmentResponseDto } from '../shipment/application/dtos/responses/shipment.response.dto';
 import { ParcelResponseDto } from '../parcel/application/dtos/responses/parcel.response.dto';
+import { ParcelTrackingResponseDto } from '../parcel/application/dtos/responses/parcel-tracking.response.dto';
 import { ProofOfDeliveryResponseDto } from '../proof-of-delivery/application/dtos/responses/proof-of-delivery.response.dto';
 import { ParcelMapper } from '../parcel/application/mappers/parcel.mapper';
 
@@ -46,6 +47,20 @@ export class CustomerShipmentFacade {
   async getParcelByTrackingNumber(
     trackingNumber: string,
   ): Promise<ParcelResponseDto> {
+    return this.parcelQueryService.findByTrackingNumber(trackingNumber);
+  }
+
+  /**
+   * Returns the parcel with its full movement history.
+   *
+   * Delegates to ParcelQueryService.findByTrackingNumber(), which is decorated
+   * with @Authorize(ParcelPolicy, ParcelAction.View) — authorization is
+   * enforced there, not here. Callers outside this module (e.g. TrackingGateway)
+   * must go through this method and must have a valid Principal in context.
+   */
+  async getParcelTracking(
+    trackingNumber: string,
+  ): Promise<ParcelTrackingResponseDto> {
     return this.parcelQueryService.findByTrackingNumber(trackingNumber);
   }
 

@@ -139,6 +139,7 @@ model employee {
   vehicle_assignment  vehicle_assignment[]
   manifest_as_creator             transport_manifest[]  @relation("manifest_created_byToemployee")
   manifest_item_as_adder          manifest_item[]       @relation("manifest_item_added_byToemployee")
+  trip_location_log_as_driver     trip_location_log[]   @relation("trip_location_log_driverToemployee")
 
   @@unique([tenant_id, employee_code], map: "uq_tenant_emp_code")
   @@unique([tenant_id, user_id], map: "uq_tenant_user")
@@ -742,6 +743,23 @@ model trip {
   organization_unit_trip_origin_org_unit_idToorganization_unit      organization_unit    @relation("trip_origin_org_unit_idToorganization_unit", fields: [origin_org_unit_id], references: [id], onUpdate: NoAction)
   tenant                                                            tenant               @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   vehicle                                                           vehicle?             @relation(fields: [vehicle_id], references: [id], onUpdate: NoAction)
+  trip_location_log                                                 trip_location_log[]
+}
+
+model trip_location_log {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  trip_id     String   @db.Uuid
+  driver_id   String   @db.Uuid
+  latitude    Decimal  @db.Decimal(10, 7)
+  longitude   Decimal  @db.Decimal(10, 7)
+  recorded_at DateTime @db.Timestamp(6)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+
+  trip   trip     @relation(fields: [trip_id],   references: [id], onDelete: Cascade,  onUpdate: NoAction)
+  driver employee @relation("trip_location_log_driverToemployee", fields: [driver_id], references: [id], onDelete: Restrict, onUpdate: NoAction)
+
+  @@index([trip_id, recorded_at])
+  @@map("trip_location_log")
 }
 
 model users {
