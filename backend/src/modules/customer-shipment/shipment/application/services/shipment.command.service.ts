@@ -44,7 +44,10 @@ import {
   CustomerShipmentCreatedPayload,
   CustomerShipmentLifecyclePayload,
 } from '../../../constants/customer-shipment.events';
-import { CUSTOMER_SHIPMENT_CACHE_KEYS, PARCEL_LABEL_STORAGE_CATEGORY } from '../../../constants/customer-shipment.cache.constants';
+import {
+  CUSTOMER_SHIPMENT_CACHE_KEYS,
+  PARCEL_LABEL_STORAGE_CATEGORY,
+} from '../../../constants/customer-shipment.cache.constants';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
 
 /** A parcel with everything computed before the transaction opens. */
@@ -269,7 +272,6 @@ export class ShipmentCommandService {
 
     return { id: shipment.id };
   }
-
 
   /** PENDING or PROCESSING -> CANCELLED. The aggregate refuses it after dispatch. */
   @Authorize({

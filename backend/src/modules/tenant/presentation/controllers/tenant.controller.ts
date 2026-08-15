@@ -441,14 +441,14 @@ export class TenantController {
     try {
       const ext = tenant.logoUrl.split('.').pop()?.toLowerCase();
       const mimeTypes: Record<string, string> = {
-        'png': 'image/png',
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'gif': 'image/gif',
-        'svg': 'image/svg+xml',
-        'webp': 'image/webp'
+        png: 'image/png',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        gif: 'image/gif',
+        svg: 'image/svg+xml',
+        webp: 'image/webp',
       };
-      
+
       if (ext && mimeTypes[ext]) {
         res.setHeader('Content-Type', mimeTypes[ext]);
       } else {

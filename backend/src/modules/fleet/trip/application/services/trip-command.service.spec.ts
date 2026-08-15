@@ -127,9 +127,9 @@ describe('TripCommandService', () => {
       vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
       commandRepository.create.mockResolvedValue(scheduledTrip());
 
-      await expect(service.createTrip(tenantId, undefined, validDto)).resolves.toBe(
-        tripId,
-      );
+      await expect(
+        service.createTrip(tenantId, undefined, validDto),
+      ).resolves.toBe(tripId);
 
       expect(employeeFacade.validateEmployeeExists).toHaveBeenCalledWith(
         driverId,
@@ -240,9 +240,9 @@ describe('TripCommandService', () => {
       commandRepository.create.mockResolvedValue(scheduledTrip());
       employeeFacade.getUserId.mockResolvedValue(null);
 
-      await expect(service.createTrip(tenantId, undefined, validDto)).resolves.toBe(
-        tripId,
-      );
+      await expect(
+        service.createTrip(tenantId, undefined, validDto),
+      ).resolves.toBe(tripId);
 
       expect(notificationFacade.notifyUser).not.toHaveBeenCalled();
     });

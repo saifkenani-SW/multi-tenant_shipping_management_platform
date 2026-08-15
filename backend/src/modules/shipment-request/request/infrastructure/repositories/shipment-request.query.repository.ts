@@ -106,13 +106,14 @@ export class ShipmentRequestQueryRepository {
 
         if (criteria.targetTenantId) {
           orConditions.push(
-            eb('sr.target_tenant_id', '=', criteria.targetTenantId!)
+            eb('sr.target_tenant_id', '=', criteria.targetTenantId!),
           );
         }
 
         if (
           criteria.quotationTenantId ||
-          (criteria.quotationOrgUnitIds && criteria.quotationOrgUnitIds.length > 0)
+          (criteria.quotationOrgUnitIds &&
+            criteria.quotationOrgUnitIds.length > 0)
         ) {
           let subquery = eb
             .selectFrom('quotation as q')
@@ -190,7 +191,9 @@ export class ShipmentRequestQueryRepository {
     }
 
     const endCursor =
-      mappedRecords.length > 0 ? mappedRecords[mappedRecords.length - 1].id : null;
+      mappedRecords.length > 0
+        ? mappedRecords[mappedRecords.length - 1].id
+        : null;
 
     return new CursorPaginatedResponse<any>(mappedRecords, {
       hasNextPage,

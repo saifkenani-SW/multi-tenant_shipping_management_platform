@@ -15,7 +15,7 @@ import { UserController } from './presentation/controllers/user.controller';
     UserCommandRepository,
     UserQueryService,
     UserCommandService,
-    UserFacade
+    UserFacade,
   ],
   exports: [UserFacade],
 })

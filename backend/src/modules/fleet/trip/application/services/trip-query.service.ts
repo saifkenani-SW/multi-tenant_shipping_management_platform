@@ -96,7 +96,10 @@ export class TripQueryService {
     tenantId: string,
     driverId: string,
   ): Promise<TripDetailsDto | null> {
-    const trip = await this.tripQueryRepository.findActiveTripByDriver(tenantId, driverId);
+    const trip = await this.tripQueryRepository.findActiveTripByDriver(
+      tenantId,
+      driverId,
+    );
     if (!trip) return null;
     return this.tripResponseMapper.toDetailsDto(trip);
   }

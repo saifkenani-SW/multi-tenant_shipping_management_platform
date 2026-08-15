@@ -23,7 +23,9 @@ export class ParcelSeeder implements Seeder {
       });
 
       if (!shipment || !orgUnit) {
-        this.logger.warn(`Skipping ParcelSeeder for tenant ${tenant.name}: missing shipment/orgUnit`);
+        this.logger.warn(
+          `Skipping ParcelSeeder for tenant ${tenant.name}: missing shipment/orgUnit`,
+        );
         continue;
       }
 

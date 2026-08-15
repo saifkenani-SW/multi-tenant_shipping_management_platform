@@ -61,4 +61,3 @@ export class CreateTripDto {
   @IsOptional()
   manifestIds?: string[];
 }
-

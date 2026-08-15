@@ -76,7 +76,6 @@ export class CreateShipmentParcelDto {
   @IsBoolean()
   @IsOptional()
   temperatureSensitive?: boolean;
-
 }
 
 /**

@@ -1,4 +1,8 @@
-import { ApiHideProperty, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { ParcelCondition, ParcelStatus } from '@prisma/client';
 import { Exclude } from 'class-transformer';
 
@@ -23,7 +27,6 @@ export class ParcelResponseDto {
 
   @ApiProperty()
   parcelType: string;
-
 
   @ApiProperty()
   actualWeightKg: number;

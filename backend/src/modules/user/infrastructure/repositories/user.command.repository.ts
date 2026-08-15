@@ -6,7 +6,9 @@ import { CreateUserDto } from '../../application/dtos/requests/create-user.dto';
 export class UserCommandRepository {
   constructor(private readonly prisma: TransactionalPrismaService) {}
 
-  async create(data: CreateUserDto & { passwordHash: string }): Promise<string> {
+  async create(
+    data: CreateUserDto & { passwordHash: string },
+  ): Promise<string> {
     try {
       const user = await this.prisma.client.users.create({
         data: {
@@ -19,7 +21,9 @@ export class UserCommandRepository {
       return user.id;
     } catch (error: any) {
       if (error.code === 'P2002') {
-        throw new ConflictException('User with this email or phone already exists');
+        throw new ConflictException(
+          'User with this email or phone already exists',
+        );
       }
       throw error;
     }

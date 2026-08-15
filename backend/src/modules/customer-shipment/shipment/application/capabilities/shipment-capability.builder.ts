@@ -12,10 +12,10 @@ import { ShipmentDetailsResponseDto } from '../dtos/responses/shipment-details.r
 import { ShipmentCapabilities } from './shipment.capabilities.interface';
 
 @Injectable()
-export class ShipmentCapabilityBuilder
-  implements
-    CapabilityBuilder<ShipmentDetailsResponseDto, ShipmentCapabilities>
-{
+export class ShipmentCapabilityBuilder implements CapabilityBuilder<
+  ShipmentDetailsResponseDto,
+  ShipmentCapabilities
+> {
   constructor(private readonly abilityFactory: CaslAbilityBuilder<Principal>) {}
 
   buildCapabilities(

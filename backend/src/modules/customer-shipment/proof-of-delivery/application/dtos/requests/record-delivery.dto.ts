@@ -64,7 +64,8 @@ export class RecordDeliveryDto {
   collectionMethod?: CollectionMethod;
 
   @ApiPropertyOptional({
-    description: 'Whether OTP was verified (send as string "true" or "false" in form-data)',
+    description:
+      'Whether OTP was verified (send as string "true" or "false" in form-data)',
     default: false,
   })
   @Transform(({ value }) => value === 'true' || value === true)

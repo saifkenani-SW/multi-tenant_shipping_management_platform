@@ -76,13 +76,16 @@ export class ProofOfDeliveryQueryRepository {
       .innerJoin('parcel as p', 'p.id', 'pod.parcel_id')
       .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
       .select([...POD_COLUMNS])
-      .select(['cs.sender_phone', 'cs.receiver_phone', 'p.tenant_id as p_tenant_id'])
+      .select([
+        'cs.sender_phone',
+        'cs.receiver_phone',
+        'p.tenant_id as p_tenant_id',
+      ])
       .where('p.tracking_number', '=', trackingNumber)
       .executeTakeFirst();
 
     return record ?? null;
   }
-
 
   async existsForParcel(parcelId: string): Promise<boolean> {
     const record = await this.kysely

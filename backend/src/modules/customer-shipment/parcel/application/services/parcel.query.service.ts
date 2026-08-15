@@ -1,30 +1,36 @@
-import {ForbiddenException, forwardRef, Inject, Injectable, NotFoundException,} from '@nestjs/common';
-import {AuthorizationFacade, Authorize,} from '../../../../../packages/authorization';
-import {Policy} from '../../../../../packages/authorization/policy';
-import {ParcelPolicy} from '../../domain/authorization/policies/parcel.policy';
-import {ParcelAction} from '../../domain/authorization/actions/parcel.action';
-import {CursorPaginatedResponse} from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
-import {ParcelQueryRepository} from '../../infrastructure/repositories/parcel.query.repository';
-import {ParcelQueryDto} from '../dtos/requests/parcel-query.dto';
-import type {ParcelMergedCriteria} from '../dtos/requests/parcel-merged-criteria.interface';
-import {ParcelResponseDto} from '../dtos/responses/parcel.response.dto';
+import {
+  ForbiddenException,
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  AuthorizationFacade,
+  Authorize,
+} from '../../../../../packages/authorization';
+import { Policy } from '../../../../../packages/authorization/policy';
+import { ParcelPolicy } from '../../domain/authorization/policies/parcel.policy';
+import { ParcelAction } from '../../domain/authorization/actions/parcel.action';
+import { CursorPaginatedResponse } from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
+import { ParcelQueryRepository } from '../../infrastructure/repositories/parcel.query.repository';
+import { ParcelQueryDto } from '../dtos/requests/parcel-query.dto';
+import type { ParcelMergedCriteria } from '../dtos/requests/parcel-merged-criteria.interface';
+import { ParcelResponseDto } from '../dtos/responses/parcel.response.dto';
 import { ParcelMapper } from '../mappers/parcel.mapper';
 import { Parcel } from '../../domain/entities/parcel.entity';
 import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-visibility.scope';
 import type { ParcelScopeInterface } from '../../domain/authorization/scopes/parcel-scope.interface';
-import {ShipmentQueryService} from '../../../shipment/application/services/shipment.query.service';
+import { ShipmentQueryService } from '../../../shipment/application/services/shipment.query.service';
 
 import { ParcelTrackingResponseDto } from '../dtos/responses/parcel-tracking.response.dto';
 import { TrackingFacade } from '../../../../tracking/application/facades/tracking.facade';
 import { ProofOfDeliveryQueryService } from '../../../proof-of-delivery/application/services/proof-of-delivery.query.service';
 import { ProofOfDeliveryResponseDto } from '../../../proof-of-delivery/application/dtos/responses/proof-of-delivery.response.dto';
 import { CACHE_FACADE } from '../../../../../core/cache/tokens/cache.tokens';
-import {
-  ReturnCapabilities,
-} from '../../../../../packages/authorization';
+import { ReturnCapabilities } from '../../../../../packages/authorization';
 import { ParcelCapabilityBuilder } from '../capabilities/parcel-capability.builder';
 import { Readable } from 'stream';
-
 
 @Injectable()
 export class ParcelQueryService {
@@ -98,7 +104,11 @@ export class ParcelQueryService {
       builder: ParcelVisibilityScope,
     });
 
-    this.assertFilterAllowed(filter.tenantId, scope.parcel?.tenant_id, 'tenant');
+    this.assertFilterAllowed(
+      filter.tenantId,
+      scope.parcel?.tenant_id,
+      'tenant',
+    );
 
     const merged: ParcelMergedCriteria = {
       tenantId: scope.parcel?.tenant_id || filter.tenantId,
@@ -212,7 +222,9 @@ export class ParcelQueryService {
     policy: Policy(ParcelPolicy, ParcelAction.View),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  async getProofOfDelivery(trackingNumber: string): Promise<ProofOfDeliveryResponseDto> {
+  async getProofOfDelivery(
+    trackingNumber: string,
+  ): Promise<ProofOfDeliveryResponseDto> {
     return this.podQueryService.findByTrackingNumber(trackingNumber);
   }
 
@@ -225,7 +237,11 @@ export class ParcelQueryService {
     photoType: 'signature' | 'idPhoto' | 'parcelPhoto' | 'additionalPhoto',
     index: number = 0,
   ): Promise<{ stream: Readable; mimeType: string }> {
-    return this.podQueryService.getPhotoStream(trackingNumber, photoType, index);
+    return this.podQueryService.getPhotoStream(
+      trackingNumber,
+      photoType,
+      index,
+    );
   }
 
   async findAggregateOrThrow(id: string): Promise<Parcel> {
@@ -265,7 +281,6 @@ export class ParcelQueryService {
 
     return record;
   }
-
 
   /** Used by the shipment side to derive a shipment status from its parcels. */
   async getStatusesForShipment(customerShipmentId: string) {

@@ -69,11 +69,7 @@ export class ParcelQueryRepository {
 
     if (criteria.customerPhone) {
       query = query
-        .innerJoin(
-          'customer_shipment as cs',
-          'cs.id',
-          'p.customer_shipment_id',
-        )
+        .innerJoin('customer_shipment as cs', 'cs.id', 'p.customer_shipment_id')
         .where((eb: any) =>
           eb.or([
             eb('cs.sender_phone', '=', criteria.customerPhone!),
@@ -280,7 +276,6 @@ export class ParcelQueryRepository {
       originOrgUnitId: record.origin_org_unit_id,
     });
   }
-
 
   async existsByTrackingNumber(trackingNumber: string): Promise<boolean> {
     const record = await this.kysely
