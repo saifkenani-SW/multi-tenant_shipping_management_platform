@@ -1,6 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
@@ -8,6 +9,7 @@ import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { AuthorizationContainer } from './packages/authorization/authorization.container';
 import { TransactionContainer } from './packages/transaction/container/transaction.container';
+import { RedisIoAdapter } from './common/websockets/redis-io.adapter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -64,6 +66,16 @@ async function bootstrap() {
       persistAuthorization: true,
     },
   });
+  // 5. Redis-backed Socket.IO adapter (pub/sub for horizontal scaling)
+  const configService = app.get(ConfigService);
+  const redisIoAdapter = new RedisIoAdapter(app);
+  await redisIoAdapter.connectToRedis({
+    host: configService.get<string>('REDIS_HOST', 'localhost'),
+    port: configService.get<number>('REDIS_PORT', 63791),
+    password: configService.get<string>('REDIS_PASSWORD'),
+  });
+  app.useWebSocketAdapter(redisIoAdapter);
+
   AuthorizationContainer.setApp(app);
   TransactionContainer.setApp(app);
   app.enableShutdownHooks();
