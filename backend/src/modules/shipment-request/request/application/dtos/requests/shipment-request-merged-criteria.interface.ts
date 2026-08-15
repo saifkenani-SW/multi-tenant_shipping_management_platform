@@ -9,6 +9,11 @@ export interface ShipmentRequestMergedCriteria {
   receiverPhone?: string;
   status?: RequestStatus;
 
+  // Quotation visibility scope constraints — when present, only requests
+  // that have at least one matching quotation will be returned.
+  quotationTenantId?: string;
+  quotationOrgUnitIds?: string[];
+
   // Pagination
   cursor?: string;
   limit?: number;

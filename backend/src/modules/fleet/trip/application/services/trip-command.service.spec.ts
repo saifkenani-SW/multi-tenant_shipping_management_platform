@@ -62,6 +62,8 @@ describe('TripCommandService', () => {
       startedAt: null,
       endedAt: null,
       notes: null,
+      createdByEmployeeId: null,
+      createdByEmployeeName: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
@@ -125,7 +127,7 @@ describe('TripCommandService', () => {
       vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
       commandRepository.create.mockResolvedValue(scheduledTrip());
 
-      await expect(service.createTrip(tenantId, validDto)).resolves.toBe(
+      await expect(service.createTrip(tenantId, undefined, validDto)).resolves.toBe(
         tripId,
       );
 
@@ -141,7 +143,7 @@ describe('TripCommandService', () => {
 
     it('rejects a trip whose origin equals its destination before any lookup', async () => {
       await expect(
-        service.createTrip(tenantId, {
+        service.createTrip(tenantId, undefined, {
           ...validDto,
           destinationOrgUnitId: originOrgUnitId,
         }),
@@ -155,7 +157,7 @@ describe('TripCommandService', () => {
       employeeFacade.validateEmployeeExists.mockResolvedValue(false);
 
       await expect(
-        service.createTrip(tenantId, validDto),
+        service.createTrip(tenantId, undefined, validDto),
       ).rejects.toBeInstanceOf(DriverNotFoundException);
 
       expect(commandRepository.create).not.toHaveBeenCalled();
@@ -168,7 +170,7 @@ describe('TripCommandService', () => {
       );
 
       await expect(
-        service.createTrip(tenantId, validDto),
+        service.createTrip(tenantId, undefined, validDto),
       ).rejects.toBeInstanceOf(InvalidTripOrgUnitsException);
 
       expect(commandRepository.create).not.toHaveBeenCalled();
@@ -182,7 +184,7 @@ describe('TripCommandService', () => {
       );
 
       await expect(
-        service.createTrip(tenantId, validDto),
+        service.createTrip(tenantId, undefined, validDto),
       ).rejects.toBeInstanceOf(VehicleNotOperableException);
 
       expect(commandRepository.create).not.toHaveBeenCalled();
@@ -193,7 +195,7 @@ describe('TripCommandService', () => {
       organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
       commandRepository.create.mockResolvedValue(scheduledTrip());
 
-      await service.createTrip(tenantId, {
+      await service.createTrip(tenantId, undefined, {
         driverId,
         originOrgUnitId,
         destinationOrgUnitId,
@@ -210,7 +212,7 @@ describe('TripCommandService', () => {
       commandRepository.create.mockResolvedValue(scheduledTrip());
       employeeFacade.getUserId.mockResolvedValue(userId);
 
-      await service.createTrip(tenantId, validDto);
+      await service.createTrip(tenantId, undefined, validDto);
 
       expect(employeeFacade.getUserId).toHaveBeenCalledWith(driverId, tenantId);
       expect(notificationFacade.notifyUser).toHaveBeenCalledWith(
@@ -225,7 +227,7 @@ describe('TripCommandService', () => {
       employeeFacade.validateEmployeeExists.mockResolvedValue(false);
 
       await expect(
-        service.createTrip(tenantId, validDto),
+        service.createTrip(tenantId, undefined, validDto),
       ).rejects.toBeInstanceOf(DriverNotFoundException);
 
       expect(notificationFacade.notifyUser).not.toHaveBeenCalled();
@@ -238,7 +240,7 @@ describe('TripCommandService', () => {
       commandRepository.create.mockResolvedValue(scheduledTrip());
       employeeFacade.getUserId.mockResolvedValue(null);
 
-      await expect(service.createTrip(tenantId, validDto)).resolves.toBe(
+      await expect(service.createTrip(tenantId, undefined, validDto)).resolves.toBe(
         tripId,
       );
 

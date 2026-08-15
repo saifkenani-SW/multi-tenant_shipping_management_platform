@@ -1,0 +1,50 @@
+import { Injectable } from '@nestjs/common';
+import {
+  AccessDeniedException,
+  VisibilityScopeBuilder,
+} from '../../../../../../packages/authorization';
+import { ContextAuthorizationProvider } from '../../../../../../packages/authorization/providers/context-authorization.provider';
+import { SubjectType } from '../../../../../../packages/context/principal/principal/SubjectType';
+import { ManifestScopeInterface } from './manifest-scope.interface';
+
+@Injectable()
+export class ManifestVisibilityScope
+  implements VisibilityScopeBuilder<ManifestScopeInterface>
+{
+  constructor(private readonly context: ContextAuthorizationProvider) {}
+
+  buildScope(): ManifestScopeInterface {
+    const principal = this.context.getContext().principal;
+    const type = principal.subject.type;
+
+    if (type === SubjectType.PLATFORM_OWNER) {
+      return {};
+    }
+
+    if (type === SubjectType.TENANT_ADMIN) {
+      return { tenantId: principal.tenantId };
+    }
+
+    if (type === SubjectType.DRIVER) {
+      throw new AccessDeniedException(
+        'Drivers cannot view manifests directly. They view them through their active trip.',
+      );
+    }
+
+    if (type === SubjectType.EMPLOYEE) {
+      const orgUnitIds = [
+        ...(principal.branches || []).map((b) => b.id),
+        ...(principal.warehouses || []).map((w) => w.id),
+      ];
+
+      return {
+        tenantId: principal.tenantId,
+        orgUnitIds,
+      };
+    }
+
+    throw new AccessDeniedException(
+      `Subject type ${type} is not supported for Manifest visibility scope.`,
+    );
+  }
+}

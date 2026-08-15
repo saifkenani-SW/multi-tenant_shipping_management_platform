@@ -5,6 +5,8 @@ import { OrganizationModule } from '../organization/organization.module';
 import { CustomerShipmentModule } from '../customer-shipment/customer-shipment.module';
 import { CustomerShipmentFacade } from '../customer-shipment/facades/customer-shipment.facade';
 import { PARCEL_LOOKUP } from './contracts/parcel-lookup';
+import { AuthorizationModule } from '../authorization/authorization.module';
+import { AuthModule } from '../auth/auth.module';
 
 import { FleetFacade } from './facades/fleet.facade';
 
@@ -21,7 +23,6 @@ import { VehicleAssignmentPersistenceMapper } from './vehicle/infrastructure/map
 import { TripController } from './trip/presentation/controllers/trip.controller';
 import { TripCommandService } from './trip/application/services/trip-command.service';
 import { TripQueryService } from './trip/application/services/trip-query.service';
-import { TripQueryCriteriaBuilder } from './trip/application/builders/query/trip-query-criteria.builder';
 import { TripResponseMapper } from './trip/application/mappers/trip-response.mapper';
 import { TripCommandRepository } from './trip/infrastructure/repositories/trip-command.repository';
 import { TripQueryRepository } from './trip/infrastructure/repositories/trip-query.repository';
@@ -30,7 +31,6 @@ import { TripPersistenceMapper } from './trip/infrastructure/mappers/trip-persis
 import { TransportManifestController } from './transport_manifest/presentation/controllers/transport-manifest.controller';
 import { ManifestCommandService } from './transport_manifest/application/services/manifest-command.service';
 import { ManifestQueryService } from './transport_manifest/application/services/manifest-query.service';
-import { ManifestQueryCriteriaBuilder } from './transport_manifest/application/builders/query/manifest-query-criteria.builder';
 import { ManifestResponseMapper } from './transport_manifest/application/mappers/manifest-response.mapper';
 import { TransportManifestCommandRepository } from './transport_manifest/infrastructure/repositories/transport-manifest-command.repository';
 import { TransportManifestQueryRepository } from './transport_manifest/infrastructure/repositories/transport-manifest-query.repository';
@@ -56,6 +56,8 @@ import { TransportManifestPersistenceMapper } from './transport_manifest/infrast
     OrganizationModule,
     CustomerShipmentModule,
     NotificationModule,
+    AuthorizationModule,
+    AuthModule,
   ],
   controllers: [VehicleController, TripController, TransportManifestController],
   providers: [
@@ -74,7 +76,6 @@ import { TransportManifestPersistenceMapper } from './transport_manifest/infrast
     TripQueryService,
     TripCommandRepository,
     TripQueryRepository,
-    TripQueryCriteriaBuilder,
     TripResponseMapper,
     TripPersistenceMapper,
 
@@ -83,7 +84,6 @@ import { TransportManifestPersistenceMapper } from './transport_manifest/infrast
     ManifestQueryService,
     TransportManifestCommandRepository,
     TransportManifestQueryRepository,
-    ManifestQueryCriteriaBuilder,
     ManifestResponseMapper,
     TransportManifestPersistenceMapper,
 

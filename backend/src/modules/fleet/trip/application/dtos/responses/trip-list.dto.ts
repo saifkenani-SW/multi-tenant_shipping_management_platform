@@ -22,6 +22,15 @@ export class TripListDto {
 
   @ApiProperty({ description: 'Planned departure time', nullable: true })
   scheduledAt: Date | null;
+
+  @ApiProperty({ description: 'Employee who created the trip', nullable: true })
+  createdByEmployeeId: string | null;
+
+  @ApiProperty({
+    description: 'Name of the employee who created the trip',
+    nullable: true,
+  })
+  createdByEmployeeName: string | null;
 }
 
 export class PaginatedTripListDto {

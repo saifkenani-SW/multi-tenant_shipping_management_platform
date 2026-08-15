@@ -22,6 +22,8 @@ export class TripCommandRepository {
         status: trip.status,
         scheduled_at: trip.scheduledAt,
         notes: trip.notes,
+        created_by_employee_id: trip.createdByEmployeeId,
+        created_by_employee_name: trip.createdByEmployeeName,
       },
     });
 

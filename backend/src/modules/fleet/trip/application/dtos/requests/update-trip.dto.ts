@@ -22,11 +22,6 @@ export class UpdateTripDto {
   @ApiPropertyOptional({ format: 'uuid' })
   @IsUUID()
   @IsOptional()
-  vehicleId?: string;
-
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsUUID()
-  @IsOptional()
   originOrgUnitId?: string;
 
   @ApiPropertyOptional({ format: 'uuid' })

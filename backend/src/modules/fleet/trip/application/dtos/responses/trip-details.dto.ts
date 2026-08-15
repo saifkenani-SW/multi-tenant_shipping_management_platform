@@ -43,4 +43,13 @@ export class TripDetailsDto {
 
   @ApiProperty({ description: 'Last update date' })
   updatedAt: Date;
+
+  @ApiProperty({ description: 'Employee who created the trip', nullable: true })
+  createdByEmployeeId: string | null;
+
+  @ApiProperty({
+    description: 'Name of the employee who created the trip',
+    nullable: true,
+  })
+  createdByEmployeeName: string | null;
 }

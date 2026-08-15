@@ -2,9 +2,13 @@ import { TenantAction } from '../modules/tenant/domain/authorization/actions/ten
 import { EmployeeAction } from '../modules/employee/authorization';
 import { ShipmentAction } from '../modules/customer-shipment/shipment/domain/authorization/actions/shipment.action';
 import { ParcelAction } from '../modules/customer-shipment/parcel/domain/authorization/actions/parcel.action';
+import { TripAction } from '../modules/fleet/trip/domain/authorization/actions/trip.action';
+import { ManifestAction } from '../modules/fleet/transport_manifest/domain/authorization/actions/manifest.action';
 
 export type ApplicationActions =
   | TenantAction
   | EmployeeAction
   | ShipmentAction
-  | ParcelAction;
+  | ParcelAction
+  | TripAction
+  | ManifestAction;

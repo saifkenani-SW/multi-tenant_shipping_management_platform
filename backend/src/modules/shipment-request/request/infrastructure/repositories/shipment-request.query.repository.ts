@@ -30,6 +30,8 @@ export class ShipmentRequestQueryRepository {
       criteria.senderPhone || 'none',
       criteria.receiverPhone || 'none',
       criteria.status || 'none',
+      criteria.quotationTenantId || 'none',
+      criteria.quotationOrgUnitIds?.join(',') || 'none',
       criteria.limit || 20,
       criteria.cursor || 'none',
     ],
@@ -66,15 +68,6 @@ export class ShipmentRequestQueryRepository {
       );
     }
 
-    if (criteria.targetTenantId) {
-      query = query.where((eb) =>
-        eb.or([
-          eb('sr.target_tenant_id', '=', criteria.targetTenantId!),
-          eb('sr.target_tenant_id', 'is', null),
-        ]),
-      );
-    }
-
     if (criteria.originGlobalLocationId) {
       query = query.where(
         'sr.origin_global_location_id',
@@ -101,6 +94,59 @@ export class ShipmentRequestQueryRepository {
 
     if (criteria.status) {
       query = query.where('sr.status', '=', criteria.status as any);
+    }
+
+    if (
+      criteria.targetTenantId ||
+      criteria.quotationTenantId ||
+      (criteria.quotationOrgUnitIds && criteria.quotationOrgUnitIds.length > 0)
+    ) {
+      query = query.where((eb) => {
+        const orConditions: any[] = [];
+
+        if (criteria.targetTenantId) {
+          orConditions.push(
+            eb('sr.target_tenant_id', '=', criteria.targetTenantId!)
+          );
+        }
+
+        if (
+          criteria.quotationTenantId ||
+          (criteria.quotationOrgUnitIds && criteria.quotationOrgUnitIds.length > 0)
+        ) {
+          let subquery = eb
+            .selectFrom('quotation as q')
+            .select('q.id' as any)
+            .whereRef('q.shipment_request_id' as any, '=', 'sr.id' as any);
+
+          if (criteria.quotationTenantId) {
+            subquery = subquery.where(
+              'q.tenant_id' as any,
+              '=',
+              criteria.quotationTenantId,
+            );
+          }
+
+          if (
+            criteria.quotationOrgUnitIds &&
+            criteria.quotationOrgUnitIds.length > 0
+          ) {
+            subquery = subquery.where(
+              'q.origin_org_unit_id' as any,
+              'in',
+              criteria.quotationOrgUnitIds,
+            );
+          }
+
+          orConditions.push(eb.exists(subquery));
+        }
+
+        if (orConditions.length > 0) {
+          return eb.or(orConditions);
+        }
+
+        return eb.and([]);
+      });
     }
 
     if (criteria.cursor) {

@@ -1,8 +1,4 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException, } from '@nestjs/common';
 import { ShipmentRequestQueryRepository } from '../../infrastructure/repositories/shipment-request.query.repository';
 import { ShipmentRequestQueryDto } from '../dtos/requests/shipment-request-query.dto';
 import { ShipmentRequestMergedCriteria } from '../dtos/requests/shipment-request-merged-criteria.interface';
@@ -11,7 +7,9 @@ import { ShipmentRequestDetailsResponseDto } from '../dtos/responses/shipment-re
 import { CursorPaginatedResponse } from '../../../../../common/pagination/cursor/responses/cursor-paginated-response';
 import { ShipmentRequestVisibilityScope } from '../../../authorization/scopes/shipment-request-visibility.scope';
 import { AuthorizationFacade } from '../../../../../packages/authorization';
-import { QuotationQueryService } from '../../../../shipment-request/quotation/application/services/quotation.query.service';
+import {
+  QuotationQueryService
+} from '../../../../shipment-request/quotation/application/services/quotation.query.service';
 import { GlobalLocationFacade } from '../../../../global-location/facades/global-location.facade';
 import { TenantFacade } from '../../../../tenant/application/facades/tenant.facade';
 
@@ -116,6 +114,10 @@ export class ShipmentRequestQueryService {
       senderPhone: filter.senderPhone,
       receiverPhone: filter.receiverPhone,
       status: filter.status,
+      // Quotation-level scope constraints (e.g. EMPLOYEE sees only requests
+      // that have a quotation from one of their org units).
+      quotationTenantId: scope.quotation?.tenant_id,
+      quotationOrgUnitIds: scope.quotation?.origin_org_unit_ids,
       cursor: filter.cursor,
       limit: filter.limit,
     };
@@ -168,14 +170,25 @@ export class ShipmentRequestQueryService {
       }
     }
 
-    if (scope.request?.target_tenant_id) {
-      if (
-        rawRequest.targetTenantId !== scope.request.target_tenant_id &&
-        rawRequest.targetTenantId !== undefined
-      ) {
-        throw new NotFoundException(
-          'Shipment request not found or you do not have permission to view it.',
+    // A tenant/employee can see the request if:
+    // 1. It's directed to their tenant
+    // 2. It's a public request (targetTenantId is null)
+    // 3. They have submitted a quotation for it
+    if (scope.request?.target_tenant_id || scope.quotation?.tenant_id || scope.quotation?.origin_org_unit_ids) {
+      const isTargetedToThem = rawRequest.targetTenantId === scope.request?.target_tenant_id;
+
+      if (!isTargetedToThem) {
+        // We must check if they have a quotation for this request to grant access.
+        const quotations = await this.quotationQueryService.findByShipmentRequestId(
+          id,
+          scope, // This will automatically filter quotations to their scope
         );
+
+        if (quotations.length === 0) {
+          throw new NotFoundException(
+            'Shipment request not found or you do not have permission to view it.',
+          );
+        }
       }
     }
 

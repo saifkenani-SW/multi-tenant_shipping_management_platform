@@ -2,7 +2,6 @@ import { Trip } from '../../domain/entities/trip.entity';
 import { TripStatus } from '../../domain/enums/trip-status.enum';
 import { TripNotFoundException } from '../../domain/exceptions/trip-not-found.exception';
 import { TripQueryRepository } from '../../infrastructure/repositories/trip-query.repository';
-import { TripQueryCriteriaBuilder } from '../builders/query/trip-query-criteria.builder';
 import { TripResponseMapper } from '../mappers/trip-response.mapper';
 import { TripQueryDto } from '../dtos/requests/trip-query.dto';
 import { TripQueryService } from './trip-query.service';
@@ -27,6 +26,8 @@ describe('TripQueryService — tenant scoping', () => {
     startedAt: null,
     endedAt: null,
     notes: null,
+    createdByEmployeeId: null,
+    createdByEmployeeName: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   });
@@ -39,12 +40,15 @@ describe('TripQueryService — tenant scoping', () => {
 
   let service: TripQueryService;
 
+  const authFacade = { buildScope: jest.fn().mockReturnValue(null) };
+
   beforeEach(() => {
     jest.resetAllMocks();
+    authFacade.buildScope.mockReturnValue(null);
     service = new TripQueryService(
       queryRepository as unknown as TripQueryRepository,
-      new TripQueryCriteriaBuilder(),
       new TripResponseMapper(),
+      authFacade as any,
     );
   });
 

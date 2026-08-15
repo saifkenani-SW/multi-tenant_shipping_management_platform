@@ -1,44 +1,54 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TransportManifestQueryRepository } from '../../infrastructure/repositories/transport-manifest-query.repository';
 import { TransportManifest } from '../../domain/entities/transport-manifest.entity';
 import { ManifestItem } from '../../domain/entities/manifest-item.entity';
 import { ManifestNotFoundException } from '../../domain/exceptions/manifest-not-found.exception';
 import { ManifestItemNotFoundException } from '../../domain/exceptions/manifest-item-not-found.exception';
-import { ManifestQueryCriteriaBuilder } from '../builders/query/manifest-query-criteria.builder';
 import { ManifestQueryDto } from '../dtos/requests/manifest-query.dto';
 import { ManifestDetailsDto } from '../dtos/responses/manifest-details.dto';
 import { ManifestItemDto } from '../dtos/responses/manifest-item.dto';
 import { PaginatedManifestListDto } from '../dtos/responses/manifest-list.dto';
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 import { PARCEL_LOOKUP } from '../../../contracts/parcel-lookup';
-// Type-only: a type named in a decorated constructor must not be emitted as a
-// value when isolatedModules and emitDecoratorMetadata are both on.
-import type {
-  ParcelLookup,
-  ParcelSummary,
-} from '../../../contracts/parcel-lookup';
+import { Inject } from '@nestjs/common';
+import type { ParcelLookup, ParcelSummary } from '../../../contracts/parcel-lookup';
+import { ManifestQueryCriteria } from '../builders/query/manifest-query-criteria';
+import { OffsetPaginationBuilder } from '../../../../../common/pagination';
+import { AuthorizationFacade } from '../../../../../packages/authorization/facade/authorization.facade';
+import { ManifestVisibilityScope } from '../../domain/authorization/scopes/manifest-visibility.scope';
+import { ForbiddenException } from '@nestjs/common';
 
-/**
- * Read side of the manifest sub-domain.
- *
- * `tenantId` is optional throughout: a platform owner carries no tenant in the
- * request context and reads across every tenant, while any other caller is
- * always scoped to their own.
- */
 @Injectable()
 export class ManifestQueryService {
   constructor(
     private readonly queryRepository: TransportManifestQueryRepository,
-    private readonly criteriaBuilder: ManifestQueryCriteriaBuilder,
     private readonly responseMapper: ManifestResponseMapper,
     @Inject(PARCEL_LOOKUP) private readonly parcelLookup: ParcelLookup,
+    private readonly authorizationFacade: AuthorizationFacade,
   ) {}
 
   async findManifests(
     tenantId: string | undefined,
     query: ManifestQueryDto,
   ): Promise<PaginatedManifestListDto> {
-    const criteria = this.criteriaBuilder.build(query, tenantId);
+    const scope = this.authorizationFacade.buildScope({
+      builder: ManifestVisibilityScope,
+    });
+
+    if (tenantId && scope?.tenantId && tenantId !== scope.tenantId) {
+      throw new ForbiddenException('Tenant mismatch');
+    }
+
+    const criteria: ManifestQueryCriteria = {
+      tenantId: scope?.tenantId || tenantId,
+      scopeOrgUnitIds: scope?.orgUnitIds,
+      status: query.status,
+      tripId: query.tripId,
+      originOrgUnitId: query.originOrgUnitId,
+      destinationOrgUnitId: query.destinationOrgUnitId,
+      pagination: OffsetPaginationBuilder.build(query),
+    };
+
     const [records, total] = await this.queryRepository.findMany(criteria);
 
     return this.responseMapper.toPaginatedListDto(
@@ -76,13 +86,13 @@ export class ManifestQueryService {
   }
 
   /**
-   * Labels for the parcels on a manifest, keyed by parcel id.
-   *
-   * A manifest item stores nothing but a parcel id, so without this the list
-   * reads as a column of identifiers. Fetched through the Customer Shipment
-   * facade in one call — Fleet still owns no parcel query of its own — and a
-   * failure here costs the labels, not the manifest.
+   * Returns manifests in READY_FOR_DISPATCH state with no trip linked.
+   * Used by the GET /manifests/available endpoint.
    */
+  async findAvailableForBooking(tenantId: string) {
+    return this.queryRepository.findAvailable(tenantId);
+  }
+
   private async loadParcels(
     items: ManifestItem[],
   ): Promise<Map<string, ParcelSummary>> {
@@ -99,7 +109,6 @@ export class ManifestQueryService {
     }
   }
 
-  /** Returns the aggregate so callers can ask it to decide a transition. */
   async findManifestOrThrow(
     tenantId: string | undefined,
     id: string,

@@ -17,6 +17,8 @@ const TRIP_COLUMNS = [
   'started_at',
   'ended_at',
   'notes',
+  'created_by_employee_id',
+  'created_by_employee_name',
   'created_at',
   'updated_at',
 ] as const;
@@ -39,6 +41,21 @@ export class TripQueryRepository {
     if (criteria.tenantId) {
       query = query.where('tenant_id', '=', criteria.tenantId);
       countQuery = countQuery.where('tenant_id', '=', criteria.tenantId);
+    }
+
+    if (criteria.scopeOrgUnitIds && criteria.scopeOrgUnitIds.length > 0) {
+      query = query.where((eb) =>
+        eb.or([
+          eb('origin_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+          eb('destination_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+        ]),
+      );
+      countQuery = countQuery.where((eb) =>
+        eb.or([
+          eb('origin_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+          eb('destination_org_unit_id', 'in', criteria.scopeOrgUnitIds!),
+        ]),
+      );
     }
 
     if (criteria.status) {
@@ -127,5 +144,22 @@ export class TripQueryRepository {
       .executeTakeFirst();
 
     return Number(result?.count ?? 0);
+  }
+
+  async findActiveTripByDriver(
+    tenantId: string,
+    driverId: string,
+  ): Promise<Trip | null> {
+    const record = await this.kysely
+      .selectFrom('trip')
+      .select(TRIP_COLUMNS)
+      .where('tenant_id', '=', tenantId)
+      .where('driver_id', '=', driverId)
+      .where('status', 'in', ['SCHEDULED', 'IN_PROGRESS'])
+      .orderBy('status', 'asc') // Assuming IN_PROGRESS sorts before SCHEDULED, but wait... 'I' before 'S'. Yes.
+      .orderBy('created_at', 'asc')
+      .executeTakeFirst();
+
+    return record ? this.tripPersistenceMapper.toDomain(record) : null;
   }
 }

@@ -102,4 +102,19 @@ export class EmployeeQueryService {
       organizationUnitId,
     );
   }
+
+  async findBasicDetailsByIds(ids: string[]) {
+    return this.queryRepository.findBasicDetailsByIds(ids);
+  }
+
+  /**
+   * Returns true when the employee has an active assignment to the given
+   * organization unit. Used by manifest services for scope enforcement.
+   */
+  async isAssignedToOrgUnit(
+    employeeId: string,
+    orgUnitId: string,
+  ): Promise<boolean> {
+    return this.queryRepository.isAssignedToOrgUnit(employeeId, orgUnitId);
+  }
 }

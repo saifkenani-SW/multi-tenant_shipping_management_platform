@@ -11,6 +11,7 @@ import { VehicleQueryService } from '../../../vehicle/application/services/vehic
 import { VehicleNotOperableException } from '../../../vehicle/domain/exceptions/vehicle-not-operable.exception';
 import { Trip } from '../../domain/entities/trip.entity';
 import { DriverNotFoundException } from '../../../vehicle/domain/exceptions/driver-not-found.exception';
+import { DriverHasNoVehicleException } from '../../domain/exceptions/driver-has-no-vehicle.exception';
 import { InvalidTripOrgUnitsException } from '../../domain/exceptions/invalid-trip-org-units.exception';
 import { CreateTripDto } from '../dtos/requests/create-trip.dto';
 import { UpdateTripDto } from '../dtos/requests/update-trip.dto';
@@ -35,8 +36,17 @@ export class TripCommandService {
    * a driver who never opens the app has no other way to learn a trip was
    * assigned to them.
    */
-  async createTrip(tenantId: string, dto: CreateTripDto): Promise<string> {
-    const id = await this.persistNewTrip(tenantId, dto);
+  async createTrip(
+    tenantId: string,
+    creatorId: string | undefined,
+    dto: CreateTripDto,
+  ): Promise<string> {
+    let creatorName: string | null = null;
+    if (creatorId) {
+      creatorName = await this.employeeFacade.getEmployeeName(creatorId);
+    }
+
+    const id = await this.persistNewTrip(tenantId, creatorId, creatorName, dto);
 
     await this.notifyDriverOfAssignment(tenantId, dto.driverId, id);
 
@@ -52,32 +62,45 @@ export class TripCommandService {
   @Transactional()
   private async persistNewTrip(
     tenantId: string,
+    creatorId: string | undefined,
+    creatorName: string | null,
     dto: CreateTripDto,
   ): Promise<string> {
-    // Route validity is a domain rule — fail before doing any lookups.
     Trip.assertRouteIsValid(dto.originOrgUnitId, dto.destinationOrgUnitId);
 
-    await this.assertDriverExists(tenantId, dto.driverId);
+    const assignedVehicleId = await this.assertDriverExists(
+      tenantId,
+      dto.driverId,
+    );
     await this.assertOrgUnitsExist(tenantId, [
       dto.originOrgUnitId,
       dto.destinationOrgUnitId,
     ]);
 
-    if (dto.vehicleId) {
-      await this.assertVehicleIsOperable(tenantId, dto.vehicleId);
-    }
+    await this.assertVehicleIsOperable(tenantId, assignedVehicleId);
 
     const trip = Trip.create({
       tenantId,
       driverId: dto.driverId,
-      vehicleId: dto.vehicleId ?? null,
+      vehicleId: assignedVehicleId,
       originOrgUnitId: dto.originOrgUnitId,
       destinationOrgUnitId: dto.destinationOrgUnitId,
       scheduledAt: dto.scheduledAt ?? null,
       notes: dto.notes ?? null,
+      createdByEmployeeId: creatorId ?? null,
+      createdByEmployeeName: creatorName ?? null,
     });
 
     const created = await this.tripCommandRepository.create(trip);
+
+    // Optionally link pre-existing READY_FOR_DISPATCH manifests to this trip
+    if (dto.manifestIds?.length) {
+      await this.manifestCommandService.assignManifestsToTrip(
+        tenantId,
+        created.id,
+        dto.manifestIds,
+      );
+    }
 
     return created.id;
   }
@@ -120,8 +143,11 @@ export class TripCommandService {
     const reassignedTo =
       dto.driverId && dto.driverId !== trip.driverId ? dto.driverId : null;
 
+    let newVehicleId = trip.vehicleId;
+
     if (reassignedTo) {
-      await this.assertDriverExists(tenantId, reassignedTo);
+      newVehicleId = await this.assertDriverExists(tenantId, reassignedTo);
+      await this.assertVehicleIsOperable(tenantId, newVehicleId);
     }
 
     const changedOrgUnits: string[] = [];
@@ -138,13 +164,9 @@ export class TripCommandService {
       await this.assertOrgUnitsExist(tenantId, changedOrgUnits);
     }
 
-    if (dto.vehicleId && dto.vehicleId !== trip.vehicleId) {
-      await this.assertVehicleIsOperable(tenantId, dto.vehicleId);
-    }
-
     await this.tripCommandRepository.update(id, {
       driverId: dto.driverId,
-      vehicleId: dto.vehicleId,
+      vehicleId: reassignedTo ? (newVehicleId ?? undefined) : undefined,
       originOrgUnitId: dto.originOrgUnitId,
       destinationOrgUnitId: dto.destinationOrgUnitId,
       scheduledAt: dto.scheduledAt,
@@ -181,7 +203,7 @@ export class TripCommandService {
     await this.manifestCommandService.markTripManifestsInTransit(tenantId, id);
   }
 
-  /** IN_PROGRESS -> COMPLETED. */
+  /** IN_PROGRESS → COMPLETED. Also completes all IN_TRANSIT manifests. */
   @Transactional()
   async completeTrip(tenantId: string, id: string): Promise<void> {
     const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
@@ -191,9 +213,11 @@ export class TripCommandService {
     await this.tripCommandRepository.updateStatus(id, trip.status, {
       endedAt: trip.endedAt,
     });
+
+    await this.manifestCommandService.markTripManifestsCompleted(tenantId, id);
   }
 
-  /** SCHEDULED -> CANCELLED. */
+  /** SCHEDULED → CANCELLED. */
   @Transactional()
   async cancelTrip(tenantId: string, id: string): Promise<void> {
     const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
@@ -203,6 +227,26 @@ export class TripCommandService {
     await this.tripCommandRepository.updateStatus(id, trip.status, {
       endedAt: trip.endedAt,
     });
+  }
+
+  /**
+   * Links one or more READY_FOR_DISPATCH manifests to an existing SCHEDULED trip.
+   * Delegates all validation to ManifestCommandService.
+   */
+  @Transactional()
+  async assignManifestsToTrip(
+    tenantId: string,
+    tripId: string,
+    manifestIds: string[],
+  ): Promise<void> {
+    const trip = await this.tripQueryService.findTripOrThrow(tenantId, tripId);
+    trip.assertEditable(); // trip must still be SCHEDULED
+
+    await this.manifestCommandService.assignManifestsToTrip(
+      tenantId,
+      tripId,
+      manifestIds,
+    );
   }
 
   /**
@@ -233,7 +277,7 @@ export class TripCommandService {
   private async assertDriverExists(
     tenantId: string,
     driverId: string,
-  ): Promise<void> {
+  ): Promise<string> {
     const exists = await this.employeeFacade.validateEmployeeExists(
       driverId,
       tenantId,
@@ -242,6 +286,17 @@ export class TripCommandService {
     if (!exists) {
       throw new DriverNotFoundException();
     }
+
+    const vehicleId =
+      await this.vehicleQueryService.getActiveVehicleIdForDriver(
+        tenantId,
+        driverId,
+      );
+    if (!vehicleId) {
+      throw new Error('DriverHasNoVehicleException'); // Replaced below in the import
+    }
+
+    return vehicleId;
   }
 
   private async assertOrgUnitsExist(

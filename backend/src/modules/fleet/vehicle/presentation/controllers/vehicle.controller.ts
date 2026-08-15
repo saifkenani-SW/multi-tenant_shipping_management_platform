@@ -17,6 +17,7 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { VehicleNotFoundException } from '../../domain/exceptions/vehicle-not-found.exception';
 import { Roles } from '../../../../../common/authorization/decorators/roles.decorator';
 import { RoleType } from '../../../../authorization/domain/enums/role.enum';
 import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
@@ -41,13 +42,14 @@ export class VehicleController {
   ) {}
 
   @Post()
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Create a vehicle' })
   @ApiResponse({
     status: HttpStatus.CREATED,
     description: 'Vehicle created successfully',
   })
   async createVehicle(@Body() dto: CreateVehicleDto): Promise<{ id: string }> {
+    console.log('PRINCEPAL_ =', this.requestContext.getPrincipal());
     const id = await this.vehicleCommandService.createVehicle(
       this.requestContext.getTenantIdOrThrow(),
       dto,
@@ -56,12 +58,7 @@ export class VehicleController {
   }
 
   @Get()
-  @Roles(
-    RoleType.PLATFORM_OWNER,
-    RoleType.TENANT_ADMIN,
-    RoleType.EMPLOYEE,
-    RoleType.DRIVER,
-  )
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'List vehicles in the current tenant' })
   @ApiResponse({ status: HttpStatus.OK, type: PaginatedVehicleListDto })
   async findVehicles(
@@ -73,13 +70,32 @@ export class VehicleController {
     );
   }
 
+  @Get('my')
+  @Roles(RoleType.DRIVER)
+  @ApiOperation({ summary: 'Get the vehicle assigned to the current driver' })
+  @ApiResponse({ status: HttpStatus.OK, type: VehicleDetailsDto })
+  async findMyVehicle(): Promise<VehicleDetailsDto> {
+    const tenantId = this.requestContext.getTenantIdOrThrow();
+    const employeeId = this.requestContext.getPrincipal().profileId;
+    if (!employeeId) {
+      throw new VehicleNotFoundException();
+    }
+
+    const vehicleId =
+      await this.vehicleQueryService.getActiveVehicleIdForDriver(
+        tenantId,
+        employeeId,
+      );
+
+    if (!vehicleId) {
+      throw new VehicleNotFoundException();
+    }
+
+    return this.vehicleQueryService.getVehicleDetails(tenantId, vehicleId);
+  }
+
   @Get(':id')
-  @Roles(
-    RoleType.PLATFORM_OWNER,
-    RoleType.TENANT_ADMIN,
-    RoleType.EMPLOYEE,
-    RoleType.DRIVER,
-  )
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Get vehicle details' })
   @ApiResponse({ status: HttpStatus.OK, type: VehicleDetailsDto })
   async getVehicleDetails(
@@ -93,7 +109,7 @@ export class VehicleController {
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Update a vehicle' })
   @ApiResponse({
     status: HttpStatus.OK,
@@ -111,7 +127,7 @@ export class VehicleController {
   }
 
   @Post(':id/assignments')
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Assign a driver to a vehicle' })
   @ApiResponse({
     status: HttpStatus.CREATED,
@@ -130,7 +146,7 @@ export class VehicleController {
   }
 
   @Get(':id/assignments')
-  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Roles(RoleType.PLATFORM_OWNER, RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'List driver assignments of a vehicle' })
   @ApiResponse({ status: HttpStatus.OK, type: [VehicleAssignmentDto] })
   async getVehicleAssignments(
@@ -144,7 +160,7 @@ export class VehicleController {
 
   @Delete(':id/assignments/:assignmentId')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @Roles(RoleType.TENANT_ADMIN)
   @ApiOperation({ summary: 'Release an active driver assignment' })
   @ApiResponse({
     status: HttpStatus.OK,

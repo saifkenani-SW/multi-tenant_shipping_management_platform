@@ -14,6 +14,9 @@ export enum PermissionResource {
   CUSTOMER = 'CUSTOMER',
   SHIPMENT = 'SHIPMENT',
   SUBSCRIPTION = 'SUBSCRIPTION',
+  TRIP = 'TRIP',
+  VEHICLE = 'VEHICLE',
+  MANIFEST = 'MANIFEST',
 }
 
 export enum PermissionSearchField {

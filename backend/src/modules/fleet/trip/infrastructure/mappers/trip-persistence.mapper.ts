@@ -16,6 +16,8 @@ export class TripPersistenceMapper {
     started_at: Date | null;
     ended_at: Date | null;
     notes: string | null;
+    created_by_employee_id: string | null;
+    created_by_employee_name: string | null;
     created_at: Date;
     updated_at: Date;
   }): Trip {
@@ -31,6 +33,8 @@ export class TripPersistenceMapper {
       startedAt: record.started_at,
       endedAt: record.ended_at,
       notes: record.notes,
+      createdByEmployeeId: record.created_by_employee_id,
+      createdByEmployeeName: record.created_by_employee_name,
       createdAt: record.created_at,
       updatedAt: record.updated_at,
     });
