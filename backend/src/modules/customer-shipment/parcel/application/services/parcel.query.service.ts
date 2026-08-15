@@ -37,6 +37,10 @@ import { CACHE_FACADE } from '../../../../../core/cache/tokens/cache.tokens';
 import { ReturnCapabilities } from '../../../../../packages/authorization';
 import { ParcelCapabilityBuilder } from '../capabilities/parcel-capability.builder';
 import { Readable } from 'stream';
+import type { IStorageProvider } from '../../../../../packages/storage/src';
+import { STORAGE_PROVIDER } from '../../../../../packages/storage/src';
+import { extname } from 'path';
+import * as mime from 'mime-types';
 
 @Injectable()
 export class ParcelQueryService {
@@ -48,6 +52,8 @@ export class ParcelQueryService {
     private readonly mapper: ParcelMapper,
     private readonly trackingFacade: TrackingFacade,
     private readonly podQueryService: ProofOfDeliveryQueryService,
+    @Inject(STORAGE_PROVIDER)
+    private readonly storageProvider: IStorageProvider,
   ) {}
 
   /**
@@ -347,6 +353,29 @@ export class ParcelQueryService {
       photoType,
       index,
     );
+  }
+
+  @Authorize({
+    policy: Policy(ParcelPolicy, ParcelAction.View),
+    payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
+  })
+  async getLabelStream(
+    trackingNumber: string,
+  ): Promise<{ stream: Readable; mimeType: string }> {
+    const record = await this.queryRepository.findRawByTrackingNumber(trackingNumber);
+
+    if (!record) {
+      throw new NotFoundException('Parcel not found');
+    }
+
+    if (!record.label_key) {
+      throw new NotFoundException('Label not found for this parcel');
+    }
+
+    const stream = await this.storageProvider.get(record.label_key);
+    const mimeType = mime.lookup(extname(record.label_key)) || 'application/octet-stream';
+
+    return { stream, mimeType };
   }
 
   async findAggregateOrThrow(id: string): Promise<Parcel> {
