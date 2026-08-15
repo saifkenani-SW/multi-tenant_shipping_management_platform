@@ -8,7 +8,7 @@ CREATE EXTENSION IF NOT EXISTS "postgis";
 CREATE TYPE "RequestStatus" AS ENUM ('PENDING', 'CUSTOMER_APPROVED', 'COMPANY_ACCEPTED', 'REJECTED', 'CONVERTED', 'CANCELLED', 'EXPIRED');
 
 -- CreateEnum
-CREATE TYPE "ParcelStatus" AS ENUM ('PROCESSING', 'READY_FOR_DISPATCH', 'IN_TRANSIT', 'READY_FOR_COLLECTION', 'COLLECTED', 'RETURNED', 'CANCELLED');
+CREATE TYPE "ParcelStatus" AS ENUM ('PROCESSING', 'READY_FOR_DISPATCH', 'IN_TRANSIT', 'READY_FOR_COLLECTION', 'COLLECTED', 'RETURNED', 'CANCELLED', 'ARRIVED_AT_UNIT');
 
 -- CreateEnum
 CREATE TYPE "ParcelCondition" AS ENUM ('NORMAL', 'DAMAGED', 'OPENED', 'LOST', 'DESTROYED');
@@ -20,7 +20,7 @@ CREATE TYPE "ShipmentStatus" AS ENUM ('PENDING', 'PROCESSING', 'READY_FOR_DISPAT
 CREATE TYPE "TripStatus" AS ENUM ('SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED');
 
 -- CreateEnum
-CREATE TYPE "ManifestStatus" AS ENUM ('PENDING', 'IN_TRANSIT', 'COMPLETED');
+CREATE TYPE "ManifestStatus" AS ENUM ('OPEN', 'READY_FOR_DISPATCH', 'ASSIGNED', 'IN_TRANSIT', 'COMPLETED');
 
 -- CreateEnum
 CREATE TYPE "ManifestItemStatus" AS ENUM ('PENDING_LOAD', 'LOADED', 'UNLOADED', 'MISSING');
@@ -29,7 +29,7 @@ CREATE TYPE "ManifestItemStatus" AS ENUM ('PENDING_LOAD', 'LOADED', 'UNLOADED', 
 CREATE TYPE "QuotationType" AS ENUM ('AUTOMATIC', 'MANUAL');
 
 -- CreateEnum
-CREATE TYPE "QuotationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'EXPIRED', 'WITHDRAWN');
+CREATE TYPE "QuotationStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED', 'EXPIRED', 'WITHDRAWN', 'WAITING_PRICING', 'WAITING_PRICING_REQUEST');
 
 -- CreateEnum
 CREATE TYPE "PaymentMethod" AS ENUM ('CASH', 'ONLINE', 'COD', 'BANK_TRANSFER');
@@ -51,6 +51,9 @@ CREATE TYPE "TicketPriority" AS ENUM ('LOW', 'MEDIUM', 'HIGH', 'URGENT');
 
 -- CreateEnum
 CREATE TYPE "TicketStatus" AS ENUM ('OPEN', 'IN_PROGRESS', 'WAITING_CUSTOMER', 'RESOLVED', 'CLOSED');
+
+-- CreateEnum
+CREATE TYPE "Currency" AS ENUM ('SY', 'USD');
 
 -- CreateEnum
 CREATE TYPE "InvoiceStatus" AS ENUM ('UNPAID', 'PARTIALLY_PAID', 'PAID', 'CANCELLED', 'OVERDUE');
@@ -94,6 +97,9 @@ CREATE TYPE "HandlingFeeType" AS ENUM ('FRAGILE', 'HAZARDOUS', 'PERISHABLE', 'TE
 -- CreateEnum
 CREATE TYPE "CoverageType" AS ENUM ('DELIVERY_AREA', 'PICKUP_AREA', 'BOTH');
 
+-- CreateEnum
+CREATE TYPE "ServiceLevel" AS ENUM ('STANDARD', 'EXPRESS', 'SAME_DAY', 'REFRIGERATED');
+
 -- CreateTable
 CREATE TABLE "assignment_role" (
     "id" UUID NOT NULL,
@@ -128,7 +134,7 @@ CREATE TABLE "customer_address" (
     "customer_id" UUID NOT NULL,
     "label" VARCHAR(100),
     "address_line" VARCHAR(500) NOT NULL,
-    "location" geometry(Point, 4326),
+    "location" geometry,
     "is_default" BOOLEAN NOT NULL DEFAULT false,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -153,10 +159,7 @@ CREATE TABLE "customer_shipment" (
     "id" UUID NOT NULL,
     "tenant_id" UUID NOT NULL,
     "sender_national_id" VARCHAR(50),
-    "sender_customer_profile_id" UUID NOT NULL,
-    "receiver_customer_profile_id" UUID,
     "shipment_request_id" UUID,
-    "approved_quotation_id" UUID,
     "origin_org_unit_id" UUID NOT NULL,
     "destination_org_unit_id" UUID NOT NULL,
     "receiver_name" VARCHAR(255) NOT NULL,
@@ -166,6 +169,12 @@ CREATE TABLE "customer_shipment" (
     "status" "ShipmentStatus" NOT NULL DEFAULT 'PROCESSING',
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "service_level" "ServiceLevel" NOT NULL DEFAULT 'STANDARD',
+    "version" INTEGER NOT NULL DEFAULT 1,
+    "sender_name" VARCHAR(255) NOT NULL,
+    "sender_phone" VARCHAR(50) NOT NULL,
+    "created_by_employee_id" UUID,
+    "created_by_employee_name" VARCHAR(255),
 
     CONSTRAINT "customer_shipment_pkey" PRIMARY KEY ("id")
 );
@@ -214,7 +223,7 @@ CREATE TABLE "global_location" (
     "parent_id" UUID,
     "name" VARCHAR(255) NOT NULL,
     "type" "LocationType" NOT NULL,
-    "location" geometry(Point, 4326),
+    "location" geometry,
 
     CONSTRAINT "global_location_pkey" PRIMARY KEY ("id")
 );
@@ -222,9 +231,15 @@ CREATE TABLE "global_location" (
 -- CreateTable
 CREATE TABLE "invoice" (
     "id" UUID NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
     "tenant_id" UUID NOT NULL,
-    "customer_profile_id" UUID NOT NULL,
     "customer_shipment_id" UUID,
+    "sender_name" VARCHAR(255) NOT NULL,
+    "sender_phone" VARCHAR(50) NOT NULL,
+    "receiver_name" VARCHAR(255) NOT NULL,
+    "receiver_phone" VARCHAR(50) NOT NULL,
+    "origin_org_unit_id" UUID NOT NULL,
+    "destination_org_unit_id" UUID NOT NULL,
     "invoice_number" VARCHAR(100) NOT NULL,
     "subtotal" DECIMAL(10,2) NOT NULL,
     "handling_fees" DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -232,13 +247,23 @@ CREATE TABLE "invoice" (
     "discount_amount" DECIMAL(10,2) NOT NULL DEFAULT 0,
     "total_amount" DECIMAL(10,2) NOT NULL,
     "payment_responsibility" "PaymentResponsibility" NOT NULL DEFAULT 'SENDER',
-    "currency" CHAR(3) NOT NULL DEFAULT 'USD',
+    "currency" "Currency" NOT NULL DEFAULT 'SY',
     "status" "InvoiceStatus" NOT NULL DEFAULT 'UNPAID',
     "due_date" TIMESTAMP(6),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "invoice_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "invoice_counter" (
+    "tenant_id" UUID NOT NULL,
+    "year" INTEGER NOT NULL,
+    "last_number" INTEGER NOT NULL DEFAULT 0,
+    "updated_at" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "invoice_counter_pkey" PRIMARY KEY ("tenant_id","year")
 );
 
 -- CreateTable
@@ -249,6 +274,8 @@ CREATE TABLE "manifest_item" (
     "status" "ManifestItemStatus" NOT NULL DEFAULT 'PENDING_LOAD',
     "loaded_at" TIMESTAMP(6),
     "unloaded_at" TIMESTAMP(6),
+    "added_by_employee_id" UUID,
+    "added_by_employee_name" VARCHAR(255),
 
     CONSTRAINT "manifest_item_pkey" PRIMARY KEY ("id")
 );
@@ -282,7 +309,7 @@ CREATE TABLE "organization_unit" (
     "name" VARCHAR(255) NOT NULL,
     "org_type" "OrgType" NOT NULL,
     "address_line" VARCHAR(500),
-    "location" geometry(Point, 4326),
+    "location" geometry,
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
@@ -312,6 +339,9 @@ CREATE TABLE "parcel" (
     "current_org_unit_id" UUID,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "destination_org_unit_id" UUID,
+    "label_key" VARCHAR(500),
+    "version" INTEGER NOT NULL DEFAULT 1,
 
     CONSTRAINT "parcel_pkey" PRIMARY KEY ("id")
 );
@@ -376,6 +406,7 @@ CREATE TABLE "proof_of_delivery" (
     "tenant_id" UUID NOT NULL,
     "parcel_id" UUID NOT NULL,
     "delivered_by_employee_id" UUID NOT NULL,
+    "delivered_by_employee_name" VARCHAR(255) NOT NULL,
     "collection_method" "CollectionMethod" NOT NULL DEFAULT 'CUSTOMER',
     "received_by_name" VARCHAR(255) NOT NULL,
     "received_by_national_id" VARCHAR(50),
@@ -403,7 +434,7 @@ CREATE TABLE "quotation" (
     "base_price" DECIMAL(10,2),
     "weight_charge" DECIMAL(10,2),
     "extra_fees" DECIMAL(10,2) DEFAULT 0,
-    "amount" DECIMAL(10,2) NOT NULL,
+    "amount" DECIMAL(10,2),
     "pricing_snapshot" JSONB,
     "notes" TEXT,
     "valid_until" TIMESTAMP(6),
@@ -411,6 +442,7 @@ CREATE TABLE "quotation" (
     "submitted_by_employee_id" UUID,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "service_level" "ServiceLevel" NOT NULL DEFAULT 'STANDARD',
 
     CONSTRAINT "quotation_pkey" PRIMARY KEY ("id")
 );
@@ -452,7 +484,7 @@ CREATE TABLE "shipment_request" (
     "receiver_lat" DECIMAL(10,8),
     "receiver_lng" DECIMAL(11,8),
     "expected_pieces_count" INTEGER NOT NULL DEFAULT 1,
-    "expected_total_weight_kg" DECIMAL(10,2),
+    "expected_total_weight_kg" DECIMAL(10,2) NOT NULL,
     "notes" TEXT,
     "status" "RequestStatus" NOT NULL DEFAULT 'PENDING',
     "cancelled_at" TIMESTAMP(6),
@@ -461,6 +493,10 @@ CREATE TABLE "shipment_request" (
     "created_by_employee_id" UUID,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "approved_quotation_id" UUID,
+    "expected_height_cm" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "expected_length_cm" DECIMAL(10,2) NOT NULL DEFAULT 0,
+    "expected_width_cm" DECIMAL(10,2) NOT NULL DEFAULT 0,
 
     CONSTRAINT "shipment_request_pkey" PRIMARY KEY ("id")
 );
@@ -576,7 +612,7 @@ CREATE TABLE "tenant_operational_settings" (
 CREATE TABLE "tenant_pricing_settings" (
     "tenant_id" UUID NOT NULL,
     "volumetric_divisor" INTEGER NOT NULL DEFAULT 5000,
-    "default_currency" CHAR(3) NOT NULL DEFAULT 'USD',
+    "default_currency" "Currency" NOT NULL DEFAULT 'SY',
 
     CONSTRAINT "tenant_pricing_settings_pkey" PRIMARY KEY ("tenant_id")
 );
@@ -636,10 +672,12 @@ CREATE TABLE "tenant_zone" (
 CREATE TABLE "transport_manifest" (
     "id" UUID NOT NULL,
     "tenant_id" UUID NOT NULL,
-    "trip_id" UUID NOT NULL,
+    "trip_id" UUID,
     "origin_org_unit_id" UUID NOT NULL,
     "destination_org_unit_id" UUID NOT NULL,
-    "status" "ManifestStatus" NOT NULL DEFAULT 'PENDING',
+    "status" "ManifestStatus" NOT NULL DEFAULT 'OPEN',
+    "created_by_employee_id" UUID,
+    "created_by_employee_name" VARCHAR(255),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -659,10 +697,25 @@ CREATE TABLE "trip" (
     "started_at" TIMESTAMP(6),
     "ended_at" TIMESTAMP(6),
     "notes" TEXT,
+    "created_by_employee_id" UUID,
+    "created_by_employee_name" VARCHAR(255),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "trip_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "trip_location_log" (
+    "id" UUID NOT NULL,
+    "trip_id" UUID NOT NULL,
+    "driver_id" UUID NOT NULL,
+    "latitude" DECIMAL(10,7) NOT NULL,
+    "longitude" DECIMAL(10,7) NOT NULL,
+    "recorded_at" TIMESTAMP(6) NOT NULL,
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "trip_location_log_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -671,6 +724,7 @@ CREATE TABLE "users" (
     "email" VARCHAR(255) NOT NULL,
     "phone" VARCHAR(50),
     "password_hash" VARCHAR(255) NOT NULL,
+    "profile_image_key" VARCHAR(500),
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
 
@@ -688,6 +742,17 @@ CREATE TABLE "user_session" (
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "user_session_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "user_device_token" (
+    "id" UUID NOT NULL,
+    "user_id" UUID NOT NULL,
+    "fcm_token" VARCHAR(512) NOT NULL,
+    "platform" VARCHAR(20) NOT NULL,
+    "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "user_device_token_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -740,6 +805,7 @@ CREATE TABLE "zone_pricing_matrix" (
     "is_active" BOOLEAN NOT NULL DEFAULT true,
     "created_at" TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMP(3) NOT NULL,
+    "service_level" "ServiceLevel" NOT NULL DEFAULT 'STANDARD',
 
     CONSTRAINT "zone_pricing_matrix_pkey" PRIMARY KEY ("id")
 );
@@ -778,12 +844,6 @@ CREATE INDEX "idx_customer_address_location" ON "customer_address" USING GIST ("
 CREATE UNIQUE INDEX "customer_profile_user_id_key" ON "customer_profile"("user_id");
 
 -- CreateIndex
-CREATE INDEX "idx_customer_shipment_sender" ON "customer_shipment"("sender_customer_profile_id");
-
--- CreateIndex
-CREATE INDEX "idx_customer_shipment_receiver" ON "customer_shipment"("receiver_customer_profile_id");
-
--- CreateIndex
 CREATE INDEX "idx_customer_shipment_tenant" ON "customer_shipment"("tenant_id");
 
 -- CreateIndex
@@ -802,7 +862,22 @@ CREATE UNIQUE INDEX "uq_employee_org_unit" ON "employee_assignment"("employee_id
 CREATE INDEX "idx_global_location_geom" ON "global_location" USING GIST ("location");
 
 -- CreateIndex
+CREATE INDEX "idx_invoice_tenant_status" ON "invoice"("tenant_id", "status");
+
+-- CreateIndex
+CREATE INDEX "idx_invoice_sender_phone" ON "invoice"("tenant_id", "sender_phone");
+
+-- CreateIndex
+CREATE INDEX "idx_invoice_origin_org_unit" ON "invoice"("origin_org_unit_id");
+
+-- CreateIndex
+CREATE INDEX "idx_invoice_destination_org_unit" ON "invoice"("destination_org_unit_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "uq_tenant_invoice" ON "invoice"("tenant_id", "invoice_number");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "uq_invoice_shipment" ON "invoice"("customer_shipment_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "uq_manifest_parcel" ON "manifest_item"("manifest_id", "parcel_id");
@@ -811,13 +886,13 @@ CREATE UNIQUE INDEX "uq_manifest_parcel" ON "manifest_item"("manifest_id", "parc
 CREATE INDEX "idx_org_unit_location" ON "organization_unit" USING GIST ("location");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "uq_tracking" ON "parcel"("tracking_number");
+
+-- CreateIndex
 CREATE INDEX "parcel_current_org_unit_id_idx" ON "parcel"("current_org_unit_id");
 
 -- CreateIndex
 CREATE INDEX "parcel_customer_shipment_id_idx" ON "parcel"("customer_shipment_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "uq_tracking" ON "parcel"("tracking_number");
 
 -- CreateIndex
 CREATE INDEX "parcel_movement_organization_unit_id_created_at_idx" ON "parcel_movement"("organization_unit_id", "created_at");
@@ -844,7 +919,16 @@ CREATE UNIQUE INDEX "uq_tenant_role_name" ON "role"("tenant_id", "name");
 CREATE UNIQUE INDEX "uq_role_permission" ON "role_permission"("role_id", "permission_id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "shipment_request_approved_quotation_id_key" ON "shipment_request"("approved_quotation_id");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "uq_org_location" ON "org_unit_location_mapping"("organization_unit_id", "global_location_id");
+
+-- CreateIndex
+CREATE INDEX "transport_manifest_tenant_id_status_trip_id_idx" ON "transport_manifest"("tenant_id", "status", "trip_id");
+
+-- CreateIndex
+CREATE INDEX "trip_location_log_trip_id_recorded_at_idx" ON "trip_location_log"("trip_id", "recorded_at");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
@@ -854,6 +938,12 @@ CREATE UNIQUE INDEX "users_phone_key" ON "users"("phone");
 
 -- CreateIndex
 CREATE INDEX "user_session_user_id_idx" ON "user_session"("user_id");
+
+-- CreateIndex
+CREATE INDEX "user_device_token_user_id_idx" ON "user_device_token"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_device_token_user_id_fcm_token_key" ON "user_device_token"("user_id", "fcm_token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "platform_admin_user_id_key" ON "platform_admin"("user_id");
@@ -868,10 +958,13 @@ CREATE UNIQUE INDEX "uq_tenant_owner" ON "tenant_owner"("tenant_id", "user_id");
 CREATE UNIQUE INDEX "uq_plate_tenant" ON "vehicle"("tenant_id", "plate_number");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "uq_pricing_route" ON "zone_pricing_matrix"("tenant_id", "origin_zone_id", "destination_zone_id");
+CREATE UNIQUE INDEX "uq_pricing_route_service" ON "zone_pricing_matrix"("tenant_id", "origin_zone_id", "destination_zone_id", "service_level");
 
 -- CreateIndex
-CREATE INDEX "vehicle_assignment_employee_id_is_active_idx" ON "vehicle_assignment"("employee_id", "is_active");
+CREATE UNIQUE INDEX "unique_active_employee_assignment" ON "vehicle_assignment"("employee_id") WHERE ("is_active" = true);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "unique_active_vehicle_assignment" ON "vehicle_assignment"("vehicle_id") WHERE ("is_active" = true);
 
 -- CreateIndex
 CREATE UNIQUE INDEX "uq_tenant_handling_fee" ON "handling_fee_rule"("tenant_id", "fee_type");
@@ -895,25 +988,19 @@ ALTER TABLE "customer_address" ADD CONSTRAINT "customer_address_customer_id_fkey
 ALTER TABLE "customer_profile" ADD CONSTRAINT "customer_profile_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_approved_quotation_id_fkey" FOREIGN KEY ("approved_quotation_id") REFERENCES "quotation"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_created_by_employee_id_fkey" FOREIGN KEY ("created_by_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_sender_customer_profile_id_fkey" FOREIGN KEY ("sender_customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_receiver_customer_profile_id_fkey" FOREIGN KEY ("receiver_customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_shipment_request_id_fkey" FOREIGN KEY ("shipment_request_id") REFERENCES "shipment_request"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
-
--- AddForeignKey
-ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
-
--- AddForeignKey
-ALTER TABLE "customer_shipment" ADD CONSTRAINT "customer_shipment_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "customer_tenant" ADD CONSTRAINT "customer_tenant_customer_profile_id_fkey" FOREIGN KEY ("customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -940,13 +1027,22 @@ ALTER TABLE "employee_assignment" ADD CONSTRAINT "employee_assignment_tenant_id_
 ALTER TABLE "global_location" ADD CONSTRAINT "global_location_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "global_location"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "invoice" ADD CONSTRAINT "invoice_customer_profile_id_fkey" FOREIGN KEY ("customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
-
--- AddForeignKey
 ALTER TABLE "invoice" ADD CONSTRAINT "invoice_customer_shipment_id_fkey" FOREIGN KEY ("customer_shipment_id") REFERENCES "customer_shipment"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "invoice" ADD CONSTRAINT "invoice_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "invoice" ADD CONSTRAINT "invoice_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "invoice" ADD CONSTRAINT "invoice_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "invoice_counter" ADD CONSTRAINT "invoice_counter_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "manifest_item" ADD CONSTRAINT "manifest_item_added_by_employee_id_fkey" FOREIGN KEY ("added_by_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "manifest_item" ADD CONSTRAINT "manifest_item_manifest_id_fkey" FOREIGN KEY ("manifest_id") REFERENCES "transport_manifest"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -976,10 +1072,13 @@ ALTER TABLE "parcel" ADD CONSTRAINT "parcel_current_org_unit_id_fkey" FOREIGN KE
 ALTER TABLE "parcel" ADD CONSTRAINT "parcel_customer_shipment_id_fkey" FOREIGN KEY ("customer_shipment_id") REFERENCES "customer_shipment"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "parcel" ADD CONSTRAINT "parcel_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "parcel" ADD CONSTRAINT "parcel_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_organization_unit_id_fkey" FOREIGN KEY ("organization_unit_id") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_parcel_id_fkey" FOREIGN KEY ("parcel_id") REFERENCES "parcel"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -988,10 +1087,10 @@ ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_parcel_id_fkey" FO
 ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_performed_by_employee_id_fkey" FOREIGN KEY ("performed_by_employee_id") REFERENCES "employee"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_trip_id_fkey" FOREIGN KEY ("trip_id") REFERENCES "trip"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_organization_unit_id_fkey" FOREIGN KEY ("organization_unit_id") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "parcel_movement" ADD CONSTRAINT "parcel_movement_trip_id_fkey" FOREIGN KEY ("trip_id") REFERENCES "trip"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "payment" ADD CONSTRAINT "payment_collected_by_employee_id_fkey" FOREIGN KEY ("collected_by_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
@@ -1015,6 +1114,12 @@ ALTER TABLE "proof_of_delivery" ADD CONSTRAINT "proof_of_delivery_parcel_id_fkey
 ALTER TABLE "proof_of_delivery" ADD CONSTRAINT "proof_of_delivery_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "quotation" ADD CONSTRAINT "quotation_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "quotation" ADD CONSTRAINT "quotation_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "quotation" ADD CONSTRAINT "quotation_shipment_request_id_fkey" FOREIGN KEY ("shipment_request_id") REFERENCES "shipment_request"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
@@ -1022,12 +1127,6 @@ ALTER TABLE "quotation" ADD CONSTRAINT "quotation_submitted_by_employee_id_fkey"
 
 -- AddForeignKey
 ALTER TABLE "quotation" ADD CONSTRAINT "quotation_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
-
--- AddForeignKey
-ALTER TABLE "quotation" ADD CONSTRAINT "quotation_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
-
--- AddForeignKey
-ALTER TABLE "quotation" ADD CONSTRAINT "quotation_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "role" ADD CONSTRAINT "role_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -1039,19 +1138,22 @@ ALTER TABLE "role_permission" ADD CONSTRAINT "role_permission_permission_id_fkey
 ALTER TABLE "role_permission" ADD CONSTRAINT "role_permission_role_id_fkey" FOREIGN KEY ("role_id") REFERENCES "role"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_approved_quotation_id_fkey" FOREIGN KEY ("approved_quotation_id") REFERENCES "quotation"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_created_by_employee_id_fkey" FOREIGN KEY ("created_by_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_customer_profile_id_fkey" FOREIGN KEY ("customer_profile_id") REFERENCES "customer_profile"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_target_tenant_id_fkey" FOREIGN KEY ("target_tenant_id") REFERENCES "tenant"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_destination_global_location_id_fkey" FOREIGN KEY ("destination_global_location_id") REFERENCES "global_location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_origin_global_location_id_fkey" FOREIGN KEY ("origin_global_location_id") REFERENCES "global_location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_destination_global_location_id_fkey" FOREIGN KEY ("destination_global_location_id") REFERENCES "global_location"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "shipment_request" ADD CONSTRAINT "shipment_request_target_tenant_id_fkey" FOREIGN KEY ("target_tenant_id") REFERENCES "tenant"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "support_ticket" ADD CONSTRAINT "support_ticket_assigned_to_employee_id_fkey" FOREIGN KEY ("assigned_to_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
@@ -1114,6 +1216,9 @@ ALTER TABLE "tenant_subscription_history" ADD CONSTRAINT "tenant_subscription_hi
 ALTER TABLE "tenant_zone" ADD CONSTRAINT "tenant_zone_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "transport_manifest" ADD CONSTRAINT "transport_manifest_created_by_employee_id_fkey" FOREIGN KEY ("created_by_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "transport_manifest" ADD CONSTRAINT "transport_manifest_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
@@ -1123,13 +1228,16 @@ ALTER TABLE "transport_manifest" ADD CONSTRAINT "transport_manifest_origin_org_u
 ALTER TABLE "transport_manifest" ADD CONSTRAINT "transport_manifest_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- AddForeignKey
-ALTER TABLE "transport_manifest" ADD CONSTRAINT "transport_manifest_trip_id_fkey" FOREIGN KEY ("trip_id") REFERENCES "trip"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+ALTER TABLE "transport_manifest" ADD CONSTRAINT "transport_manifest_trip_id_fkey" FOREIGN KEY ("trip_id") REFERENCES "trip"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "trip" ADD CONSTRAINT "trip_destination_org_unit_id_fkey" FOREIGN KEY ("destination_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "trip" ADD CONSTRAINT "trip_driver_id_fkey" FOREIGN KEY ("driver_id") REFERENCES "employee"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "trip" ADD CONSTRAINT "trip_created_by_employee_id_fkey" FOREIGN KEY ("created_by_employee_id") REFERENCES "employee"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
 ALTER TABLE "trip" ADD CONSTRAINT "trip_origin_org_unit_id_fkey" FOREIGN KEY ("origin_org_unit_id") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
@@ -1141,7 +1249,16 @@ ALTER TABLE "trip" ADD CONSTRAINT "trip_tenant_id_fkey" FOREIGN KEY ("tenant_id"
 ALTER TABLE "trip" ADD CONSTRAINT "trip_vehicle_id_fkey" FOREIGN KEY ("vehicle_id") REFERENCES "vehicle"("id") ON DELETE SET NULL ON UPDATE NO ACTION;
 
 -- AddForeignKey
+ALTER TABLE "trip_location_log" ADD CONSTRAINT "trip_location_log_trip_id_fkey" FOREIGN KEY ("trip_id") REFERENCES "trip"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- AddForeignKey
+ALTER TABLE "trip_location_log" ADD CONSTRAINT "trip_location_log_driver_id_fkey" FOREIGN KEY ("driver_id") REFERENCES "employee"("id") ON DELETE RESTRICT ON UPDATE NO ACTION;
+
+-- AddForeignKey
 ALTER TABLE "user_session" ADD CONSTRAINT "user_session_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "user_device_token" ADD CONSTRAINT "user_device_token_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "platform_admin" ADD CONSTRAINT "platform_admin_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE NO ACTION;
@@ -1168,10 +1285,10 @@ ALTER TABLE "zone_pricing_matrix" ADD CONSTRAINT "zone_pricing_matrix_tenant_id_
 ALTER TABLE "vehicle_assignment" ADD CONSTRAINT "vehicle_assignment_employee_id_fkey" FOREIGN KEY ("employee_id") REFERENCES "employee"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "vehicle_assignment" ADD CONSTRAINT "vehicle_assignment_vehicle_id_fkey" FOREIGN KEY ("vehicle_id") REFERENCES "vehicle"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "vehicle_assignment" ADD CONSTRAINT "vehicle_assignment_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "vehicle_assignment" ADD CONSTRAINT "vehicle_assignment_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "vehicle_assignment" ADD CONSTRAINT "vehicle_assignment_vehicle_id_fkey" FOREIGN KEY ("vehicle_id") REFERENCES "vehicle"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "handling_fee_rule" ADD CONSTRAINT "handling_fee_rule_tenant_id_fkey" FOREIGN KEY ("tenant_id") REFERENCES "tenant"("id") ON DELETE CASCADE ON UPDATE NO ACTION;

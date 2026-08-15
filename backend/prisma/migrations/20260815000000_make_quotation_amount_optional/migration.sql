@@ -1,1 +1,0 @@
-ALTER TABLE "quotation" ALTER COLUMN "amount" DROP NOT NULL;

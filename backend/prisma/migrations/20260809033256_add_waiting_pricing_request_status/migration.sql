@@ -1,2 +1,0 @@
--- AlterEnum
-ALTER TYPE "QuotationStatus" ADD VALUE 'WAITING_PRICING_REQUEST';
