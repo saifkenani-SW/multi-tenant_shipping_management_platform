@@ -34,6 +34,7 @@ import { UpdateParcelStatusDto } from '../../application/dtos/requests/update-pa
 import { ParcelTrackingResponseDto } from '../../application/dtos/responses/parcel-tracking.response.dto';
 import { RecordDeliveryDto } from '../../../proof-of-delivery/application/dtos/requests/record-delivery.dto';
 import { ProofOfDeliveryResponseDto } from '../../../proof-of-delivery/application/dtos/responses/proof-of-delivery.response.dto';
+import { GetParcelStatisticsResponseDto } from '../../application/dtos/responses/parcel-statistics.response.dto';
 
 @ApiTags('Customer Shipments - Parcels')
 @ApiBearerAuth()
@@ -57,6 +58,22 @@ export class ParcelController {
     @Query() query: ParcelQueryDto,
   ) {
     return this.queryService.findByShipment(shipmentId, query);
+  }
+
+  @Get('parcels/statistics')
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.CUSTOMER,
+  )
+  @ApiOperation({
+    summary:
+      'Get aggregated statistics of all parcels within the visibility scope. No filters required.',
+  })
+  @ApiResponse({ status: HttpStatus.OK, type: GetParcelStatisticsResponseDto })
+  async getStatistics(): Promise<GetParcelStatisticsResponseDto> {
+    return this.queryService.getStatistics();
   }
 
   @Get('parcels')

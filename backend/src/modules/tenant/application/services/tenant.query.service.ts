@@ -1,5 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { TenantQueryRepository } from '../../infrastructure/repositories/tenant.query.repository';
+import {
+  UserFacade,
+  UserSummaryDto,
+} from '../../../user/application/facades/user.facade';
 
 import { PaginatedTenantListDto } from '../dtos/responses/tenant-list.dto';
 import { TenantDetailsDto } from '../dtos/responses/tenant-details.dto';
@@ -35,6 +39,7 @@ export class TenantQueryService {
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly tenantQueryCriteriaBuilder: TenantQueryCriteriaBuilder,
     private readonly tenantResponseMapper: TenantResponseMapper,
+    private readonly userFacade: UserFacade,
   ) {}
 
   @ReturnVisibilityScope({
@@ -168,5 +173,24 @@ export class TenantQueryService {
 
   async isTenantOwner(tenantId: string, userId: string): Promise<boolean> {
     return this.tenantQueryRepository.isTenantOwner(tenantId, userId);
+  }
+
+  @Authorize({
+    policy: Policy(TenantPolicy, TenantAction.View),
+    payloadResolver: (tenantId: string) => ({
+      tenantId,
+    }),
+  })
+  async getTenantOwner(tenantId: string): Promise<UserSummaryDto> {
+    const ownerId = await this.tenantQueryRepository.getTenantOwnerId(tenantId);
+    if (!ownerId) {
+      throw new NotFoundException('Tenant owner not found');
+    }
+
+    const userSummary = await this.userFacade.getUserSummary(ownerId);
+    if (!userSummary) {
+      throw new NotFoundException('User details not found');
+    }
+    return userSummary;
   }
 }

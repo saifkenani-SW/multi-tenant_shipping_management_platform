@@ -137,9 +137,24 @@ export class TransportManifest {
     this._status = ManifestStatus.OPEN;
   }
 
-  /** READY_FOR_DISPATCH → IN_TRANSIT. Applied when the owning trip departs. */
-  markInTransit(): void {
+  /**
+   * READY_FOR_DISPATCH → ASSIGNED.
+   * Called when a dispatcher assigns this available manifest to a scheduled trip.
+   */
+  assignToTrip(tripId: string): void {
     if (this._status !== ManifestStatus.READY_FOR_DISPATCH) {
+      throw new ManifestNotModifiableException();
+    }
+    if (this._tripId !== null) {
+      throw new ManifestNotModifiableException();
+    }
+    this._tripId = tripId;
+    this._status = ManifestStatus.ASSIGNED;
+  }
+
+  /** ASSIGNED → IN_TRANSIT. Applied when the owning trip departs. */
+  markInTransit(): void {
+    if (this._status !== ManifestStatus.ASSIGNED) {
       throw new ManifestNotModifiableException();
     }
     this._status = ManifestStatus.IN_TRANSIT;

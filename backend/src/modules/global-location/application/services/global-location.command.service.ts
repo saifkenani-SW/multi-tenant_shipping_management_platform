@@ -17,26 +17,12 @@ export class GlobalLocationCommandService {
     return this.repository.create(data);
   }
 
-  @CacheEvict({
-    keyPrefix: GLOBAL_LOCATION_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: GLOBAL_LOCATION_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [GLOBAL_LOCATION_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: GLOBAL_LOCATION_CACHE_KEYS.PREFIX, allEntries: true })
   async update(id: string, data: UpdateGlobalLocationDto): Promise<void> {
     await this.repository.update(id, data);
   }
 
-  @CacheEvict({
-    keyPrefix: GLOBAL_LOCATION_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: GLOBAL_LOCATION_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [GLOBAL_LOCATION_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: GLOBAL_LOCATION_CACHE_KEYS.PREFIX, allEntries: true })
   async delete(id: string): Promise<void> {
     await this.repository.delete(id);
   }

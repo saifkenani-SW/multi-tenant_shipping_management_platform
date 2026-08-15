@@ -42,6 +42,7 @@ const OCCUPYING_ITEM_STATUSES: ManifestItemStatus[] = [
 const ACTIVE_MANIFEST_STATUSES: ManifestStatus[] = [
   ManifestStatus.OPEN,
   ManifestStatus.READY_FOR_DISPATCH,
+  ManifestStatus.ASSIGNED,
   ManifestStatus.IN_TRANSIT,
 ];
 
@@ -134,7 +135,6 @@ export class TransportManifestQueryRepository {
         .innerJoin('trip', 'trip.id', 'tm.trip_id')
         .where('trip.driver_id', '=', criteria.driverId);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       countQuery = (countQuery as any)
         .innerJoin('trip', 'trip.id', 'tm.trip_id')
         .where('trip.driver_id', '=', criteria.driverId);
@@ -159,22 +159,26 @@ export class TransportManifestQueryRepository {
     ];
   }
 
-  async findById(
-    tenantId: string | undefined,
-    id: string,
-  ): Promise<TransportManifest | null> {
-    let query = this.kysely
+  async findById(id: string): Promise<TransportManifest | null> {
+    const record = await this.kysely
       .selectFrom('transport_manifest')
       .select(MANIFEST_COLUMNS)
-      .where('id', '=', id);
-
-    if (tenantId) {
-      query = query.where('tenant_id', '=', tenantId);
-    }
-
-    const record = await query.executeTakeFirst();
+      .where('id', '=', id)
+      .executeTakeFirst();
 
     return record ? this.persistenceMapper.toDomain(record) : null;
+  }
+
+  async findRawById(id: string): Promise<any> {
+    const record = await this.kysely
+      .selectFrom('transport_manifest as tm')
+      .leftJoin('trip as t', 't.id', 'tm.trip_id')
+      .selectAll('tm')
+      .select('t.driver_id as trip_driver_id')
+      .where('tm.id', '=', id)
+      .executeTakeFirst();
+
+    return record || null;
   }
 
   async findItems(manifestId: string): Promise<ManifestItem[]> {
@@ -256,7 +260,6 @@ export class TransportManifestQueryRepository {
       .select(MANIFEST_COLUMNS)
       .where('tenant_id', '=', tenantId)
       .where('status', '=', ManifestStatus.READY_FOR_DISPATCH)
-      .where('trip_id', 'is', null)
       .orderBy('created_at', 'asc')
       .execute();
 
@@ -297,7 +300,6 @@ export class TransportManifestQueryRepository {
       .where('id', 'in', manifestIds)
       .where('tenant_id', '=', tenantId)
       .where('status', '=', ManifestStatus.READY_FOR_DISPATCH)
-      .where('trip_id', 'is', null)
       .execute();
 
     return records.map((r) => this.persistenceMapper.toDomain(r));

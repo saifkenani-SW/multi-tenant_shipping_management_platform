@@ -10,7 +10,7 @@ DROP INDEX IF EXISTS "vehicle_assignment_employee_id_is_active_idx";
 
 -- Cleanup: Deactivate duplicate active assignments for the same vehicle (keep the most recent one)
 WITH RankedVehicles AS (
-    SELECT id, ROW_NUMBER() OVER (PARTITION BY vehicle_id ORDER BY created_at DESC) as rn
+    SELECT id, ROW_NUMBER() OVER (PARTITION BY vehicle_id ORDER BY assigned_at DESC) as rn
     FROM "vehicle_assignment"
     WHERE "is_active" = true
 )
@@ -20,7 +20,7 @@ WHERE id IN (SELECT id FROM RankedVehicles WHERE rn > 1);
 
 -- Cleanup: Deactivate duplicate active assignments for the same employee (keep the most recent one)
 WITH RankedEmployees AS (
-    SELECT id, ROW_NUMBER() OVER (PARTITION BY employee_id ORDER BY created_at DESC) as rn
+    SELECT id, ROW_NUMBER() OVER (PARTITION BY employee_id ORDER BY assigned_at DESC) as rn
     FROM "vehicle_assignment"
     WHERE "is_active" = true
 )

@@ -12,6 +12,7 @@
 export const ManifestStatus = {
   OPEN: 'OPEN',
   READY_FOR_DISPATCH: 'READY_FOR_DISPATCH',
+  ASSIGNED: 'ASSIGNED',
   IN_TRANSIT: 'IN_TRANSIT',
   COMPLETED: 'COMPLETED',
 } as const;

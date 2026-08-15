@@ -74,12 +74,13 @@ export class ManifestResponseMapper {
     records: Array<{ manifest: TransportManifest; itemCount: number }>,
     total: number,
     pagination: Pagination,
+    scope?: any,
   ): PaginatedManifestListDto {
     const dto = new PaginatedManifestListDto();
     dto.data = records.map((record) =>
       this.toListDto(record.manifest, record.itemCount),
     );
-    dto.meta = new PaginationMeta(pagination, total);
+    dto.meta = { ...new PaginationMeta(pagination, total), scope };
     return dto;
   }
 }

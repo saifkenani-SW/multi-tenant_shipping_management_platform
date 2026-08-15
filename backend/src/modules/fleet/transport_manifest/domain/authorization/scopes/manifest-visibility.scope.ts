@@ -24,9 +24,10 @@ export class ManifestVisibilityScope implements VisibilityScopeBuilder<ManifestS
     }
 
     if (type === SubjectType.DRIVER) {
-      throw new AccessDeniedException(
-        'Drivers cannot view manifests directly. They view them through their active trip.',
-      );
+      return {
+        tenantId: principal.tenantId,
+        driverId: principal.profileId,
+      };
     }
 
     if (type === SubjectType.EMPLOYEE) {

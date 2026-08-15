@@ -36,5 +36,6 @@ export class PaginatedManifestListDto {
     page: number;
     limit: number;
     total: number;
+    scope?: any;
   };
 }

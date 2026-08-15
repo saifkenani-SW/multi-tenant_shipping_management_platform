@@ -1,11 +1,12 @@
 import {
   IsEmail,
   IsNotEmpty,
+  IsOptional,
   IsPhoneNumber,
   IsString,
   IsUUID,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTenantDto {
   @ApiProperty({
@@ -40,11 +41,36 @@ export class CreateTenantDto {
   @IsNotEmpty()
   phone: string;
 
-  @ApiProperty({
-    description: 'The UUID of the existing User who will own this Tenant',
+  @ApiPropertyOptional({
+    description: 'The UUID of an existing User who will own this Tenant',
     example: '01910b80-6e42-7000-8000-000000000000',
   })
   @IsUUID(7)
-  @IsNotEmpty()
-  ownerUserId: string;
+  @IsOptional()
+  ownerUserId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Email address for the tenant admin owner',
+    example: 'admin@globallogistics.com',
+  })
+  @IsEmail()
+  @IsOptional()
+  ownerEmail?: string;
+
+  @ApiPropertyOptional({
+    description: 'Password for the tenant admin owner',
+    example: 'password123',
+  })
+  @IsString()
+  @IsOptional()
+  ownerPassword?: string;
+
+  @ApiProperty({
+    description: 'Phone number for the tenant admin owner',
+    example: '+971501234567',
+    required: false,
+  })
+  @IsPhoneNumber()
+  @IsOptional()
+  ownerPhone?: string;
 }

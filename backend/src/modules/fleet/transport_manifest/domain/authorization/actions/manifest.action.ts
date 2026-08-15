@@ -1,8 +1,5 @@
 export enum ManifestAction {
-  Manage = 'manage',
-  View = 'view',
-  Create = 'create',
-  Update = 'update',
-  Finalize = 'finalize',
-  Reopen = 'reopen',
+  View = 'View',
+  Update = 'Update',
+  Delete = 'Delete',
 }

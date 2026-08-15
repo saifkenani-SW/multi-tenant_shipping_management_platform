@@ -9,7 +9,19 @@ import {
   CUSTOMER_SHIPMENT_CACHE_TTL,
 } from '../../../constants/customer-shipment.cache.constants';
 import type { ParcelMergedCriteria } from '../../application/dtos/requests/parcel-merged-criteria.interface';
+import type { ParcelStatisticsCriteria } from '../../application/dtos/requests/parcel-statistics-criteria.interface';
 import { Parcel } from '../../domain/entities/parcel.entity';
+
+export interface ParcelStatisticsRow {
+  tenantId: string;
+  tenantName: string | null;
+  orgUnitId: string;
+  orgUnitName: string | null;
+  direction: 'CURRENT' | 'INCOMING';
+  status: string;
+  condition: string;
+  count: number | string | bigint;
+}
 
 const PARCEL_COLUMNS = [
   'p.id',
@@ -141,6 +153,122 @@ export class ParcelQueryRepository {
       nextCursor,
       previousCursor: null,
     });
+  }
+
+  async getStatistics(
+    criteria: ParcelStatisticsCriteria,
+  ): Promise<ParcelStatisticsRow[]> {
+    const applyCommonFilters = (query: any) => {
+      let q = query;
+      if (criteria.tenantId) {
+        q = q.where('p.tenant_id', '=', criteria.tenantId);
+      }
+      return q;
+    };
+
+    // --- CURRENT QUERY ---
+    let currentQuery: any = this.kysely
+      .selectFrom('parcel as p')
+      .leftJoin('tenant as t', 't.id', 'p.tenant_id')
+      .leftJoin('organization_unit as ou', 'ou.id', 'p.current_org_unit_id')
+      .select([
+        'p.tenant_id as tenantId',
+        't.name as tenantName',
+        'p.current_org_unit_id as orgUnitId',
+        'ou.name as orgUnitName',
+        'p.current_status as status',
+        'p.current_condition as condition',
+      ])
+      .select((eb: any) => eb.fn.count('p.id').as('count'))
+      .where('p.current_org_unit_id', 'is not', null) // Current implies it is somewhere
+      .groupBy([
+        'p.tenant_id',
+        't.name',
+        'p.current_org_unit_id',
+        'ou.name',
+        'p.current_status',
+        'p.current_condition',
+      ]);
+
+    currentQuery = applyCommonFilters(currentQuery);
+
+    if (criteria.scopeOrgUnitIds) {
+      if (criteria.scopeOrgUnitIds.length > 0) {
+        currentQuery = currentQuery.where(
+          'p.current_org_unit_id',
+          'in',
+          criteria.scopeOrgUnitIds,
+        );
+      } else {
+        currentQuery = currentQuery.where((eb: any) => eb.val(false));
+      }
+    }
+
+    // --- INCOMING QUERY ---
+    let incomingQuery: any = this.kysely
+      .selectFrom('parcel as p')
+      .leftJoin('tenant as t', 't.id', 'p.tenant_id')
+      .leftJoin('organization_unit as ou', 'ou.id', 'p.destination_org_unit_id')
+      .select([
+        'p.tenant_id as tenantId',
+        't.name as tenantName',
+        'p.destination_org_unit_id as orgUnitId',
+        'ou.name as orgUnitName',
+        'p.current_status as status',
+        'p.current_condition as condition',
+      ])
+      .select((eb: any) => eb.fn.count('p.id').as('count'))
+      .where('p.destination_org_unit_id', 'is not', null)
+      // Arrived logic based on the domain rule: `isFinalDestination` is `currentOrgUnitId === destinationOrgUnitId`
+      .where((eb: any) =>
+        eb.or([
+          eb(
+            'p.current_org_unit_id',
+            '!=',
+            eb.ref('p.destination_org_unit_id'),
+          ),
+          eb('p.current_org_unit_id', 'is', null),
+        ]),
+      )
+      .groupBy([
+        'p.tenant_id',
+        't.name',
+        'p.destination_org_unit_id',
+        'ou.name',
+        'p.current_status',
+        'p.current_condition',
+      ]);
+
+    incomingQuery = applyCommonFilters(incomingQuery);
+
+    if (criteria.scopeOrgUnitIds) {
+      if (criteria.scopeOrgUnitIds.length > 0) {
+        incomingQuery = incomingQuery.where(
+          'p.destination_org_unit_id',
+          'in',
+          criteria.scopeOrgUnitIds,
+        );
+      } else {
+        incomingQuery = incomingQuery.where((eb: any) => eb.val(false));
+      }
+    }
+
+    const [currentResults, incomingResults] = await Promise.all([
+      currentQuery.execute(),
+      incomingQuery.execute(),
+    ]);
+
+    const mappedCurrent = currentResults.map((r: any) => ({
+      ...r,
+      direction: 'CURRENT' as const,
+    }));
+
+    const mappedIncoming = incomingResults.map((r: any) => ({
+      ...r,
+      direction: 'INCOMING' as const,
+    }));
+
+    return [...mappedCurrent, ...mappedIncoming];
   }
 
   /** All parcels of one shipment, unpaginated — used to derive shipment status. */

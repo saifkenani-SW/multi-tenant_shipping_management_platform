@@ -278,4 +278,14 @@ export class TenantQueryRepository {
       .executeTakeFirst();
     return !!record;
   }
+
+  async getTenantOwnerId(tenantId: string): Promise<string | null> {
+    const record = await this.kysely
+      .selectFrom('tenant_owner')
+      .select('user_id')
+      .where('tenant_id', '=', tenantId)
+      .where('is_primary', '=', true)
+      .executeTakeFirst();
+    return record?.user_id ?? null;
+  }
 }

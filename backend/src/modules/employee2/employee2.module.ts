@@ -8,9 +8,10 @@ import { EmployeeFacade } from './facades/employee.facade';
 import { TenantModule } from '../tenant/tenant.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { AuthorizationModule } from '../authorization/authorization.module';
+import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [TenantModule, OrganizationModule, AuthorizationModule],
+  imports: [TenantModule, OrganizationModule, AuthorizationModule, UserModule],
   controllers: [EmployeeController],
   providers: [
     EmployeeCommandService,

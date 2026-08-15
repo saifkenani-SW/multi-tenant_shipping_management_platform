@@ -37,14 +37,7 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
     return plan.id;
   }
 
-  @CacheEvict({
-    keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.PREFIX, allEntries: true })
   async updatePlan(id: string, dto: UpdateSubscriptionPlanDto): Promise<void> {
     await this.planRepository.update(id, {
       name: dto.name,
@@ -61,26 +54,12 @@ export class SubscriptionPlanCommandService implements ISubscriptionPlanCommandS
     });
   }
 
-  @CacheEvict({
-    keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.PREFIX, allEntries: true })
   async deactivatePlan(id: string): Promise<void> {
     await this.planRepository.updateStatus(id, false);
   }
 
-  @CacheEvict({
-    keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [SUBSCRIPTION_PLAN_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: SUBSCRIPTION_PLAN_CACHE_KEYS.PREFIX, allEntries: true })
   async activatePlan(id: string): Promise<void> {
     await this.planRepository.updateStatus(id, true);
   }
