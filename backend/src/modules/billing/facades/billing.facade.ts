@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ShipmentStatus } from '@prisma/client';
 import { InvoiceCommandService } from '../invoice/application/services/invoice.command.service';
 import { InvoiceQueryService } from '../invoice/application/services/invoice.query.service';
 import type { CreateInvoiceForShipmentCommand } from '../invoice/application/dtos/requests/create-invoice-for-shipment.command';
@@ -31,11 +32,19 @@ export class BillingFacade {
   }
 
   /**
-   * Cancels the invoice of a cancelled shipment. Does nothing when the shipment
-   * has none; refuses when the money has already been taken.
+   * Cancels the invoice of a cancelled shipment.
+   *
+   * Pass the shipment status from *before* the cancel write. Refunds run only
+   * for PENDING. RETURNED never refunds and never voids the invoice.
    */
-  async cancelInvoiceForShipment(customerShipmentId: string): Promise<void> {
-    await this.invoiceCommandService.cancelForShipment(customerShipmentId);
+  async cancelInvoiceForShipment(
+    customerShipmentId: string,
+    shipmentStatus: ShipmentStatus,
+  ): Promise<void> {
+    await this.invoiceCommandService.cancelForShipment(
+      customerShipmentId,
+      shipmentStatus,
+    );
   }
 
   /**
@@ -44,6 +53,27 @@ export class BillingFacade {
    */
   async recordPayment(command: RecordPaymentCommand): Promise<{ id: string }> {
     return this.invoiceCommandService.recordPayment(command);
+  }
+
+  /** Same as recordPayment, looked up from the shipment rather than the invoice id. */
+  async recordPaymentForShipment(
+    customerShipmentId: string,
+    command: Omit<RecordPaymentCommand, 'invoiceId'>,
+  ): Promise<{ id: string }> {
+    return this.invoiceCommandService.recordPaymentForShipment(
+      customerShipmentId,
+      command,
+    );
+  }
+
+  /**
+   * Refuses handover until the shipment invoice is fully paid. A payment
+   * recorded earlier in the same transaction is visible here.
+   */
+  async assertSettledForDelivery(customerShipmentId: string): Promise<void> {
+    await this.invoiceCommandService.assertSettledForDelivery(
+      customerShipmentId,
+    );
   }
 
   /**

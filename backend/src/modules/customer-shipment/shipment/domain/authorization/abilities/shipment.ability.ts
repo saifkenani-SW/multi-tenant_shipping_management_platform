@@ -32,9 +32,15 @@ export class ShipmentAbility implements CaslAbilityContributor<
 
     if (type === SubjectType.TENANT_ADMIN) {
       if (principal.tenantId) {
-        builder.can(ShipmentAction.View, ShipmentSubject, {
-          tenantId: principal.tenantId,
-        } as any);
+        const ownTenant = { tenantId: principal.tenantId } as any;
+        builder.can(ShipmentAction.View, ShipmentSubject, ownTenant);
+        builder.can(ShipmentAction.RecordPayment, ShipmentSubject, ownTenant);
+        builder.can(ShipmentAction.Cancel, ShipmentSubject, {
+          ...ownTenant,
+          status: {
+            $in: [ShipmentStatus.PENDING, ShipmentStatus.PROCESSING],
+          },
+        });
       }
       return;
     }
@@ -101,6 +107,17 @@ export class ShipmentAbility implements CaslAbilityContributor<
             ...mutateScope,
             status: ShipmentStatus.IN_TRANSIT,
           });
+        }
+
+        if (perms.includes(Permission.MANAGE_BILLING)) {
+          builder.can(ShipmentAction.RecordPayment, ShipmentSubject, {
+            tenantId: principal.tenantId,
+            originOrgUnitId: orgUnit.id,
+          } as any);
+          builder.can(ShipmentAction.RecordPayment, ShipmentSubject, {
+            tenantId: principal.tenantId,
+            destinationOrgUnitId: orgUnit.id,
+          } as any);
         }
       }
     }

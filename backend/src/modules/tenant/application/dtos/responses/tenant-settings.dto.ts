@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Currency } from '@prisma/client';
 
 export class DeliverySettingsDto {
   @ApiProperty()
@@ -47,8 +48,8 @@ export class PricingSettingsDto {
   @ApiProperty()
   volumetricDivisor: number;
 
-  @ApiProperty()
-  defaultCurrency: string;
+  @ApiProperty({ enum: Currency })
+  defaultCurrency: Currency;
 }
 
 export class TenantSettingsDto {
@@ -72,6 +73,6 @@ export class TenantPricingSettingsOnlyDto {
   @ApiProperty()
   volumetricDivisor: number;
 
-  @ApiProperty()
-  defaultCurrency: string;
+  @ApiProperty({ enum: Currency })
+  defaultCurrency: Currency;
 }

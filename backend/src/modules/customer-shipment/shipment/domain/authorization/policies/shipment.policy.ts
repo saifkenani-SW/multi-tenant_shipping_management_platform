@@ -50,7 +50,8 @@ export class ShipmentPolicy implements AuthorizationPolicy<ShipmentAction> {
       case ShipmentAction.Update:
       case ShipmentAction.Cancel:
       case ShipmentAction.Return:
-      case ShipmentAction.View: {
+      case ShipmentAction.View:
+      case ShipmentAction.RecordPayment: {
         if (!payload?.shipmentId) {
           throw new AccessDeniedException('Missing shipment ID.');
         }

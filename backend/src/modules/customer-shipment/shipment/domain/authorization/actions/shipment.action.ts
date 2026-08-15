@@ -4,4 +4,5 @@ export enum ShipmentAction {
   Update = 'update',
   Cancel = 'cancel',
   Return = 'return',
+  RecordPayment = 'record_payment',
 }

@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { InvoiceStatus, PaymentStatus } from '@prisma/client';
 import { InvoiceResponseDto } from '../dtos/responses/invoice.response.dto';
 import {
   InvoiceDetailsResponseDto,
   InvoicePaymentDto,
 } from '../dtos/responses/invoice-details.response.dto';
+import { roundMoney } from '../../../constants/billing.constants';
 
 /** Maps raw Kysely rows (snake_case) to the API shape (camelCase). */
 @Injectable()
@@ -11,6 +13,8 @@ export class InvoiceMapper {
   toResponse(record: any): InvoiceResponseDto {
     const totalAmount = Number(record.total_amount);
     const paidAmount = Number(record.paid_amount ?? 0);
+    const refundedAmount = Number(record.refunded_amount ?? 0);
+    const cancelled = record.status === InvoiceStatus.CANCELLED;
 
     return {
       id: record.id,
@@ -29,14 +33,12 @@ export class InvoiceMapper {
       discountAmount: Number(record.discount_amount),
       totalAmount,
       paidAmount,
-      // Never negative: an overpayment is still a settled invoice, and the
-      // surplus is a refund question rather than a negative balance.
-      balanceDue: Math.max(
-        0,
-        Math.round((totalAmount - paidAmount) * 100) / 100,
-      ),
+      refundedAmount,
+      balanceDue: cancelled
+        ? 0
+        : Math.max(0, roundMoney(totalAmount - paidAmount)),
       paymentResponsibility: record.payment_responsibility,
-      currency: (record.currency ?? '').trim(),
+      currency: record.currency,
       status: record.status,
       dueDate: record.due_date ?? null,
       createdAt: record.created_at,
@@ -58,9 +60,25 @@ export class InvoiceMapper {
   }
 
   toDetails(record: any, payments: any[]): InvoiceDetailsResponseDto {
+    const paymentDtos = payments.map((p) => this.toPaymentDto(p));
+    const paidAmount = roundMoney(
+      paymentDtos
+        .filter((p) => p.status === PaymentStatus.COMPLETED)
+        .reduce((sum, p) => sum + p.amount, 0),
+    );
+    const refundedAmount = roundMoney(
+      paymentDtos
+        .filter((p) => p.status === PaymentStatus.REFUNDED)
+        .reduce((sum, p) => sum + p.amount, 0),
+    );
+
     return {
-      ...this.toResponse(record),
-      payments: payments.map((p) => this.toPaymentDto(p)),
+      ...this.toResponse({
+        ...record,
+        paid_amount: paidAmount,
+        refunded_amount: refundedAmount,
+      }),
+      payments: paymentDtos,
     };
   }
 }

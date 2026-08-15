@@ -41,8 +41,8 @@ export class InvoiceQueryRepository {
   /**
    * Sum of completed payments, as a correlated subquery.
    *
-   * Only COMPLETED counts: a pending or failed attempt has not collected
-   * anything, and a refund is recorded separately rather than reducing this.
+   * Only COMPLETED counts toward what was collected. Refunds are a separate
+   * column so history can show both without erasing the original collections.
    */
   private paidAmountExpression(eb: any) {
     return eb
@@ -55,13 +55,27 @@ export class InvoiceQueryRepository {
       .as('paid_amount');
   }
 
+  private refundedAmountExpression(eb: any) {
+    return eb
+      .selectFrom('payment as pay')
+      .select((inner: any) =>
+        inner.fn
+          .coalesce(inner.fn.sum('pay.amount'), inner.val(0))
+          .as('refunded'),
+      )
+      .whereRef('pay.invoice_id', '=', 'i.id')
+      .where('pay.status', '=', PaymentStatus.REFUNDED)
+      .as('refunded_amount');
+  }
+
   async findMany(
     criteria: InvoiceMergedCriteria,
   ): Promise<CursorPaginatedResponse<any>> {
     let query: any = this.kysely
       .selectFrom('invoice as i')
       .select([...INVOICE_COLUMNS])
-      .select((eb: any) => this.paidAmountExpression(eb));
+      .select((eb: any) => this.paidAmountExpression(eb))
+      .select((eb: any) => this.refundedAmountExpression(eb));
 
     if (criteria.tenantId) {
       query = query.where('i.tenant_id', '=', criteria.tenantId);
@@ -157,6 +171,7 @@ export class InvoiceQueryRepository {
       .selectFrom('invoice as i')
       .select([...INVOICE_COLUMNS])
       .select((eb: any) => this.paidAmountExpression(eb))
+      .select((eb: any) => this.refundedAmountExpression(eb))
       .where('i.id', '=', id)
       .executeTakeFirst();
 
@@ -168,13 +183,14 @@ export class InvoiceQueryRepository {
       .selectFrom('invoice as i')
       .select([...INVOICE_COLUMNS])
       .select((eb: any) => this.paidAmountExpression(eb))
+      .select((eb: any) => this.refundedAmountExpression(eb))
       .where('i.customer_shipment_id', '=', customerShipmentId)
       .executeTakeFirst();
 
     return record ?? null;
   }
 
-  /** Every payment recorded against an invoice, oldest first. */
+  /** Every payment and refund recorded against an invoice, oldest first. */
   async findPayments(invoiceId: string): Promise<any[]> {
     return this.kysely
       .selectFrom('payment')

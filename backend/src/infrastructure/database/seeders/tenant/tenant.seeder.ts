@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { SubscriptionStatus } from '@prisma/client';
+import { Currency, SubscriptionStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { Seeder } from '../seeder.interface';
 
@@ -102,12 +102,12 @@ export class TenantSeeder implements Seeder {
         where: { tenant_id: t.id },
         update: {
           volumetric_divisor: volumetricDivisor,
-          default_currency: 'USD',
+          default_currency: Currency.USD,
         },
         create: {
           tenant_id: t.id,
           volumetric_divisor: volumetricDivisor,
-          default_currency: 'USD',
+          default_currency: Currency.USD,
         },
       });
 

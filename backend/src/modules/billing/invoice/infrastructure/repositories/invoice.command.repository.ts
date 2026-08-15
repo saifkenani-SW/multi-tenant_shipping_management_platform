@@ -1,6 +1,12 @@
 import { ConflictException, Injectable } from '@nestjs/common';
-import { InvoiceStatus, PaymentResponsibility } from '@prisma/client';
+import {
+  Currency,
+  InvoiceStatus,
+  PaymentResponsibility,
+  PaymentStatus,
+} from '@prisma/client';
 import { TransactionalPrismaService } from '../../../../../packages/transaction';
+import { Invoice } from '../../domain/entities/invoice.entity';
 
 export interface CreateInvoiceData {
   tenantId: string;
@@ -18,7 +24,7 @@ export interface CreateInvoiceData {
   discountAmount: number;
   totalAmount: number;
   paymentResponsibility: PaymentResponsibility;
-  currency: string;
+  currency: Currency;
   status: InvoiceStatus;
   dueDate: Date | null;
 }
@@ -28,29 +34,76 @@ export class InvoiceCommandRepository {
   constructor(private readonly prisma: TransactionalPrismaService) {}
 
   async create(data: CreateInvoiceData): Promise<{ id: string }> {
-    return this.prisma.client.invoice.create({
-      data: {
-        tenant_id: data.tenantId,
-        customer_shipment_id: data.customerShipmentId,
-        sender_name: data.senderName,
-        sender_phone: data.senderPhone,
-        receiver_name: data.receiverName,
-        receiver_phone: data.receiverPhone,
-        origin_org_unit_id: data.originOrgUnitId,
-        destination_org_unit_id: data.destinationOrgUnitId,
-        invoice_number: data.invoiceNumber,
-        subtotal: data.subtotal,
-        handling_fees: data.handlingFees,
-        tax_amount: data.taxAmount,
-        discount_amount: data.discountAmount,
-        total_amount: data.totalAmount,
-        payment_responsibility: data.paymentResponsibility,
-        currency: data.currency,
-        status: data.status,
-        due_date: data.dueDate,
-      },
+    try {
+      return await this.prisma.client.invoice.create({
+        data: {
+          tenant_id: data.tenantId,
+          customer_shipment_id: data.customerShipmentId,
+          sender_name: data.senderName,
+          sender_phone: data.senderPhone,
+          receiver_name: data.receiverName,
+          receiver_phone: data.receiverPhone,
+          origin_org_unit_id: data.originOrgUnitId,
+          destination_org_unit_id: data.destinationOrgUnitId,
+          invoice_number: data.invoiceNumber,
+          subtotal: data.subtotal,
+          handling_fees: data.handlingFees,
+          tax_amount: data.taxAmount,
+          discount_amount: data.discountAmount,
+          total_amount: data.totalAmount,
+          payment_responsibility: data.paymentResponsibility,
+          currency: data.currency,
+          status: data.status,
+          due_date: data.dueDate,
+        },
+        select: { id: true },
+      });
+    } catch (error: any) {
+      if (error.code === 'P2002') {
+        throw new ConflictException('This shipment already has an invoice.');
+      }
+      throw error;
+    }
+  }
+
+  async existsForShipment(customerShipmentId: string): Promise<boolean> {
+    const row = await this.prisma.client.invoice.findFirst({
+      where: { customer_shipment_id: customerShipmentId },
       select: { id: true },
     });
+
+    return !!row;
+  }
+
+  async findAggregateById(id: string): Promise<Invoice | null> {
+    const record = await this.prisma.client.invoice.findUnique({
+      where: { id },
+    });
+
+    return record ? this.toAggregate(record) : null;
+  }
+
+  async findAggregateByShipmentId(
+    customerShipmentId: string,
+  ): Promise<Invoice | null> {
+    const record = await this.prisma.client.invoice.findFirst({
+      where: { customer_shipment_id: customerShipmentId },
+    });
+
+    return record ? this.toAggregate(record) : null;
+  }
+
+  /**
+   * Sum of completed payments on the same Prisma connection as the write, so a
+   * payment just inserted in this transaction is counted.
+   */
+  async sumCompletedPayments(invoiceId: string): Promise<number> {
+    const row = await this.prisma.client.payment.aggregate({
+      where: { invoice_id: invoiceId, status: PaymentStatus.COMPLETED },
+      _sum: { amount: true },
+    });
+
+    return Number(row._sum.amount ?? 0);
   }
 
   /**
@@ -86,7 +139,8 @@ export class InvoiceCommandRepository {
    * Persists a status the aggregate already approved, guarded by the version it
    * was loaded with. A concurrent payment bumps that version, this WHERE stops
    * matching, and the caller is told to retry rather than losing the other
-   * payment.
+   * payment. Called after every payment, even when status did not change, so
+   * two overlapping collections cannot both commit.
    */
   async updateStatus(
     invoiceId: string,
@@ -120,5 +174,32 @@ export class InvoiceCommandRepository {
     });
 
     return result.count;
+  }
+
+  private toAggregate(record: any): Invoice {
+    return Invoice.restore({
+      id: record.id,
+      version: record.version,
+      tenantId: record.tenant_id,
+      customerShipmentId: record.customer_shipment_id,
+      senderName: record.sender_name,
+      senderPhone: record.sender_phone,
+      receiverName: record.receiver_name,
+      receiverPhone: record.receiver_phone,
+      originOrgUnitId: record.origin_org_unit_id,
+      destinationOrgUnitId: record.destination_org_unit_id,
+      invoiceNumber: record.invoice_number,
+      subtotal: Number(record.subtotal),
+      handlingFees: Number(record.handling_fees),
+      taxAmount: Number(record.tax_amount),
+      discountAmount: Number(record.discount_amount),
+      totalAmount: Number(record.total_amount),
+      paymentResponsibility: record.payment_responsibility,
+      currency: record.currency,
+      status: record.status,
+      dueDate: record.due_date,
+      createdAt: record.created_at,
+      updatedAt: record.updated_at,
+    });
   }
 }

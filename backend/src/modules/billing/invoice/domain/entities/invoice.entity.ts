@@ -1,5 +1,9 @@
 import { ConflictException } from '@nestjs/common';
-import { InvoiceStatus } from '@prisma/client';
+import { Currency, InvoiceStatus } from '@prisma/client';
+import {
+  minimumPaymentAmount,
+  roundMoney,
+} from '../../../constants/billing.constants';
 
 export interface InvoiceSnapshot {
   id: string;
@@ -19,7 +23,7 @@ export interface InvoiceSnapshot {
   discountAmount: number;
   totalAmount: number;
   paymentResponsibility: string;
-  currency: string;
+  currency: Currency;
   status: InvoiceStatus;
   dueDate: Date | null;
   createdAt: Date;
@@ -29,9 +33,12 @@ export interface InvoiceSnapshot {
 /**
  * Transitions the invoice lifecycle allows.
  *
- * PAID is not terminal in the schema sense — a refund workflow could reopen it
- * later — but nothing in this module moves an invoice out of PAID today, so it
- * is treated as final here and the door is left closed rather than half open.
+ * PAID and PARTIALLY_PAID can move to CANCELLED only after a refund has been
+ * recorded. `cancel()` still refuses while money is held; `cancelAfterRefund()`
+ * is the door that opens once it has been given back.
+ *
+ * A returned shipment never takes that door — returning is a logistics
+ * outcome, not a refund.
  */
 const ALLOWED_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
   [InvoiceStatus.UNPAID]: [
@@ -51,7 +58,7 @@ const ALLOWED_TRANSITIONS: Record<InvoiceStatus, InvoiceStatus[]> = {
     InvoiceStatus.PAID,
     InvoiceStatus.CANCELLED,
   ],
-  [InvoiceStatus.PAID]: [],
+  [InvoiceStatus.PAID]: [InvoiceStatus.CANCELLED],
   [InvoiceStatus.CANCELLED]: [],
 };
 
@@ -90,7 +97,7 @@ export class Invoice {
     public readonly discountAmount: number,
     public readonly totalAmount: number,
     public readonly paymentResponsibility: string,
-    public readonly currency: string,
+    public readonly currency: Currency,
     private _status: InvoiceStatus,
     public readonly dueDate: Date | null,
     public readonly createdAt: Date,
@@ -150,7 +157,11 @@ export class Invoice {
       );
     }
 
-    return Math.round(total * 100) / 100;
+    return roundMoney(total);
+  }
+
+  remainingBalance(paidSoFar: number): number {
+    return roundMoney(this.totalAmount - paidSoFar);
   }
 
   private transitionTo(target: InvoiceStatus): void {
@@ -175,12 +186,18 @@ export class Invoice {
    * settles an invoice from being read as a few millionths short.
    */
   applyPaidTotal(paidTotal: number): InvoiceStatus | null {
-    const paid = Math.round(paidTotal * 100) / 100;
-    const owed = Math.round(this.totalAmount * 100) / 100;
+    const paid = roundMoney(paidTotal);
+    const owed = roundMoney(this.totalAmount);
+
+    if (paid > owed) {
+      throw new ConflictException(
+        `Payment would exceed the amount owed (${owed} ${this.currency}).`,
+      );
+    }
 
     let target: InvoiceStatus;
 
-    if (paid >= owed) {
+    if (paid === owed) {
       target = InvoiceStatus.PAID;
     } else if (paid > 0) {
       target = InvoiceStatus.PARTIALLY_PAID;
@@ -200,8 +217,23 @@ export class Invoice {
     return target;
   }
 
-  /** Cancelled alongside the shipment it belongs to. */
-  cancel(): void {
+  /** Cancelled alongside the shipment it belongs to, while no money is held. */
+  cancel(paidTotal = 0): void {
+    if (roundMoney(paidTotal) > 0) {
+      throw new ConflictException(
+        'Invoice for this shipment already has payments and cannot be cancelled without a refund.',
+      );
+    }
+
+    this.transitionTo(InvoiceStatus.CANCELLED);
+  }
+
+  /**
+   * Voids the invoice after the collected amount has been recorded as a
+   * refund. Only the refund path may call this — a status flip alone would
+   * leave the money unaccounted for.
+   */
+  cancelAfterRefund(): void {
     this.transitionTo(InvoiceStatus.CANCELLED);
   }
 
@@ -210,8 +242,13 @@ export class Invoice {
     this.transitionTo(InvoiceStatus.OVERDUE);
   }
 
-  /** A settled or cancelled invoice takes no further payments. */
-  assertAcceptsPayment(): void {
+  /**
+   * A settled or cancelled invoice takes no further payments. A payment may
+   * not exceed what is still owed, and must meet the currency minimum unless
+   * the remaining balance is smaller — in which case only that remainder is
+   * accepted, so the last payment can settle without going over.
+   */
+  assertAcceptsPayment(amount: number, paidSoFar: number): void {
     if (this._status === InvoiceStatus.PAID) {
       throw new ConflictException('Invoice is already fully paid.');
     }
@@ -219,6 +256,38 @@ export class Invoice {
     if (this._status === InvoiceStatus.CANCELLED) {
       throw new ConflictException('Invoice has been cancelled.');
     }
+
+    const payment = roundMoney(amount);
+    const remaining = this.remainingBalance(paidSoFar);
+
+    if (remaining <= 0) {
+      throw new ConflictException('Invoice is already fully paid.');
+    }
+
+    if (payment <= 0) {
+      throw new ConflictException('A payment must be greater than zero.');
+    }
+
+    if (payment > remaining) {
+      throw new ConflictException(
+        `A payment cannot exceed the remaining balance of ${remaining} ${this.currency}.`,
+      );
+    }
+
+    const minimum = Math.min(
+      minimumPaymentAmount(this.currency),
+      remaining,
+    );
+
+    if (payment < minimum) {
+      throw new ConflictException(
+        `Minimum payment is ${minimumPaymentAmount(this.currency)} ${this.currency}, or the remaining balance (${remaining} ${this.currency}) when it is smaller.`,
+      );
+    }
+  }
+
+  isFullyPaid(): boolean {
+    return this._status === InvoiceStatus.PAID;
   }
 
   isSettled(): boolean {

@@ -1,8 +1,12 @@
 import { ConflictException } from '@nestjs/common';
-import { InvoiceStatus } from '@prisma/client';
+import { Currency, InvoiceStatus } from '@prisma/client';
 import { Invoice } from './invoice.entity';
 
-const invoiceAt = (status: InvoiceStatus, totalAmount = 100) =>
+const invoiceAt = (
+  status: InvoiceStatus,
+  totalAmount = 5000,
+  currency: Currency = Currency.SY,
+) =>
   Invoice.restore({
     id: '01910b80-6e42-7000-8000-000000000901',
     version: 1,
@@ -21,7 +25,7 @@ const invoiceAt = (status: InvoiceStatus, totalAmount = 100) =>
     discountAmount: 0,
     totalAmount,
     paymentResponsibility: 'SENDER',
-    currency: 'SYP',
+    currency,
     status,
     dueDate: null,
     createdAt: new Date(),
@@ -66,46 +70,46 @@ describe('Invoice', () => {
 
   describe('applyPaidTotal', () => {
     it('settles the invoice once the full amount is collected', () => {
-      const invoice = invoiceAt(InvoiceStatus.UNPAID, 100);
+      const invoice = invoiceAt(InvoiceStatus.UNPAID, 5000);
 
-      expect(invoice.applyPaidTotal(100)).toBe(InvoiceStatus.PAID);
+      expect(invoice.applyPaidTotal(5000)).toBe(InvoiceStatus.PAID);
       expect(invoice.status).toBe(InvoiceStatus.PAID);
     });
 
-    it('settles on an overpayment rather than leaving it short', () => {
-      const invoice = invoiceAt(InvoiceStatus.UNPAID, 100);
+    it('refuses an overpayment rather than marking it paid', () => {
+      const invoice = invoiceAt(InvoiceStatus.UNPAID, 5000);
 
-      expect(invoice.applyPaidTotal(120)).toBe(InvoiceStatus.PAID);
+      expect(() => invoice.applyPaidTotal(5200)).toThrow(ConflictException);
     });
 
     it('marks a part payment as partially paid', () => {
-      const invoice = invoiceAt(InvoiceStatus.UNPAID, 100);
+      const invoice = invoiceAt(InvoiceStatus.UNPAID, 5000);
 
-      expect(invoice.applyPaidTotal(40)).toBe(InvoiceStatus.PARTIALLY_PAID);
+      expect(invoice.applyPaidTotal(1000)).toBe(InvoiceStatus.PARTIALLY_PAID);
     });
 
     it('reports no change when the status already matches', () => {
-      const invoice = invoiceAt(InvoiceStatus.PARTIALLY_PAID, 100);
+      const invoice = invoiceAt(InvoiceStatus.PARTIALLY_PAID, 5000);
 
-      expect(invoice.applyPaidTotal(40)).toBeNull();
+      expect(invoice.applyPaidTotal(2000)).toBeNull();
       expect(invoice.status).toBe(InvoiceStatus.PARTIALLY_PAID);
     });
 
     it('settles an overdue invoice that gets paid', () => {
-      const invoice = invoiceAt(InvoiceStatus.OVERDUE, 100);
+      const invoice = invoiceAt(InvoiceStatus.OVERDUE, 5000);
 
-      expect(invoice.applyPaidTotal(100)).toBe(InvoiceStatus.PAID);
+      expect(invoice.applyPaidTotal(5000)).toBe(InvoiceStatus.PAID);
     });
 
     it('keeps an overdue invoice overdue while nothing is collected', () => {
-      const invoice = invoiceAt(InvoiceStatus.OVERDUE, 100);
+      const invoice = invoiceAt(InvoiceStatus.OVERDUE, 5000);
 
       expect(invoice.applyPaidTotal(0)).toBeNull();
       expect(invoice.status).toBe(InvoiceStatus.OVERDUE);
     });
 
     it('does not read a payment that exactly settles as short', () => {
-      const invoice = invoiceAt(InvoiceStatus.UNPAID, 0.1 + 0.2);
+      const invoice = invoiceAt(InvoiceStatus.UNPAID, 0.3, Currency.USD);
 
       expect(invoice.applyPaidTotal(0.3)).toBe(InvoiceStatus.PAID);
     });
@@ -115,7 +119,7 @@ describe('Invoice', () => {
     it('cancels an unpaid invoice', () => {
       const invoice = invoiceAt(InvoiceStatus.UNPAID);
 
-      invoice.cancel();
+      invoice.cancel(0);
 
       expect(invoice.status).toBe(InvoiceStatus.CANCELLED);
     });
@@ -123,32 +127,104 @@ describe('Invoice', () => {
     it('refuses to cancel a paid invoice', () => {
       const invoice = invoiceAt(InvoiceStatus.PAID);
 
-      expect(() => invoice.cancel()).toThrow(ConflictException);
+      expect(() => invoice.cancel(5000)).toThrow(ConflictException);
+    });
+
+    it('refuses to cancel when any payment has already been taken', () => {
+      const invoice = invoiceAt(InvoiceStatus.PARTIALLY_PAID);
+
+      expect(() => invoice.cancel(1000)).toThrow(ConflictException);
+    });
+
+    it('refuses to cancel an overdue invoice that already has payments', () => {
+      const invoice = invoiceAt(InvoiceStatus.OVERDUE);
+
+      expect(() => invoice.cancel(1000)).toThrow(ConflictException);
+    });
+  });
+
+  describe('cancelAfterRefund', () => {
+    it('cancels a paid invoice once the money has been refunded', () => {
+      const invoice = invoiceAt(InvoiceStatus.PAID);
+
+      invoice.cancelAfterRefund();
+
+      expect(invoice.status).toBe(InvoiceStatus.CANCELLED);
+    });
+
+    it('cancels a partially paid invoice once the money has been refunded', () => {
+      const invoice = invoiceAt(InvoiceStatus.PARTIALLY_PAID);
+
+      invoice.cancelAfterRefund();
+
+      expect(invoice.status).toBe(InvoiceStatus.CANCELLED);
     });
   });
 
   describe('assertAcceptsPayment', () => {
-    it('accepts payment on an unpaid invoice', () => {
+    it('accepts a payment that meets the SY minimum', () => {
       expect(() =>
-        invoiceAt(InvoiceStatus.UNPAID).assertAcceptsPayment(),
+        invoiceAt(InvoiceStatus.UNPAID).assertAcceptsPayment(1000, 0),
+      ).not.toThrow();
+    });
+
+    it('accepts a payment that meets the USD minimum', () => {
+      expect(() =>
+        invoiceAt(InvoiceStatus.UNPAID, 500, Currency.USD).assertAcceptsPayment(
+          100,
+          0,
+        ),
       ).not.toThrow();
     });
 
     it('accepts payment on an overdue invoice', () => {
       expect(() =>
-        invoiceAt(InvoiceStatus.OVERDUE).assertAcceptsPayment(),
+        invoiceAt(InvoiceStatus.OVERDUE).assertAcceptsPayment(1000, 0),
       ).not.toThrow();
+    });
+
+    it('refuses a payment below the SY minimum while enough remains', () => {
+      expect(() =>
+        invoiceAt(InvoiceStatus.UNPAID).assertAcceptsPayment(999, 0),
+      ).toThrow(ConflictException);
+    });
+
+    it('refuses a payment below the USD minimum while enough remains', () => {
+      expect(() =>
+        invoiceAt(InvoiceStatus.UNPAID, 500, Currency.USD).assertAcceptsPayment(
+          99,
+          0,
+        ),
+      ).toThrow(ConflictException);
+    });
+
+    it('accepts the remaining balance when it is below the minimum', () => {
+      expect(() =>
+        invoiceAt(InvoiceStatus.UNPAID, 500).assertAcceptsPayment(500, 0),
+      ).not.toThrow();
+    });
+
+    it('refuses a short payment when the remaining balance is below the minimum', () => {
+      expect(() =>
+        invoiceAt(InvoiceStatus.UNPAID, 500).assertAcceptsPayment(400, 0),
+      ).toThrow(ConflictException);
+    });
+
+    it('refuses a payment larger than the remaining balance', () => {
+      expect(() =>
+        invoiceAt(InvoiceStatus.UNPAID).assertAcceptsPayment(1000, 4500),
+      ).toThrow(ConflictException);
     });
 
     it('refuses payment on a settled invoice', () => {
       expect(() =>
-        invoiceAt(InvoiceStatus.PAID).assertAcceptsPayment(),
+        invoiceAt(InvoiceStatus.PAID).assertAcceptsPayment(1000, 5000),
       ).toThrow(ConflictException);
     });
 
     it('refuses payment on a cancelled invoice', () => {
       expect(() =>
-        invoiceAt(InvoiceStatus.CANCELLED).assertAcceptsPayment(),
+        invoiceAt(InvoiceStatus.CANCELLED).assertAcceptsPayment(1000, 0),
       ).toThrow(ConflictException);
     });
   });

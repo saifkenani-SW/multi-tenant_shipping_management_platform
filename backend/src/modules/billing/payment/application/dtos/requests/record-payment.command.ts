@@ -3,9 +3,9 @@ import { PaymentMethod } from '@prisma/client';
 /**
  * Internal command for taking a payment against an invoice.
  *
- * Built by the customer-shipment module when a parcel is handed over at the
- * branch, or by the invoice controller when a tenant admin settles an invoice
- * directly. Never bound straight from an HTTP body.
+ * Built by the customer-shipment module when money is taken at the counter
+ * (`POST /shipments/:id/payments`) or as optional COD on proof of delivery.
+ * Never bound straight from an HTTP body.
  */
 export interface RecordPaymentCommand {
   invoiceId: string;

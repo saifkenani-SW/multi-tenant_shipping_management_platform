@@ -54,10 +54,10 @@ export class ProofOfDeliveryCommandService {
   /**
    * Records the delivery of one parcel.
    *
-   * Four things commit together: the proof row, the parcel moving to COLLECTED
-   * under its optimistic lock, the movement appended to the tracking history,
-   * and the owning shipment status re-derived. A proof exists at most once per
-   * parcel, enforced both here and by a unique constraint.
+   * The shipment invoice must be fully paid first. A payment attached to this
+   * request is recorded in the same transaction so a receiver-paid handover can
+   * settle and deliver in one act. Then the proof row, the parcel moving to
+   * COLLECTED, tracking, and the shipment status all commit together.
    */
   @Transactional()
   async recordDelivery(
@@ -93,6 +93,26 @@ export class ProofOfDeliveryCommandService {
 
     const previousStatus = parcel.currentStatus;
     const alreadyCollected = parcel.isCollected();
+
+    // Billing is the gate: no proof, no files, no status change until the
+    // invoice is fully paid. Optional payment on this request settles COD
+    // in the same transaction; a short payment rolls the whole handover back.
+    if (dto.payment) {
+      await this.billingFacade.recordPaymentForShipment(
+        parcel.customerShipmentId,
+        {
+          amount: dto.payment.amount,
+          paymentMethod: dto.payment.paymentMethod ?? PaymentMethod.CASH,
+          collectedByEmployeeId: employeeId,
+          organizationUnitId: parcel.currentOrgUnitId,
+          transactionReference: dto.payment.transactionReference ?? null,
+        },
+      );
+    }
+
+    await this.billingFacade.assertSettledForDelivery(
+      parcel.customerShipmentId,
+    );
 
     const tenantSettings = await this.tenantFacade.getTenantSettings(
       parcel.tenantId,
@@ -227,23 +247,6 @@ export class ProofOfDeliveryCommandService {
           parcel.customerShipmentId,
         ]),
       ]);
-    }
-
-    // Handover at the branch is where a receiver-paid shipment is settled, so
-    // the money is recorded in the same transaction as the proof of it.
-    if (dto.payment) {
-      const invoice = await this.billingFacade.getInvoiceForShipment(
-        parcel.customerShipmentId,
-      );
-
-      await this.billingFacade.recordPayment({
-        invoiceId: invoice.id,
-        amount: dto.payment.amount,
-        paymentMethod: dto.payment.paymentMethod ?? PaymentMethod.CASH,
-        collectedByEmployeeId: employeeId,
-        organizationUnitId: parcel.currentOrgUnitId,
-        transactionReference: dto.payment.transactionReference ?? null,
-      });
     }
 
     return created;
