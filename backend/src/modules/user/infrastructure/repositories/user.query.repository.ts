@@ -6,6 +6,7 @@ export interface UserSummary {
   id: string;
   email: string;
   phone: string | null;
+  profileImageKey: string | null;
   isActive: boolean;
 }
 
@@ -28,7 +29,7 @@ export class UserQueryRepository {
   async getUserSummary(userId: string): Promise<UserSummary | null> {
     const user = await this.db
       .selectFrom('users')
-      .select(['id', 'email', 'phone'])
+      .select(['id', 'email', 'phone', 'profile_image_key'])
       .where('id', '=', userId)
       .executeTakeFirst();
 
@@ -38,6 +39,7 @@ export class UserQueryRepository {
       id: user.id,
       email: user.email,
       phone: user.phone,
+      profileImageKey: user.profile_image_key,
       isActive: true, // Assuming isActive is true based on previous logic since users table doesn't have is_active
     };
   }

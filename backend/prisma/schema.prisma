@@ -750,6 +750,10 @@ model users {
   email                  String                   @unique @db.VarChar(255)
   phone                  String?                  @unique @db.VarChar(50)
   password_hash          String                   @db.VarChar(255)
+  // Avatar lives here rather than on each profile table because users is the
+  // only table every login type has a row in. A tenant admin has no profile
+  // table at all, so anywhere else would have left that type without one.
+  profile_image_key      String?                  @db.VarChar(500)
   created_at             DateTime                 @default(now()) @db.Timestamp(6)
   updated_at             DateTime                 @updatedAt
   audit_log              audit_log[]

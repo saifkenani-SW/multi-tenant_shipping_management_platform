@@ -7,6 +7,7 @@ export interface UserSummaryDto {
   id: string;
   email: string;
   phone: string | null;
+  profileImageKey: string | null;
   isActive: boolean;
 }
 

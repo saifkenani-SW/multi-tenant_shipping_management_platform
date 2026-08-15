@@ -5,6 +5,8 @@ import { UserModule } from '../user/user.module';
 import { FleetModule } from '../fleet/fleet.module';
 import { ProfileController } from './presentation/controllers/profile.controller';
 import { ProfileQueryService } from './application/services/profile.query.service';
+import { AvatarService } from './application/services/avatar.service';
+import { StorageModule } from '../../packages/storage/src';
 
 /**
  * Profile module.
@@ -20,8 +22,8 @@ import { ProfileQueryService } from './application/services/profile.query.servic
  * Nothing is exported. This module is a consumer, not a supplier.
  */
 @Module({
-  imports: [Employee2Module, UserModule, FleetModule],
+  imports: [Employee2Module, UserModule, FleetModule, StorageModule],
   controllers: [ProfileController],
-  providers: [ProfileQueryService],
+  providers: [ProfileQueryService, AvatarService],
 })
 export class ProfileModule {}
