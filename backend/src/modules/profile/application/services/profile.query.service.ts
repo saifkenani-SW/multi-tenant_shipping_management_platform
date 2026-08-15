@@ -6,6 +6,7 @@ import { EmployeeQueryService } from '../../../employee2/application/services/em
 import { UserFacade } from '../../../user/application/facades/user.facade';
 import { FleetFacade } from '../../../fleet/facades/fleet.facade';
 import { MyProfileResponseDto } from '../dtos/responses/my-profile.response.dto';
+import { PROFILE_AVATAR } from '../../constants/profile.constants';
 
 /**
  * Assembles the profile of whoever is making the request.
@@ -60,6 +61,11 @@ export class ProfileQueryService {
       nationalId: employee.nationalId ?? null,
       email: user?.email ?? null,
       phone: user?.phone ?? null,
+      // A path only when there is actually an image behind it, so the client
+      // can treat null as "show the placeholder" without a second request.
+      profileImageUrl: user?.profileImageKey
+        ? PROFILE_AVATAR.urlFor(employee.userId)
+        : null,
       isActive: employee.isActive,
       isDriver,
       assignments: employee.assignments,
