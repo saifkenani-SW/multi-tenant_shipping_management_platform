@@ -14,8 +14,8 @@ class LoginHeader extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              MdiIcons.shippingPallet,
-              color: theme.colorScheme.onPrimary,
+              MdiIcons.shippingPallet, 
+              color: theme.colorScheme.primary, // تم الربط بلون الثيم
               size: 24.sp,
             ),
             SizedBox(width: 8.w),
@@ -24,6 +24,7 @@ class LoginHeader extends StatelessWidget {
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
+                color: theme.colorScheme.onSurface, // متوافق مع الثيم
               ),
             ),
           ],
@@ -35,6 +36,7 @@ class LoginHeader extends StatelessWidget {
           style: theme.textTheme.displaySmall?.copyWith(
             fontWeight: FontWeight.w700,
             height: 1.2,
+            color: theme.colorScheme.onSurface, // متوافق مع الثيم
           ),
         ),
         SizedBox(height: 16.h),

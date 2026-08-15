@@ -8,7 +8,8 @@ import 'package:mobile/features/auth/otp/widgets/timer.dart';
 import 'package:mobile/features/auth/otp/widgets/verify_button.dart';
 
 class OtpVerificationScreen extends StatelessWidget {
-  const OtpVerificationScreen({super.key});
+  final String email;
+  const OtpVerificationScreen({super.key, required this.email, });
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +36,7 @@ class OtpVerificationScreen extends StatelessWidget {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 12.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -45,9 +46,9 @@ class OtpVerificationScreen extends StatelessWidget {
                 SizedBox(height: 32.h),
                 const OtpInputBoxes(),
                 SizedBox(height: 24.h),
-                const TimerAndResendRow(),
+                TimerAndResendRow(email: email),
                 SizedBox(height: 32.h),
-                const VerifyButton(),
+                 VerifyButton(email: email,),
                 SizedBox(height: 24.h),
                 const SupportFooter(),
               ],

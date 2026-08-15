@@ -1,10 +1,13 @@
-// ب) نموذج الإدخال (Form Fields & Actions)
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile/core/routing/app_routes.dart';
 import 'package:mobile/features/auth/providers/password_visibility_provider.dart';
+import 'package:mobile/features/auth/register/providers/register_notifier.dart';
+import 'package:mobile/features/auth/register/providers/register_controller.dart';
 import 'package:mobile/features/auth/register/providers/terms_check_box_provider.dart';
 
 class RegisterForm extends ConsumerWidget {
@@ -12,14 +15,31 @@ class RegisterForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final isPasswordHidden = ref.watch(passwordVisibilityProvider);
     final isTermsAccepted = ref.watch(termsCheckboxProvider);
+    final theme = Theme.of(context);
+    final controllers = ref.watch(registerControllersProvider);
+
+    // 1. الاستماع للأخطاء والنجاح بطريقة نظيفة
+    ref.listen(authNotifierProvider, (previous, next) {
+      next.whenData((data) {
+        // if (data != null) {
+        // نجح التسجيل: اعرض رسالة وانتقل
+        log("message");
+        _onRegisterSuccess(context, controllers.emailController.text.trim());
+        // }
+      });
+
+      if (next.hasError && !next.isLoading) {
+        _onRegisterError(context, next.error.toString());
+      }
+    });
+
+    final authState = ref.watch(authNotifierProvider);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // الاسم الأول والاسم الأخير في صف واحد للتجاوب
+        // ... (الحقول الخاصة بك كما هي تماماً دون أي تغيير) ...
         Row(
           children: [
             Expanded(
@@ -28,10 +48,11 @@ class RegisterForm extends ConsumerWidget {
                 children: [
                   Text('First Name', style: theme.textTheme.labelMedium),
                   SizedBox(height: 6.h),
-                  const TextField(
+                  TextField(
+                    controller: controllers.firstNameController,
                     keyboardType: TextInputType.name,
                     textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(hintText: 'John'),
+                    decoration: const InputDecoration(hintText: 'John'),
                   ),
                 ],
               ),
@@ -43,10 +64,11 @@ class RegisterForm extends ConsumerWidget {
                 children: [
                   Text('Last Name', style: theme.textTheme.labelMedium),
                   SizedBox(height: 6.h),
-                  const TextField(
+                  TextField(
+                    controller: controllers.lastNameController,
                     keyboardType: TextInputType.name,
                     textInputAction: TextInputAction.next,
-                    decoration: InputDecoration(hintText: 'Doe'),
+                    decoration: const InputDecoration(hintText: 'Doe'),
                   ),
                 ],
               ),
@@ -59,6 +81,7 @@ class RegisterForm extends ConsumerWidget {
         Text('Work Email', style: theme.textTheme.labelMedium),
         SizedBox(height: 6.h),
         TextField(
+          controller: controllers.emailController,
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
@@ -76,10 +99,11 @@ class RegisterForm extends ConsumerWidget {
         Text('Phone Number', style: theme.textTheme.labelMedium),
         SizedBox(height: 6.h),
         TextField(
+          controller: controllers.phoneController,
           keyboardType: TextInputType.phone,
           textInputAction: TextInputAction.next,
           decoration: InputDecoration(
-            hintText: '+1 (555) 000-0000',
+            hintText: '',
             prefixIcon: Icon(
               Icons.phone_outlined,
               size: 20.sp,
@@ -93,6 +117,7 @@ class RegisterForm extends ConsumerWidget {
         Text('Password', style: theme.textTheme.labelMedium),
         SizedBox(height: 6.h),
         TextField(
+          controller: controllers.passwordController,
           obscureText: isPasswordHidden,
           keyboardType: TextInputType.visiblePassword,
           textInputAction: TextInputAction.done,
@@ -199,20 +224,16 @@ class RegisterForm extends ConsumerWidget {
         ),
         SizedBox(height: 24.h),
 
-        // زر إتمام التسجيل
+        // زر التسجيل أصبح نظيفاً جداً وخالياً من التعقيد
         ElevatedButton(
-          onPressed: () {
-            GoRouter.of(context).pushNamed(AppRoutes.otpScreen);
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Complete Registration'),
-              SizedBox(width: 8.w),
-              Icon(Icons.arrow_forward, size: 20.sp),
-            ],
-          ),
+          onPressed: authState.isLoading
+              ? null
+              : () => _submitForm(ref, context, isTermsAccepted, controllers),
+          child: authState.isLoading
+              ? const CircularProgressIndicator(color: Colors.white)
+              : const Text('Create Account'),
         ),
+
         SizedBox(height: 24.h),
 
         // تذييل الانتقال لتسجيل الدخول
@@ -229,7 +250,7 @@ class RegisterForm extends ConsumerWidget {
               ),
               GestureDetector(
                 onTap: () {
-                  GoRouter.of(context).pushNamed(AppRoutes.loginScreen);
+                  context.pushNamed(AppRoutes.loginScreen);
                 },
                 child: Text(
                   'Log in here',
@@ -245,5 +266,47 @@ class RegisterForm extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  // فصلنا الـ Logic في دوال مساعدة خارج بناء الواجهة (Helper Functions)
+  void _submitForm(
+    WidgetRef ref,
+    BuildContext context,
+    bool isTermsAccepted,
+    RegisterControllers controllers,
+  ) {
+    if (!isTermsAccepted) {
+      _showSnackBar(
+        context,
+        'الرجاء الموافقة على شروط الاستخدام أولاً',
+        Colors.orange,
+      );
+      return;
+    }
+
+    String name =
+        "${controllers.firstNameController.text.trim()} ${controllers.lastNameController.text.trim()}";
+    String email = controllers.emailController.text.trim();
+    String phone = controllers.phoneController.text.trim();
+    String password = controllers.passwordController.text.trim();
+
+    ref
+        .read(authNotifierProvider.notifier)
+        .register(name, email, phone, password);
+  }
+
+  void _onRegisterSuccess(BuildContext context, String email) {
+    _showSnackBar(context, 'تم إنشاء الحساب بنجاح!', Colors.green);
+    GoRouter.of(context).pushNamed(AppRoutes.otpScreen, extra: email);
+  }
+
+  void _onRegisterError(BuildContext context, String error) {
+    _showSnackBar(context, 'فشل التسجيل: $error', Colors.red);
+  }
+
+  void _showSnackBar(BuildContext context, String message, Color color) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
   }
 }
