@@ -8,6 +8,7 @@ import { SelectProfileDto } from './dtos/select-profile.dto';
 import { JwtPayload, UserLoginType } from './types/auth.types';
 import { generateUuid } from '../../common/uuid';
 import { UserFacade } from '../user/application/facades/user.facade';
+import { UserProfileInfo } from '../user/application/services/user.query.service';
 
 @Injectable()
 export class AuthService {
@@ -72,12 +73,7 @@ export class AuthService {
       );
       return {
         ...tokens,
-        user: {
-          id: identity.userId,
-          email,
-          type: requestedProfile.type,
-          tenantId: requestedProfile.tenantId,
-        },
+        user: this.buildLoginUser(identity.userId, email, requestedProfile),
       };
     }
 
@@ -93,12 +89,7 @@ export class AuthService {
       );
       return {
         ...tokens,
-        user: {
-          id: identity.userId,
-          email,
-          type: profile.type,
-          tenantId: profile.tenantId,
-        },
+        user: this.buildLoginUser(identity.userId, email, profile),
       };
     }
 
@@ -114,6 +105,7 @@ export class AuthService {
     const profilesForClient = activeProfiles.map((p) => ({
       type: p.type,
       tenantId: p.tenantId,
+      tenantName: p.tenantName,
       isActive: p.isActive,
     }));
 
@@ -163,12 +155,7 @@ export class AuthService {
     );
     return {
       ...tokens,
-      user: {
-        id: userId,
-        email: user.email,
-        type: requestedProfile.type,
-        tenantId: requestedProfile.tenantId,
-      },
+      user: this.buildLoginUser(userId, user.email, requestedProfile),
     };
   }
 
@@ -222,6 +209,21 @@ export class AuthService {
     await this.prisma.user_session.deleteMany({
       where: { id: sessionId },
     });
+  }
+
+  private buildLoginUser(
+    userId: string,
+    email: string,
+    profile: UserProfileInfo,
+  ) {
+    return {
+      id: userId,
+      email,
+      type: profile.type,
+      ...(profile.tenantId
+        ? { tenantId: profile.tenantId, tenantName: profile.tenantName }
+        : {}),
+    };
   }
 
   private async generateTokens(

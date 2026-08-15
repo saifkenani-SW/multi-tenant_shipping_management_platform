@@ -88,6 +88,24 @@ export class UserQueryRepository {
         .execute();
     }
 
+    // Names for every workspace this user belongs to, in one round trip. The
+    // login response carries a workspace id, and an id alone is not something
+    // a person can choose between when they hold more than one.
+    const tenantIds = [
+      ...new Set([
+        ...tenantOwners.map((owner) => owner.tenant_id),
+        ...employees.map((employee) => employee.tenant_id),
+      ]),
+    ];
+
+    const tenants = tenantIds.length
+      ? await this.db
+          .selectFrom('tenant')
+          .select(['id', 'name'])
+          .where('id', 'in', tenantIds)
+          .execute()
+      : [];
+
     return {
       user,
       platformOwner,
@@ -95,6 +113,7 @@ export class UserQueryRepository {
       employees,
       customerProfile,
       vehicleAssignments,
+      tenantNames: new Map(tenants.map((tenant) => [tenant.id, tenant.name])),
     };
   }
 }
