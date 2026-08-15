@@ -2,9 +2,9 @@ import {
   IsEmail,
   IsNotEmpty,
   IsOptional,
-  IsPhoneNumber,
   IsString,
   IsUUID,
+  MaxLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { normalizeCitizenPhone } from '../../../../../common/utils/phone.util';
@@ -39,7 +39,8 @@ export class CreateTenantDto {
     description: 'Primary contact phone number (Accepted formats: +963991234567, 963991234567, 0991234567)',
     example: '+963991234567',
   })
-  @IsPhoneNumber()
+  @IsString()
+  @MaxLength(50)
   @IsNotEmpty()
   @Transform(({ value }) => normalizeCitizenPhone(value))
   phone: string;
@@ -73,7 +74,8 @@ export class CreateTenantDto {
     example: '+963991234567',
     required: false,
   })
-  @IsPhoneNumber()
+  @IsString()
+  @MaxLength(50)
   @IsOptional()
   @Transform(({ value }) => normalizeCitizenPhone(value))
   ownerPhone?: string;
