@@ -37,7 +37,7 @@ describe('TenantFacade', () => {
         {
           tenantId: 'tenant-1',
           volumetricDivisor: 5000,
-          defaultCurrency: 'SAR',
+          defaultCurrency: 'SY',
         },
         {
           tenantId: 'tenant-2',
@@ -65,7 +65,7 @@ describe('TenantFacade', () => {
       expect(result.get('tenant-1')).toEqual({
         tenantId: 'tenant-1',
         volumetricDivisor: 5000,
-        defaultCurrency: 'SAR',
+        defaultCurrency: 'SY',
       });
       expect(result.get('tenant-2')).toEqual({
         tenantId: 'tenant-2',

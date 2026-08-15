@@ -192,7 +192,7 @@ model invoice {
   discount_amount         Decimal               @default(0) @db.Decimal(10, 2)
   total_amount            Decimal               @db.Decimal(10, 2)
   payment_responsibility  PaymentResponsibility @default(SENDER)
-  currency                String                @default("USD") @db.Char(3)
+  currency                Currency              @default(SY)
   status                  InvoiceStatus         @default(UNPAID)
   due_date                DateTime?             @db.Timestamp(6)
   created_at              DateTime              @default(now()) @db.Timestamp(6)
@@ -204,6 +204,7 @@ model invoice {
   payment                 payment[]
 
   @@unique([tenant_id, invoice_number], map: "uq_tenant_invoice")
+  @@unique([customer_shipment_id], map: "uq_invoice_shipment")
   @@index([tenant_id, status], map: "idx_invoice_tenant_status")
   @@index([tenant_id, sender_phone], map: "idx_invoice_sender_phone")
   @@index([origin_org_unit_id], map: "idx_invoice_origin_org_unit")
@@ -638,10 +639,10 @@ model tenant_operational_settings {
 }
 
 model tenant_pricing_settings {
-  tenant_id          String @id @db.Uuid
-  volumetric_divisor Int    @default(5000)
-  default_currency   String @default("SR") @db.Char(3)
-  tenant             tenant @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  tenant_id          String   @id @db.Uuid
+  volumetric_divisor Int      @default(5000)
+  default_currency   Currency @default(SY)
+  tenant             tenant   @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 }
 
 model tenant_subscription {
@@ -1012,6 +1013,11 @@ enum TicketStatus {
   WAITING_CUSTOMER
   RESOLVED
   CLOSED
+}
+
+enum Currency {
+  SY
+  USD
 }
 
 enum InvoiceStatus {

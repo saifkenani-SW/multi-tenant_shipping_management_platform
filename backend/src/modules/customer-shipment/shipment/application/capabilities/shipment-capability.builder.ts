@@ -30,6 +30,10 @@ export class ShipmentCapabilityBuilder implements CapabilityBuilder<
       canUpdate: ability.can(ShipmentAction.Update, shipmentSubject),
       canCancel: ability.can(ShipmentAction.Cancel, shipmentSubject),
       canReturn: ability.can(ShipmentAction.Return, shipmentSubject),
+      canRecordPayment: ability.can(
+        ShipmentAction.RecordPayment,
+        shipmentSubject,
+      ),
     };
   }
 }

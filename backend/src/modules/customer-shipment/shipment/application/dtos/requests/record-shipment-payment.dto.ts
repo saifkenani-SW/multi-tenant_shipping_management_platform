@@ -12,8 +12,8 @@ import {
   Min,
 } from 'class-validator';
 
-/** Body for taking a payment against an invoice directly. */
-export class SettleInvoiceDto {
+/** Body for taking a payment against the shipment's invoice at the counter. */
+export class RecordShipmentPaymentDto {
   @ApiProperty({
     description:
       'Amount collected. Must not exceed the remaining balance. Minimum is 1000 SY or 100 USD, unless the remainder is smaller.',

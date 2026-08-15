@@ -131,6 +131,11 @@ export const TicketStatus = {
     CLOSED: "CLOSED"
 } as const;
 export type TicketStatus = (typeof TicketStatus)[keyof typeof TicketStatus];
+export const Currency = {
+    SY: "SY",
+    USD: "USD"
+} as const;
+export type Currency = (typeof Currency)[keyof typeof Currency];
 export const InvoiceStatus = {
     UNPAID: "UNPAID",
     PARTIALLY_PAID: "PARTIALLY_PAID",
@@ -361,7 +366,7 @@ export type invoice = {
     discount_amount: Generated<string>;
     total_amount: string;
     payment_responsibility: Generated<PaymentResponsibility>;
-    currency: Generated<string>;
+    currency: Generated<Currency>;
     status: Generated<InvoiceStatus>;
     due_date: Timestamp | null;
     created_at: Generated<Timestamp>;
@@ -663,7 +668,7 @@ export type tenant_owner = {
 export type tenant_pricing_settings = {
     tenant_id: string;
     volumetric_divisor: Generated<number>;
-    default_currency: Generated<string>;
+    default_currency: Generated<Currency>;
 };
 export type tenant_subscription = {
     id: string;

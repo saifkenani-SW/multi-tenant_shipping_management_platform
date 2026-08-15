@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { Currency } from '@prisma/client';
+import { IsEnum, IsNumber, IsOptional } from 'class-validator';
 
 export class UpdateTenantPricingSettingsDto {
   @ApiPropertyOptional({
@@ -9,8 +10,11 @@ export class UpdateTenantPricingSettingsDto {
   @IsOptional()
   volumetricDivisor?: number;
 
-  @ApiPropertyOptional({ description: 'Default currency code for the tenant' })
-  @IsString()
+  @ApiPropertyOptional({
+    description: 'Default billing currency for the tenant',
+    enum: Currency,
+  })
+  @IsEnum(Currency)
   @IsOptional()
-  defaultCurrency?: string;
+  defaultCurrency?: Currency;
 }

@@ -48,6 +48,7 @@ import {
   CUSTOMER_SHIPMENT_CACHE_KEYS,
   PARCEL_LABEL_STORAGE_CATEGORY,
 } from '../../../constants/customer-shipment.cache.constants';
+import { RecordShipmentPaymentDto } from '../dtos/requests/record-shipment-payment.dto';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
 
 /** A parcel with everything computed before the transaction opens. */
@@ -294,6 +295,7 @@ export class ShipmentCommandService {
   @Transactional()
   async cancelShipment(shipmentId: string): Promise<void> {
     const shipment = await this.queryService.findAggregateOrThrow(shipmentId);
+    const statusBeforeCancel = shipment.status;
 
     shipment.cancel();
 
@@ -303,9 +305,12 @@ export class ShipmentCommandService {
       shipment.version,
     );
 
-    // Cancelling the shipment voids what was billed for it. Refuses when the
-    // money has already been taken — that needs a refund, not a status flip.
-    await this.billingFacade.cancelInvoiceForShipment(shipmentId);
+    // Refund only if the shipment was still PENDING. A later cancel keeps the
+    // money; a return never refunds and does not come through this path.
+    await this.billingFacade.cancelInvoiceForShipment(
+      shipmentId,
+      statusBeforeCancel,
+    );
 
     const payload: CustomerShipmentLifecyclePayload = {
       shipmentId,
@@ -316,6 +321,31 @@ export class ShipmentCommandService {
       CUSTOMER_SHIPMENT_EVENTS.CANCELLED,
       payload,
     );
+  }
+
+  /**
+   * Records a counter payment against the shipment invoice. Does not cancel
+   * or refund; that stays on cancel. Payment rows are never edited, so this
+   * is always an append to the history.
+   */
+  @Authorize({
+    policy: Policy(ShipmentPolicy, ShipmentAction.RecordPayment),
+    payloadResolver: (shipmentId: string) => ({ shipmentId }),
+  })
+  @Transactional()
+  async recordPayment(
+    shipmentId: string,
+    dto: RecordShipmentPaymentDto,
+  ): Promise<{ id: string }> {
+    const principal = this.requestContext.getPrincipal();
+
+    return this.billingFacade.recordPaymentForShipment(shipmentId, {
+      amount: dto.amount,
+      paymentMethod: dto.paymentMethod,
+      collectedByEmployeeId: principal.profileId ?? null,
+      organizationUnitId: dto.organizationUnitId ?? null,
+      transactionReference: dto.transactionReference ?? null,
+    });
   }
 
   private async prepareParcels(

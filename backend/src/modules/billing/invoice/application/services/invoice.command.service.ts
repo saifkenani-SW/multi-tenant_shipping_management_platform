@@ -3,23 +3,24 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InvoiceStatus, PaymentStatus } from '@prisma/client';
+import { InvoiceStatus, PaymentMethod, PaymentStatus, ShipmentStatus } from '@prisma/client';
 import { Transactional } from '../../../../../packages/transaction';
 import { TenantFacade } from '../../../../tenant/application/facades/tenant.facade';
 import { InvoiceCommandRepository } from '../../infrastructure/repositories/invoice.command.repository';
-import { InvoiceQueryRepository } from '../../infrastructure/repositories/invoice.query.repository';
 import { PaymentCommandRepository } from '../../../payment/infrastructure/repositories/payment.command.repository';
 import { InvoiceNumberGenerator } from './invoice-number.generator';
 import { Invoice } from '../../domain/entities/invoice.entity';
 import type { CreateInvoiceForShipmentCommand } from '../dtos/requests/create-invoice-for-shipment.command';
 import type { RecordPaymentCommand } from '../../../payment/application/dtos/requests/record-payment.command';
-import { DEFAULT_PAYMENT_TERMS_DAYS } from '../../../constants/billing.constants';
+import {
+  DEFAULT_PAYMENT_TERMS_DAYS,
+  resolveCurrency,
+} from '../../../constants/billing.constants';
 
 @Injectable()
 export class InvoiceCommandService {
   constructor(
     private readonly commandRepository: InvoiceCommandRepository,
-    private readonly queryRepository: InvoiceQueryRepository,
     private readonly paymentCommandRepository: PaymentCommandRepository,
     private readonly numberGenerator: InvoiceNumberGenerator,
     private readonly tenantFacade: TenantFacade,
@@ -40,11 +41,11 @@ export class InvoiceCommandService {
   async createForShipment(
     command: CreateInvoiceForShipmentCommand,
   ): Promise<{ id: string; invoiceNumber: string }> {
-    const existing = await this.queryRepository.findRawByShipmentId(
+    const alreadyBilled = await this.commandRepository.existsForShipment(
       command.customerShipmentId,
     );
 
-    if (existing) {
+    if (alreadyBilled) {
       throw new ConflictException('This shipment already has an invoice.');
     }
 
@@ -52,9 +53,7 @@ export class InvoiceCommandService {
       command.tenantId,
     );
 
-    const currency = (settings?.pricing?.defaultCurrency ?? 'SYP')
-      .toString()
-      .trim();
+    const currency = resolveCurrency(settings?.pricing?.defaultCurrency);
 
     const invoiceNumber = await this.numberGenerator.next(
       command.tenantId,
@@ -99,15 +98,21 @@ export class InvoiceCommandService {
   /**
    * Cancels the invoice belonging to a cancelled shipment.
    *
-   * Silent when there is no invoice: a shipment created before this module
-   * existed has none, and refusing to cancel such a shipment would be the
-   * wrong trade. A paid invoice is a different matter — that is money already
-   * taken, and voiding it needs a refund, not a status flip.
+   * Silent when there is no invoice. Unpaid invoices are just voided.
+   *
+   * Money already taken is refunded only while the shipment is still PENDING —
+   * cancelled before work started. A returned shipment is a logistics outcome
+   * and is never refunded; any other status keeps the money and refuses cancel.
    */
   @Transactional()
-  async cancelForShipment(customerShipmentId: string): Promise<void> {
+  async cancelForShipment(
+    customerShipmentId: string,
+    shipmentStatus: ShipmentStatus,
+  ): Promise<void> {
     const invoice =
-      await this.queryRepository.findAggregateByShipmentId(customerShipmentId);
+      await this.commandRepository.findAggregateByShipmentId(
+        customerShipmentId,
+      );
 
     if (!invoice) {
       return;
@@ -117,13 +122,38 @@ export class InvoiceCommandService {
       return;
     }
 
-    if (invoice.status === InvoiceStatus.PAID) {
+    if (shipmentStatus === ShipmentStatus.RETURNED) {
       throw new ConflictException(
-        'Invoice for this shipment is already paid and cannot be cancelled. Issue a refund instead.',
+        'A returned shipment is not refunded and its invoice is not cancelled.',
       );
     }
 
-    invoice.cancel();
+    const paidTotal = await this.commandRepository.sumCompletedPayments(
+      invoice.id,
+    );
+
+    if (paidTotal > 0) {
+      if (shipmentStatus !== ShipmentStatus.PENDING) {
+        throw new ConflictException(
+          'Refund is only possible while the shipment is still pending.',
+        );
+      }
+
+      await this.paymentCommandRepository.create({
+        tenantId: invoice.tenantId,
+        invoiceId: invoice.id,
+        amount: paidTotal,
+        paymentMethod: PaymentMethod.CASH,
+        collectedByEmployeeId: null,
+        organizationUnitId: null,
+        transactionReference: `REFUND:${invoice.invoiceNumber}`,
+        status: PaymentStatus.REFUNDED,
+      });
+
+      invoice.cancelAfterRefund();
+    } else {
+      invoice.cancel(paidTotal);
+    }
 
     await this.commandRepository.updateStatus(
       invoice.id,
@@ -138,11 +168,13 @@ export class InvoiceCommandService {
    *
    * Both writes share one transaction, and the status write is guarded by the
    * version the invoice was loaded with, so two counters taking money at the
-   * same moment cannot leave the invoice showing only one of them.
+   * same moment cannot leave the invoice showing only one of them. The version
+   * is always bumped, even when status does not change, so two overlapping
+   * partial payments cannot both commit.
    */
   @Transactional()
   async recordPayment(command: RecordPaymentCommand): Promise<{ id: string }> {
-    const invoice = await this.queryRepository.findAggregateById(
+    const invoice = await this.commandRepository.findAggregateById(
       command.invoiceId,
     );
 
@@ -150,11 +182,69 @@ export class InvoiceCommandService {
       throw new NotFoundException('Invoice not found');
     }
 
-    invoice.assertAcceptsPayment();
+    return this.collectAgainst(invoice, command);
+  }
 
-    if (command.amount <= 0) {
-      throw new ConflictException('A payment must be greater than zero.');
+  @Transactional()
+  async recordPaymentForShipment(
+    customerShipmentId: string,
+    command: Omit<RecordPaymentCommand, 'invoiceId'>,
+  ): Promise<{ id: string }> {
+    const invoice =
+      await this.commandRepository.findAggregateByShipmentId(
+        customerShipmentId,
+      );
+
+    if (!invoice) {
+      throw new NotFoundException('This shipment has no invoice');
     }
+
+    return this.collectAgainst(invoice, {
+      ...command,
+      invoiceId: invoice.id,
+    });
+  }
+
+  /**
+   * Delivery is not allowed while anything is still owed. Uses the Prisma
+   * connection so a payment recorded earlier in the same transaction is seen.
+   */
+  async assertSettledForDelivery(customerShipmentId: string): Promise<void> {
+    const invoice =
+      await this.commandRepository.findAggregateByShipmentId(
+        customerShipmentId,
+      );
+
+    if (!invoice) {
+      throw new ConflictException(
+        'This shipment has no invoice and cannot be delivered.',
+      );
+    }
+
+    if (!invoice.isFullyPaid()) {
+      throw new ConflictException(
+        'Parcel cannot be delivered until the invoice is fully paid.',
+      );
+    }
+  }
+
+  /**
+   * Sweeps unpaid invoices past their due date into OVERDUE. Driven by the
+   * scheduled job, not by a request.
+   */
+  async markOverdueInvoices(now: Date = new Date()): Promise<number> {
+    return this.commandRepository.markOverdueBefore(now);
+  }
+
+  private async collectAgainst(
+    invoice: Invoice,
+    command: RecordPaymentCommand,
+  ): Promise<{ id: string }> {
+    const paidSoFar = await this.commandRepository.sumCompletedPayments(
+      invoice.id,
+    );
+
+    invoice.assertAcceptsPayment(command.amount, paidSoFar);
 
     const payment = await this.paymentCommandRepository.create({
       tenantId: invoice.tenantId,
@@ -167,31 +257,16 @@ export class InvoiceCommandService {
       status: PaymentStatus.COMPLETED,
     });
 
-    // Read the total back rather than adding to a figure held in memory, so a
-    // payment recorded by another request in the meantime is counted too.
-    const paidTotal = await this.queryRepository.sumCompletedPayments(
-      invoice.id,
-    );
-
+    const paidTotal = paidSoFar + command.amount;
     const newStatus = invoice.applyPaidTotal(paidTotal);
 
-    if (newStatus) {
-      await this.commandRepository.updateStatus(
-        invoice.id,
-        newStatus,
-        invoice.version,
-      );
-    }
+    await this.commandRepository.updateStatus(
+      invoice.id,
+      newStatus ?? invoice.status,
+      invoice.version,
+    );
 
     return payment;
-  }
-
-  /**
-   * Sweeps unpaid invoices past their due date into OVERDUE. Driven by the
-   * scheduled job, not by a request.
-   */
-  async markOverdueInvoices(now: Date = new Date()): Promise<number> {
-    return this.commandRepository.markOverdueBefore(now);
   }
 
   private calculateDueDate(): Date {

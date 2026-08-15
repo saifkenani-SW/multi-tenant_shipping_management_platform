@@ -5,6 +5,7 @@ import { ZonePricingResolutionService } from '../../../pricing/application/servi
 import { PricingCalculationService } from '../../../pricing/application/services/pricing-calculation.service';
 import { CreateShipmentRequestDto } from '../../../request/application/dtos/requests/create-shipment-request.dto';
 import { generateUuid } from '../../../../../common/uuid/uuid.helper';
+import { resolveCurrency } from '../../../../billing/constants/billing.constants';
 
 export enum QuotationStatus {
   PENDING = 'PENDING',
@@ -140,7 +141,7 @@ export class QuotationGenerationService {
       // Get settings for the tenant
       const settings = settingsMap.get(route.tenantId);
       const volumetricDivisor = settings?.volumetricDivisor || 5000;
-      const currency = settings?.defaultCurrency || 'SR';
+      const currency = resolveCurrency(settings?.defaultCurrency);
 
       const key = `${route.tenantId}:${route.originZoneId}:${route.destinationZoneId}`;
       const pricingList = pricingMap.get(key) || [];

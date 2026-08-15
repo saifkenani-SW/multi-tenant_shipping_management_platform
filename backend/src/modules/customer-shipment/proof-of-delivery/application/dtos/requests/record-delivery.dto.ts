@@ -18,13 +18,16 @@ import {
 /**
  * Money taken as the parcel is handed over.
  *
- * Optional: it is only present when this handover is also the moment of
- * payment, which is the case when the receiver is the paying party. A shipment
- * paid by the sender at the origin branch is handed over with nothing to
- * collect.
+ * Omit it when the invoice is already fully paid. Include it when anything is
+ * still owed: a parcel is not delivered until the invoice is PAID, so this is
+ * how a receiver-paid handover settles and delivers in one act.
  */
 export class CollectPaymentDto {
-  @ApiProperty({ description: 'Amount collected', example: 40.25 })
+  @ApiProperty({
+    description:
+      'Amount collected against the shipment invoice. Must not exceed the remaining balance. Minimum is 1000 SY or 100 USD, unless the remainder is smaller.',
+    example: 1000,
+  })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0.01)
@@ -117,7 +120,7 @@ export class RecordDeliveryDto {
 
   @ApiPropertyOptional({
     description:
-      'Payment taken at this handover, when the receiver is the paying party. Recorded against the shipment invoice.',
+      'Payment taken at this handover. Required when the invoice is not yet fully paid: a parcel cannot be delivered while anything is still owed.',
     type: CollectPaymentDto,
   })
   @ValidateNested()

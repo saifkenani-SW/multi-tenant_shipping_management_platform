@@ -23,6 +23,8 @@ import { ShipmentMapper } from '../mappers/shipment.mapper';
 import { ParcelQueryService } from '../../../parcel/application/services/parcel.query.service';
 import { ParcelMapper } from '../../../parcel/application/mappers/parcel.mapper';
 import { CustomerShipment } from '../../domain/entities/customer-shipment.entity';
+import { BillingFacade } from '../../../../billing/facades/billing.facade';
+import { InvoiceDetailsResponseDto } from '../../../../billing/invoice/application/dtos/responses/invoice-details.response.dto';
 
 @Injectable()
 export class ShipmentQueryService {
@@ -32,6 +34,7 @@ export class ShipmentQueryService {
     private readonly mapper: ShipmentMapper,
     private readonly parcelQueryService: ParcelQueryService,
     private readonly parcelMapper: ParcelMapper,
+    private readonly billingFacade: BillingFacade,
   ) {}
 
   /**
@@ -105,6 +108,18 @@ export class ShipmentQueryService {
   async findById(id: string): Promise<ShipmentResponseDto> {
     const record = await this.findRawOrThrow(id);
     return this.mapper.toResponse(record);
+  }
+
+  /**
+   * Invoice and full payment history for this shipment, including refunds
+   * after a pending cancel. Authorised as viewing the shipment.
+   */
+  @Authorize({
+    policy: Policy(ShipmentPolicy, ShipmentAction.View),
+    payloadResolver: (id: string) => ({ shipmentId: id }),
+  })
+  async getInvoice(id: string): Promise<InvoiceDetailsResponseDto> {
+    return this.billingFacade.getInvoiceForShipment(id);
   }
 
   async findAggregateOrThrow(id: string): Promise<CustomerShipment> {

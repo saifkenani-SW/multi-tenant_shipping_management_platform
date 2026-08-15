@@ -3,4 +3,5 @@ export interface ShipmentCapabilities {
   canUpdate: boolean;
   canCancel: boolean;
   canReturn: boolean;
+  canRecordPayment: boolean;
 }

@@ -71,6 +71,8 @@ export class ShipmentStatusRecalculator {
     }
 
     if (status === ShipmentStatus.RETURNED) {
+      // A return is a logistics outcome. Billing is not touched: collected
+      // money stays, and no refund is issued.
       await this.eventEmitter.emitAsync(
         CUSTOMER_SHIPMENT_EVENTS.RETURNED,
         payload,

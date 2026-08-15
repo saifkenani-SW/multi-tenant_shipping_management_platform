@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { InvoiceStatus } from '@prisma/client';
+import { Currency, InvoiceStatus } from '@prisma/client';
 
 export class InvoiceResponseDto {
   @ApiProperty()
@@ -49,17 +49,25 @@ export class InvoiceResponseDto {
   @ApiProperty()
   totalAmount: number;
 
-  @ApiProperty({ description: 'Sum of completed payments so far' })
+  @ApiProperty({ description: 'Sum of completed collections (not reduced by refunds)' })
   paidAmount: number;
 
-  @ApiProperty({ description: 'What is still owed' })
+  @ApiProperty({
+    description: 'Sum of refunded amounts recorded against this invoice',
+  })
+  refundedAmount: number;
+
+  @ApiProperty({
+    description:
+      'What is still owed. Zero when the invoice is cancelled (including after a refund).',
+  })
   balanceDue: number;
 
   @ApiProperty()
   paymentResponsibility: string;
 
-  @ApiProperty()
-  currency: string;
+  @ApiProperty({ enum: Currency })
+  currency: Currency;
 
   @ApiProperty({ enum: InvoiceStatus })
   status: InvoiceStatus;

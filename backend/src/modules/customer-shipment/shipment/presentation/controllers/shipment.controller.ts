@@ -17,12 +17,13 @@ import {
 } from '@nestjs/swagger';
 import { Roles } from '../../../../../common/authorization/decorators/roles.decorator';
 import { RoleType } from '../../../../authorization/domain/enums/role.enum';
-import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { ShipmentCommandService } from '../../application/services/shipment.command.service';
 import { ShipmentQueryService } from '../../application/services/shipment.query.service';
 import { CreateShipmentDto } from '../../application/dtos/requests/create-shipment.dto';
 import { ShipmentQueryDto } from '../../application/dtos/requests/shipment-query.dto';
 import { ShipmentDetailsResponseDto } from '../../application/dtos/responses/shipment-details.response.dto';
+import { RecordShipmentPaymentDto } from '../../application/dtos/requests/record-shipment-payment.dto';
+import { InvoiceDetailsResponseDto } from '../../../../billing/invoice/application/dtos/responses/invoice-details.response.dto';
 
 /**
  * Thin by design: role gating happens here, the per-entity policy check lives
@@ -36,7 +37,6 @@ export class ShipmentController {
   constructor(
     private readonly commandService: ShipmentCommandService,
     private readonly queryService: ShipmentQueryService,
-    private readonly requestContext: RequestContextService,
   ) {}
 
   @Post()
@@ -79,6 +79,39 @@ export class ShipmentController {
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ShipmentDetailsResponseDto> {
     return this.queryService.findDetailsById(id);
+  }
+
+  @Get(':id/invoice')
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.CUSTOMER,
+  )
+  @ApiOperation({
+    summary:
+      'Get the invoice and full payment history for this shipment, including refunds after a pending cancel',
+  })
+  @ApiResponse({ status: HttpStatus.OK, type: InvoiceDetailsResponseDto })
+  async getInvoice(
+    @Param('id', ParseUUIDPipe) id: string,
+  ): Promise<InvoiceDetailsResponseDto> {
+    return this.queryService.getInvoice(id);
+  }
+
+  @Post(':id/payments')
+  @HttpCode(HttpStatus.CREATED)
+  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
+  @ApiOperation({
+    summary:
+      'Record a counter payment against the shipment invoice. Handover collection uses proof of delivery instead.',
+  })
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Payment recorded' })
+  async recordPayment(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RecordShipmentPaymentDto,
+  ): Promise<{ id: string }> {
+    return this.commandService.recordPayment(id, dto);
   }
 
   @Post(':id/cancel')

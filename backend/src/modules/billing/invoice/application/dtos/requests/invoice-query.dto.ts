@@ -1,7 +1,14 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { InvoiceStatus, PaymentResponsibility } from '@prisma/client';
 import { Type } from 'class-transformer';
-import { IsDate, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsDate,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import { CursorPaginationQueryDto } from '../../../../../../common/pagination/cursor/dtos/cursor-pagination-query.dto';
 
 /**
@@ -21,8 +28,11 @@ export class InvoiceQueryDto extends CursorPaginationQueryDto {
   @IsOptional()
   status?: InvoiceStatus;
 
-  @ApiPropertyOptional({ description: 'Filter by the customer who owes it' })
-  @IsUUID()
+  @ApiPropertyOptional({
+    description: 'Filter by the sender phone copied onto the invoice',
+  })
+  @IsString()
+  @MaxLength(50)
   @IsOptional()
   senderPhone?: string;
 

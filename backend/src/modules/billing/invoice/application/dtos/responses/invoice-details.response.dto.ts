@@ -30,7 +30,8 @@ export class InvoicePaymentDto {
 
 export class InvoiceDetailsResponseDto extends InvoiceResponseDto {
   @ApiProperty({
-    description: 'Every payment recorded against this invoice, oldest first',
+    description:
+      'Every payment and refund recorded against this invoice, oldest first. Rows are never deleted: a pending cancel adds a REFUNDED row after the collections.',
     type: [InvoicePaymentDto],
   })
   payments: InvoicePaymentDto[];

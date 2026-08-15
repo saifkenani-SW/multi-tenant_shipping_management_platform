@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InvoiceStatus, PaymentMethod, PaymentStatus } from '@prisma/client';
+import { InvoiceStatus, PaymentMethod, PaymentStatus, Currency } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { Seeder } from '../seeder.interface';
 import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
@@ -56,11 +56,11 @@ export class BillingSeeder implements Seeder {
         origin_org_unit_id: shipment.origin_org_unit_id,
         destination_org_unit_id: shipment.destination_org_unit_id,
         invoice_number: invoiceNumber,
-        subtotal: 35.0,
-        tax_amount: 5.25,
+        subtotal: 100.0,
+        tax_amount: 0.0,
         discount_amount: 0.0,
-        total_amount: 40.25,
-        currency: 'USD',
+        total_amount: 100.0,
+        currency: Currency.USD,
         status: InvoiceStatus.PAID,
       },
     });
@@ -77,7 +77,7 @@ export class BillingSeeder implements Seeder {
         invoice_id: inv.id,
         collected_by_employee_id: employee.id,
         organization_unit_id: orgUnit.id,
-        amount: 40.25,
+        amount: 100.0,
         payment_method: PaymentMethod.CASH,
         transaction_reference: 'TXN-99887766',
         status: PaymentStatus.COMPLETED,
