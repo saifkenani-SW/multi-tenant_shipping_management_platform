@@ -39,7 +39,10 @@ export class CreateShipmentRequestDto {
   @IsNotEmpty()
   sender_name: string;
 
-  @ApiProperty({ example: '+1234567890' })
+  @ApiProperty({ 
+    description: 'Sender phone (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '+963991234567' 
+  })
   @IsString()
   @IsNotEmpty()
   sender_phone: string;
@@ -59,7 +62,10 @@ export class CreateShipmentRequestDto {
   @IsNotEmpty()
   receiver_name: string;
 
-  @ApiProperty({ example: '+0987654321' })
+  @ApiProperty({ 
+    description: 'Receiver phone (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '0991234567' 
+  })
   @IsString()
   @IsNotEmpty()
   receiver_phone: string;

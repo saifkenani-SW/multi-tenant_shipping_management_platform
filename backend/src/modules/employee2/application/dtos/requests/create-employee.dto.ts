@@ -7,7 +7,8 @@ import {
   IsArray,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { normalizeCitizenPhone } from '../../../../../common/utils/phone.util';
 import { AssignmentInputDto } from './add-employee-assignments.dto';
 
 export class CreateEmployeeDto {
@@ -28,9 +29,13 @@ export class CreateEmployeeDto {
   @IsOptional()
   password?: string;
 
-  @ApiPropertyOptional({ description: 'رقم الهاتف لإنشاء حساب مستخدم جديد' })
+  @ApiPropertyOptional({ 
+    description: 'رقم الهاتف لإنشاء حساب مستخدم جديد (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '+963991234567',
+  })
   @IsString()
   @IsOptional()
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   phone?: string;
 
   @ApiProperty({ description: 'الرمز الوظيفي للموظف' })

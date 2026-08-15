@@ -10,6 +10,8 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { normalizeCitizenPhone } from '../../../../common/utils/phone.util';
 
 /**
  * ينشئ حساب users والموظف معاً: لا معنى لموظف لا يستطيع الدخول.
@@ -32,12 +34,13 @@ export class CreateEmployeeDto {
   password: string;
 
   @ApiPropertyOptional({
-    description: 'Contact phone',
-    example: '+962790000000',
+    description: 'Contact phone (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '+963991234567',
   })
   @IsString()
   @IsOptional()
   @MaxLength(50)
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   phone?: string;
 
   @ApiProperty({

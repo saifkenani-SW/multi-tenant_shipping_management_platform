@@ -19,6 +19,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { normalizeCitizenPhone } from '../../../../../../common/utils/phone.util';
 
 export class CreateShipmentParcelDto {
   @ApiPropertyOptional({ description: 'Free-text description of the contents' })
@@ -137,10 +138,15 @@ export class CreateShipmentDto {
   @MaxLength(255)
   senderName: string;
 
-  @ApiProperty({ maxLength: 50 })
+  @ApiProperty({
+    maxLength: 50,
+    description: 'Sender phone (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '+963991234567',
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   senderPhone: string;
 
   @ApiPropertyOptional({
@@ -167,10 +173,15 @@ export class CreateShipmentDto {
   @MaxLength(255)
   receiverName: string;
 
-  @ApiProperty({ maxLength: 50 })
+  @ApiProperty({
+    maxLength: 50,
+    description: 'Receiver phone (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '0991234567',
+  })
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   receiverPhone: string;
 
   @ApiPropertyOptional({ enum: ServiceLevel, default: ServiceLevel.STANDARD })

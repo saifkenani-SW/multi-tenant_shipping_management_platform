@@ -1,5 +1,7 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { normalizeCitizenPhone } from '../../../../common/utils/phone.util';
 
 export class RegisterDto {
   @ApiProperty({
@@ -30,9 +32,10 @@ export class RegisterDto {
 
   @ApiProperty({
     example: '0991234567',
-    description: 'The phone number of the customer',
+    description: 'The phone number of the customer (Accepted formats: +963991234567, 963991234567, 0991234567)',
   })
   @IsString()
   @IsNotEmpty()
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   phone!: string;
 }

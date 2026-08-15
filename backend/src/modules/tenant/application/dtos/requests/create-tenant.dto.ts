@@ -6,6 +6,8 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { normalizeCitizenPhone } from '../../../../../common/utils/phone.util';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateTenantDto {
@@ -34,11 +36,12 @@ export class CreateTenantDto {
   email: string;
 
   @ApiProperty({
-    description: 'Primary contact phone number in international E.164 format',
-    example: '+971501234567',
+    description: 'Primary contact phone number (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '+963991234567',
   })
   @IsPhoneNumber()
   @IsNotEmpty()
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   phone: string;
 
   @ApiPropertyOptional({
@@ -66,11 +69,12 @@ export class CreateTenantDto {
   ownerPassword?: string;
 
   @ApiProperty({
-    description: 'Phone number for the tenant admin owner',
-    example: '+971501234567',
+    description: 'Phone number for the tenant admin owner (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '+963991234567',
     required: false,
   })
   @IsPhoneNumber()
   @IsOptional()
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   ownerPhone?: string;
 }

@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { InvoiceStatus, PaymentResponsibility } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
+import { normalizeCitizenPhone } from '../../../../../../common/utils/phone.util';
 import {
   IsDate,
   IsEnum,
@@ -29,11 +30,13 @@ export class InvoiceQueryDto extends CursorPaginationQueryDto {
   status?: InvoiceStatus;
 
   @ApiPropertyOptional({
-    description: 'Filter by the sender phone copied onto the invoice',
+    description: 'Filter by the sender phone copied onto the invoice (Accepted formats: +963991234567, 963991234567, 0991234567)',
+    example: '+963991234567',
   })
   @IsString()
   @MaxLength(50)
   @IsOptional()
+  @Transform(({ value }) => normalizeCitizenPhone(value))
   senderPhone?: string;
 
   @ApiPropertyOptional({ description: 'Filter by the shipment it belongs to' })
