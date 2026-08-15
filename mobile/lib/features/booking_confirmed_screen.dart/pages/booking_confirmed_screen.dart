@@ -6,7 +6,6 @@ import 'package:mobile/features/booking_confirmed_screen.dart/providers/booking_
 import 'package:mobile/features/booking_confirmed_screen.dart/widgets/app_button.dart';
 import 'package:mobile/features/booking_confirmed_screen.dart/widgets/app_card_container.dart';
 import 'package:mobile/features/booking_confirmed_screen.dart/widgets/app_divider.dart';
-import 'package:mobile/features/booking_confirmed_screen.dart/widgets/custom_bottom_nav_bar.dart';
 import 'package:mobile/features/booking_confirmed_screen.dart/widgets/info_column.dart';
 import 'package:mobile/features/booking_confirmed_screen.dart/widgets/location_row.dart';
 import 'package:mobile/features/booking_confirmed_screen.dart/widgets/qrcode_container_widget.dart';
@@ -124,7 +123,6 @@ class BookingConfirmedScreen extends ConsumerWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(),
     );
   }
 }

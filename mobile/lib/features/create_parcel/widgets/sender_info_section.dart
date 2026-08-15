@@ -1,103 +1,93 @@
-
-// ج) معلومات المرسل
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-class SenderInfoSection extends StatelessWidget {
-  const SenderInfoSection({super.key});
+import 'package:mobile/core/theme/app_colors.dart';
+import 'package:mobile/features/create_parcel/providers/sender_location_notifier.dart';
+import 'package:mobile/features/create_parcel/repository/create_parcel_controller.dart';
+import 'package:mobile/features/create_parcel/widgets/CardContainer.dart';
+import 'package:mobile/features/create_parcel/widgets/LocationDropdowns.dart';
+
+class SenderInfoSection extends ConsumerWidget {
+  final CreateParcelController controllers;
+
+  const SenderInfoSection({super.key, required this.controllers});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locationState = ref.watch(senderLocationNotifierProvider);
 
-    return Container(
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                'معلومات المرسل',
-                style: TextStyle(
-                  fontSize: 15.sp,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-              SizedBox(width: 8.w),
-              Icon(
-                Icons.local_shipping_outlined,
-                color: theme.colorScheme.primary,
-                size: 20.sp,
-              ),
-            ],
+    return CardContainer(
+      borderColor: AppColorsDark.accentBlue,
+      title: 'معلومات المرسل',
+      icon: Icons.local_shipping_outlined,
+      iconColor: AppColorsDark.accentBlue,
+      children: [
+        Text(
+          'اسم المرسل',
+          style: TextStyle(fontSize: 12.sp, color: AppColorsDark.textGrey),
+        ),
+
+        SizedBox(height: 8.h),
+
+        TextField(
+          controller: controllers.senderNameController,
+          decoration: const InputDecoration(hintText: 'اسم المرسل الكامل'),
+        ),
+
+        SizedBox(height: 12.h),
+
+        Text(
+          'رقم الهاتف',
+          style: TextStyle(fontSize: 12.sp, color: AppColorsDark.textGrey),
+        ),
+
+        SizedBox(height: 8.h),
+
+        TextField(
+          controller: controllers.senderPhoneController,
+          keyboardType: TextInputType.phone,
+          decoration: const InputDecoration(hintText: '05xxxxxxxx'),
+        ),
+
+        SizedBox(height: 12.h),
+
+        locationState.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+
+          error: (error, stackTrace) => Text(
+            'حدث خطأ في تحميل المناطق',
+            style: TextStyle(color: Colors.red, fontSize: 12.sp),
           ),
-          SizedBox(height: 14.h),
-          Text(
-            'الدولة',
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          SizedBox(height: 6.h),
-          const TextField(
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(hintText: 'المملكة العربية السعودية'),
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'المدينة',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    const TextField(
-                      textAlign: TextAlign.right,
-                      decoration: InputDecoration(hintText: 'الرياض'),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(width: 12.w),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'المحافظة',
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    SizedBox(height: 6.h),
-                    const TextField(
-                      textAlign: TextAlign.right,
-                      decoration: InputDecoration(hintText: 'الرياض'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+
+          data: (state) {
+            return LocationDropdowns(
+              levels: state.levels,
+
+              // onSearch: (index, value) {
+              //   ref
+              //       .read(
+              //         senderLocationNotifierProvider.notifier,
+              //       )
+              //       .search(index, value);
+              // },
+              onSelected: (index, location) {
+                ref
+                    .read(senderLocationNotifierProvider.notifier)
+                    .selectLocation(index, location);
+              },
+
+              // onLoadMore: (index) {
+              //   ref
+              //       .read(
+              //         senderLocationNotifierProvider.notifier,
+              //       )
+              //       .loadMore(index);
+              // },
+            );
+          },
+        ),
+      ],
     );
   }
 }
