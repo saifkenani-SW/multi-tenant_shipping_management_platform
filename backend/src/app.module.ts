@@ -34,6 +34,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { FirebaseNotificationModule } from './packages/firebase-notifications';
 import { NotificationModule } from './modules/notification/notification.module';
 import { ProfileModule } from './modules/profile/profile.module';
+import { TrackingGatewayModule } from './modules/tracking-gateway.module';
 
 @Module({
   imports: [
@@ -84,6 +85,7 @@ import { ProfileModule } from './modules/profile/profile.module';
     }),
     NotificationModule,
     ProfileModule,
+    TrackingGatewayModule,
   ],
   controllers: [AppController],
   providers: [AppService, GlobalExceptionFilter],

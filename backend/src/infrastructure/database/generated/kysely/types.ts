@@ -739,6 +739,15 @@ export type trip = {
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };
+export type trip_location_log = {
+    id: string;
+    trip_id: string;
+    driver_id: string;
+    latitude: string;
+    longitude: string;
+    recorded_at: Timestamp;
+    created_at: Generated<Timestamp>;
+};
 export type user_device_token = {
     id: string;
     user_id: string;
@@ -843,6 +852,7 @@ export type DB = {
     tenant_zone: tenant_zone;
     transport_manifest: transport_manifest;
     trip: trip;
+    trip_location_log: trip_location_log;
     user_device_token: user_device_token;
     user_session: user_session;
     users: users;
