@@ -18,7 +18,7 @@ COPY package*.json ./
 
 # npm ci not npm install: it installs exactly what package-lock.json pins, so the
 # image built today and the one built next month contain the same packages.
-RUN npm ci
+RUN npm install
 
 ############################################
 # Builder
@@ -38,7 +38,7 @@ FROM base AS production-dependencies
 
 COPY package*.json ./
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 ############################################
 # Runtime
