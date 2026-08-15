@@ -13,9 +13,10 @@ import { ParcelCapabilities } from './parcel.capabilities.interface';
 import { ParcelStatus } from '@prisma/client';
 
 @Injectable()
-export class ParcelCapabilityBuilder
-  implements CapabilityBuilder<ParcelTrackingResponseDto, ParcelCapabilities>
-{
+export class ParcelCapabilityBuilder implements CapabilityBuilder<
+  ParcelTrackingResponseDto,
+  ParcelCapabilities
+> {
   constructor(private readonly abilityFactory: CaslAbilityBuilder<Principal>) {}
 
   buildCapabilities(

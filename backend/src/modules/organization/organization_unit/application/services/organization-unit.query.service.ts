@@ -67,9 +67,7 @@ export class OrganizationUnitQueryService {
 
     if (records.length !== uniqueIds.length) return false;
 
-    return records.every(
-      (r) => r.tenantId === tenantId && r.isActive === true,
-    );
+    return records.every((r) => r.tenantId === tenantId && r.isActive === true);
   }
 
   async findCandidatesByGlobalLocation(locationId: string) {

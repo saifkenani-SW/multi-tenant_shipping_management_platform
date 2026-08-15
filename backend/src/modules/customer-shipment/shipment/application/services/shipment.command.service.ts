@@ -44,7 +44,10 @@ import {
   CustomerShipmentCreatedPayload,
   CustomerShipmentLifecyclePayload,
 } from '../../../constants/customer-shipment.events';
-import { CUSTOMER_SHIPMENT_CACHE_KEYS, PARCEL_LABEL_STORAGE_CATEGORY } from '../../../constants/customer-shipment.cache.constants';
+import {
+  CUSTOMER_SHIPMENT_CACHE_KEYS,
+  PARCEL_LABEL_STORAGE_CATEGORY,
+} from '../../../constants/customer-shipment.cache.constants';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
 
 /** A parcel with everything computed before the transaction opens. */
@@ -270,25 +273,12 @@ export class ShipmentCommandService {
     return { id: shipment.id };
   }
 
-
   /** PENDING or PROCESSING -> CANCELLED. The aggregate refuses it after dispatch. */
   @Authorize({
     policy: Policy(ShipmentPolicy, ShipmentAction.Cancel),
     payloadResolver: (shipmentId: string) => ({ shipmentId }),
   })
-  @CacheEvict([
-    {
-      keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
-      allEntries: true,
-    },
-    {
-      keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
-      keyBuilder: (shipmentId: string) => [
-        CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
-        shipmentId,
-      ],
-    },
-  ])
+  @CacheEvict({ keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX, allEntries: true })
   @Transactional()
   async cancelShipment(shipmentId: string): Promise<void> {
     const shipment = await this.queryService.findAggregateOrThrow(shipmentId);

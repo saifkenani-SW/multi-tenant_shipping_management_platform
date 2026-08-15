@@ -55,11 +55,7 @@ export class RoleService {
     return role.id;
   }
 
-  @CacheEvict({ keyPrefix: 'roles:list', allEntries: true })
-  @CacheEvict({
-    keyPrefix: 'roles:details',
-    keyBuilder: (id: string) => ['roles', 'details', id],
-  })
+  @CacheEvict({ keyPrefix: 'roles', allEntries: true })
   async updateRole(id: string, dto: UpdateRoleDto): Promise<void> {
     const tenantId = this.resolveTenantId();
     const role = await this.roleRepository.findById(id);
@@ -87,11 +83,7 @@ export class RoleService {
     }
   }
 
-  @CacheEvict({ keyPrefix: 'roles:list', allEntries: true })
-  @CacheEvict({
-    keyPrefix: 'roles:details',
-    keyBuilder: (id: string) => ['roles', 'details', id],
-  })
+  @CacheEvict({ keyPrefix: 'roles', allEntries: true })
   async deleteRole(id: string): Promise<void> {
     const tenantId = this.resolveTenantId();
     const role = await this.roleRepository.findById(id);
@@ -110,11 +102,7 @@ export class RoleService {
     await this.permissionCacheService.invalidateRolePermissions(id);
   }
 
-  @CacheEvict({
-    keyPrefix: 'roles:details',
-    keyBuilder: (id: string) => ['roles', 'details', id],
-  })
-  @CacheEvict({ keyPrefix: 'roles:list', allEntries: true })
+  @CacheEvict({ keyPrefix: 'roles', allEntries: true })
   @Transactional()
   async setRolePermissions(
     id: string,

@@ -1,2 +1,1 @@
-export const ManifestSubject = 'Manifest';
-export type ManifestSubject = typeof ManifestSubject;
+export const ManifestSubject = 'Manifest' as const;

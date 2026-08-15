@@ -64,8 +64,8 @@ export class ManifestResponseMapper {
     dto.status = manifest.status;
     dto.createdAt = manifest.createdAt;
     dto.updatedAt = manifest.updatedAt;
-    dto.items = items.map(
-      (item) => this.toItemDto(item, parcels.get(item.parcelId)),
+    dto.items = items.map((item) =>
+      this.toItemDto(item, parcels.get(item.parcelId)),
     );
     return dto;
   }
@@ -74,12 +74,13 @@ export class ManifestResponseMapper {
     records: Array<{ manifest: TransportManifest; itemCount: number }>,
     total: number,
     pagination: Pagination,
+    scope?: any,
   ): PaginatedManifestListDto {
     const dto = new PaginatedManifestListDto();
     dto.data = records.map((record) =>
       this.toListDto(record.manifest, record.itemCount),
     );
-    dto.meta = new PaginationMeta(pagination, total);
+    dto.meta = { ...new PaginationMeta(pagination, total), scope };
     return dto;
   }
 }

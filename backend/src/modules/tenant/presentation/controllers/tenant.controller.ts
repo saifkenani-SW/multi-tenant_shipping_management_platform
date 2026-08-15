@@ -30,6 +30,7 @@ import { TenantQueryService } from '../../application/services/tenant.query.serv
 import { PaginatedTenantListDto } from '../../application/dtos/responses/tenant-list.dto';
 import { TenantDetailsDto } from '../../application/dtos/responses/tenant-details.dto';
 import { TenantSettingsDto } from '../../application/dtos/responses/tenant-settings.dto';
+import { TenantOwnerResponseDto } from '../../application/dtos/responses/tenant-owner.dto';
 import { UpdateTenantDeliverySettingsDto } from '../../application/dtos/requests/update-tenant-delivery-settings.dto';
 import { UpdateTenantOperationalSettingsDto } from '../../application/dtos/requests/update-tenant-operational-settings.dto';
 import { UpdateTenantPricingSettingsDto } from '../../application/dtos/requests/update-tenant-pricing-settings.dto';
@@ -75,6 +76,33 @@ export class TenantController {
     description: 'Tenant created successfully',
     type: String,
   })
+  @ApiBody({
+    type: CreateTenantDto,
+    examples: {
+      withOwnerUserId: {
+        summary: 'إنشاء شركة مع تحديد مستخدم موجود مسبقاً ليكون المدير',
+        value: {
+          name: 'Global Logistics Inc.',
+          taxNumber: 'TAX-987654321',
+          email: 'contact@globallogistics.com',
+          phone: '+971501234567',
+          ownerUserId: '00000000-0000-0000-0000-000000000000',
+        },
+      },
+      withNewOwnerUser: {
+        summary: 'إنشاء شركة مع بيانات مستخدم جديد ليكون المدير',
+        value: {
+          name: 'Global Logistics Inc.',
+          taxNumber: 'TAX-987654321',
+          email: 'contact@globallogistics.com',
+          phone: '+971501234567',
+          ownerEmail: 'admin@globallogistics.com',
+          ownerPassword: 'password123',
+          ownerPhone: '+971501234567',
+        },
+      },
+    },
+  })
   async createTenant(@Body() dto: CreateTenantDto): Promise<{ id: string }> {
     const id = await this.tenantCommandService.createTenant(dto);
     return { id };
@@ -113,6 +141,21 @@ export class TenantController {
       throw new ForbiddenException('You do not have permission to access');
     }
     return this.tenantQueryService.getTenantDetails(id);
+  }
+
+  @Get(':id/owner')
+  @Roles(RoleType.PLATFORM_OWNER)
+  @ApiOperation({ summary: 'Get tenant owner details (Platform Admin only)' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Tenant owner details',
+    type: TenantOwnerResponseDto,
+  })
+  async getTenantOwner(
+    @Param() params: BaseUuidParamDto,
+  ): Promise<TenantOwnerResponseDto> {
+    const id = params.id;
+    return this.tenantQueryService.getTenantOwner(id);
   }
 
   @Patch(':id')
@@ -441,14 +484,14 @@ export class TenantController {
     try {
       const ext = tenant.logoUrl.split('.').pop()?.toLowerCase();
       const mimeTypes: Record<string, string> = {
-        'png': 'image/png',
-        'jpg': 'image/jpeg',
-        'jpeg': 'image/jpeg',
-        'gif': 'image/gif',
-        'svg': 'image/svg+xml',
-        'webp': 'image/webp'
+        png: 'image/png',
+        jpg: 'image/jpeg',
+        jpeg: 'image/jpeg',
+        gif: 'image/gif',
+        svg: 'image/svg+xml',
+        webp: 'image/webp',
       };
-      
+
       if (ext && mimeTypes[ext]) {
         res.setHeader('Content-Type', mimeTypes[ext]);
       } else {

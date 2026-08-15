@@ -35,6 +35,8 @@ import { ManifestResponseMapper } from './transport_manifest/application/mappers
 import { TransportManifestCommandRepository } from './transport_manifest/infrastructure/repositories/transport-manifest-command.repository';
 import { TransportManifestQueryRepository } from './transport_manifest/infrastructure/repositories/transport-manifest-query.repository';
 import { TransportManifestPersistenceMapper } from './transport_manifest/infrastructure/mappers/transport-manifest-persistence.mapper';
+import { ManifestAbility } from './transport_manifest/domain/authorization/abilities/manifest.ability';
+import { ManifestPolicy } from './transport_manifest/domain/authorization/policies/manifest.policy';
 
 /**
  * Fleet module — the Transport bounded context.
@@ -86,6 +88,8 @@ import { TransportManifestPersistenceMapper } from './transport_manifest/infrast
     TransportManifestQueryRepository,
     ManifestResponseMapper,
     TransportManifestPersistenceMapper,
+    ManifestAbility,
+    ManifestPolicy,
 
     // Customer Shipment implements the parcel contract Fleet declares. Binding
     // it here keeps the concrete facade out of the services themselves.

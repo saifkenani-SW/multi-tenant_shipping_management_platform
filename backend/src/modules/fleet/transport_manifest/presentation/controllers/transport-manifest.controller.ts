@@ -20,7 +20,10 @@ import {
 import { Roles } from '../../../../../common/authorization/decorators/roles.decorator';
 import { Permissions } from '../../../../../common/authorization/decorators/permissions.decorator';
 import { RoleType } from '../../../../authorization/domain/enums/role.enum';
-import { PermissionAction, PermissionResource } from '../../../../authorization/domain/enums/permission.enum';
+import {
+  PermissionAction,
+  PermissionResource,
+} from '../../../../authorization/domain/enums/permission.enum';
 import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { ManifestCommandService } from '../../application/services/manifest-command.service';
 import { ManifestQueryService } from '../../application/services/manifest-query.service';
@@ -90,10 +93,7 @@ export class TransportManifestController {
   async getManifestDetails(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ManifestDetailsDto> {
-    return this.manifestQueryService.getManifestDetails(
-      this.requestContext.getTenantId(),
-      id,
-    );
+    return this.manifestQueryService.getManifestDetails(id);
   }
 
   @Get(':id/items')
@@ -109,10 +109,7 @@ export class TransportManifestController {
   async getManifestItems(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ManifestItemDto[]> {
-    return this.manifestQueryService.getManifestItems(
-      this.requestContext.getTenantId(),
-      id,
-    );
+    return this.manifestQueryService.getManifestItems(id);
   }
 
   // ──────────────────────────── COMMANDS ───────────────────────────────────
@@ -143,7 +140,8 @@ export class TransportManifestController {
   @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
   @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
   @ApiOperation({
-    summary: 'Finalize a manifest (OPEN → READY_FOR_DISPATCH). Must have ≥1 item.',
+    summary:
+      'Finalize a manifest (OPEN → READY_FOR_DISPATCH). Must have ≥1 item.',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Manifest finalized' })
   async finalizeManifest(
@@ -165,9 +163,7 @@ export class TransportManifestController {
       'Reopen a manifest (READY_FOR_DISPATCH → OPEN). Only allowed when no trip is linked.',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Manifest reopened' })
-  async reopenManifest(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<void> {
+  async reopenManifest(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     await this.manifestCommandService.reopenManifest(
       this.requestContext.getTenantIdOrThrow(),
       id,

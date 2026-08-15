@@ -9,7 +9,11 @@ export class DeviceTokenRepository {
    * يحفظ التوكن — إذا كان موجوداً مسبقاً (نفس user + token) يتجاهل الطلب.
    * Upserts the token — ignores duplicates (same user + token).
    */
-  async upsert(userId: string, fcmToken: string, platform: string): Promise<void> {
+  async upsert(
+    userId: string,
+    fcmToken: string,
+    platform: string,
+  ): Promise<void> {
     await this.prisma.client.user_device_token.upsert({
       where: { user_id_fcm_token: { user_id: userId, fcm_token: fcmToken } },
       create: { user_id: userId, fcm_token: fcmToken, platform },
@@ -43,4 +47,3 @@ export class DeviceTokenRepository {
     return rows.map((r) => r.fcm_token);
   }
 }
-

@@ -73,10 +73,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     OrganizationModule,
     StorageModule,
   ],
-  controllers: [
-    ShipmentController,
-    ParcelController,
-  ],
+  controllers: [ShipmentController, ParcelController],
   providers: [
     // Shipment
     ShipmentCommandService,

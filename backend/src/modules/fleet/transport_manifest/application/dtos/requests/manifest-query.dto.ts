@@ -9,7 +9,10 @@ export class ManifestQueryDto extends PaginationQueryDto {
   @IsOptional()
   status?: ManifestStatus;
 
-  @ApiPropertyOptional({ description: 'Filter by tenant (Platform Owner only)', format: 'uuid' })
+  @ApiPropertyOptional({
+    description: 'Filter by tenant (Platform Owner only)',
+    format: 'uuid',
+  })
   @IsUUID()
   @IsOptional()
   tenantId?: string;

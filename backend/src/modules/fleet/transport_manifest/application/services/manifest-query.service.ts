@@ -11,12 +11,21 @@ import { PaginatedManifestListDto } from '../dtos/responses/manifest-list.dto';
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 import { PARCEL_LOOKUP } from '../../../contracts/parcel-lookup';
 import { Inject } from '@nestjs/common';
-import type { ParcelLookup, ParcelSummary } from '../../../contracts/parcel-lookup';
+import type {
+  ParcelLookup,
+  ParcelSummary,
+} from '../../../contracts/parcel-lookup';
 import { ManifestQueryCriteria } from '../builders/query/manifest-query-criteria';
 import { OffsetPaginationBuilder } from '../../../../../common/pagination';
-import { AuthorizationFacade } from '../../../../../packages/authorization/facade/authorization.facade';
+import {
+  AuthorizationFacade,
+  Authorize,
+} from '../../../../../packages/authorization';
+import { Policy } from '../../../../../packages/authorization/policy';
 import { ManifestVisibilityScope } from '../../domain/authorization/scopes/manifest-visibility.scope';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ManifestPolicy } from '../../domain/authorization/policies/manifest.policy';
+import { ManifestAction } from '../../domain/authorization/actions/manifest.action';
 
 @Injectable()
 export class ManifestQueryService {
@@ -56,14 +65,16 @@ export class ManifestQueryService {
       records,
       total,
       criteria.pagination,
+      scope,
     );
   }
 
-  async getManifestDetails(
-    tenantId: string | undefined,
-    id: string,
-  ): Promise<ManifestDetailsDto> {
-    const manifest = await this.findManifestOrThrow(tenantId, id);
+  @Authorize({
+    policy: Policy(ManifestPolicy, ManifestAction.View),
+    payloadResolver: (id: string) => ({ id }),
+  })
+  async getManifestDetails(id: string): Promise<ManifestDetailsDto> {
+    const manifest = await this.findManifestOrThrow(id);
     const items = await this.queryRepository.findItems(id);
 
     return this.responseMapper.toDetailsDto(
@@ -73,16 +84,17 @@ export class ManifestQueryService {
     );
   }
 
-  async getManifestItems(
-    tenantId: string | undefined,
-    manifestId: string,
-  ): Promise<ManifestItemDto[]> {
-    await this.findManifestOrThrow(tenantId, manifestId);
+  @Authorize({
+    policy: Policy(ManifestPolicy, ManifestAction.View),
+    payloadResolver: (manifestId: string) => ({ id: manifestId }),
+  })
+  async getManifestItems(manifestId: string): Promise<ManifestItemDto[]> {
+    await this.findManifestOrThrow(manifestId);
     const items = await this.queryRepository.findItems(manifestId);
     const parcels = await this.loadParcels(items);
 
-    return items.map(
-      (item) => this.responseMapper.toItemDto(item, parcels.get(item.parcelId)),
+    return items.map((item) =>
+      this.responseMapper.toItemDto(item, parcels.get(item.parcelId)),
     );
   }
 
@@ -110,11 +122,8 @@ export class ManifestQueryService {
     }
   }
 
-  async findManifestOrThrow(
-    tenantId: string | undefined,
-    id: string,
-  ): Promise<TransportManifest> {
-    const manifest = await this.queryRepository.findById(tenantId, id);
+  async findManifestOrThrow(id: string): Promise<TransportManifest> {
+    const manifest = await this.queryRepository.findById(id);
 
     if (!manifest) {
       throw new ManifestNotFoundException();

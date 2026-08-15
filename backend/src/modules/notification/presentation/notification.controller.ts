@@ -1,4 +1,11 @@
-import { Body, Controller, Delete, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  HttpCode,
+  HttpStatus,
+  Post,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationService } from '../application/notification.service';
 import { RegisterDeviceTokenDto } from '../application/dtos/register-device-token.dto';
@@ -27,7 +34,11 @@ export class NotificationController {
   @ApiOperation({ summary: 'تسجيل FCM token للجهاز الحالي' })
   async registerToken(@Body() dto: RegisterDeviceTokenDto): Promise<void> {
     const userId = this.requestContext.getPrincipal().subject.id;
-    await this.notificationService.registerToken(userId, dto.fcmToken, dto.platform);
+    await this.notificationService.registerToken(
+      userId,
+      dto.fcmToken,
+      dto.platform,
+    );
   }
 
   @Delete('tokens')

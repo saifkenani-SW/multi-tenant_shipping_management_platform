@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserQueryService } from '../services/user.query.service';
+import { UserCommandService } from '../services/user.command.service';
+import { CreateUserDto } from '../dtos/requests/create-user.dto';
 
 export interface UserSummaryDto {
   id: string;
@@ -10,7 +12,17 @@ export interface UserSummaryDto {
 
 @Injectable()
 export class UserFacade {
-  constructor(private readonly queryService: UserQueryService) {}
+  constructor(
+    private readonly queryService: UserQueryService,
+    private readonly commandService: UserCommandService,
+  ) {}
+
+  /**
+   * Creates a new user.
+   */
+  async createUser(dto: CreateUserDto): Promise<string> {
+    return this.commandService.createUser(dto);
+  }
 
   /**
    * Checks if a user exists and is active.

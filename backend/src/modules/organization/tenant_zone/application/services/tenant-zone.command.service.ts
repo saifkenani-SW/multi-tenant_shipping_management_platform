@@ -28,21 +28,7 @@ export class TenantZoneCommandService {
   }
 
   // مسح كاش التفاصيل لضمان تحديث بيانات المنطقة
-  @CacheEvict({
-    keyPrefix: TENANT_ZONE_CACHE_KEYS.PREFIX,
-    keyBuilder: (tenantId: string, id: string, dto: UpdateTenantZoneDto) => [
-      TENANT_ZONE_CACHE_KEYS.DETAILS,
-      id,
-    ],
-  })
-  // مسح كاش القائمة لضمان تحديث اللائحة العامة
-  @CacheEvict({
-    keyPrefix: TENANT_ZONE_CACHE_KEYS.PREFIX,
-    keyBuilder: (tenantId: string, id: string, dto: UpdateTenantZoneDto) => [
-      TENANT_ZONE_CACHE_KEYS.LIST,
-      tenantId,
-    ],
-  })
+  @CacheEvict({ keyPrefix: TENANT_ZONE_CACHE_KEYS.PREFIX, allEntries: true })
   @Transactional()
   async update(tenantId: string, id: string, dto: UpdateTenantZoneDto) {
     await this.queryService.findById(id, tenantId);

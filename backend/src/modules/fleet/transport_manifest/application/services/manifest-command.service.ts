@@ -1,4 +1,8 @@
-import { ConflictException, ForbiddenException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { Transactional } from '../../../../../packages/transaction';
 import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
 import { EmployeeFacade } from '../../../../employee2/facades/employee.facade';
@@ -88,10 +92,9 @@ export class ManifestCommandService {
     employeeId: string | undefined,
     dto: AddManifestItemDto,
   ): Promise<string> {
-    const manifest = await this.manifestQueryService.findManifestOrThrow(
-      tenantId,
-      manifestId,
-    );
+    const manifest =
+      await this.manifestQueryService.findManifestOrThrow(manifestId);
+    if (manifest.tenantId !== tenantId) throw new ForbiddenException();
 
     manifest.assertItemsModifiable();
 
@@ -144,7 +147,9 @@ export class ManifestCommandService {
     itemId: string,
     dto: UpdateManifestItemStatusDto,
   ): Promise<void> {
-    await this.manifestQueryService.findManifestOrThrow(tenantId, manifestId);
+    const manifest =
+      await this.manifestQueryService.findManifestOrThrow(manifestId);
+    if (manifest.tenantId !== tenantId) throw new ForbiddenException();
 
     const item = await this.manifestQueryService.findItemOrThrow(
       manifestId,
@@ -177,10 +182,9 @@ export class ManifestCommandService {
     itemId: string,
     employeeId: string | undefined,
   ): Promise<void> {
-    const manifest = await this.manifestQueryService.findManifestOrThrow(
-      tenantId,
-      manifestId,
-    );
+    const manifest =
+      await this.manifestQueryService.findManifestOrThrow(manifestId);
+    if (manifest.tenantId !== tenantId) throw new ForbiddenException();
 
     manifest.assertItemsModifiable();
 
@@ -202,17 +206,13 @@ export class ManifestCommandService {
     manifestId: string,
     employeeId: string | undefined,
   ): Promise<void> {
-    const manifest = await this.manifestQueryService.findManifestOrThrow(
-      tenantId,
-      manifestId,
-    );
+    const manifest =
+      await this.manifestQueryService.findManifestOrThrow(manifestId);
+    if (manifest.tenantId !== tenantId) throw new ForbiddenException();
 
     await this.assertEmployeeCanEditManifest(employeeId, manifest);
 
-    const items = await this.manifestQueryService.getManifestItems(
-      tenantId,
-      manifestId,
-    );
+    const items = await this.manifestQueryService.getManifestItems(manifestId);
 
     if (!items.length) {
       throw new ManifestNotFinalizableException(
@@ -236,10 +236,9 @@ export class ManifestCommandService {
     manifestId: string,
     employeeId: string | undefined,
   ): Promise<void> {
-    const manifest = await this.manifestQueryService.findManifestOrThrow(
-      tenantId,
-      manifestId,
-    );
+    const manifest =
+      await this.manifestQueryService.findManifestOrThrow(manifestId);
+    if (manifest.tenantId !== tenantId) throw new ForbiddenException();
 
     await this.assertEmployeeCanEditManifest(employeeId, manifest);
 
