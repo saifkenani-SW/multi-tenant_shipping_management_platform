@@ -3,6 +3,8 @@ import { UserFacade } from './application/facades/user.facade';
 import { UserQueryService } from './application/services/user.query.service';
 import { UserCommandService } from './application/services/user.command.service';
 import { UserQueryRepository } from './infrastructure/repositories/user.query.repository';
+import { UserListingQueryRepository } from './infrastructure/repositories/user-listing.query.repository';
+import { UserListingQueryService } from './application/services/user-listing.query.service';
 import { UserCommandRepository } from './infrastructure/repositories/user.command.repository';
 import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { UserController } from './presentation/controllers/user.controller';
@@ -12,6 +14,8 @@ import { UserController } from './presentation/controllers/user.controller';
   controllers: [UserController],
   providers: [
     UserQueryRepository,
+    UserListingQueryRepository,
+    UserListingQueryService,
     UserCommandRepository,
     UserQueryService,
     UserCommandService,
