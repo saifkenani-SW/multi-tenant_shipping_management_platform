@@ -248,4 +248,25 @@ export class ParcelController {
     res.setHeader('Content-Type', mimeType);
     stream.pipe(res);
   }
+
+  @Get('parcels/:trackingNumber/label')
+  @Roles(
+    RoleType.PLATFORM_OWNER,
+    RoleType.TENANT_ADMIN,
+    RoleType.EMPLOYEE,
+    RoleType.CUSTOMER,
+  )
+  @ApiOperation({
+    summary: 'Stream the shipping label for a parcel',
+  })
+  @ApiResponse({ status: HttpStatus.OK, description: 'The label file stream' })
+  async getLabel(
+    @Param('trackingNumber') trackingNumber: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { stream, mimeType } =
+      await this.queryService.getLabelStream(trackingNumber);
+    res.setHeader('Content-Type', mimeType);
+    stream.pipe(res);
+  }
 }
