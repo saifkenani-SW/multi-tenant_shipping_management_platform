@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Transactional } from '../../../../../packages/transaction';
+import { NotificationType } from '../../../../../packages/firebase-notifications';
 import { EmployeeFacade } from '../../../../employee2/facades/employee.facade';
+import { NotificationFacade } from '../../../../notification/facades/notification.facade';
 import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
 import { TripCommandRepository } from '../../infrastructure/repositories/trip-command.repository';
 import { TripQueryService } from './trip-query.service';
@@ -22,18 +24,36 @@ export class TripCommandService {
     private readonly vehicleQueryService: VehicleQueryService,
     private readonly employeeFacade: EmployeeFacade,
     private readonly organizationFacade: OrganizationFacade,
+    private readonly notificationFacade: NotificationFacade,
   ) {}
 
   /**
-   * Creates a SCHEDULED trip.
+   * Creates a SCHEDULED trip and tells the driver about it.
    *
+   * The push is deliberately outside the transaction: notifying a driver about
+   * a trip that then failed to commit is worse than a missed notification, and
+   * a driver who never opens the app has no other way to learn a trip was
+   * assigned to them.
+   */
+  async createTrip(tenantId: string, dto: CreateTripDto): Promise<string> {
+    const id = await this.persistNewTrip(tenantId, dto);
+
+    await this.notifyDriverOfAssignment(tenantId, dto.driverId, id);
+
+    return id;
+  }
+
+  /**
    * External references are verified through facades only: the driver through
    * EmployeeFacade and both organization units through OrganizationFacade.
    * The vehicle lives inside Fleet, so it is read through the sibling
    * vehicle query service.
    */
   @Transactional()
-  async createTrip(tenantId: string, dto: CreateTripDto): Promise<string> {
+  private async persistNewTrip(
+    tenantId: string,
+    dto: CreateTripDto,
+  ): Promise<string> {
     // Route validity is a domain rule — fail before doing any lookups.
     Trip.assertRouteIsValid(dto.originOrgUnitId, dto.destinationOrgUnitId);
 
@@ -63,15 +83,30 @@ export class TripCommandService {
   }
 
   /**
-   * Updates a trip that has not departed yet. The aggregate decides whether it
-   * is still editable.
+   * Updates a trip that has not departed yet, and notifies the new driver if
+   * the trip changed hands. The previous driver is not told: dispatchers
+   * reassign freely while a trip is still SCHEDULED, and a "no longer yours"
+   * push for a trip the driver never saw is noise.
    */
-  @Transactional()
   async updateTrip(
     tenantId: string,
     id: string,
     dto: UpdateTripDto,
   ): Promise<void> {
+    const reassignedTo = await this.persistTripUpdate(tenantId, id, dto);
+
+    if (reassignedTo) {
+      await this.notifyDriverOfAssignment(tenantId, reassignedTo, id);
+    }
+  }
+
+  /** Returns the new driver id when the trip was reassigned, otherwise null. */
+  @Transactional()
+  private async persistTripUpdate(
+    tenantId: string,
+    id: string,
+    dto: UpdateTripDto,
+  ): Promise<string | null> {
     const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
 
     trip.assertEditable();
@@ -82,8 +117,11 @@ export class TripCommandService {
 
     Trip.assertRouteIsValid(originOrgUnitId, destinationOrgUnitId);
 
-    if (dto.driverId && dto.driverId !== trip.driverId) {
-      await this.assertDriverExists(tenantId, dto.driverId);
+    const reassignedTo =
+      dto.driverId && dto.driverId !== trip.driverId ? dto.driverId : null;
+
+    if (reassignedTo) {
+      await this.assertDriverExists(tenantId, reassignedTo);
     }
 
     const changedOrgUnits: string[] = [];
@@ -112,6 +150,8 @@ export class TripCommandService {
       scheduledAt: dto.scheduledAt,
       notes: dto.notes,
     });
+
+    return reassignedTo;
   }
 
   /**
@@ -162,6 +202,31 @@ export class TripCommandService {
 
     await this.tripCommandRepository.updateStatus(id, trip.status, {
       endedAt: trip.endedAt,
+    });
+  }
+
+  /**
+   * Tells a driver a trip is now theirs.
+   *
+   * Tokens are registered against user accounts, so the employee id the trip
+   * carries has to be resolved through EmployeeFacade first. Both facades
+   * absorb their own failures, so nothing here can break trip creation.
+   */
+  private async notifyDriverOfAssignment(
+    tenantId: string,
+    driverId: string,
+    tripId: string,
+  ): Promise<void> {
+    const userId = await this.employeeFacade.getUserId(driverId, tenantId);
+    if (!userId) return;
+
+    await this.notificationFacade.notifyUser(userId, {
+      title: 'رحلة جديدة',
+      body: 'تم إسناد رحلة جديدة إليك. افتح التطبيق لمراجعة تفاصيلها.',
+      data: {
+        type: NotificationType.TRIP_ASSIGNED,
+        tripId,
+      },
     });
   }
 

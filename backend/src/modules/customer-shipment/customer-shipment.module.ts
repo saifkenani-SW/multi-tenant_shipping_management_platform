@@ -9,6 +9,7 @@ import { TenantModule } from '../tenant/tenant.module';
 import { CustomerModule } from '../customer/customer.module';
 import { EmployeeModule } from '../employee/employee.module';
 import { ShipmentRequestModule } from '../shipment-request/shipment-request.module';
+import { BillingModule } from '../billing/billing.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { StorageModule } from '../../packages/storage/src/storage.module';
 
@@ -68,6 +69,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     CustomerModule,
     EmployeeModule,
     ShipmentRequestModule,
+    BillingModule,
     OrganizationModule,
     StorageModule,
   ],

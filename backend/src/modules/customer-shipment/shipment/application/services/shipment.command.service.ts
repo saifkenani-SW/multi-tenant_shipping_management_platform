@@ -22,6 +22,7 @@ import { TenantFacade } from '../../../../tenant/application/facades/tenant.faca
 import { CustomerFacade } from '../../../../customer/facades/customer.facade';
 import { EmployeeFacade } from '../../../../employee/facades/employee.facade';
 import { ShipmentRequestFacade } from '../../../../shipment-request/facades/shipment-request.facade';
+import { BillingFacade } from '../../../../billing/facades/billing.facade';
 import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
 import { LabelGeneratorService } from '../../../../../packages/label-generator/services/label-generator.service';
 import { PdfGeneratorService } from '../../../../../packages/pdf-generator/services/pdf-generator.service';
@@ -71,6 +72,7 @@ export class ShipmentCommandService {
     private readonly customerFacade: CustomerFacade,
     private readonly employeeFacade: EmployeeFacade,
     private readonly shipmentRequestFacade: ShipmentRequestFacade,
+    private readonly billingFacade: BillingFacade,
     private readonly organizationFacade: OrganizationFacade,
     private readonly labelGenerator: LabelGeneratorService,
     private readonly pdfGenerator: PdfGeneratorService,
@@ -227,6 +229,26 @@ export class ShipmentCommandService {
       });
     }
 
+    // The invoice belongs to this act, not to a later one: a shipment that
+    // exists without its invoice is not a state worth allowing, so this shares
+    // the transaction and fails it if billing fails.
+    await this.billingFacade.createInvoiceForShipment({
+      tenantId,
+      customerShipmentId: shipment.id,
+      senderName: dto.senderName,
+      senderPhone: dto.senderPhone,
+      receiverName: dto.receiverName,
+      receiverPhone: dto.receiverPhone,
+      originOrgUnitId: dto.originOrgUnitId,
+      destinationOrgUnitId: dto.destinationOrgUnitId,
+      paymentResponsibility:
+        dto.paymentResponsibility ?? PaymentResponsibility.SENDER,
+      subtotal: dto.billing.subtotal,
+      handlingFees: dto.billing.handlingFees,
+      taxAmount: dto.billing.taxAmount,
+      discountAmount: dto.billing.discountAmount,
+    });
+
     if (dto.shipmentRequestId) {
       await this.shipmentRequestFacade.convertToShipment(dto.shipmentRequestId);
     }
@@ -278,6 +300,10 @@ export class ShipmentCommandService {
       shipment.status,
       shipment.version,
     );
+
+    // Cancelling the shipment voids what was billed for it. Refuses when the
+    // money has already been taken — that needs a refund, not a status flip.
+    await this.billingFacade.cancelInvoiceForShipment(shipmentId);
 
     const payload: CustomerShipmentLifecyclePayload = {
       shipmentId,

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { Employee2Module } from '../employee2/employee2.module';
+import { NotificationModule } from '../notification/notification.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { CustomerShipmentModule } from '../customer-shipment/customer-shipment.module';
 import { CustomerShipmentFacade } from '../customer-shipment/facades/customer-shipment.facade';
@@ -43,13 +44,19 @@ import { TransportManifestPersistenceMapper } from './transport_manifest/infrast
  * manifest items).
  *
  * Only FleetFacade is exported: nothing inside is reachable from other modules.
- * Conversely, Fleet reaches employees, organization units and parcels solely
- * through their own facades, and never queries their tables — the
+ * Conversely, Fleet reaches employees, organization units, parcels and
+ * notifications solely through their own facades, and never queries their
+ * tables — the
  * manifest_item foreign key is what validates a parcel id, and parcel labels
  * for a manifest come from CustomerShipmentFacade.
  */
 @Module({
-  imports: [Employee2Module, OrganizationModule, CustomerShipmentModule],
+  imports: [
+    Employee2Module,
+    OrganizationModule,
+    CustomerShipmentModule,
+    NotificationModule,
+  ],
   controllers: [VehicleController, TripController, TransportManifestController],
   providers: [
     // vehicle
