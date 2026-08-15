@@ -6,8 +6,8 @@ import { AppendParcelMovementCommand } from '../../application/commands/append-p
 export class TrackingCommandRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async appendMovement(command: AppendParcelMovementCommand): Promise<void> {
-    await this.prisma.parcel_movement.create({
+  async appendMovement(command: AppendParcelMovementCommand) {
+    return this.prisma.parcel_movement.create({
       data: {
         tenant_id: command.tenantId,
         parcel_id: command.parcelId,
