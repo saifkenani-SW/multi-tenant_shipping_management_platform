@@ -766,6 +766,7 @@ export type users = {
     email: string;
     phone: string | null;
     password_hash: string;
+    profile_image_key: string | null;
     created_at: Generated<Timestamp>;
     updated_at: Timestamp;
 };

@@ -82,6 +82,13 @@ export class MyProfileResponseDto {
   @ApiPropertyOptional({ nullable: true })
   phone?: string | null;
 
+  @ApiPropertyOptional({
+    description: 'Path to fetch the avatar from, or null when none is set',
+    example: '/me/avatar/01910b80-6e42-7000-8000-000000000013',
+    nullable: true,
+  })
+  profileImageUrl?: string | null;
+
   @ApiProperty()
   isActive: boolean;
 
