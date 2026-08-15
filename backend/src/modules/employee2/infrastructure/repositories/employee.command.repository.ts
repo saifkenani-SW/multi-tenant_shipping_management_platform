@@ -11,7 +11,7 @@ export class EmployeeCommandRepository {
     return this.prisma.client.employee.create({
       data: {
         tenant_id: tenantId,
-        user_id: dto.userId,
+        user_id: dto.userId as string,
         employee_code: dto.employeeCode,
         full_name: dto.fullName,
         national_id: dto.nationalId,
@@ -96,5 +96,21 @@ export class EmployeeCommandRepository {
         employee_id: id,
       },
     });
+  }
+
+  async setAssignmentRoles(assignmentId: string, roleIds: string[]) {
+    await this.prisma.client.assignment_role.deleteMany({
+      where: { assignment_id: assignmentId },
+    });
+
+    if (roleIds.length > 0) {
+      await this.prisma.client.assignment_role.createMany({
+        data: roleIds.map((roleId) => ({
+          assignment_id: assignmentId,
+          role_id: roleId,
+        })),
+        skipDuplicates: true,
+      });
+    }
   }
 }

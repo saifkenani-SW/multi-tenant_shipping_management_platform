@@ -93,10 +93,7 @@ export class TransportManifestController {
   async getManifestDetails(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ManifestDetailsDto> {
-    return this.manifestQueryService.getManifestDetails(
-      this.requestContext.getTenantId(),
-      id,
-    );
+    return this.manifestQueryService.getManifestDetails(id);
   }
 
   @Get(':id/items')
@@ -112,10 +109,7 @@ export class TransportManifestController {
   async getManifestItems(
     @Param('id', ParseUUIDPipe) id: string,
   ): Promise<ManifestItemDto[]> {
-    return this.manifestQueryService.getManifestItems(
-      this.requestContext.getTenantId(),
-      id,
-    );
+    return this.manifestQueryService.getManifestItems(id);
   }
 
   // ──────────────────────────── COMMANDS ───────────────────────────────────

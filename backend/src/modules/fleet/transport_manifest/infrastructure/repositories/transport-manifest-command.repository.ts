@@ -49,7 +49,7 @@ export class TransportManifestCommandRepository {
       where: {
         tenant_id: tenantId,
         trip_id: tripId,
-        status: ManifestStatus.READY_FOR_DISPATCH,
+        status: ManifestStatus.ASSIGNED,
       },
       data: { status: ManifestStatus.IN_TRANSIT },
     });
@@ -90,7 +90,7 @@ export class TransportManifestCommandRepository {
         status: ManifestStatus.READY_FOR_DISPATCH,
         trip_id: null,
       },
-      data: { trip_id: tripId },
+      data: { trip_id: tripId, status: ManifestStatus.ASSIGNED },
     });
 
     return result.count;

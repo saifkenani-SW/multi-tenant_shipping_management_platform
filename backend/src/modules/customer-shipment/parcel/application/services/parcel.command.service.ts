@@ -54,10 +54,7 @@ export class ParcelCommandService {
     policy: Policy(ParcelPolicy, ParcelAction.Receive),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  @CacheEvict([
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
-  ])
+  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
   async receiveParcel(trackingNumber: string): Promise<void> {
     const parcel =
       await this.queryService.findAggregateByTrackingNumberOrThrow(
@@ -76,10 +73,7 @@ export class ParcelCommandService {
     policy: Policy(ParcelPolicy, ParcelAction.Dispatch),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  @CacheEvict([
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
-  ])
+  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
   async markReadyForDispatch(trackingNumber: string): Promise<void> {
     const parcel =
       await this.queryService.findAggregateByTrackingNumberOrThrow(
@@ -98,10 +92,7 @@ export class ParcelCommandService {
     policy: Policy(ParcelPolicy, ParcelAction.UpdateStatus),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  @CacheEvict([
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
-  ])
+  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
   async updateStatus(
     trackingNumber: string,
     dto: UpdateParcelStatusDto,
@@ -135,10 +126,7 @@ export class ParcelCommandService {
    * Called by the Fleet module (via ParcelFacade) when a driver picks up a parcel.
    * Bypasses ParcelPolicy since Fleet validates driver authorization.
    */
-  @CacheEvict([
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
-  ])
+  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
   async pickUpParcel(parcelId: string, tripId: string): Promise<void> {
     const parcel = await this.queryService.findAggregateOrThrow(parcelId);
 
@@ -155,10 +143,7 @@ export class ParcelCommandService {
    * Called by the Fleet module (via ParcelFacade) when a driver drops off a parcel.
    * Bypasses ParcelPolicy since Fleet validates driver authorization.
    */
-  @CacheEvict([
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_LIST, allEntries: true },
-    { keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST, allEntries: true },
-  ])
+  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
   async dropOffParcel(
     parcelId: string,
     orgUnitId: string,

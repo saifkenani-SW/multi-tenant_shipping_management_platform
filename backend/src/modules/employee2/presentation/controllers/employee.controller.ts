@@ -16,6 +16,7 @@ import { CreateEmployeeDto } from '../../application/dtos/requests/create-employ
 import { UpdateEmployeeDto } from '../../application/dtos/requests/update-employee.dto';
 import { EmployeeQueryDto } from '../../application/dtos/requests/employee-query.dto';
 import { AddEmployeeAssignmentsDto } from '../../application/dtos/requests/add-employee-assignments.dto';
+import { SetAssignmentRolesDto } from '../../application/dtos/requests/set-assignment-roles.dto';
 import { RequestContextService } from '../../../../packages/context/services/request-context.service';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiBody } from '@nestjs/swagger';
 import { Roles } from '../../../../common/authorization';
@@ -37,13 +38,31 @@ export class EmployeeController {
   @ApiBody({
     type: CreateEmployeeDto,
     examples: {
-      default: {
-        summary: 'مثال لبيانات إنشاء موظف',
+      withUserId: {
+        summary: 'مثال لبيانات إنشاء موظف (مستخدم موجود) بدون تعيينات',
         value: {
           userId: '00000000-0000-0000-0000-000000000000',
           employeeCode: 'EMP-001',
           fullName: 'John Doe',
           nationalId: '1234567890',
+        },
+      },
+      withNewUserAndAssignments: {
+        summary:
+          'مثال لبيانات إنشاء موظف (مستخدم جديد) مع تعيينات للوحدة التنظيمية والصلاحيات',
+        value: {
+          email: 'employee@example.com',
+          password: 'password123',
+          phone: '+971501234567',
+          employeeCode: 'EMP-002',
+          fullName: 'Jane Doe',
+          nationalId: '0987654321',
+          assignments: [
+            {
+              organizationUnitId: '00000000-0000-7000-8000-000000001502',
+              roleIds: ['00000000-0000-7000-8000-000000001111'],
+            },
+          ],
         },
       },
     },
@@ -169,5 +188,34 @@ export class EmployeeController {
   ) {
     const tenantId = this.requestContext.getTenantIdOrThrow();
     return this.commandService.removeAssignment(id, assignmentId, tenantId);
+  }
+
+  @Put(':id/assignments/:assignmentId/roles')
+  @Roles(RoleType.TENANT_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'تعديل (Override) صلاحيات الموظف داخل التعيين' })
+  @ApiBody({
+    type: SetAssignmentRolesDto,
+    examples: {
+      default: {
+        summary: 'مثال لإعادة تعيين الصلاحيات',
+        value: {
+          roleIds: ['00000000-0000-7000-8000-000000003333'],
+        },
+      },
+    },
+  })
+  async setAssignmentRoles(
+    @Param('id') id: string,
+    @Param('assignmentId') assignmentId: string,
+    @Body() dto: SetAssignmentRolesDto,
+  ) {
+    const tenantId = this.requestContext.getTenantIdOrThrow();
+    return this.commandService.setAssignmentRoles(
+      tenantId,
+      id,
+      assignmentId,
+      dto,
+    );
   }
 }

@@ -22,6 +22,12 @@ import { Parcel } from '../../domain/entities/parcel.entity';
 import { ParcelVisibilityScope } from '../../domain/authorization/scopes/parcel-visibility.scope';
 import type { ParcelScopeInterface } from '../../domain/authorization/scopes/parcel-scope.interface';
 import { ShipmentQueryService } from '../../../shipment/application/services/shipment.query.service';
+import {
+  GetParcelStatisticsResponseDto,
+  ParcelTenantStatsDto,
+  ParcelOrgUnitStatsDto,
+} from '../dtos/responses/parcel-statistics.response.dto';
+import type { ParcelStatisticsCriteria } from '../dtos/requests/parcel-statistics-criteria.interface';
 
 import { ParcelTrackingResponseDto } from '../dtos/responses/parcel-tracking.response.dto';
 import { TrackingFacade } from '../../../../tracking/application/facades/tracking.facade';
@@ -135,6 +141,105 @@ export class ParcelQueryService {
       (result.data as any[]).map((row) => this.mapper.toResponse(row)),
       { ...result.meta, scope },
     );
+  }
+
+  /**
+   * Global Parcel Statistics Summary (No input filters allowed)
+   * The visibility scope controls all constraints.
+   */
+  async getStatistics(): Promise<GetParcelStatisticsResponseDto> {
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+
+    const criteria: ParcelStatisticsCriteria = {
+      tenantId: scope.parcel?.tenant_id,
+      scopeOrgUnitIds: scope.parcel?.org_unit_ids,
+    };
+
+    const records = await this.queryRepository.getStatistics(criteria);
+
+    // O(N) Mapping using Maps
+    const response: GetParcelStatisticsResponseDto = {
+      total: 0,
+      tenants: [],
+    };
+
+    // Nested Map for O(N) mapping
+    // tenantId -> { tenant, orgUnitsMap }
+    const tenantMap = new Map<
+      string,
+      {
+        tenant: ParcelTenantStatsDto;
+        orgUnits: Map<string, ParcelOrgUnitStatsDto>;
+      }
+    >();
+
+    for (const row of records) {
+      const countNum = Number(row.count);
+      if (!Number.isSafeInteger(countNum) || countNum < 0) {
+        throw new Error(
+          `Invalid statistics count value returned for parcel aggregation: ${row.count}`,
+        );
+      }
+
+      let tenantEntry = tenantMap.get(row.tenantId);
+      if (!tenantEntry) {
+        tenantEntry = {
+          tenant: {
+            tenantId: row.tenantId,
+            tenantName: row.tenantName,
+            total: 0,
+            orgUnits: [],
+          },
+          orgUnits: new Map<string, ParcelOrgUnitStatsDto>(),
+        };
+        tenantMap.set(row.tenantId, tenantEntry);
+      }
+
+      // Ensure org unit ID exists (current or destination)
+      if (!row.orgUnitId) continue;
+
+      let orgUnitStats = tenantEntry.orgUnits.get(row.orgUnitId);
+      if (!orgUnitStats) {
+        orgUnitStats = {
+          orgUnitId: row.orgUnitId,
+          orgUnitName: row.orgUnitName,
+          current: { total: 0, stats: [] },
+          incoming: { total: 0, stats: [] },
+        };
+        tenantEntry.orgUnits.set(row.orgUnitId, orgUnitStats);
+      }
+
+      const statItem = {
+        status: row.status as any,
+        condition: row.condition as any,
+        count: countNum,
+      };
+
+      // Rules:
+      // response.total = sum(CURRENT)
+      // tenant.total = sum(CURRENT for tenant)
+      // orgUnit.current.total = sum(CURRENT stats)
+      // orgUnit.incoming.total = sum(INCOMING stats)
+      if (row.direction === 'CURRENT') {
+        response.total += countNum;
+        tenantEntry.tenant.total += countNum;
+        orgUnitStats.current.total += countNum;
+        orgUnitStats.current.stats.push(statItem);
+      } else if (row.direction === 'INCOMING') {
+        orgUnitStats.incoming.total += countNum;
+        orgUnitStats.incoming.stats.push(statItem);
+      }
+    }
+
+    // Convert Maps to nested arrays
+    response.tenants = Array.from(tenantMap.values()).map((entry) => {
+      entry.tenant.orgUnits = Array.from(entry.orgUnits.values());
+      return entry.tenant;
+    });
+
+    return response;
   }
 
   /**

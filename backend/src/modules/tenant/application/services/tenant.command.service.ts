@@ -67,8 +67,33 @@ export class TenantCommandService {
     }),
   })
   async createTenant(dto: CreateTenantDto): Promise<string> {
+    const hasUserId = !!dto.ownerUserId;
+    const hasUserDetails = !!(dto.ownerEmail && dto.ownerPassword);
+
+    if (hasUserId && hasUserDetails) {
+      throw new BadRequestException(
+        'يرجى توفير إما معرف المستخدم أو بيانات المستخدم الجديد، وليس كلاهما',
+      );
+    }
+
+    if (!hasUserId && !hasUserDetails) {
+      throw new BadRequestException(
+        'يجب توفير معرف المستخدم أو بيانات المستخدم الجديد',
+      );
+    }
+
+    let finalUserId = dto.ownerUserId;
+
+    if (hasUserDetails) {
+      finalUserId = await this.userFacade.createUser({
+        email: dto.ownerEmail!,
+        password: dto.ownerPassword!,
+        phone: dto.ownerPhone,
+      });
+    }
+
     // 1. Guardrail Check: Validate owner user via UserFacade
-    await this.validateOwnerUserExistsAndActive(dto.ownerUserId);
+    await this.validateOwnerUserExistsAndActive(finalUserId!);
 
     // 2. Create Core Tenant Entity
     const tenant = await this.tenantRepository.create({
@@ -95,21 +120,14 @@ export class TenantCommandService {
     // 4. Assign Primary Owner
     await this.settingsCommandRepository.assignOwner(
       tenant.id,
-      dto.ownerUserId,
+      finalUserId!,
       true,
     );
 
     return tenant.id;
   }
 
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.Update),
     payloadResolver: (tenantId: string, dto: UpdateTenantDto) => ({
@@ -130,14 +148,7 @@ export class TenantCommandService {
     });
   }
 
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.Suspend),
     payloadResolver: (tenantId: string) => ({
@@ -156,14 +167,7 @@ export class TenantCommandService {
     );
   }
 
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.LIST,
-    allEntries: true,
-  })
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.DETAILS,
-    keyBuilder: (id: string) => [TENANT_CACHE_KEYS.DETAILS, id],
-  })
+  @CacheEvict({ keyPrefix: TENANT_CACHE_KEYS.PREFIX, allEntries: true })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.Activate),
     payloadResolver: (tenantId: string) => ({
@@ -179,20 +183,7 @@ export class TenantCommandService {
   }
 
   @Transactional()
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-      tenantId,
-    ],
-  })
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-      tenantId,
-    ],
-  })
+  @CacheEvict({ keyPrefix: 'tenant:subscription', allEntries: true })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),
@@ -250,20 +241,7 @@ export class TenantCommandService {
     await this.tenantRepository.createSubscriptionHistory(history);
   }
 
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-      tenantId,
-    ],
-  })
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-      tenantId,
-    ],
-  })
+  @CacheEvict({ keyPrefix: 'tenant:subscription', allEntries: true })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),
@@ -301,20 +279,7 @@ export class TenantCommandService {
     await this.tenantRepository.createSubscriptionHistory(history);
   }
 
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-      tenantId,
-    ],
-  })
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-      tenantId,
-    ],
-  })
+  @CacheEvict({ keyPrefix: 'tenant:subscription', allEntries: true })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),
@@ -352,20 +317,7 @@ export class TenantCommandService {
     await this.tenantRepository.createSubscriptionHistory(history);
   }
 
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_ACTIVE,
-      tenantId,
-    ],
-  })
-  @CacheEvict({
-    keyPrefix: TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-    keyBuilder: (tenantId: string) => [
-      TENANT_CACHE_KEYS.SUBSCRIPTION_HISTORY,
-      tenantId,
-    ],
-  })
+  @CacheEvict({ keyPrefix: 'tenant:subscription', allEntries: true })
   @Authorize({
     policy: Policy(TenantPolicy, TenantAction.ManageSubscription),
     payloadResolver: (tenantId: string) => ({ tenantId }),

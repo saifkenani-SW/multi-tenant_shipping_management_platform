@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "884302698795",
+    "project_id": "shipping-platform-app",
+    "storage_bucket": "shipping-platform-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:884302698795:android:b1cb5ec4cf197cd78fcd6e",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlZ2SCrJu6cpXNDJDmAAr1ydZeevkPGkg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

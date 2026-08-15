@@ -937,6 +937,7 @@ enum TripStatus {
 enum ManifestStatus {
   OPEN
   READY_FOR_DISPATCH
+  ASSIGNED
   IN_TRANSIT
   COMPLETED
 }

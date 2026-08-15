@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { VehicleQueryService } from '../vehicle/application/services/vehicle-query.service';
 import { TripQueryService } from '../trip/application/services/trip-query.service';
 import { ManifestQueryService } from '../transport_manifest/application/services/manifest-query.service';
@@ -93,10 +93,15 @@ export class FleetFacade {
   }
 
   async getManifestDetails(
-    tenantId: string,
+    tenantId: string | undefined,
     manifestId: string,
   ): Promise<ManifestDetailsDto> {
-    return this.manifestQueryService.getManifestDetails(tenantId, manifestId);
+    const details =
+      await this.manifestQueryService.getManifestDetails(manifestId);
+    if (tenantId && details.tenantId !== tenantId) {
+      throw new ForbiddenException();
+    }
+    return details;
   }
 
   /**
