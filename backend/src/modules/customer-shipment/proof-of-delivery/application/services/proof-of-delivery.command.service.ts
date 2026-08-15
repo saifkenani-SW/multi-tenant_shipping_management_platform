@@ -161,7 +161,8 @@ export class ProofOfDeliveryCommandService {
       additionalPhotoKey = keys.join(',');
     }
 
-    const employeeName = await this.employeeFacade.getEmployeeName(employeeId) ?? 'Unknown';
+    const employeeName =
+      (await this.employeeFacade.getEmployeeName(employeeId)) ?? 'Unknown';
 
     const created = await this.commandRepository.create({
       tenantId: parcel.tenantId,

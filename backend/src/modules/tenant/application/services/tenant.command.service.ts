@@ -474,12 +474,19 @@ export class TenantCommandService {
     };
 
     // Slugify tenant name to use as folder name
-    const companyNameFolder = tenant.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const companyNameFolder = tenant.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
 
-    const { storage_key } = await this.storage.save(storageFile, companyNameFolder, 'logos');
-    
+    const { storage_key } = await this.storage.save(
+      storageFile,
+      companyNameFolder,
+      'logos',
+    );
+
     await this.tenantRepository.updateLogoUrl(tenantId, storage_key);
-    
+
     return { url: storage_key };
   }
 }

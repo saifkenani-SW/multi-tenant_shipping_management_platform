@@ -72,10 +72,11 @@ export class FleetFacade {
     tenantId: string,
     employeeId: string,
   ): Promise<VehicleDetailsDto | null> {
-    const vehicleId = await this.vehicleQueryService.getActiveVehicleIdForDriver(
-      tenantId,
-      employeeId,
-    );
+    const vehicleId =
+      await this.vehicleQueryService.getActiveVehicleIdForDriver(
+        tenantId,
+        employeeId,
+      );
 
     if (!vehicleId) {
       return null;

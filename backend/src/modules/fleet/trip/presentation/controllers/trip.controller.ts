@@ -1,9 +1,28 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query, } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags, } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { Roles } from '../../../../../common/authorization/decorators/roles.decorator';
 import { Permissions } from '../../../../../common/authorization/decorators/permissions.decorator';
 import { RoleType } from '../../../../authorization/domain/enums/role.enum';
-import { PermissionAction, PermissionResource, } from '../../../../authorization/domain/enums/permission.enum';
+import {
+  PermissionAction,
+  PermissionResource,
+} from '../../../../authorization/domain/enums/permission.enum';
 import { RequestContextService } from '../../../../../packages/context/services/request-context.service';
 import { TripCommandService } from '../../application/services/trip-command.service';
 import { TripQueryService } from '../../application/services/trip-query.service';
@@ -43,12 +62,17 @@ export class TripController {
 
   @Get('my/active')
   @Roles(RoleType.DRIVER)
-  @ApiOperation({ summary: 'Get the active trip assigned to the current driver' })
+  @ApiOperation({
+    summary: 'Get the active trip assigned to the current driver',
+  })
   @ApiResponse({ status: HttpStatus.OK, type: TripDetailsDto })
   async findMyActiveTrip(): Promise<TripDetailsDto> {
     const tenantId = this.requestContext.getTenantIdOrThrow();
     const driverId = this.requestContext.getPrincipal()!.profileId!;
-    const trip = await this.tripQueryService.findMyActiveTrip(tenantId, driverId);
+    const trip = await this.tripQueryService.findMyActiveTrip(
+      tenantId,
+      driverId,
+    );
     if (!trip) {
       throw new Error('No active trip found for this driver');
     }
@@ -116,7 +140,8 @@ export class TripController {
   @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
   @Permissions(PermissionAction.UPDATE, PermissionResource.TRIP)
   @ApiOperation({
-    summary: 'Assign READY_FOR_DISPATCH manifests to an existing scheduled trip',
+    summary:
+      'Assign READY_FOR_DISPATCH manifests to an existing scheduled trip',
   })
   @ApiResponse({ status: HttpStatus.OK, description: 'Manifests assigned' })
   async assignManifests(
@@ -155,7 +180,10 @@ export class TripController {
   async startMyTrip(): Promise<void> {
     const tenantId = this.requestContext.getTenantIdOrThrow();
     const driverId = this.requestContext.getPrincipal()!.profileId!;
-    const trip = await this.tripQueryService.findMyActiveTrip(tenantId, driverId);
+    const trip = await this.tripQueryService.findMyActiveTrip(
+      tenantId,
+      driverId,
+    );
     if (!trip) {
       throw new Error('No active trip found to start');
     }
@@ -183,7 +211,10 @@ export class TripController {
   async completeMyTrip(): Promise<void> {
     const tenantId = this.requestContext.getTenantIdOrThrow();
     const driverId = this.requestContext.getPrincipal()!.profileId!;
-    const trip = await this.tripQueryService.findMyActiveTrip(tenantId, driverId);
+    const trip = await this.tripQueryService.findMyActiveTrip(
+      tenantId,
+      driverId,
+    );
     if (!trip) {
       throw new Error('No active trip found to complete');
     }

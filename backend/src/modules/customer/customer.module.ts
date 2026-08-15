@@ -32,10 +32,6 @@ import { CustomerFacade } from './facades/customer.facade';
     },
     CustomerFacade,
   ],
-  exports: [
-    'ICustomerCommandService',
-    'ICustomerQueryService',
-    CustomerFacade,
-  ],
+  exports: ['ICustomerCommandService', 'ICustomerQueryService', CustomerFacade],
 })
 export class CustomerModule {}

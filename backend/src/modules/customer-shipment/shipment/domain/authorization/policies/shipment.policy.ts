@@ -40,7 +40,9 @@ export class ShipmentPolicy implements AuthorizationPolicy<ShipmentAction> {
         } as any);
 
         if (!ability.can(action, candidate)) {
-          throw new AccessDeniedException(`You are not allowed to perform ${action} on this resource.`);
+          throw new AccessDeniedException(
+            `You are not allowed to perform ${action} on this resource.`,
+          );
         }
         break;
       }
@@ -53,13 +55,17 @@ export class ShipmentPolicy implements AuthorizationPolicy<ShipmentAction> {
           throw new AccessDeniedException('Missing shipment ID.');
         }
 
-        const shipment = await this.queryRepo.findAggregateById(payload.shipmentId);
+        const shipment = await this.queryRepo.findAggregateById(
+          payload.shipmentId,
+        );
         if (!shipment) {
           throw new AccessDeniedException('Shipment not found.');
         }
 
         if (!ability.can(action, subject(ShipmentSubject, shipment))) {
-          throw new AccessDeniedException(`You are not allowed to perform ${action} on this resource.`);
+          throw new AccessDeniedException(
+            `You are not allowed to perform ${action} on this resource.`,
+          );
         }
         break;
       }

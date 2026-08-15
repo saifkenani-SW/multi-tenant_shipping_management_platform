@@ -74,8 +74,6 @@ export class ShipmentQueryRepository {
       query = query.where('cs.tenant_id', '=', criteria.tenantId);
     }
 
-
-
     if (criteria.originOrgUnitId) {
       query = query.where(
         'cs.origin_org_unit_id',

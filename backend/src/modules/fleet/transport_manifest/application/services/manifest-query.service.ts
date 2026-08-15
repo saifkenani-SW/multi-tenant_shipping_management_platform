@@ -11,7 +11,10 @@ import { PaginatedManifestListDto } from '../dtos/responses/manifest-list.dto';
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 import { PARCEL_LOOKUP } from '../../../contracts/parcel-lookup';
 import { Inject } from '@nestjs/common';
-import type { ParcelLookup, ParcelSummary } from '../../../contracts/parcel-lookup';
+import type {
+  ParcelLookup,
+  ParcelSummary,
+} from '../../../contracts/parcel-lookup';
 import { ManifestQueryCriteria } from '../builders/query/manifest-query-criteria';
 import { OffsetPaginationBuilder } from '../../../../../common/pagination';
 import { AuthorizationFacade } from '../../../../../packages/authorization/facade/authorization.facade';
@@ -80,8 +83,8 @@ export class ManifestQueryService {
     const items = await this.queryRepository.findItems(manifestId);
     const parcels = await this.loadParcels(items);
 
-    return items.map(
-      (item) => this.responseMapper.toItemDto(item, parcels.get(item.parcelId)),
+    return items.map((item) =>
+      this.responseMapper.toItemDto(item, parcels.get(item.parcelId)),
     );
   }
 

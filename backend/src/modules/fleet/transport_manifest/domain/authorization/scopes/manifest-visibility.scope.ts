@@ -8,9 +8,7 @@ import { SubjectType } from '../../../../../../packages/context/principal/princi
 import { ManifestScopeInterface } from './manifest-scope.interface';
 
 @Injectable()
-export class ManifestVisibilityScope
-  implements VisibilityScopeBuilder<ManifestScopeInterface>
-{
+export class ManifestVisibilityScope implements VisibilityScopeBuilder<ManifestScopeInterface> {
   constructor(private readonly context: ContextAuthorizationProvider) {}
 
   buildScope(): ManifestScopeInterface {

@@ -281,7 +281,6 @@ export class TransportManifestQueryRepository {
     }));
   }
 
-
   /**
    * Fetches only the manifests that are bookable (READY_FOR_DISPATCH, no trip)
    * from the given id set. Used by assignManifestsToTrip for validation.

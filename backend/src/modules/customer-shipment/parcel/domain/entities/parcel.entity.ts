@@ -32,19 +32,13 @@ const ALLOWED_TRANSITIONS: Record<ParcelStatus, ParcelStatus[]> = {
     ParcelStatus.READY_FOR_DISPATCH,
     ParcelStatus.RETURNED,
   ],
-  [ParcelStatus.READY_FOR_DISPATCH]: [
-    ParcelStatus.IN_TRANSIT,
-  ],
-  [ParcelStatus.IN_TRANSIT]: [
-    ParcelStatus.ARRIVED_AT_UNIT,
-  ],
+  [ParcelStatus.READY_FOR_DISPATCH]: [ParcelStatus.IN_TRANSIT],
+  [ParcelStatus.IN_TRANSIT]: [ParcelStatus.ARRIVED_AT_UNIT],
   [ParcelStatus.ARRIVED_AT_UNIT]: [
     ParcelStatus.PROCESSING,
     ParcelStatus.READY_FOR_COLLECTION,
   ],
-  [ParcelStatus.READY_FOR_COLLECTION]: [
-    ParcelStatus.COLLECTED,
-  ],
+  [ParcelStatus.READY_FOR_COLLECTION]: [ParcelStatus.COLLECTED],
   [ParcelStatus.COLLECTED]: [],
   [ParcelStatus.RETURNED]: [],
   [ParcelStatus.CANCELLED]: [],
@@ -124,7 +118,9 @@ export class Parcel {
 
   receive(): void {
     if (this._currentStatus !== ParcelStatus.ARRIVED_AT_UNIT) {
-      throw new ConflictException('Parcel must be ARRIVED_AT_UNIT to be received.');
+      throw new ConflictException(
+        'Parcel must be ARRIVED_AT_UNIT to be received.',
+      );
     }
     const nextStatus = this.isFinalDestination
       ? ParcelStatus.READY_FOR_COLLECTION
@@ -134,7 +130,9 @@ export class Parcel {
 
   markReadyForDispatch(): void {
     if (this._currentStatus !== ParcelStatus.PROCESSING) {
-      throw new ConflictException('Parcel must be PROCESSING to be dispatched.');
+      throw new ConflictException(
+        'Parcel must be PROCESSING to be dispatched.',
+      );
     }
     this.transitionTo(ParcelStatus.READY_FOR_DISPATCH);
   }

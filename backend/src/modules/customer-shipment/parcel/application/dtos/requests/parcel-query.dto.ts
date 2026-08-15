@@ -5,10 +5,17 @@ import { Transform } from 'class-transformer';
 import { CursorPaginationQueryDto } from '../../../../../../common/pagination/cursor/dtos/cursor-pagination-query.dto';
 
 export class ParcelQueryDto extends CursorPaginationQueryDto {
-  @ApiPropertyOptional({ enum: ParcelStatus, isArray: true, type: [String], description: 'Comma separated list of statuses' })
+  @ApiPropertyOptional({
+    enum: ParcelStatus,
+    isArray: true,
+    type: [String],
+    description: 'Comma separated list of statuses',
+  })
   @IsEnum(ParcelStatus, { each: true })
   @IsOptional()
-  @Transform(({ value }) => (typeof value === 'string' ? value.split(',') : value))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? value.split(',') : value,
+  )
   statuses?: ParcelStatus[];
 
   @ApiPropertyOptional({ enum: ParcelCondition })

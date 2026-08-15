@@ -69,14 +69,20 @@ export class FirebaseNotificationService implements OnModuleInit {
   }
 
   /** إرسال لجهاز واحد — Send to a single device token */
-  async sendToToken(token: string, message: INotificationMessage): Promise<string> {
+  async sendToToken(
+    token: string,
+    message: INotificationMessage,
+  ): Promise<string> {
     try {
       return await this.messaging.send({
         token,
         ...this.buildPayload(message),
       });
     } catch (error) {
-      this.logger.error(`Failed to send notification to token: ${token}`, error as Error);
+      this.logger.error(
+        `Failed to send notification to token: ${token}`,
+        error as Error,
+      );
       throw error;
     }
   }
@@ -88,15 +94,22 @@ export class FirebaseNotificationService implements OnModuleInit {
    * Sends to multiple device tokens — automatically batches into chunks of
    * ≤500 (FCM's per-call limit), fires them in parallel, and aggregates the result.
    */
-  async sendToTokens(tokens: string[], message: INotificationMessage): Promise<MulticastResult> {
-    if (!tokens.length) return { successCount: 0, failureCount: 0, responses: [] };
+  async sendToTokens(
+    tokens: string[],
+    message: INotificationMessage,
+  ): Promise<MulticastResult> {
+    if (!tokens.length)
+      return { successCount: 0, failureCount: 0, responses: [] };
 
     const payload = this.buildPayload(message);
     const batches = chunk(tokens, MULTICAST_BATCH_LIMIT);
 
     const results = await Promise.all(
       batches.map((batchTokens) =>
-        this.messaging.sendEachForMulticast({ tokens: batchTokens, ...payload }),
+        this.messaging.sendEachForMulticast({
+          tokens: batchTokens,
+          ...payload,
+        }),
       ),
     );
 
@@ -111,7 +124,10 @@ export class FirebaseNotificationService implements OnModuleInit {
   }
 
   /** إرسال لموضوع (Topic) — Send to a topic */
-  async sendToTopic(topic: string, message: INotificationMessage): Promise<string> {
+  async sendToTopic(
+    topic: string,
+    message: INotificationMessage,
+  ): Promise<string> {
     return this.messaging.send({
       topic,
       ...this.buildPayload(message),
@@ -122,7 +138,10 @@ export class FirebaseNotificationService implements OnModuleInit {
    * اشتراك أجهزة بموضوع — يقسّم القائمة تلقائيًا لدفعات ≤1000 توكن (حد FCM).
    * Subscribes tokens to a topic — auto-batches into chunks of ≤1000 (FCM's limit).
    */
-  async subscribeToTopic(tokens: string[], topic: string): Promise<TopicManagementResult> {
+  async subscribeToTopic(
+    tokens: string[],
+    topic: string,
+  ): Promise<TopicManagementResult> {
     return this.runTopicBatches(tokens, (batch) =>
       this.messaging.subscribeToTopic(batch, topic),
     );
@@ -132,7 +151,10 @@ export class FirebaseNotificationService implements OnModuleInit {
    * إلغاء اشتراك أجهزة من موضوع — يقسّم القائمة تلقائيًا لدفعات ≤1000 توكن.
    * Unsubscribes tokens from a topic — auto-batches into chunks of ≤1000.
    */
-  async unsubscribeFromTopic(tokens: string[], topic: string): Promise<TopicManagementResult> {
+  async unsubscribeFromTopic(
+    tokens: string[],
+    topic: string,
+  ): Promise<TopicManagementResult> {
     return this.runTopicBatches(tokens, (batch) =>
       this.messaging.unsubscribeFromTopic(batch, topic),
     );
@@ -145,7 +167,11 @@ export class FirebaseNotificationService implements OnModuleInit {
    * Moves tokens from one topic to another in a single call (unsubscribe old +
    * subscribe new, in parallel). Useful e.g. when an employee moves branches.
    */
-  async switchTopic(tokens: string[], fromTopic: string, toTopic: string): Promise<void> {
+  async switchTopic(
+    tokens: string[],
+    fromTopic: string,
+    toTopic: string,
+  ): Promise<void> {
     if (!tokens.length) return;
 
     await Promise.all([
@@ -156,7 +182,10 @@ export class FirebaseNotificationService implements OnModuleInit {
 
   private async runTopicBatches<
     T extends { successCount: number; failureCount: number; errors: unknown[] },
-  >(tokens: string[], operation: (batch: string[]) => Promise<T>): Promise<TopicManagementResult> {
+  >(
+    tokens: string[],
+    operation: (batch: string[]) => Promise<T>,
+  ): Promise<TopicManagementResult> {
     if (!tokens.length) return { successCount: 0, failureCount: 0, errors: [] };
 
     const batches = chunk(tokens, TOPIC_BATCH_LIMIT);

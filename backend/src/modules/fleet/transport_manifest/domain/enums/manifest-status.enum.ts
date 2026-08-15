@@ -18,4 +18,3 @@ export const ManifestStatus = {
 
 export type ManifestStatus =
   (typeof ManifestStatus)[keyof typeof ManifestStatus];
-
