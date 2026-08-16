@@ -6,7 +6,7 @@ const SUBSCRIPTION_PLANS = [
   {
     id: '00000000-0000-7000-8000-000000000001',
     name: 'Starter',
-    description: 'Perfect for small businesses',
+    description: 'مناسبة للشركات الناشئة ومكاتب الشحن الصغيرة',
     max_branches: 3,
     max_warehouses: 1,
     max_employees: 10,
@@ -20,7 +20,7 @@ const SUBSCRIPTION_PLANS = [
   {
     id: '00000000-0000-7000-8000-000000000002',
     name: 'Business',
-    description: 'For growing logistics companies',
+    description: 'للشركات اللوجستية المتوسطة والمتنامية',
     max_branches: 10,
     max_warehouses: 5,
     max_employees: 50,
@@ -34,7 +34,7 @@ const SUBSCRIPTION_PLANS = [
   {
     id: '00000000-0000-7000-8000-000000000003',
     name: 'Enterprise',
-    description: 'Unlimited scale for large operations',
+    description: 'للشركات الكبيرة ذات التغطية على مستوى المحافظات',
     max_branches: 50,
     max_warehouses: 20,
     max_employees: 200,

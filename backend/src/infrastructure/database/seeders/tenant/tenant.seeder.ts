@@ -6,34 +6,37 @@ import { Seeder } from '../seeder.interface';
 export const SEEDED_TENANTS = [
   {
     id: '00000000-0000-7000-8000-000000000101',
-    name: 'FastShip Logistics',
-    email: 'info@fastship.com',
+    name: 'الشام إكسبرس',
+    email: 'info@alshamexpress.sy',
     owner_email: 'admin@fastship.com',
-    phone: '+1987654321',
-    tax_number: 'TAX-001-2024',
-    logo_url: 'https://cdn.fastship.com/logo.png',
+    phone: '+963112214455',
+    tax_number: '12345678-1',
+    logo_url: null,
+    tracking_prefix: 'SHAM',
   },
   {
     id: '00000000-0000-7000-8000-000000000102',
-    name: 'QuickDelivery Co.',
-    email: 'info@quickdelivery.com',
+    name: 'بردى للشحن',
+    email: 'info@baradashipping.sy',
     owner_email: 'admin@quickdelivery.com',
-    phone: '+1122334455',
-    tax_number: 'TAX-002-2024',
+    phone: '+963112556677',
+    tax_number: '23456789-2',
     logo_url: null,
+    tracking_prefix: 'BRDA',
   },
   {
     id: '00000000-0000-7000-8000-000000000103',
-    name: 'GlobalFreight Co.',
-    email: 'info@globalfreight.com',
+    name: 'الفرات للنقل',
+    email: 'info@alfurattransport.sy',
     owner_email: 'admin@globalfreight.com',
-    phone: '+1199887766',
-    tax_number: 'TAX-003-2024',
+    phone: '+963212334455',
+    tax_number: '34567890-3',
     logo_url: null,
+    tracking_prefix: 'FRAT',
   },
 ] as const;
 
-const PLAN_ID = '00000000-0000-7000-8000-000000000002'; // Business plan
+const PLAN_ID = '00000000-0000-7000-8000-000000000002';
 
 @Injectable()
 export class TenantSeeder implements Seeder {
@@ -66,7 +69,6 @@ export class TenantSeeder implements Seeder {
         },
       });
 
-      // Tenant Settings
       await this.prisma.tenant_delivery_settings.upsert({
         where: { tenant_id: t.id },
         update: {
@@ -85,11 +87,13 @@ export class TenantSeeder implements Seeder {
       await this.prisma.tenant_operational_settings.upsert({
         where: { tenant_id: t.id },
         update: {
+          tracking_prefix: t.tracking_prefix,
           auto_close_shipment_after_collection: true,
           quotation_validity_hours: 48,
         },
         create: {
           tenant_id: t.id,
+          tracking_prefix: t.tracking_prefix,
           auto_close_shipment_after_collection: true,
           quotation_validity_hours: 48,
         },
@@ -102,16 +106,15 @@ export class TenantSeeder implements Seeder {
         where: { tenant_id: t.id },
         update: {
           volumetric_divisor: volumetricDivisor,
-          default_currency: Currency.USD,
+          default_currency: Currency.SY,
         },
         create: {
           tenant_id: t.id,
           volumetric_divisor: volumetricDivisor,
-          default_currency: Currency.USD,
+          default_currency: Currency.SY,
         },
       });
 
-      // Tenant Subscriptions
       const subscriptionId = `00000000-0000-7000-8000-0000000001${t.id.slice(-2)}`;
       const sub = await this.prisma.tenant_subscription.upsert({
         where: { id: subscriptionId },
@@ -133,13 +136,12 @@ export class TenantSeeder implements Seeder {
         },
       });
 
-      // Tenant Subscription History
       const historyId = `00000000-0000-7000-8000-0000000002${t.id.slice(-2)}`;
       await this.prisma.tenant_subscription_history.upsert({
         where: { id: historyId },
         update: {
           action: 'CREATE',
-          notes: 'Initial subscription creation',
+          notes: 'إنشاء الاشتراك الأولي لخطة الأعمال',
         },
         create: {
           id: historyId,
@@ -147,11 +149,10 @@ export class TenantSeeder implements Seeder {
           subscription_id: sub.id,
           plan_id: PLAN_ID,
           action: 'CREATE',
-          notes: 'Initial subscription creation',
+          notes: 'إنشاء الاشتراك الأولي لخطة الأعمال',
         },
       });
 
-      // Tenant Owner
       const user = await this.prisma.users.findUnique({
         where: { email: t.owner_email },
       });

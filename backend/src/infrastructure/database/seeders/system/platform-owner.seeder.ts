@@ -21,17 +21,19 @@ export class PlatformOwnerSeeder implements Seeder {
       update: {},
       create: {
         email: PLATFORM_OWNER_EMAIL,
-        phone: '+1234567890',
+        phone: '+963944000001',
         password_hash: passwordHash,
       },
     });
 
     await this.prisma.platform_admin.upsert({
       where: { user_id: owner.id },
-      update: {},
+      update: {
+        full_name: 'عبد الرحمن الخطيب',
+      },
       create: {
         user_id: owner.id,
-        full_name: 'Ahmed Al-Rashid',
+        full_name: 'عبد الرحمن الخطيب',
         role: 'SUPER_ADMIN',
       },
     });

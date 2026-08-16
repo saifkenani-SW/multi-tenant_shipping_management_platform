@@ -1,17 +1,34 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ServiceLevel } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { Seeder } from '../seeder.interface';
 import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
 export const SEEDED_ZONES = [
-  { idSuffix: '301', name: 'Central Zone', description: 'Riyadh Central Area' },
+  {
+    idSuffix: '301',
+    name: 'منطقة دمشق',
+    description: 'دمشق وريف دمشق',
+  },
   {
     idSuffix: '302',
-    name: 'Western Zone',
-    description: 'Jeddah & Coastal Area',
+    name: 'منطقة حلب',
+    description: 'حلب والمدن الشمالية',
   },
-  { idSuffix: '303', name: 'Eastern Zone', description: 'Dammam Area' },
+  {
+    idSuffix: '303',
+    name: 'منطقة الساحل والوسط',
+    description: 'اللاذقية وحمص ودير الزور',
+  },
 ] as const;
+
+type ZoneMatrix = {
+  origin: string;
+  dest: string;
+  service: ServiceLevel;
+  basePrice: number;
+  active: boolean;
+};
 
 @Injectable()
 export class ZoneSeeder implements Seeder {
@@ -24,11 +41,9 @@ export class ZoneSeeder implements Seeder {
 
     for (let i = 0; i < SEEDED_TENANTS.length; i++) {
       const tenant = SEEDED_TENANTS[i];
-
       const createdZoneIds: string[] = [];
 
-      for (let j = 0; j < SEEDED_ZONES.length; j++) {
-        const zoneInfo = SEEDED_ZONES[j];
+      for (const zoneInfo of SEEDED_ZONES) {
         const zoneId = `00000000-0000-7000-8000-00000000${i}${zoneInfo.idSuffix}`;
 
         const zone = await this.prisma.tenant_zone.upsert({
@@ -49,88 +64,88 @@ export class ZoneSeeder implements Seeder {
         createdZoneIds.push(zone.id);
       }
 
-      const centralId = createdZoneIds[0];
-      const westernId = createdZoneIds[1];
-      const easternId = createdZoneIds[2];
+      const damascusId = createdZoneIds[0];
+      const aleppoId = createdZoneIds[1];
+      const coastId = createdZoneIds[2];
 
-      const matrices: any[] = [];
+      const matrices: ZoneMatrix[] = [];
 
-      if (tenant.name === 'FastShip Logistics') {
+      if (tenant.id === SEEDED_TENANTS[0].id) {
         matrices.push(
           {
-            origin: centralId,
-            dest: westernId,
-            service: 'STANDARD',
-            basePrice: 25.0,
+            origin: damascusId,
+            dest: aleppoId,
+            service: ServiceLevel.STANDARD,
+            basePrice: 35000,
             active: true,
           },
           {
-            origin: centralId,
-            dest: westernId,
-            service: 'EXPRESS',
-            basePrice: 40.0,
+            origin: damascusId,
+            dest: aleppoId,
+            service: ServiceLevel.EXPRESS,
+            basePrice: 55000,
             active: true,
           },
           {
-            origin: westernId,
-            dest: centralId,
-            service: 'STANDARD',
-            basePrice: 25.0,
+            origin: aleppoId,
+            dest: damascusId,
+            service: ServiceLevel.STANDARD,
+            basePrice: 35000,
             active: true,
           },
           {
-            origin: centralId,
-            dest: easternId,
-            service: 'STANDARD',
-            basePrice: 30.0,
+            origin: damascusId,
+            dest: coastId,
+            service: ServiceLevel.STANDARD,
+            basePrice: 40000,
             active: true,
           },
           {
-            origin: centralId,
-            dest: easternId,
-            service: 'SAME_DAY',
-            basePrice: 50.0,
+            origin: damascusId,
+            dest: coastId,
+            service: ServiceLevel.SAME_DAY,
+            basePrice: 75000,
             active: false,
           },
         );
-      } else if (tenant.name === 'QuickDelivery Co.') {
+      } else if (tenant.id === SEEDED_TENANTS[1].id) {
         matrices.push(
           {
-            origin: centralId,
-            dest: westernId,
-            service: 'STANDARD',
-            basePrice: 20.0,
+            origin: damascusId,
+            dest: aleppoId,
+            service: ServiceLevel.STANDARD,
+            basePrice: 32000,
             active: true,
           },
           {
-            origin: centralId,
-            dest: easternId,
-            service: 'STANDARD',
-            basePrice: 22.0,
+            origin: damascusId,
+            dest: coastId,
+            service: ServiceLevel.STANDARD,
+            basePrice: 36000,
             active: true,
           },
         );
-      } else if (tenant.name === 'GlobalFreight Co.') {
+      } else if (tenant.id === SEEDED_TENANTS[2].id) {
         matrices.push(
           {
-            origin: centralId,
-            dest: easternId,
-            service: 'STANDARD',
-            basePrice: 28.0,
+            origin: damascusId,
+            dest: coastId,
+            service: ServiceLevel.STANDARD,
+            basePrice: 38000,
             active: true,
           },
           {
-            origin: centralId,
-            dest: easternId,
-            service: 'EXPRESS',
-            basePrice: 50.0,
+            origin: damascusId,
+            dest: coastId,
+            service: ServiceLevel.EXPRESS,
+            basePrice: 60000,
             active: true,
           },
           {
-            origin: easternId,
-            dest: centralId,
-            service: 'STANDARD',
-            basePrice: 28.0,
+            origin: coastId,
+            dest: damascusId,
+            service: ServiceLevel.STANDARD,
+            basePrice: 38000,
             active: true,
           },
         );
@@ -152,7 +167,7 @@ export class ZoneSeeder implements Seeder {
           update: {
             base_price: matrix.basePrice,
             base_weight_kg: 5.0,
-            price_per_extra_kg: 2.5,
+            price_per_extra_kg: 2500,
             is_active: matrix.active,
           },
           create: {
@@ -163,7 +178,7 @@ export class ZoneSeeder implements Seeder {
             service_level: matrix.service,
             base_price: matrix.basePrice,
             base_weight_kg: 5.0,
-            price_per_extra_kg: 2.5,
+            price_per_extra_kg: 2500,
             is_active: matrix.active,
           },
         });

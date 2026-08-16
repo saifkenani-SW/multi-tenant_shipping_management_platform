@@ -4,12 +4,12 @@ import { Seeder } from '../seeder.interface';
 import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
 export const SEEDED_ROLES = [
-  { name: 'Administrator', description: 'Full access to tenant operations' },
+  { name: 'Administrator', description: 'صلاحيات كاملة على عمليات الشركة' },
   {
     name: 'Branch Manager',
-    description: 'Manages branch activities and staff',
+    description: 'إدارة أنشطة الفرع والموظفين',
   },
-  { name: 'Driver', description: 'Driver access for trips and deliveries' },
+  { name: 'Driver', description: 'صلاحيات السائق للرحلات والتسليم' },
 ] as const;
 
 @Injectable()

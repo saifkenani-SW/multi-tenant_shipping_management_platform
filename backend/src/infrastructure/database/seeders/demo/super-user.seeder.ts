@@ -18,10 +18,13 @@ export class SuperUserSeeder implements Seeder {
     // 1. Create or update User
     const superUser = await this.prisma.users.upsert({
       where: { email },
-      update: {},
+      update: {
+        phone: '+963944000099',
+        password_hash: passwordHash,
+      },
       create: {
         email,
-        phone: '+9999999999',
+        phone: '+963944000099',
         password_hash: passwordHash,
       },
     });
@@ -29,17 +32,18 @@ export class SuperUserSeeder implements Seeder {
     // 2. Create Platform Admin profile
     await this.prisma.platform_admin.upsert({
       where: { user_id: superUser.id },
-      update: {},
+      update: {
+        full_name: 'حساب العرض الشامل',
+      },
       create: {
         user_id: superUser.id,
-        full_name: 'Super Admin',
+        full_name: 'حساب العرض الشامل',
         role: 'SUPER_ADMIN',
       },
     });
 
-    // Fetch existing tenant
-    const tenant = await this.prisma.tenant.findFirst({
-      where: { name: { contains: 'FastShip' } },
+    const tenant = await this.prisma.tenant.findUnique({
+      where: { id: '00000000-0000-7000-8000-000000000101' },
     });
 
     if (!tenant) {
@@ -69,12 +73,14 @@ export class SuperUserSeeder implements Seeder {
           user_id: superUser.id,
         },
       },
-      update: {},
+      update: {
+        full_name: 'حساب العرض الشامل',
+      },
       create: {
         user_id: superUser.id,
         tenant_id: tenant.id,
         employee_code: 'EMP-SUPER-1',
-        full_name: 'Super Employee',
+        full_name: 'حساب العرض الشامل',
       },
     });
 
@@ -118,7 +124,10 @@ export class SuperUserSeeder implements Seeder {
 
     // 5. Driver Profile (Vehicle Assignment)
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { tenant_id: tenant.id },
+      where: {
+        tenant_id: tenant.id,
+        vehicle_assignment: { none: { is_active: true } },
+      },
     });
 
     if (vehicle) {
@@ -142,11 +151,14 @@ export class SuperUserSeeder implements Seeder {
     // 6. Customer Profile
     await this.prisma.customer_profile.upsert({
       where: { user_id: superUser.id },
-      update: {},
+      update: {
+        full_name: 'حساب العرض الشامل',
+        phone: '+963944000099',
+      },
       create: {
         user_id: superUser.id,
-        full_name: 'Super Customer',
-        phone: '+9999999999',
+        full_name: 'حساب العرض الشامل',
+        phone: '+963944000099',
       },
     });
 

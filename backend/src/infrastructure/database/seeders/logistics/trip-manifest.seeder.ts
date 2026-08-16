@@ -4,6 +4,7 @@ import {
   CollectionMethod,
   ManifestItemStatus,
   ManifestStatus,
+  OrgType,
   ParcelCondition,
   ParcelStatus,
   TripStatus,
@@ -23,19 +24,28 @@ export class TripManifestSeeder implements Seeder {
 
     const tenant1 = SEEDED_TENANTS[0];
     const driver = await this.prisma.employee.findFirst({
-      where: { tenant_id: tenant1.id },
+      where: { tenant_id: tenant1.id, employee_code: 'EMP-102' },
     });
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { tenant_id: tenant1.id },
+      where: { tenant_id: tenant1.id, plate_number: '441203-دمشق' },
     });
-    const orgUnit = await this.prisma.organization_unit.findFirst({
-      where: { tenant_id: tenant1.id },
+    const origin = await this.prisma.organization_unit.findFirst({
+      where: { tenant_id: tenant1.id, org_type: OrgType.HUB },
     });
-    const parcel1 = await this.prisma.parcel.findFirst({
-      where: { tenant_id: tenant1.id },
+    const destination = await this.prisma.organization_unit.findFirst({
+      where: {
+        tenant_id: tenant1.id,
+        name: 'فرع حلب — العزيزية',
+      },
+    });
+    const parcel1 = await this.prisma.parcel.findUnique({
+      where: { id: '00000000-0000-7000-8000-000000001101' },
+    });
+    const deliveredParcel = await this.prisma.parcel.findUnique({
+      where: { id: '00000000-0000-7000-8000-000000001107' },
     });
 
-    if (!driver || !orgUnit || !parcel1) {
+    if (!driver || !origin || !destination || !parcel1) {
       this.logger.warn(
         'Skipping TripManifestSeeder: missing driver/orgUnit/parcel',
       );
@@ -47,14 +57,16 @@ export class TripManifestSeeder implements Seeder {
       where: { id: tripId },
       update: {
         status: TripStatus.IN_PROGRESS,
+        origin_org_unit_id: origin.id,
+        destination_org_unit_id: destination.id,
       },
       create: {
         id: tripId,
         tenant_id: tenant1.id,
         driver_id: driver.id,
         vehicle_id: vehicle ? vehicle.id : null,
-        origin_org_unit_id: orgUnit.id,
-        destination_org_unit_id: orgUnit.id,
+        origin_org_unit_id: origin.id,
+        destination_org_unit_id: destination.id,
         status: TripStatus.IN_PROGRESS,
         scheduled_at: new Date(),
         started_at: new Date(),
@@ -71,13 +83,12 @@ export class TripManifestSeeder implements Seeder {
         id: manifestId,
         tenant_id: tenant1.id,
         trip_id: trip.id,
-        origin_org_unit_id: orgUnit.id,
-        destination_org_unit_id: orgUnit.id,
+        origin_org_unit_id: origin.id,
+        destination_org_unit_id: destination.id,
         status: ManifestStatus.IN_TRANSIT,
       },
     });
 
-    const itemId = '00000000-0000-7000-8000-000000001221';
     await this.prisma.manifest_item.upsert({
       where: {
         manifest_id_parcel_id: {
@@ -101,42 +112,49 @@ export class TripManifestSeeder implements Seeder {
       where: { id: movementId },
       update: {
         action_type: ActionType.LOADED_ON_TRIP,
+        performed_by_name: driver.full_name,
+        notes: 'تم تحميل الطرد على رحلة دمشق — حلب',
+        organization_unit_name: origin.name,
+        organization_type: origin.org_type,
       },
       create: {
         tenant_id: tenant1.id,
         parcel_id: parcel1.id,
-        organization_unit_id: orgUnit.id,
+        organization_unit_id: origin.id,
         trip_id: trip.id,
         action_type: ActionType.LOADED_ON_TRIP,
         new_status: ParcelStatus.IN_TRANSIT,
         new_condition: ParcelCondition.NORMAL,
         performed_by_employee_id: driver.id,
-        performed_by_name: 'Driver 1',
-        notes: 'Parcel loaded on trip',
+        performed_by_name: driver.full_name,
+        organization_unit_name: origin.name,
+        organization_type: origin.org_type,
+        notes: 'تم تحميل الطرد على رحلة دمشق — حلب',
       },
     });
 
-    const podId = '00000000-0000-7000-8000-000000001241';
-    await this.prisma.proof_of_delivery.upsert({
-      where: { parcel_id: parcel1.id },
-      update: {
-        received_by_name: 'Jane Receiver',
-        otp_verified: true,
-      },
-      create: {
-        tenant_id: tenant1.id,
-        parcel_id: parcel1.id,
-        delivered_by_employee_id: driver.id,
-        delivered_by_employee_name: 'Driver 1',
-        collection_method: CollectionMethod.CUSTOMER,
-        received_by_name: 'Jane Receiver',
-        otp_verified: true,
-        otp_verified_at: new Date(),
-        signature_key: 'https://cdn.fastship.com/pod/sig.png',
-        delivery_lat: 24.6901,
-        delivery_lng: 46.6853,
-      },
-    });
+    if (deliveredParcel) {
+      await this.prisma.proof_of_delivery.upsert({
+        where: { parcel_id: deliveredParcel.id },
+        update: {
+          received_by_name: 'هبة محمد عطري',
+          otp_verified: true,
+        },
+        create: {
+          tenant_id: tenant1.id,
+          parcel_id: deliveredParcel.id,
+          delivered_by_employee_id: driver.id,
+          delivered_by_employee_name: driver.full_name,
+          collection_method: CollectionMethod.CUSTOMER,
+          received_by_name: 'هبة محمد عطري',
+          otp_verified: true,
+          otp_verified_at: new Date(),
+          signature_key: null,
+          delivery_lat: 35.5208,
+          delivery_lng: 35.7812,
+        },
+      });
+    }
 
     this.logger.log('TripManifestSeeder completed.');
   }

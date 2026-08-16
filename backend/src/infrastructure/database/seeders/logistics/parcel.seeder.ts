@@ -1,8 +1,88 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ParcelCondition, ParcelStatus } from '@prisma/client';
+import { ParcelCondition, ParcelStatus, ParcelType } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { Seeder } from '../seeder.interface';
-import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
+
+const PARCELS = [
+  {
+    id: '00000000-0000-7000-8000-000000001101',
+    shipmentId: '00000000-0000-7000-8000-000000000821',
+    trackingNumber: 'SHAM-2026-0001',
+    description: 'كرتون ملابس شتوية',
+    category: 'ملابس',
+    weight: 2.5,
+    length: 40,
+    width: 30,
+    height: 20,
+    status: ParcelStatus.IN_TRANSIT,
+    fragile: false,
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001102',
+    shipmentId: '00000000-0000-7000-8000-000000000821',
+    trackingNumber: 'SHAM-2026-0002',
+    description: 'مستلزمات منزلية وأدوات مطبخ',
+    category: 'منزلية',
+    weight: 3.0,
+    length: 35,
+    width: 25,
+    height: 18,
+    status: ParcelStatus.IN_TRANSIT,
+    fragile: true,
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001107',
+    shipmentId: '00000000-0000-7000-8000-000000000824',
+    trackingNumber: 'SHAM-2026-0003',
+    description: 'طرد مستحضرات تجميل',
+    category: 'تجميل',
+    weight: 3.2,
+    length: 25,
+    width: 20,
+    height: 12,
+    status: ParcelStatus.COLLECTED,
+    fragile: true,
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001103',
+    shipmentId: '00000000-0000-7000-8000-000000000822',
+    trackingNumber: 'BRDA-2026-0001',
+    description: 'مستندات تجارية وكتالوجات',
+    category: 'مستندات',
+    weight: 1.5,
+    length: 30,
+    width: 22,
+    height: 8,
+    status: ParcelStatus.PROCESSING,
+    fragile: false,
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001104',
+    shipmentId: '00000000-0000-7000-8000-000000000822',
+    trackingNumber: 'BRDA-2026-0002',
+    description: 'عينات أقمشة',
+    category: 'أقمشة',
+    weight: 2.5,
+    length: 40,
+    width: 20,
+    height: 10,
+    status: ParcelStatus.PROCESSING,
+    fragile: false,
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001105',
+    shipmentId: '00000000-0000-7000-8000-000000000823',
+    trackingNumber: 'FRAT-2026-0001',
+    description: 'أغذية مجففة وتمر ديري',
+    category: 'أغذية',
+    weight: 6.8,
+    length: 40,
+    width: 30,
+    height: 25,
+    status: ParcelStatus.READY_FOR_COLLECTION,
+    fragile: false,
+  },
+] as const;
 
 @Injectable()
 export class ParcelSeeder implements Seeder {
@@ -13,70 +93,54 @@ export class ParcelSeeder implements Seeder {
   async seed(): Promise<void> {
     this.logger.log('Starting ParcelSeeder...');
 
-    for (let i = 0; i < SEEDED_TENANTS.length; i++) {
-      const tenant = SEEDED_TENANTS[i];
-      const shipment = await this.prisma.customer_shipment.findFirst({
-        where: { tenant_id: tenant.id },
-      });
-      const orgUnit = await this.prisma.organization_unit.findFirst({
-        where: { tenant_id: tenant.id, org_type: 'BRANCH' },
+    for (const p of PARCELS) {
+      const shipment = await this.prisma.customer_shipment.findUnique({
+        where: { id: p.shipmentId },
       });
 
-      if (!shipment || !orgUnit) {
+      if (!shipment) {
         this.logger.warn(
-          `Skipping ParcelSeeder for tenant ${tenant.name}: missing shipment/orgUnit`,
+          `Skipping parcel ${p.trackingNumber}: shipment not found`,
         );
         continue;
       }
 
-      const id1 = `00000000-0000-7000-8000-0000000011${(i * 2 + 1).toString().padStart(2, '0')}`;
-      const id2 = `00000000-0000-7000-8000-0000000011${(i * 2 + 2).toString().padStart(2, '0')}`;
-      const trk1 = `TRK-2026-${(i * 2 + 1).toString().padStart(4, '0')}`;
-      const trk2 = `TRK-2026-${(i * 2 + 2).toString().padStart(4, '0')}`;
+      const dest = await this.prisma.organization_unit.findUnique({
+        where: { id: shipment.destination_org_unit_id },
+      });
 
-      const parcels = [
-        {
-          id: id1,
-          trackingNumber: trk1,
-          weight: 2.5,
-          length: 20,
-          width: 15,
-          height: 10,
+      await this.prisma.parcel.upsert({
+        where: { id: p.id },
+        update: {
+          tracking_number: p.trackingNumber,
+          description: p.description,
+          category: p.category,
+          current_status: p.status,
+          current_condition: ParcelCondition.NORMAL,
+          current_org_unit_id: dest?.id ?? shipment.origin_org_unit_id,
+          destination_org_unit_id: shipment.destination_org_unit_id,
+          is_fragile: p.fragile,
         },
-        {
-          id: id2,
-          trackingNumber: trk2,
-          weight: 3.0,
-          length: 25,
-          width: 20,
-          height: 12,
+        create: {
+          id: p.id,
+          tenant_id: shipment.tenant_id,
+          customer_shipment_id: shipment.id,
+          tracking_number: p.trackingNumber,
+          description: p.description,
+          category: p.category,
+          parcel_type: ParcelType.PACKAGE,
+          is_fragile: p.fragile,
+          actual_weight_kg: p.weight,
+          length_cm: p.length,
+          width_cm: p.width,
+          height_cm: p.height,
+          volumetric_weight_kg: (p.length * p.width * p.height) / 5000,
+          current_status: p.status,
+          current_condition: ParcelCondition.NORMAL,
+          current_org_unit_id: dest?.id ?? shipment.origin_org_unit_id,
+          destination_org_unit_id: shipment.destination_org_unit_id,
         },
-      ];
-
-      for (const p of parcels) {
-        await this.prisma.parcel.upsert({
-          where: { tracking_number: p.trackingNumber },
-          update: {
-            current_status: ParcelStatus.IN_TRANSIT,
-            current_condition: ParcelCondition.NORMAL,
-            current_org_unit_id: orgUnit.id,
-          },
-          create: {
-            id: p.id,
-            tenant_id: tenant.id,
-            customer_shipment_id: shipment.id,
-            tracking_number: p.trackingNumber,
-            actual_weight_kg: p.weight,
-            length_cm: p.length,
-            width_cm: p.width,
-            height_cm: p.height,
-            volumetric_weight_kg: (p.length * p.width * p.height) / 5000,
-            current_status: ParcelStatus.IN_TRANSIT,
-            current_condition: ParcelCondition.NORMAL,
-            current_org_unit_id: orgUnit.id,
-          },
-        });
-      }
+      });
     }
 
     this.logger.log('ParcelSeeder completed.');
