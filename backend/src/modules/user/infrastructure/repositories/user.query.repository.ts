@@ -44,6 +44,24 @@ export class UserQueryRepository {
     };
   }
 
+  async getUserSummaryByPhone(phone: string): Promise<UserSummary | null> {
+    const user = await this.db
+      .selectFrom('users')
+      .select(['id', 'email', 'phone', 'profile_image_key'])
+      .where('phone', '=', phone)
+      .executeTakeFirst();
+
+    if (!user) return null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      phone: user.phone,
+      profileImageKey: user.profile_image_key,
+      isActive: true,
+    };
+  }
+
   async getUserIdentityByEmail(email: string) {
     const user = await this.db
       .selectFrom('users')

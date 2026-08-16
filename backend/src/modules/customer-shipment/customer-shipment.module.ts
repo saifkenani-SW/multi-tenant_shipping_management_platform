@@ -12,6 +12,8 @@ import { ShipmentRequestModule } from '../shipment-request/shipment-request.modu
 import { BillingModule } from '../billing/billing.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { StorageModule } from '../../packages/storage/src/storage.module';
+import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 // Shipment
 import { ShipmentController } from './shipment/presentation/controllers/shipment.controller';
@@ -24,6 +26,7 @@ import { ShipmentMapper } from './shipment/application/mappers/shipment.mapper';
 import { ShipmentPolicy } from './shipment/domain/authorization/policies/shipment.policy';
 import { ShipmentAbility } from './shipment/domain/authorization/abilities/shipment.ability';
 import { ShipmentVisibilityScope } from './shipment/domain/authorization/scopes/shipment-visibility.scope';
+import { ShipmentDeliveredListener } from './shipment/application/listeners/shipment-delivered.listener';
 
 // Parcel
 import { ParcelController } from './parcel/presentation/controllers/parcel.controller';
@@ -72,6 +75,8 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     BillingModule,
     OrganizationModule,
     StorageModule,
+    UserModule,
+    NotificationModule,
   ],
   controllers: [ShipmentController, ParcelController],
   providers: [
@@ -86,6 +91,7 @@ import { CustomerShipmentFacade } from './facades/customer-shipment.facade';
     ShipmentAbility,
     ShipmentVisibilityScope,
     ShipmentCapabilityBuilder,
+    ShipmentDeliveredListener,
 
     // Parcel
     ParcelCommandService,

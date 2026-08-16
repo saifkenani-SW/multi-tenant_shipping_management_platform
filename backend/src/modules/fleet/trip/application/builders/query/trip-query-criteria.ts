@@ -9,5 +9,6 @@ export interface TripQueryCriteria {
   readonly vehicleId?: string;
   readonly originOrgUnitId?: string;
   readonly destinationOrgUnitId?: string;
+  readonly tripIds?: string[];
   readonly pagination: Pagination;
 }

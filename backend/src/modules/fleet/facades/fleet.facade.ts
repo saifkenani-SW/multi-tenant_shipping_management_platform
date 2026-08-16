@@ -92,6 +92,18 @@ export class FleetFacade {
     return this.tripQueryService.getTripDetails(tenantId, tripId);
   }
 
+  async filterVisibleTrips(
+    principal: any,
+    tripIds: string[],
+    payloadTenantId?: string,
+  ): Promise<string[]> {
+    return this.tripQueryService.filterVisibleTrips(
+      principal,
+      tripIds,
+      payloadTenantId,
+    );
+  }
+
   async getManifestDetails(
     tenantId: string | undefined,
     manifestId: string,

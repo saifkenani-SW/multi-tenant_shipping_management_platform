@@ -32,6 +32,10 @@ export class UserQueryService {
     return this.queryRepository.getUserSummary(userId);
   }
 
+  async getUserSummaryByPhone(phone: string): Promise<UserSummary | null> {
+    return this.queryRepository.getUserSummaryByPhone(phone);
+  }
+
   async getIdentityByEmail(email: string): Promise<UserIdentityResult | null> {
     const data = await this.queryRepository.getUserIdentityByEmail(email);
 
