@@ -27,6 +27,7 @@ import { TripResponseMapper } from './trip/application/mappers/trip-response.map
 import { TripCommandRepository } from './trip/infrastructure/repositories/trip-command.repository';
 import { TripQueryRepository } from './trip/infrastructure/repositories/trip-query.repository';
 import { TripPersistenceMapper } from './trip/infrastructure/mappers/trip-persistence.mapper';
+import { TripVisibilityScope } from './trip/domain/authorization/scopes/trip-visibility.scope';
 
 import { TransportManifestController } from './transport_manifest/presentation/controllers/transport-manifest.controller';
 import { ManifestCommandService } from './transport_manifest/application/services/manifest-command.service';
@@ -80,6 +81,7 @@ import { ManifestPolicy } from './transport_manifest/domain/authorization/polici
     TripQueryRepository,
     TripResponseMapper,
     TripPersistenceMapper,
+    TripVisibilityScope,
 
     // transport manifest
     ManifestCommandService,
