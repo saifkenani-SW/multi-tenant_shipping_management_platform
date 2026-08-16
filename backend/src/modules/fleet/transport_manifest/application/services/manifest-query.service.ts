@@ -207,7 +207,7 @@ export class ManifestQueryService {
   async scanParcel(
     tenantId: string,
     trackingNumber: string,
-  ): Promise<{ manifestId: string; itemId: string }> {
+  ): Promise<{ manifestId: string; itemId: string; parcel: any }> {
     // 1. Resolve parcel ID bypassing CustomerShipment authorization (since caller is Driver scanning physical barcode)
     const parcelId =
       await this.parcelLookup.getParcelIdByTrackingNumber(trackingNumber);
@@ -228,9 +228,12 @@ export class ManifestQueryService {
     // (e.g. they are the assigned driver, or an employee with matching org scope)
     await this.getManifestDetails(item.manifestId);
 
+    const parcels = await this.parcelLookup.getParcelsByIds([parcelId]);
+
     return {
       manifestId: item.manifestId,
       itemId: item.itemId,
+      parcel: parcels[0],
     };
   }
 }

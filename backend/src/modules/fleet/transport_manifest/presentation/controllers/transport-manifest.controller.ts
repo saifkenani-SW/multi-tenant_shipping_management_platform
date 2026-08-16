@@ -123,6 +123,7 @@ export class TransportManifestController {
   async scanParcel(@Param('trackingNumber') trackingNumber: string): Promise<{
     manifestId: string;
     itemId: string;
+    parcel: any;
   }> {
     return this.manifestQueryService.scanParcel(
       this.requestContext.getTenantIdOrThrow(),
