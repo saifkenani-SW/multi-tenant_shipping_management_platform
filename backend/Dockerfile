@@ -69,6 +69,7 @@ COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts ./scripts
 
 RUN mkdir -p /app/uploads && \
     chown -R node:node /app/uploads && \
