@@ -20,9 +20,11 @@ import { SubscriptionPlanSeeder } from './system/subscription-plan.seeder';
 import { UserSeeder } from './system/user.seeder';
 import { TenantSeeder } from './tenant/tenant.seeder';
 import { SuperUserSeeder } from './demo/super-user.seeder';
+import { SeedCleanupSeeder } from './system/seed-cleanup.seeder';
 
 const SEEDERS = [
   SeedRunner,
+  SeedCleanupSeeder,
   PermissionSeeder,
   SubscriptionPlanSeeder,
   PlatformOwnerSeeder,

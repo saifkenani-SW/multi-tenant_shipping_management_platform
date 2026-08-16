@@ -18,12 +18,14 @@ import { SubscriptionPlanSeeder } from './system/subscription-plan.seeder';
 import { UserSeeder } from './system/user.seeder';
 import { TenantSeeder } from './tenant/tenant.seeder';
 import { SuperUserSeeder } from './demo/super-user.seeder';
+import { SeedCleanupSeeder } from './system/seed-cleanup.seeder';
 
 @Injectable()
 export class SeedRunner {
   private readonly logger = new Logger(SeedRunner.name);
 
   constructor(
+    private readonly seedCleanupSeeder: SeedCleanupSeeder,
     private readonly permissionSeeder: PermissionSeeder,
     private readonly subscriptionPlanSeeder: SubscriptionPlanSeeder,
     private readonly platformOwnerSeeder: PlatformOwnerSeeder,
@@ -48,6 +50,8 @@ export class SeedRunner {
     this.logger.log('Starting complete database seeding sequence...');
 
     const topologicalSeeders: Seeder[] = [
+      this.seedCleanupSeeder,
+
       // 1. System level independent models
       this.permissionSeeder,
       this.subscriptionPlanSeeder,
