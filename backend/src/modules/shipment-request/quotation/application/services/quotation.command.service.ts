@@ -13,6 +13,8 @@ import { RequestContextService } from '../../../../../packages/context/services/
 import { SubmitQuotationPriceDto } from '../dtos/requests/submit-quotation-price.dto';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
 import { QUOTATION_CACHE_KEYS } from '../../constants/quotation.cache.constants';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { QUOTATION_EVENTS } from '../../constants/quotation.events';
 
 @Injectable()
 export class QuotationCommandService {
@@ -24,6 +26,7 @@ export class QuotationCommandService {
     private readonly authorizationFacade: AuthorizationFacade,
     private readonly shipmentRequestQueryService: ShipmentRequestQueryService,
     private readonly requestContextService: RequestContextService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @CacheEvict({
@@ -111,7 +114,11 @@ export class QuotationCommandService {
       quotation.status,
     );
 
-    // TODO: Trigger notification to the specific company to price this quotation
+    this.eventEmitter.emit(QUOTATION_EVENTS.MANUAL_PRICE_REQUESTED, {
+      quotationId: quotation.id,
+      shipmentRequestId: quotation.shipmentRequestId,
+      originOrgUnitId: quotationDto.originOrgUnitId,
+    });
   }
 
   @CacheEvict({
@@ -158,6 +165,9 @@ export class QuotationCommandService {
       employeeId,
     );
 
-    // TODO: Send notification to the customer that the quotation has been priced
+    this.eventEmitter.emit(QUOTATION_EVENTS.MANUAL_PRICE_SUBMITTED, {
+      quotationId: quotation.id,
+      shipmentRequestId: quotation.shipmentRequestId,
+    });
   }
 }

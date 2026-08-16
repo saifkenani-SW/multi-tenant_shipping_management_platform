@@ -30,6 +30,32 @@ export class NotificationFacade {
     }
   }
 
+  async notifyUsers(
+    userIds: string[],
+    message: INotificationMessage,
+  ): Promise<void> {
+    try {
+      await this.notificationService.sendToUsers(userIds, message);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to notify users: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async notifyTopic(
+    topic: string,
+    message: INotificationMessage,
+  ): Promise<void> {
+    try {
+      await this.notificationService.sendToTopic(topic, message);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to notify topic ${topic}: ${(error as Error).message}`,
+      );
+    }
+  }
+
   async registerToken(
     userId: string,
     fcmToken: string,

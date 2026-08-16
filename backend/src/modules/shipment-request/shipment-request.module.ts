@@ -25,6 +25,7 @@ import { ShipmentRequestCommandRepository } from './request/infrastructure/repos
 import { ShipmentRequestQueryService } from './request/application/services/shipment-request.query.service';
 import { ShipmentRequestQueryRepository } from './request/infrastructure/repositories/shipment-request.query.repository';
 import { ShipmentRequestVisibilityScope } from './authorization/scopes/shipment-request-visibility.scope';
+import { QuotationListener } from './quotation/application/listeners/quotation.listener';
 
 // Facades
 import { ShipmentRequestFacade } from './facades/shipment-request.facade';
@@ -61,6 +62,7 @@ import { NotificationModule } from '../notification/notification.module';
     ShipmentRequestQueryService,
     ShipmentRequestQueryRepository,
     ShipmentRequestVisibilityScope,
+    QuotationListener,
     ShipmentRequestFacade,
   ],
   exports: [ShipmentRequestFacade],
