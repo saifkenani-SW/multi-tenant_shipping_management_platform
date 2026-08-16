@@ -19,6 +19,8 @@ import { ShipmentRequestQueryService } from './shipment-request.query.service';
 import { RequestStatus } from '@prisma/client';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
 import { SHIPMENT_REQUEST_CACHE_KEYS } from '../../constants/shipment-request.cache.constants';
+import { UserFacade } from '../../../../user/application/facades/user.facade';
+import { NotificationFacade } from '../../../../notification/facades/notification.facade';
 
 @Injectable()
 export class ShipmentRequestCommandService {
@@ -30,6 +32,8 @@ export class ShipmentRequestCommandService {
     private readonly quotationCommandService: QuotationCommandService,
     private readonly tenantFacade: TenantFacade,
     private readonly queryService: ShipmentRequestQueryService,
+    private readonly userFacade: UserFacade,
+    private readonly notificationFacade: NotificationFacade,
   ) {}
 
   @CacheEvict({
@@ -139,6 +143,16 @@ export class ShipmentRequestCommandService {
       requestEntity.id,
       requestEntity.status,
     );
+
+    const userSummary = await this.userFacade.getUserSummaryByPhone(
+      rawRequest.senderPhone,
+    );
+    if (userSummary) {
+      await this.notificationFacade.notifyUser(userSummary.id, {
+        title: 'تمت الموافقة على طلب الشحن',
+        body: `تم الموافقة على طلب الشحن الخاص بك، تستطيع الآن التوجه للشحن. رقم الطلب: ${rawRequest.id}`,
+      });
+    }
   }
 
   @CacheEvict({

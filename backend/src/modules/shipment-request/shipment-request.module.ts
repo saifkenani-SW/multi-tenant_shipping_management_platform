@@ -29,9 +29,17 @@ import { ShipmentRequestVisibilityScope } from './authorization/scopes/shipment-
 // Facades
 import { ShipmentRequestFacade } from './facades/shipment-request.facade';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [OrganizationModule, GlobalLocationModule, TenantModule],
+  imports: [
+    OrganizationModule,
+    GlobalLocationModule,
+    TenantModule,
+    UserModule,
+    NotificationModule,
+  ],
   controllers: [
     ZonePricingController,
     ShipmentRequestController,
