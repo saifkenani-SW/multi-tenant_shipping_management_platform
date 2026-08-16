@@ -26,10 +26,19 @@ export class TripManifestSeeder implements Seeder {
     const driver = await this.prisma.employee.findFirst({
       where: { tenant_id: tenant1.id, employee_code: 'EMP-102' },
     });
-    const vehicle = await this.prisma.vehicle.findFirst({
-      where: { tenant_id: tenant1.id },
-      orderBy: { created_at: 'asc' },
-    });
+    const driverAssignment = driver
+      ? await this.prisma.vehicle_assignment.findFirst({
+          where: { employee_id: driver.id, is_active: true },
+        })
+      : null;
+    const vehicle = driverAssignment
+      ? await this.prisma.vehicle.findUnique({
+          where: { id: driverAssignment.vehicle_id },
+        })
+      : await this.prisma.vehicle.findFirst({
+          where: { tenant_id: tenant1.id },
+          orderBy: { created_at: 'asc' },
+        });
     const origin = await this.prisma.organization_unit.findFirst({
       where: { tenant_id: tenant1.id, org_type: OrgType.HUB },
     });
@@ -57,6 +66,8 @@ export class TripManifestSeeder implements Seeder {
     const trip = await this.prisma.trip.upsert({
       where: { id: tripId },
       update: {
+        driver_id: driver.id,
+        vehicle_id: vehicle ? vehicle.id : null,
         status: TripStatus.IN_PROGRESS,
         origin_org_unit_id: origin.id,
         destination_org_unit_id: destination.id,
@@ -187,7 +198,11 @@ export class TripManifestSeeder implements Seeder {
     if (latakia && dispatchParcel) {
       const scheduledTrip = await this.prisma.trip.upsert({
         where: { id: '00000000-0000-7000-8000-000000001250' },
-        update: { status: TripStatus.SCHEDULED },
+        update: {
+          driver_id: driver.id,
+          vehicle_id: vehicle ? vehicle.id : null,
+          status: TripStatus.SCHEDULED,
+        },
         create: {
           id: '00000000-0000-7000-8000-000000001250',
           tenant_id: tenant1.id,
@@ -236,7 +251,11 @@ export class TripManifestSeeder implements Seeder {
     if (destination && warehouse && silkParcel) {
       const doneTrip = await this.prisma.trip.upsert({
         where: { id: '00000000-0000-7000-8000-000000001252' },
-        update: { status: TripStatus.COMPLETED },
+        update: {
+          driver_id: driver.id,
+          vehicle_id: vehicle ? vehicle.id : null,
+          status: TripStatus.COMPLETED,
+        },
         create: {
           id: '00000000-0000-7000-8000-000000001252',
           tenant_id: tenant1.id,
