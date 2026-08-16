@@ -401,6 +401,17 @@ export class ParcelQueryService {
     return parcel;
   }
 
+  async findIdByTrackingNumberOrThrow(trackingNumber: string): Promise<string> {
+    const record =
+      await this.queryRepository.findRawByTrackingNumber(trackingNumber);
+
+    if (!record) {
+      throw new NotFoundException('Parcel not found');
+    }
+
+    return record.id;
+  }
+
   async findRawOrThrow(id: string): Promise<any> {
     const record = await this.queryRepository.findRawById(id);
 

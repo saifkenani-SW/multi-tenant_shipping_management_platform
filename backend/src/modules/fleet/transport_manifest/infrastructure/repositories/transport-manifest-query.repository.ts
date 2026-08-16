@@ -246,6 +246,33 @@ export class TransportManifestQueryRepository {
     return Boolean(await query.executeTakeFirst());
   }
 
+  /**
+   * Finds the single active manifest item for a given parcel in the tenant.
+   * A parcel can only be in one active manifest at a time.
+   */
+  async findActiveItemByParcelIdAndTenant(
+    parcelId: string,
+    tenantId: string,
+  ): Promise<{ manifestId: string; itemId: string; status: ManifestItemStatus } | null> {
+    const record = await this.kysely
+      .selectFrom('manifest_item as mi')
+      .innerJoin('transport_manifest as tm', 'tm.id', 'mi.manifest_id')
+      .select(['mi.id as itemId', 'mi.manifest_id as manifestId', 'mi.status'])
+      .where('tm.tenant_id', '=', tenantId)
+      .where('mi.parcel_id', '=', parcelId)
+      .where('mi.status', 'in', OCCUPYING_ITEM_STATUSES)
+      .where('tm.status', 'in', ACTIVE_MANIFEST_STATUSES)
+      .executeTakeFirst();
+
+    if (!record) return null;
+
+    return {
+      manifestId: record.manifestId,
+      itemId: record.itemId,
+      status: record.status as ManifestItemStatus,
+    };
+  }
+
   async existsItemsForParcels(
     manifestId: string,
     parcelIds: string[],

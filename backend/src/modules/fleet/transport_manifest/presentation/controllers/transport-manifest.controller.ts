@@ -112,6 +112,24 @@ export class TransportManifestController {
     return this.manifestQueryService.getManifestItems(id);
   }
 
+  @Get('scan/:trackingNumber')
+  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Permissions(PermissionAction.READ, PermissionResource.MANIFEST)
+  @ApiOperation({
+    summary:
+      'Scan a tracking number to find its active manifest item. Bypasses parcel authorization.',
+  })
+  @ApiResponse({ status: HttpStatus.OK })
+  async scanParcel(@Param('trackingNumber') trackingNumber: string): Promise<{
+    manifestId: string;
+    itemId: string;
+  }> {
+    return this.manifestQueryService.scanParcel(
+      this.requestContext.getTenantIdOrThrow(),
+      trackingNumber,
+    );
+  }
+
   // ──────────────────────────── COMMANDS ───────────────────────────────────
 
   @Post()
