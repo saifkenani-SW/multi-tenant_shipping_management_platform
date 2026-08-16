@@ -4,6 +4,8 @@ import { DatabaseModule } from '../../infrastructure/database/database.module';
 import { StatisticsController } from './presentation/controllers/statistics.controller';
 import { FinancialStatisticsService } from './application/services/financial-statistics.service';
 import { FinancialStatisticsQueryRepository } from './infrastructure/repositories/financial-statistics.query.repository';
+import { OrganizationUnitStatisticsService } from './application/services/organization-unit-statistics.service';
+import { OrganizationUnitStatisticsQueryRepository } from './infrastructure/repositories/organization-unit-statistics.query.repository';
 
 /**
  * Statistics module.
@@ -18,6 +20,11 @@ import { FinancialStatisticsQueryRepository } from './infrastructure/repositorie
 @Module({
   imports: [DatabaseModule],
   controllers: [StatisticsController],
-  providers: [FinancialStatisticsService, FinancialStatisticsQueryRepository],
+  providers: [
+    FinancialStatisticsService,
+    FinancialStatisticsQueryRepository,
+    OrganizationUnitStatisticsService,
+    OrganizationUnitStatisticsQueryRepository,
+  ],
 })
 export class StatisticsModule {}
