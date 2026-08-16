@@ -182,9 +182,9 @@ export class TripCommandService {
    * The manifest count is fetched here and handed to the aggregate, which
    * enforces the "a trip cannot depart empty" invariant.
    *
-   * Departure also carries every attached manifest to IN_TRANSIT, in the same
-   * transaction, so a departed trip can never leave a manifest still open for
-   * loading.
+   * Note: manifest status transitions are now driven by the driver's item-level
+   * scan actions (ASSIGNED → LOADING → IN_TRANSIT → COMPLETED), not by the
+   * trip lifecycle.
    */
   @Transactional()
   async startTrip(tenantId: string, id: string): Promise<void> {
@@ -199,11 +199,9 @@ export class TripCommandService {
     await this.tripCommandRepository.updateStatus(id, trip.status, {
       startedAt: trip.startedAt,
     });
-
-    await this.manifestCommandService.markTripManifestsInTransit(tenantId, id);
   }
 
-  /** IN_PROGRESS → COMPLETED. Also completes all IN_TRANSIT manifests. */
+  /** IN_PROGRESS → COMPLETED. */
   @Transactional()
   async completeTrip(tenantId: string, id: string): Promise<void> {
     const trip = await this.tripQueryService.findTripOrThrow(tenantId, id);
@@ -213,8 +211,6 @@ export class TripCommandService {
     await this.tripCommandRepository.updateStatus(id, trip.status, {
       endedAt: trip.endedAt,
     });
-
-    await this.manifestCommandService.markTripManifestsCompleted(tenantId, id);
   }
 
   /** SCHEDULED → CANCELLED. */

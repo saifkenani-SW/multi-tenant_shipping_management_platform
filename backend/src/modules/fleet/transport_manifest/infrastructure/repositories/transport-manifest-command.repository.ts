@@ -142,4 +142,20 @@ export class TransportManifestCommandRepository {
   async deleteItem(id: string): Promise<void> {
     await this.prisma.client.manifest_item.delete({ where: { id } });
   }
+
+  /**
+   * Counts manifest items with a specific status **within the active transaction**.
+   *
+   * Must live in the command repository (TransactionalPrismaService) — not in
+   * the Kysely query repository — so that it reads the uncommitted writes made
+   * earlier in the same @Transactional() block (e.g. after updateItemStatus).
+   */
+  async countItemsByStatus(
+    manifestId: string,
+    status: ManifestItemStatus,
+  ): Promise<number> {
+    return this.prisma.client.manifest_item.count({
+      where: { manifest_id: manifestId, status },
+    });
+  }
 }

@@ -26,9 +26,11 @@ const ALLOWED_TRANSITIONS: ManifestTransition[] = [
   { from: ManifestStatus.OPEN, to: ManifestStatus.READY_FOR_DISPATCH },
   // 2. Fleet Books
   { from: ManifestStatus.READY_FOR_DISPATCH, to: ManifestStatus.ASSIGNED },
-  // 3. Start Trip
-  { from: ManifestStatus.ASSIGNED, to: ManifestStatus.IN_TRANSIT },
-  // 4. Complete Trip
+  // 3a. Driver scans first parcel
+  { from: ManifestStatus.ASSIGNED, to: ManifestStatus.LOADING },
+  // 3b. Driver scans last parcel (no more PENDING_LOAD)
+  { from: ManifestStatus.LOADING, to: ManifestStatus.IN_TRANSIT },
+  // 4. Driver unloads last parcel at destination
   { from: ManifestStatus.IN_TRANSIT, to: ManifestStatus.COMPLETED },
   // 5. Revert/Reopen
   { from: ManifestStatus.READY_FOR_DISPATCH, to: ManifestStatus.OPEN },
@@ -37,12 +39,14 @@ const ALLOWED_TRANSITIONS: ManifestTransition[] = [
 /**
  * TransportManifest aggregate root.
  *
- * Lifecycle: OPEN → READY_FOR_DISPATCH → IN_TRANSIT → COMPLETED
+ * Lifecycle: OPEN → READY_FOR_DISPATCH → ASSIGNED → LOADING → IN_TRANSIT → COMPLETED
  *
  * A manifest is created standalone (OPEN, no trip). An employee assembles
- * parcels on it and then calls finalize() to signal it is ready for dispatch.
- * Fleet links it to a departing trip (which drives it to IN_TRANSIT). On trip
- * completion the manifest is automatically moved to COMPLETED.
+ * parcels on it and calls finalize() to signal it is ready for dispatch.
+ * Fleet assigns it to a trip (ASSIGNED). The driver then scans parcels:
+ *   - First scan  → LOADING
+ *   - Last scan   → IN_TRANSIT (all parcels on board)
+ * When the driver unloads the last parcel at the destination → COMPLETED.
  */
 export class TransportManifest {
   private constructor(
@@ -173,14 +177,50 @@ export class TransportManifest {
     this._tripId = tripId;
   }
 
-  /** ASSIGNED → IN_TRANSIT. Applied when the owning trip departs. */
-  markInTransit(): void {
+  /**
+   * ASSIGNED → LOADING.
+   * Called when the driver scans the first parcel onto the vehicle.
+   */
+  startLoading(): void {
+    this.transitionTo(ManifestStatus.LOADING);
+  }
+
+  /**
+   * LOADING → IN_TRANSIT.
+   * Called when all PENDING_LOAD items have been scanned (none remain).
+   */
+  completeLoading(): void {
     this.transitionTo(ManifestStatus.IN_TRANSIT);
   }
 
-  /** IN_TRANSIT → COMPLETED. Terminal: the manifest becomes immutable. */
-  complete(): void {
+  /**
+   * IN_TRANSIT → COMPLETED.
+   * Called when the last LOADED item has been unloaded at the destination.
+   */
+  markCompleted(): void {
     this.transitionTo(ManifestStatus.COMPLETED);
+  }
+
+  /**
+   * Guard: ensures updateItemStatus is only called in a valid manifest state.
+   * - LOADED action: manifest must be ASSIGNED or LOADING.
+   * - UNLOADED / MISSING action: manifest must be IN_TRANSIT.
+   */
+  assertItemStatusUpdatable(targetStatus: string): void {
+    const loadingStates: ManifestStatus[] = [ManifestStatus.ASSIGNED, ManifestStatus.LOADING];
+    if (targetStatus === 'LOADED' && !loadingStates.includes(this._status)) {
+      throw new ManifestNotModifiableException(
+        `Cannot load items on a manifest in status ${this._status}`,
+      );
+    }
+    if (
+      (targetStatus === 'UNLOADED' || targetStatus === 'MISSING') &&
+      this._status !== ManifestStatus.IN_TRANSIT
+    ) {
+      throw new ManifestNotModifiableException(
+        `Cannot unload/report missing items on a manifest in status ${this._status}`,
+      );
+    }
   }
 
   /** True when the manifest is ready and not yet claimed by any trip. */

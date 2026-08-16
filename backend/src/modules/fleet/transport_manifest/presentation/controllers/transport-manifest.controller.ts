@@ -194,7 +194,7 @@ export class TransportManifestController {
 
   @Patch(':id/items/:itemId')
   @HttpCode(HttpStatus.OK)
-  @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE, RoleType.DRIVER)
+  @Roles(RoleType.DRIVER)
   @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
   @ApiOperation({
     summary: 'Mark a parcel on the manifest as loaded, unloaded or missing',

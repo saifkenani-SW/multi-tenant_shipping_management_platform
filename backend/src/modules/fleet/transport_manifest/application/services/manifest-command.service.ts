@@ -23,6 +23,7 @@ import {
   ManifestItemTargetStatus,
   UpdateManifestItemStatusDto,
 } from '../dtos/requests/update-manifest-item-status.dto';
+import { ManifestStatus } from '../../domain/enums/manifest-status.enum';
 
 @Injectable()
 export class ManifestCommandService {
@@ -136,8 +137,20 @@ export class ManifestCommandService {
   }
 
   /**
-   * Moves one parcel through its own lifecycle. The item entity decides whether
-   * the requested transition is legal.
+   * Moves one manifest item through its lifecycle and keeps both the parcel
+   * status and the manifest status in sync.
+   *
+   * LOADED:
+   *   - Parcel            → IN_TRANSIT  (via CustomerShipmentFacade)
+   *   - Manifest ASSIGNED → LOADING     (first scan)
+   *   - Manifest LOADING  → IN_TRANSIT  (last scan, no PENDING_LOAD remaining)
+   *
+   * UNLOADED:
+   *   - Parcel            → ARRIVED_AT_UNIT (via CustomerShipmentFacade)
+   *   - Manifest IN_TRANSIT → COMPLETED (last unload, no LOADED remaining)
+   *
+   * MISSING:
+   *   - No parcel or manifest status change. Reported for investigation.
    */
   @Transactional()
   async updateItemStatus(
@@ -150,27 +163,86 @@ export class ManifestCommandService {
       await this.manifestQueryService.findManifestOrThrow(manifestId);
     if (manifest.tenantId !== tenantId) throw new ForbiddenException();
 
+    // Guard: validate manifest is in the right state for this item transition
+    manifest.assertItemStatusUpdatable(dto.status);
+
     const item = await this.manifestQueryService.findItemOrThrow(
       manifestId,
       itemId,
     );
 
     switch (dto.status) {
-      case ManifestItemTargetStatus.LOADED:
+      case ManifestItemTargetStatus.LOADED: {
         item.markLoaded();
-        break;
-      case ManifestItemTargetStatus.UNLOADED:
-        item.markUnloaded();
-        break;
-      case ManifestItemTargetStatus.MISSING:
-        item.markMissing();
-        break;
-    }
+        await this.commandRepository.updateItemStatus(itemId, item.status, {
+          loadedAt: item.loadedAt,
+          unloadedAt: null,
+        });
 
-    await this.commandRepository.updateItemStatus(itemId, item.status, {
-      loadedAt: item.loadedAt,
-      unloadedAt: item.unloadedAt,
-    });
+        // Parcel → IN_TRANSIT
+        await this.customerShipmentFacade.markParcelLoadedOnManifest(
+          item.parcelId,
+          manifest.tripId!,
+        );
+
+        // Manifest: ASSIGNED → LOADING on first scan
+        if (manifest.status === ManifestStatus.ASSIGNED) {
+          manifest.startLoading();
+          await this.commandRepository.updateStatus(manifestId, manifest.status);
+        }
+
+        // Manifest: LOADING → IN_TRANSIT when no PENDING_LOAD items remain
+        // Uses commandRepository (Prisma/transactional) to read within the same
+        // transaction and see the just-written LOADED status.
+        const pendingCount = await this.commandRepository.countItemsByStatus(
+          manifestId,
+          ManifestItemStatus.PENDING_LOAD,
+        );
+        if (pendingCount === 0) {
+          manifest.completeLoading();
+          await this.commandRepository.updateStatus(manifestId, manifest.status);
+        }
+        break;
+      }
+
+      case ManifestItemTargetStatus.UNLOADED: {
+        item.markUnloaded();
+        await this.commandRepository.updateItemStatus(itemId, item.status, {
+          loadedAt: item.loadedAt,
+          unloadedAt: item.unloadedAt,
+        });
+
+        // Parcel → ARRIVED_AT_UNIT (with updated org unit location)
+        await this.customerShipmentFacade.markParcelUnloadedFromManifest(
+          item.parcelId,
+          manifest.destinationOrgUnitId,
+          manifest.tripId ?? undefined,
+        );
+
+        // Manifest: IN_TRANSIT → COMPLETED when no LOADED items remain
+        // Uses commandRepository (Prisma/transactional) to read within the same
+        // transaction and see the just-written UNLOADED status.
+        const loadedCount = await this.commandRepository.countItemsByStatus(
+          manifestId,
+          ManifestItemStatus.LOADED,
+        );
+        if (loadedCount === 0) {
+          manifest.markCompleted();
+          await this.commandRepository.updateStatus(manifestId, manifest.status);
+        }
+        break;
+      }
+
+      case ManifestItemTargetStatus.MISSING: {
+        item.markMissing();
+        await this.commandRepository.updateItemStatus(itemId, item.status, {
+          loadedAt: item.loadedAt,
+          unloadedAt: null,
+        });
+        // No parcel or manifest status change — reported for investigation
+        break;
+      }
+    }
   }
 
   /** Removes a parcel from a manifest that is still OPEN. */
