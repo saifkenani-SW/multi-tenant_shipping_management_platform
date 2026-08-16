@@ -143,6 +143,17 @@ describe('TrackingGateway — handleDriverLocation()', () => {
     expect(client.join).toHaveBeenCalledWith(`trip:${TRIP_ID}`);
   });
 
+  it('reuses trip authorization within the short TTL so frequent GPS pings skip a second fetch', async () => {
+    mockRequestContextService.getPrincipal.mockReturnValue(makeDriverPrincipal());
+    mockFleetFacade.getTripDetails.mockResolvedValue(makeInProgressTrip());
+
+    await gateway.handleDriverLocation(makeSocketMock() as any, validPayload);
+    await gateway.handleDriverLocation(makeSocketMock() as any, validPayload);
+
+    expect(mockFleetFacade.getTripDetails).toHaveBeenCalledTimes(1);
+    expect(mockLocationFlusher.buffer).toHaveBeenCalledTimes(2);
+  });
+
   // ── Authorization failures ─────────────────────────────────────────────────
 
   it('throws WsException when principal is a CUSTOMER (not DRIVER)', async () => {

@@ -48,6 +48,18 @@ export class TrackingGateway {
 
   private readonly logger = new Logger(TrackingGateway.name);
 
+  /**
+   * Drivers ping every ~3s. Re-fetching the trip on every ping is wasteful
+   * and can stall GPS under load, so we cache a successful auth briefly.
+   * Contract of `driver_location` is unchanged.
+   */
+  private readonly tripAuthCache = new Map<
+    string,
+    { driverId: string; tenantId: string; expiresAt: number }
+  >();
+
+  private static readonly TRIP_AUTH_TTL_MS = 20_000;
+
   constructor(
     private readonly customerShipmentFacade: CustomerShipmentFacade,
     private readonly fleetFacade: FleetFacade,
@@ -134,18 +146,7 @@ export class TrackingGateway {
       throw new WsException('Incomplete driver context');
     }
 
-    const trip = await this.fleetFacade.getTripDetails(
-      tenantId,
-      payload.tripId,
-    );
-
-    if (trip.status !== TripStatus.IN_PROGRESS) {
-      throw new WsException('Trip is not in progress');
-    }
-
-    if (trip.driverId !== driverId) {
-      throw new WsException('You are not the assigned driver for this trip');
-    }
+    await this.assertDriverOwnsActiveTrip(tenantId, driverId, payload.tripId);
 
     const recordedAt = new Date();
     const entry = {
@@ -168,6 +169,39 @@ export class TrackingGateway {
       latitude: payload.latitude,
       longitude: payload.longitude,
       recordedAt: recordedAt.toISOString(),
+    });
+  }
+
+  private async assertDriverOwnsActiveTrip(
+    tenantId: string,
+    driverId: string,
+    tripId: string,
+  ): Promise<void> {
+    const cached = this.tripAuthCache.get(tripId);
+    if (
+      cached &&
+      cached.expiresAt > Date.now() &&
+      cached.driverId === driverId &&
+      cached.tenantId === tenantId
+    ) {
+      return;
+    }
+
+    const trip = await this.fleetFacade.getTripDetails(tenantId, tripId);
+
+    if (trip.status !== TripStatus.IN_PROGRESS) {
+      this.tripAuthCache.delete(tripId);
+      throw new WsException('Trip is not in progress');
+    }
+
+    if (trip.driverId !== driverId) {
+      throw new WsException('You are not the assigned driver for this trip');
+    }
+
+    this.tripAuthCache.set(tripId, {
+      driverId,
+      tenantId,
+      expiresAt: Date.now() + TrackingGateway.TRIP_AUTH_TTL_MS,
     });
   }
 

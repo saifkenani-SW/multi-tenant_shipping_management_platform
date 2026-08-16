@@ -38,6 +38,7 @@ import { TransportManifestQueryRepository } from './transport_manifest/infrastru
 import { TransportManifestPersistenceMapper } from './transport_manifest/infrastructure/mappers/transport-manifest-persistence.mapper';
 import { ManifestAbility } from './transport_manifest/domain/authorization/abilities/manifest.ability';
 import { ManifestPolicy } from './transport_manifest/domain/authorization/policies/manifest.policy';
+import { ManifestVisibilityScope } from './transport_manifest/domain/authorization/scopes/manifest-visibility.scope';
 
 /**
  * Fleet module — the Transport bounded context.
@@ -92,6 +93,7 @@ import { ManifestPolicy } from './transport_manifest/domain/authorization/polici
     TransportManifestPersistenceMapper,
     ManifestAbility,
     ManifestPolicy,
+    ManifestVisibilityScope,
 
 
 
