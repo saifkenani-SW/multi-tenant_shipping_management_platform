@@ -28,8 +28,7 @@ describe('GlobalAuthGuard tenant context', () => {
 
   it('uses x-tenant-id for a platform administrator', async () => {
     await (guard as any).populatePrincipal(
-      { sub: 'platform-admin-id', type: UserLoginType.PLATFORM_OWNER },
-      { headers: { 'x-tenant-id': tenantId } },
+      { sub: 'platform-admin-id', type: UserLoginType.PLATFORM_OWNER }
     );
 
     expect(setPrincipal).toHaveBeenCalledWith({
@@ -37,7 +36,6 @@ describe('GlobalAuthGuard tenant context', () => {
         id: 'platform-admin-id',
         type: SubjectType.PLATFORM_OWNER,
       },
-      tenantId,
       branches: [],
       warehouses: [],
     });

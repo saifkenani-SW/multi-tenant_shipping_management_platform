@@ -6,6 +6,7 @@ import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 import { ManifestQueryDto } from '../dtos/requests/manifest-query.dto';
 import { ManifestQueryService } from './manifest-query.service';
 import { CustomerShipmentFacade } from '../../../customer-shipment/facades/customer-shipment.facade';
+import { AuthorizationContainer } from '../../../../../packages/authorization/authorization.container';
 
 /**
  * A platform owner carries no tenant in the request context, so every read
@@ -49,6 +50,7 @@ describe('ManifestQueryService — tenant scoping', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
+    jest.spyOn(AuthorizationContainer, 'get').mockReturnValue(authorizationFacade);
     (shipmentFacade.getParcelsByIds as jest.Mock).mockResolvedValue([]);
     service = new ManifestQueryService(
       queryRepository as unknown as TransportManifestQueryRepository,

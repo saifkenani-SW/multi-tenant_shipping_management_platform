@@ -49,6 +49,9 @@ describe('TripQueryService — tenant scoping', () => {
       queryRepository as unknown as TripQueryRepository,
       new TripResponseMapper(),
       authFacade as any,
+      { getEmployeesBasicDetails: jest.fn().mockResolvedValue([]) } as any,
+      { getOrganizationUnitsByIds: jest.fn().mockResolvedValue([]) } as any,
+      { findVehiclesByIds: jest.fn().mockResolvedValue([]) } as any,
     );
   });
 

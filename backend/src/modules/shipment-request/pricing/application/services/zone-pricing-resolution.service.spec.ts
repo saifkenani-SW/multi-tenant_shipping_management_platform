@@ -15,7 +15,7 @@ describe('ZonePricingResolutionService', () => {
         {
           provide: ZonePricingQueryRepository,
           useValue: {
-            findPricesForZonePairs: jest.fn(),
+            findPricesForZonePairsV2: jest.fn(),
           },
         },
       ],
@@ -36,7 +36,7 @@ describe('ZonePricingResolutionService', () => {
         { tenantId: 'tenant-1', originZoneId: 'z3', destinationZoneId: 'z4' },
       ];
 
-      jest.spyOn(repository, 'findPricesForZonePairs').mockResolvedValue([
+      jest.spyOn(repository, 'findPricesForZonePairsV2').mockResolvedValue([
         {
           id: 'price-1',
           tenantId: 'tenant-1',
@@ -53,7 +53,7 @@ describe('ZonePricingResolutionService', () => {
 
       const result = await service.resolvePrices(zonePairs);
 
-      expect(repository.findPricesForZonePairs).toHaveBeenCalledWith(zonePairs);
+      expect(repository.findPricesForZonePairsV2).toHaveBeenCalledWith(zonePairs);
       expect(result.has('tenant-1:z1:z2')).toBe(true);
       expect(result.get('tenant-1:z1:z2')).toBeDefined();
       expect(result.has('tenant-1:z3:z4')).toBe(false); // No price returned
@@ -67,7 +67,7 @@ describe('ZonePricingResolutionService', () => {
       const zonePairs = [
         { tenantId: 't1', originZoneId: 'z1', destinationZoneId: 'z2' },
       ];
-      jest.spyOn(repository, 'findPricesForZonePairs').mockResolvedValue([]);
+      jest.spyOn(repository, 'findPricesForZonePairsV2').mockResolvedValue([]);
 
       const result = await service.resolvePrices(zonePairs);
       expect(result.size).toBe(0);

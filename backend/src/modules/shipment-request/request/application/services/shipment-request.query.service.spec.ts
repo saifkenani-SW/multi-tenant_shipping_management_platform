@@ -1,5 +1,8 @@
 import { ShipmentRequestQueryService } from './shipment-request.query.service';
 import { Test, TestingModule } from '@nestjs/testing';
+import { QuotationQueryService } from '../../quotation/application/services/quotation.query.service';
+import { GlobalLocationFacade } from '../../../../global-location/application/facades/global-location.facade';
+import { TenantFacade } from '../../../../tenant/application/facades/tenant.facade';
 import { ShipmentRequestQueryRepository } from '../../infrastructure/repositories/shipment-request.query.repository';
 import { AuthorizationFacade } from '../../../../../packages/authorization';
 import { AuthorizationContainer } from '../../../../../packages/authorization/authorization.container';
@@ -35,6 +38,18 @@ describe('ShipmentRequestQueryService', () => {
         {
           provide: AuthorizationFacade,
           useValue: authorizationFacade,
+        },
+        {
+          provide: QuotationQueryService,
+          useValue: {},
+        },
+        {
+          provide: GlobalLocationFacade,
+          useValue: {},
+        },
+        {
+          provide: TenantFacade,
+          useValue: {},
         },
       ],
     }).compile();

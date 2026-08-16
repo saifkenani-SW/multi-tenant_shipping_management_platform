@@ -7,6 +7,7 @@ import { AuthorizationFacade } from '../../../../packages/authorization';
 import { AuthorizationContainer } from '../../../../packages/authorization/authorization.container';
 import { TenantQueryCriteriaBuilder } from '../builders/query/tenant-query-criteria.builder';
 import { TenantResponseMapper } from '../mappers/tenant.response.mapper';
+import { UserFacade } from '../../../user/application/facades/user.facade';
 import { TenantQueryCriteria } from '../builders/query/tenant-query-criteria';
 import { TenantNotFoundException } from '../../domain/exceptions/tenant-not-found.exception';
 import { Pagination } from '../../../../common/pagination';
@@ -45,6 +46,10 @@ describe('TenantQueryService', () => {
           useValue: tenantQueryRepository,
         },
         { provide: AuthorizationFacade, useValue: authorizationFacade },
+        {
+          provide: UserFacade,
+          useValue: {},
+        },
         TenantQueryCriteriaBuilder,
         TenantResponseMapper,
       ],
