@@ -42,6 +42,15 @@ export class PermissionsGuard implements CanActivate {
     }
 
     if (user.type !== UserLoginType.EMPLOYEE) {
+      const requiredRoles = this.reflector.getAllAndOverride<string[]>('roles', [
+        context.getHandler(),
+        context.getClass(),
+      ]);
+
+      if (requiredRoles && requiredRoles.includes(user.type)) {
+        return true;
+      }
+
       throw new ForbiddenException(
         'Only employees can have permissions evaluated.',
       );
