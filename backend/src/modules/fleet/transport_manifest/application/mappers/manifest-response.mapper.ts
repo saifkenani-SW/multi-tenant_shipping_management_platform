@@ -33,14 +33,21 @@ export class ManifestResponseMapper {
     return dto;
   }
 
-  toListDto(manifest: TransportManifest, itemCount: number): ManifestListDto {
+  toListDto(
+    manifest: TransportManifest,
+    itemCount: number,
+    originOrgUnitName?: string,
+    destinationOrgUnitName?: string,
+  ): ManifestListDto {
     const dto = new ManifestListDto();
     dto.id = manifest.id;
     if (manifest.tripId) {
       dto.tripId = manifest.tripId;
     }
     dto.originOrgUnitId = manifest.originOrgUnitId;
+    dto.originOrgUnitName = originOrgUnitName;
     dto.destinationOrgUnitId = manifest.destinationOrgUnitId;
+    dto.destinationOrgUnitName = destinationOrgUnitName;
     dto.status = manifest.status;
     dto.itemCount = itemCount;
     dto.createdAt = manifest.createdAt;
@@ -51,6 +58,8 @@ export class ManifestResponseMapper {
     manifest: TransportManifest,
     items: ManifestItem[],
     parcels: Map<string, any> = new Map(),
+    originOrgUnitName?: string,
+    destinationOrgUnitName?: string,
   ): ManifestDetailsDto {
     const dto = new ManifestDetailsDto();
     dto.id = manifest.id;
@@ -59,7 +68,9 @@ export class ManifestResponseMapper {
       dto.tripId = manifest.tripId;
     }
     dto.originOrgUnitId = manifest.originOrgUnitId;
+    dto.originOrgUnitName = originOrgUnitName;
     dto.destinationOrgUnitId = manifest.destinationOrgUnitId;
+    dto.destinationOrgUnitName = destinationOrgUnitName;
     dto.status = manifest.status;
     dto.createdAt = manifest.createdAt;
     dto.updatedAt = manifest.updatedAt;
@@ -74,10 +85,16 @@ export class ManifestResponseMapper {
     total: number,
     pagination: Pagination,
     scope?: any,
+    orgUnitNamesMap: Record<string, string> = {},
   ): PaginatedManifestListDto {
     const dto = new PaginatedManifestListDto();
     dto.data = records.map((record) =>
-      this.toListDto(record.manifest, record.itemCount),
+      this.toListDto(
+        record.manifest,
+        record.itemCount,
+        orgUnitNamesMap[record.manifest.originOrgUnitId],
+        orgUnitNamesMap[record.manifest.destinationOrgUnitId],
+      ),
     );
     dto.meta = { ...new PaginationMeta(pagination, total), scope };
     return dto;

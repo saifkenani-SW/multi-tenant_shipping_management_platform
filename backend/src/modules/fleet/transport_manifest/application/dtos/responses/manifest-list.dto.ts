@@ -11,8 +11,14 @@ export class ManifestListDto {
   @ApiProperty({ description: 'Organization unit the manifest is loaded at' })
   originOrgUnitId: string;
 
+  @ApiProperty({ description: 'Name of the origin organization unit', required: false })
+  originOrgUnitName?: string;
+
   @ApiProperty({ description: 'Organization unit the manifest is unloaded at' })
   destinationOrgUnitId: string;
+
+  @ApiProperty({ description: 'Name of the destination organization unit', required: false })
+  destinationOrgUnitName?: string;
 
   @ApiProperty({ enum: ManifestStatus })
   status: ManifestStatus;
