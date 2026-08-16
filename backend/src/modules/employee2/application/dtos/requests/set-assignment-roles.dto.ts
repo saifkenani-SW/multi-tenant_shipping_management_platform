@@ -8,7 +8,7 @@ export class SetAssignmentRolesDto {
     example: ['00000000-0000-7000-8000-000000001111'],
   })
   @IsArray()
-  @IsUUID('4', { each: true })
+  @IsUUID('7', { each: true })
   @ArrayMinSize(1)
   roleIds: string[];
 }

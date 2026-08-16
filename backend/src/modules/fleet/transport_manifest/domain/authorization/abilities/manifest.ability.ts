@@ -29,17 +29,18 @@ export class ManifestAbility implements CaslAbilityContributor<
 
     if (!principal.tenantId) return;
 
-    const ownTenant = { tenant_id: principal.tenantId } as any;
+    const ownTenant = { tenantId: principal.tenantId } as any;
 
     if (type === SubjectType.TENANT_ADMIN) {
       builder.can(ManifestAction.View, ManifestSubject, ownTenant);
+      builder.can(ManifestAction.Update, ManifestSubject, ownTenant);
       return;
     }
 
     if (type === SubjectType.DRIVER) {
       builder.can(ManifestAction.View, ManifestSubject, {
-        tenant_id: principal.tenantId,
-        trip_driver_id: principal.profileId,
+        tenantId: principal.tenantId,
+        tripDriverId: principal.profileId,
       } as any);
       return;
     }
@@ -51,12 +52,16 @@ export class ManifestAbility implements CaslAbilityContributor<
       ];
       for (const orgUnit of orgUnits) {
         builder.can(ManifestAction.View, ManifestSubject, {
-          tenant_id: principal.tenantId,
-          origin_org_unit_id: orgUnit.id,
+          tenantId: principal.tenantId,
+          originOrgUnitId: orgUnit.id,
+        } as any);
+        builder.can(ManifestAction.Update, ManifestSubject, {
+          tenantId: principal.tenantId,
+          originOrgUnitId: orgUnit.id,
         } as any);
         builder.can(ManifestAction.View, ManifestSubject, {
-          tenant_id: principal.tenantId,
-          destination_org_unit_id: orgUnit.id,
+          tenantId: principal.tenantId,
+          destinationOrgUnitId: orgUnit.id,
         } as any);
       }
       return;

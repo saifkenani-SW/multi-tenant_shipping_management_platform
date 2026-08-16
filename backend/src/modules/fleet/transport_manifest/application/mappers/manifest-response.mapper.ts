@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { Pagination, PaginationMeta } from '../../../../../common/pagination';
 import { TransportManifest } from '../../domain/entities/transport-manifest.entity';
 import { ManifestItem } from '../../domain/entities/manifest-item.entity';
-import { ParcelSummary } from '../../../contracts/parcel-lookup';
 import { ManifestDetailsDto } from '../dtos/responses/manifest-details.dto';
 import { ManifestItemDto } from '../dtos/responses/manifest-item.dto';
 import {
@@ -16,7 +15,7 @@ export class ManifestResponseMapper {
    * [parcel] is optional so callers that only need the manifest side keep
    * working, and so a row whose parcel could not be read still renders.
    */
-  toItemDto(item: ManifestItem, parcel?: ParcelSummary): ManifestItemDto {
+  toItemDto(item: ManifestItem, parcel?: any): ManifestItemDto {
     const dto = new ManifestItemDto();
     dto.id = item.id;
     dto.manifestId = item.manifestId;
@@ -51,7 +50,7 @@ export class ManifestResponseMapper {
   toDetailsDto(
     manifest: TransportManifest,
     items: ManifestItem[],
-    parcels: Map<string, ParcelSummary> = new Map(),
+    parcels: Map<string, any> = new Map(),
   ): ManifestDetailsDto {
     const dto = new ManifestDetailsDto();
     dto.id = manifest.id;

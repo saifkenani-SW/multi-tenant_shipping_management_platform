@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import {
   ActionType,
   OrgType,
@@ -22,8 +22,6 @@ import { RequestContextService } from '../../../../../packages/context/services/
 import { EmployeeFacade } from '../../../../employee/facades/employee.facade';
 import { CUSTOMER_SHIPMENT_CACHE_KEYS } from '../../../constants/customer-shipment.cache.constants';
 import { CacheEvict } from '../../../../../infrastructure/cache/decorators/CacheEvict';
-import type { ICacheFacade } from '../../../../../core/cache/interfaces/ICacheFacade';
-import { CACHE_FACADE } from '../../../../../core/cache/tokens/cache.tokens';
 import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
 
 @Injectable()
@@ -36,8 +34,6 @@ export class ParcelCommandService {
     private readonly podCommandService: ProofOfDeliveryCommandService,
     private readonly requestContext: RequestContextService,
     private readonly employeeFacade: EmployeeFacade,
-    @Inject(CACHE_FACADE)
-    private readonly cache: ICacheFacade,
     private readonly organizationFacade: OrganizationFacade,
   ) {}
 
@@ -54,7 +50,10 @@ export class ParcelCommandService {
     policy: Policy(ParcelPolicy, ParcelAction.Receive),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async receiveParcel(trackingNumber: string): Promise<void> {
     const parcel =
       await this.queryService.findAggregateByTrackingNumberOrThrow(
@@ -73,7 +72,10 @@ export class ParcelCommandService {
     policy: Policy(ParcelPolicy, ParcelAction.Dispatch),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async markReadyForDispatch(trackingNumber: string): Promise<void> {
     const parcel =
       await this.queryService.findAggregateByTrackingNumberOrThrow(
@@ -88,11 +90,88 @@ export class ParcelCommandService {
     );
   }
 
+  /**
+   * Called by the Fleet module (via ParcelFacade) when parcels are added to a manifest.
+   * Checks authorization scopes in bulk, applies domain rules, and updates everything in bulk.
+   */
+  @Transactional()
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
+  async markParcelsReadyForDispatch(parcelIds: string[]): Promise<void> {
+    if (parcelIds.length === 0) return;
+
+    const parcels =
+      await this.queryService.findAggregatesByIdsScoped(parcelIds);
+
+    if (parcels.length !== parcelIds.length) {
+      throw new ForbiddenException(
+        'Some parcels are not accessible or do not exist in your scope',
+      );
+    }
+
+    const principal = this.requestContext.getPrincipal();
+    const employeeId = principal.profileId ?? principal.subject.id ?? 'system';
+
+    let employeeName = 'system';
+    if (principal.profileId) {
+      employeeName =
+        (await this.employeeFacade.getEmployeeName(principal.profileId)) ||
+        'system';
+    }
+
+    const shipmentIdsToRecalculate = new Set<string>();
+    const movements: AppendParcelMovementCommand[] = [];
+
+    // Apply domain rules and prepare movements
+    for (const parcel of parcels) {
+      const previousStatus = parcel.currentStatus;
+      const previousCondition = parcel.currentCondition;
+
+      parcel.markReadyForDispatch();
+
+      movements.push({
+        tenantId: parcel.tenantId,
+        parcelId: parcel.id,
+        organizationUnitId: parcel.currentOrgUnitId ?? undefined,
+        performedByEmployeeId: employeeId,
+        actionType: ActionType.TRANSFERRED,
+        previousStatus,
+        newStatus: parcel.currentStatus,
+        previousCondition,
+        newCondition: parcel.currentCondition,
+        performedByName: employeeName,
+      });
+
+      shipmentIdsToRecalculate.add(parcel.customerShipmentId);
+    }
+
+    // Bulk update parcels in the database
+    await this.commandRepository.updateStatuses(
+      parcelIds,
+      ParcelStatus.READY_FOR_DISPATCH,
+    );
+
+    // Append movements in bulk
+    await this.trackingFacade.appendMovements(movements);
+
+    // Recalculate affected shipments
+    await Promise.all(
+      Array.from(shipmentIdsToRecalculate).map((shipmentId) =>
+        this.shipmentRecalculator.recalculateFromParcels(shipmentId),
+      ),
+    );
+  }
+
   @Authorize({
     policy: Policy(ParcelPolicy, ParcelAction.UpdateStatus),
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
-  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async updateStatus(
     trackingNumber: string,
     dto: UpdateParcelStatusDto,
@@ -126,7 +205,10 @@ export class ParcelCommandService {
    * Called by the Fleet module (via ParcelFacade) when a driver picks up a parcel.
    * Bypasses ParcelPolicy since Fleet validates driver authorization.
    */
-  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async pickUpParcel(parcelId: string, tripId: string): Promise<void> {
     const parcel = await this.queryService.findAggregateOrThrow(parcelId);
 
@@ -143,7 +225,10 @@ export class ParcelCommandService {
    * Called by the Fleet module (via ParcelFacade) when a driver drops off a parcel.
    * Bypasses ParcelPolicy since Fleet validates driver authorization.
    */
-  @CacheEvict({ keyPrefix: 'customer_shipment:parcel', allEntries: true })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async dropOffParcel(
     parcelId: string,
     orgUnitId: string,
@@ -169,7 +254,7 @@ export class ParcelCommandService {
     payloadResolver: (trackingNumber: string) => ({ trackingNumber }),
   })
   @CacheEvict({
-    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
     allEntries: true,
   })
   async recordDelivery(
@@ -286,31 +371,12 @@ export class ParcelCommandService {
     await this.shipmentRecalculator.recalculateFromParcels(
       parcel.customerShipmentId,
     );
-
-    // Evict specific details since trackingNumber argument isn't enough for the decorator
-    await Promise.all([
-      this.cache.evict([
-        CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
-        parcel.id,
-      ]),
-      this.cache.evict([
-        CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
-        trackingNumber,
-      ]),
-      this.cache.evict([
-        CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
-        parcel.customerShipmentId,
-      ]),
-    ]);
   }
 
   /** Records the label produced for a parcel. Stores the key, never a URL. */
   @CacheEvict({
-    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
-    keyBuilder: (parcelId: string) => [
-      CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
-      parcelId,
-    ],
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
   })
   async attachLabel(parcelId: string, labelKey: string): Promise<void> {
     await this.commandRepository.updateLabelKey(parcelId, labelKey);

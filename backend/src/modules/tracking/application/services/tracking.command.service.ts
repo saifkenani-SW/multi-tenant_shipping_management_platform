@@ -33,4 +33,23 @@ export class TrackingCommandService {
       this.eventEmitter.emit(PARCEL_MOVEMENT_APPENDED, payload);
     }
   }
+
+  async appendMovements(commands: AppendParcelMovementCommand[]): Promise<void> {
+    if (commands.length === 0) return;
+
+    this.logger.debug(`Appending ${commands.length} parcel movements in bulk`);
+
+    await this.repository.appendMovements(commands);
+
+    for (const command of commands) {
+      if (command.tripId) {
+        const payload: ParcelMovementAppendedPayload = {
+          tripId: command.tripId,
+          movement: command as unknown as Record<string, unknown>,
+        };
+
+        this.eventEmitter.emit(PARCEL_MOVEMENT_APPENDED, payload);
+      }
+    }
+  }
 }

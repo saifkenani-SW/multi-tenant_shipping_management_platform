@@ -29,7 +29,7 @@ import { ManifestCommandService } from '../../application/services/manifest-comm
 import { ManifestQueryService } from '../../application/services/manifest-query.service';
 import { CreateManifestDto } from '../../application/dtos/requests/create-manifest.dto';
 import { ManifestQueryDto } from '../../application/dtos/requests/manifest-query.dto';
-import { AddManifestItemDto } from '../../application/dtos/requests/add-manifest-item.dto';
+import { AddManifestItemsDto } from '../../application/dtos/requests/add-manifest-items.dto';
 import { UpdateManifestItemStatusDto } from '../../application/dtos/requests/update-manifest-item-status.dto';
 import { ManifestDetailsDto } from '../../application/dtos/responses/manifest-details.dto';
 import { ManifestItemDto } from '../../application/dtos/responses/manifest-item.dto';
@@ -66,7 +66,7 @@ export class TransportManifestController {
     );
   }
 
-  @Get('available')
+  /*  @Get('available')
   @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
   @Permissions(PermissionAction.READ, PermissionResource.MANIFEST)
   @ApiOperation({
@@ -78,7 +78,7 @@ export class TransportManifestController {
     return this.manifestQueryService.findAvailableForBooking(
       this.requestContext.getTenantIdOrThrow(),
     );
-  }
+  }*/
 
   @Get(':id')
   @Roles(
@@ -174,22 +174,22 @@ export class TransportManifestController {
   @Post(':id/items')
   @Roles(RoleType.TENANT_ADMIN, RoleType.EMPLOYEE)
   @Permissions(PermissionAction.UPDATE, PermissionResource.MANIFEST)
-  @ApiOperation({ summary: 'Add a parcel to an OPEN manifest' })
+  @ApiOperation({ summary: 'Add parcels to an OPEN manifest' })
   @ApiResponse({
     status: HttpStatus.CREATED,
-    description: 'Parcel added to the manifest',
+    description: 'Parcels added to the manifest',
   })
-  async addItem(
+  async addItems(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: AddManifestItemDto,
-  ): Promise<{ id: string }> {
-    const itemId = await this.manifestCommandService.addItem(
+    @Body() dto: AddManifestItemsDto,
+  ): Promise<{ ids: string[] }> {
+    const itemIds = await this.manifestCommandService.addItems(
       this.requestContext.getTenantIdOrThrow(),
       id,
       this.requestContext.getPrincipal()?.profileId,
-      dto,
+      dto.parcelIds,
     );
-    return { id: itemId };
+    return { ids: itemIds };
   }
 
   @Patch(':id/items/:itemId')

@@ -90,6 +90,21 @@ export class ParcelCommandRepository {
     }
   }
 
+  async updateStatuses(
+    parcelIds: string[],
+    newStatus: ParcelStatus,
+  ): Promise<void> {
+    if (parcelIds.length === 0) return;
+
+    await this.prisma.client.parcel.updateMany({
+      where: { id: { in: parcelIds } },
+      data: {
+        current_status: newStatus,
+        version: { increment: 1 },
+      },
+    });
+  }
+
   async updateLabelKey(parcelId: string, labelKey: string): Promise<void> {
     await this.prisma.client.parcel.update({
       where: { id: parcelId },

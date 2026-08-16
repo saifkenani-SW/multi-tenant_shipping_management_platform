@@ -178,7 +178,17 @@ export class TransportManifestQueryRepository {
       .where('tm.id', '=', id)
       .executeTakeFirst();
 
-    return record || null;
+    if (!record) return null;
+
+    return {
+      id: record.id,
+      tenantId: record.tenant_id,
+      tripId: record.trip_id,
+      originOrgUnitId: record.origin_org_unit_id,
+      destinationOrgUnitId: record.destination_org_unit_id,
+      status: record.status,
+      tripDriverId: record.trip_driver_id,
+    };
   }
 
   async findItems(manifestId: string): Promise<ManifestItem[]> {
@@ -213,17 +223,19 @@ export class TransportManifestQueryRepository {
    * never leaves the module: a parcel is considered taken when it sits in a
    * not-yet-finished manifest in a state that still expects it to travel.
    */
-  async isParcelInActiveManifest(
+  async areParcelsInActiveManifest(
     tenantId: string,
-    parcelId: string,
+    parcelIds: string[],
     excludeManifestId?: string,
   ): Promise<boolean> {
+    if (parcelIds.length === 0) return false;
+
     let query = this.kysely
       .selectFrom('manifest_item as mi')
       .innerJoin('transport_manifest as tm', 'tm.id', 'mi.manifest_id')
       .select('mi.id')
       .where('tm.tenant_id', '=', tenantId)
-      .where('mi.parcel_id', '=', parcelId)
+      .where('mi.parcel_id', 'in', parcelIds)
       .where('mi.status', 'in', OCCUPYING_ITEM_STATUSES)
       .where('tm.status', 'in', ACTIVE_MANIFEST_STATUSES);
 
@@ -234,15 +246,17 @@ export class TransportManifestQueryRepository {
     return Boolean(await query.executeTakeFirst());
   }
 
-  async existsItemForParcel(
+  async existsItemsForParcels(
     manifestId: string,
-    parcelId: string,
+    parcelIds: string[],
   ): Promise<boolean> {
+    if (parcelIds.length === 0) return false;
+
     const record = await this.kysely
       .selectFrom('manifest_item')
       .select('id')
       .where('manifest_id', '=', manifestId)
-      .where('parcel_id', '=', parcelId)
+      .where('parcel_id', 'in', parcelIds)
       .executeTakeFirst();
 
     return Boolean(record);

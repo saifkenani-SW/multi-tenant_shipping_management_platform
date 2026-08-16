@@ -16,7 +16,7 @@ export class ZonePricingCommandService {
     private readonly organizationFacade: OrganizationFacade,
   ) {}
 
-  @CacheEvict({ keyPrefix: PRICING_CACHE_KEYS.LIST, allEntries: true })
+  @CacheEvict({ keyPrefix: PRICING_CACHE_KEYS.PREFIX, allEntries: true })
   @Transactional()
   async createPricing(
     tenantId: string,
@@ -56,19 +56,7 @@ export class ZonePricingCommandService {
     return result;
   }
 
-  @CacheEvict([
-    {
-      keyPrefix: PRICING_CACHE_KEYS.LIST,
-      allEntries: true,
-    },
-    {
-      keyPrefix: PRICING_CACHE_KEYS.DETAILS,
-      keyBuilder: (tenantId: string, id: string) => [
-        PRICING_CACHE_KEYS.DETAILS,
-        id,
-      ],
-    },
-  ])
+  @CacheEvict({ keyPrefix: PRICING_CACHE_KEYS.PREFIX, allEntries: true })
   async updatePricing(
     tenantId: string,
     id: string,
@@ -80,19 +68,7 @@ export class ZonePricingCommandService {
     return result;
   }
 
-  @CacheEvict([
-    {
-      keyPrefix: PRICING_CACHE_KEYS.LIST,
-      allEntries: true,
-    },
-    {
-      keyPrefix: PRICING_CACHE_KEYS.DETAILS,
-      keyBuilder: (tenantId: string, id: string) => [
-        PRICING_CACHE_KEYS.DETAILS,
-        id,
-      ],
-    },
-  ])
+  @CacheEvict({ keyPrefix: PRICING_CACHE_KEYS.PREFIX, allEntries: true })
   @Transactional()
   async deletePricing(tenantId: string, id: string): Promise<void> {
     await this.queryService.getPricingById(id, tenantId);

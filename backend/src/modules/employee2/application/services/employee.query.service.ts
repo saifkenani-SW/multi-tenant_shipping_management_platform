@@ -8,6 +8,8 @@ import { PaginationMeta } from '../../../../common/pagination/offset/responses/p
 import { Pagination } from '../../../../common/pagination/offset/value-objects/pagination';
 import { OrganizationFacade } from '../../../organization/facades/organization.facade';
 import { AuthorizationModuleFacade } from '../../../authorization/facades/authorization-module.facade';
+import { Cacheable } from '../../../../infrastructure/cache/decorators/Cacheable';
+import { EMPLOYEE_CACHE_KEYS, EMPLOYEE_CACHE_TTL } from '../../constants/employee.cache.constants';
 
 @Injectable()
 export class EmployeeQueryService {
@@ -17,6 +19,11 @@ export class EmployeeQueryService {
     private readonly authorizationFacade: AuthorizationModuleFacade,
   ) {}
 
+  @Cacheable({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
+    keyBuilder: (id: string, _tenantId?: string) => [EMPLOYEE_CACHE_KEYS.DETAILS, id],
+    ttl: EMPLOYEE_CACHE_TTL.DETAILS,
+  })
   async findById(id: string, tenantId?: string) {
     const employee = await this.queryRepository.findById(id);
     if (!employee || (tenantId && employee.tenantId !== tenantId)) {
@@ -63,6 +70,17 @@ export class EmployeeQueryService {
     );
   }
 
+  @Cacheable({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.LIST,
+    keyBuilder: (query: EmployeeQueryDto, contextTenantId?: string) => [
+      contextTenantId || query.tenantId || 'global',
+      query.page || 1,
+      query.limit || 10,
+      query.search || '',
+      query.organizationUnitId || '',
+    ],
+    ttl: EMPLOYEE_CACHE_TTL.LIST,
+  })
   async findMany(query: EmployeeQueryDto, contextTenantId?: string) {
     const pagination = new Pagination({
       page: query.page || 1,

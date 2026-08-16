@@ -4,7 +4,7 @@ import { NotificationModule } from '../notification/notification.module';
 import { OrganizationModule } from '../organization/organization.module';
 import { CustomerShipmentModule } from '../customer-shipment/customer-shipment.module';
 import { CustomerShipmentFacade } from '../customer-shipment/facades/customer-shipment.facade';
-import { PARCEL_LOOKUP } from './contracts/parcel-lookup';
+
 import { AuthorizationModule } from '../authorization/authorization.module';
 import { AuthModule } from '../auth/auth.module';
 
@@ -91,9 +91,7 @@ import { ManifestPolicy } from './transport_manifest/domain/authorization/polici
     ManifestAbility,
     ManifestPolicy,
 
-    // Customer Shipment implements the parcel contract Fleet declares. Binding
-    // it here keeps the concrete facade out of the services themselves.
-    { provide: PARCEL_LOOKUP, useExisting: CustomerShipmentFacade },
+
 
     FleetFacade,
   ],

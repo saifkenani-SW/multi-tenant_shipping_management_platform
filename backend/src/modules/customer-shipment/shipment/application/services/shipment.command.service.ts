@@ -101,7 +101,7 @@ export class ShipmentCommandService {
     }),
   })
   @CacheEvict({
-    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.LIST,
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
     allEntries: true,
   })
   async createShipment(dto: CreateShipmentDto): Promise<{ id: string }> {
@@ -279,7 +279,10 @@ export class ShipmentCommandService {
     policy: Policy(ShipmentPolicy, ShipmentAction.Cancel),
     payloadResolver: (shipmentId: string) => ({ shipmentId }),
   })
-  @CacheEvict({ keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async cancelShipment(shipmentId: string): Promise<void> {
     const shipment = await this.queryService.findAggregateOrThrow(shipmentId);

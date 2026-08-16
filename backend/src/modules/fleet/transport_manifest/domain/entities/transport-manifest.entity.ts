@@ -1,8 +1,6 @@
 import { ManifestStatus } from '../enums/manifest-status.enum';
 import { InvalidManifestRouteException } from '../exceptions/invalid-manifest-route.exception';
-import { ManifestNotInTransitException } from '../exceptions/manifest-not-in-transit.exception';
 import { ManifestNotModifiableException } from '../exceptions/manifest-not-modifiable.exception';
-import { ManifestNotFinalizableException } from '../exceptions/manifest-not-finalizable.exception';
 import { ManifestNotReopenableException } from '../exceptions/manifest-not-reopenable.exception';
 
 export interface TransportManifestSnapshot {
@@ -17,6 +15,24 @@ export interface TransportManifestSnapshot {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type ManifestTransition = {
+  from: ManifestStatus;
+  to: ManifestStatus;
+};
+
+const ALLOWED_TRANSITIONS: ManifestTransition[] = [
+  // 1. Finalize
+  { from: ManifestStatus.OPEN, to: ManifestStatus.READY_FOR_DISPATCH },
+  // 2. Fleet Books
+  { from: ManifestStatus.READY_FOR_DISPATCH, to: ManifestStatus.ASSIGNED },
+  // 3. Start Trip
+  { from: ManifestStatus.ASSIGNED, to: ManifestStatus.IN_TRANSIT },
+  // 4. Complete Trip
+  { from: ManifestStatus.IN_TRANSIT, to: ManifestStatus.COMPLETED },
+  // 5. Revert/Reopen
+  { from: ManifestStatus.READY_FOR_DISPATCH, to: ManifestStatus.OPEN },
+];
 
 /**
  * TransportManifest aggregate root.
@@ -102,6 +118,18 @@ export class TransportManifest {
     }
   }
 
+  private transitionTo(newStatus: ManifestStatus): void {
+    const isValid = ALLOWED_TRANSITIONS.some(
+      (t) => t.from === this._status && t.to === newStatus,
+    );
+    if (!isValid) {
+      throw new ManifestNotModifiableException(
+        `Invalid transition from ${this._status} to ${newStatus}`,
+      );
+    }
+    this._status = newStatus;
+  }
+
   /**
    * Parcels may only be added or removed while the manifest is OPEN.
    * Once finalised the parcel list is frozen until the manifest is reopened.
@@ -117,10 +145,7 @@ export class TransportManifest {
    * The service must verify that at least one item exists before calling this.
    */
   finalize(): void {
-    if (this._status !== ManifestStatus.OPEN) {
-      throw new ManifestNotFinalizableException();
-    }
-    this._status = ManifestStatus.READY_FOR_DISPATCH;
+    this.transitionTo(ManifestStatus.READY_FOR_DISPATCH);
   }
 
   /**
@@ -128,13 +153,10 @@ export class TransportManifest {
    * Only allowed while no trip has claimed this manifest yet.
    */
   reopen(): void {
-    if (this._status !== ManifestStatus.READY_FOR_DISPATCH) {
-      throw new ManifestNotReopenableException();
-    }
     if (this._tripId !== null) {
       throw new ManifestNotReopenableException();
     }
-    this._status = ManifestStatus.OPEN;
+    this.transitionTo(ManifestStatus.OPEN);
   }
 
   /**
@@ -142,30 +164,23 @@ export class TransportManifest {
    * Called when a dispatcher assigns this available manifest to a scheduled trip.
    */
   assignToTrip(tripId: string): void {
-    if (this._status !== ManifestStatus.READY_FOR_DISPATCH) {
-      throw new ManifestNotModifiableException();
-    }
     if (this._tripId !== null) {
-      throw new ManifestNotModifiableException();
+      throw new ManifestNotModifiableException(
+        'Manifest is already assigned to a trip',
+      );
     }
+    this.transitionTo(ManifestStatus.ASSIGNED);
     this._tripId = tripId;
-    this._status = ManifestStatus.ASSIGNED;
   }
 
   /** ASSIGNED → IN_TRANSIT. Applied when the owning trip departs. */
   markInTransit(): void {
-    if (this._status !== ManifestStatus.ASSIGNED) {
-      throw new ManifestNotModifiableException();
-    }
-    this._status = ManifestStatus.IN_TRANSIT;
+    this.transitionTo(ManifestStatus.IN_TRANSIT);
   }
 
   /** IN_TRANSIT → COMPLETED. Terminal: the manifest becomes immutable. */
   complete(): void {
-    if (this._status !== ManifestStatus.IN_TRANSIT) {
-      throw new ManifestNotInTransitException();
-    }
-    this._status = ManifestStatus.COMPLETED;
+    this.transitionTo(ManifestStatus.COMPLETED);
   }
 
   /** True when the manifest is ready and not yet claimed by any trip. */

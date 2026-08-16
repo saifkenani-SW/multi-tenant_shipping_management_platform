@@ -110,6 +110,20 @@ export class TransportManifestCommandRepository {
     return this.persistenceMapper.itemToDomain(record);
   }
 
+  async createItems(items: ManifestItem[]): Promise<void> {
+    if (items.length === 0) return;
+    
+    await this.prisma.client.manifest_item.createMany({
+      data: items.map(item => ({
+        manifest_id: item.manifestId,
+        parcel_id: item.parcelId,
+        status: item.status,
+        added_by_employee_id: item.addedByEmployeeId ?? undefined,
+        added_by_employee_name: item.addedByEmployeeName ?? undefined,
+      }))
+    });
+  }
+
   async updateItemStatus(
     id: string,
     status: ManifestItemStatus,

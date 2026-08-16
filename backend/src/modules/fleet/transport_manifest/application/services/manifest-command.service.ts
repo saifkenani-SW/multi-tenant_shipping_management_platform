@@ -17,7 +17,8 @@ import { InvalidManifestOrgUnitsException } from '../../domain/exceptions/invali
 import { DuplicateManifestParcelException } from '../../domain/exceptions/duplicate-manifest-parcel.exception';
 import { ParcelAlreadyInActiveManifestException } from '../../domain/exceptions/parcel-already-in-active-manifest.exception';
 import { CreateManifestDto } from '../dtos/requests/create-manifest.dto';
-import { AddManifestItemDto } from '../dtos/requests/add-manifest-item.dto';
+import { AddManifestItemsDto } from '../dtos/requests/add-manifest-items.dto';
+import { CustomerShipmentFacade } from '../../../../customer-shipment/facades/customer-shipment.facade';
 import {
   ManifestItemTargetStatus,
   UpdateManifestItemStatusDto,
@@ -31,6 +32,7 @@ export class ManifestCommandService {
     private readonly manifestQueryService: ManifestQueryService,
     private readonly organizationFacade: OrganizationFacade,
     private readonly employeeFacade: EmployeeFacade,
+    private readonly customerShipmentFacade: CustomerShipmentFacade,
   ) {}
 
   /**
@@ -86,12 +88,14 @@ export class ManifestCommandService {
    * the employee must be assigned to the manifest's origin org unit.
    */
   @Transactional()
-  async addItem(
+  async addItems(
     tenantId: string,
     manifestId: string,
     employeeId: string | undefined,
-    dto: AddManifestItemDto,
-  ): Promise<string> {
+    parcelIds: string[],
+  ): Promise<string[]> {
+    if (parcelIds.length === 0) return [];
+
     const manifest =
       await this.manifestQueryService.findManifestOrThrow(manifestId);
     if (manifest.tenantId !== tenantId) throw new ForbiddenException();
@@ -100,22 +104,12 @@ export class ManifestCommandService {
 
     await this.assertEmployeeCanEditManifest(employeeId, manifest);
 
-    if (
-      await this.manifestQueryService.existsItemForParcel(
-        manifestId,
-        dto.parcelId,
-      )
-    ) {
+    // Validate all parcels in bulk
+    if (await this.manifestQueryService.existsItemsForParcels(manifestId, parcelIds)) {
       throw new DuplicateManifestParcelException();
     }
 
-    if (
-      await this.manifestQueryService.isParcelInActiveManifest(
-        tenantId,
-        dto.parcelId,
-        manifestId,
-      )
-    ) {
+    if (await this.manifestQueryService.areParcelsInActiveManifest(tenantId, parcelIds, manifestId)) {
       throw new ParcelAlreadyInActiveManifestException();
     }
 
@@ -124,16 +118,21 @@ export class ManifestCommandService {
       adderName = await this.employeeFacade.getEmployeeName(employeeId);
     }
 
-    const item = ManifestItem.create({
-      manifestId,
-      parcelId: dto.parcelId,
-      addedByEmployeeId: employeeId ?? null,
-      addedByEmployeeName: adderName,
-    });
+    const items = parcelIds.map((parcelId) =>
+      ManifestItem.create({
+        manifestId,
+        parcelId,
+        addedByEmployeeId: employeeId ?? null,
+        addedByEmployeeName: adderName,
+      }),
+    );
 
-    const created = await this.commandRepository.createItem(item);
+    await this.commandRepository.createItems(items);
 
-    return created.id;
+    // Call the customer shipment facade to process parcels in bulk
+    await this.customerShipmentFacade.markParcelsReadyForDispatch(parcelIds);
+
+    return items.map((item) => item.id);
   }
 
   /**

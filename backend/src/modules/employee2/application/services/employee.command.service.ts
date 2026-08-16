@@ -26,7 +26,7 @@ export class EmployeeCommandService {
 
   @CacheEvict({
     keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
-    keyBuilder: (tenantId: string) => [EMPLOYEE_CACHE_KEYS.LIST, tenantId],
+    allEntries: true,
   })
   @Transactional()
   async create(tenantId: string, dto: CreateEmployeeDto) {
@@ -107,7 +107,10 @@ export class EmployeeCommandService {
     return employee;
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async update(id: string, tenantId: string, dto: UpdateEmployeeDto) {
     await this.queryService.findById(id, tenantId);
@@ -115,7 +118,10 @@ export class EmployeeCommandService {
     return this.commandRepository.update(id, tenantId, dto);
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async delete(id: string, tenantId: string) {
     await this.queryService.findById(id, tenantId);
@@ -123,7 +129,10 @@ export class EmployeeCommandService {
     return this.commandRepository.delete(id, tenantId);
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async addAssignments(
     tenantId: string,
@@ -164,14 +173,20 @@ export class EmployeeCommandService {
     );
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async activate(id: string, tenantId: string) {
     await this.queryService.findById(id, tenantId);
     return this.commandRepository.activate(id);
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async deactivate(id: string, tenantId: string) {
     await this.queryService.findById(id, tenantId);
@@ -180,10 +195,7 @@ export class EmployeeCommandService {
 
   @CacheEvict({
     keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
-    keyBuilder: (id: string, tenantId: string) => [
-      EMPLOYEE_CACHE_KEYS.DETAILS,
-      id,
-    ],
+    allEntries: true,
   })
   @Transactional()
   async removeAssignment(id: string, assignmentId: string, tenantId: string) {
@@ -191,7 +203,10 @@ export class EmployeeCommandService {
     return this.commandRepository.removeAssignment(id, assignmentId);
   }
 
-  @CacheEvict({ keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX, allEntries: true })
+  @CacheEvict({
+    keyPrefix: EMPLOYEE_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async setAssignmentRoles(
     tenantId: string,

@@ -113,9 +113,9 @@ export class FleetFacade {
     tenantId: string,
     parcelId: string,
   ): Promise<boolean> {
-    return this.manifestQueryService.isParcelInActiveManifest(
+    return this.manifestQueryService.areParcelsInActiveManifest(
       tenantId,
-      parcelId,
+      [parcelId],
     );
   }
 }

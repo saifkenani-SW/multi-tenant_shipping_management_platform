@@ -14,6 +14,10 @@ export class TrackingFacade {
     await this.commandService.appendMovement(command);
   }
 
+  async appendMovements(commands: AppendParcelMovementCommand[]): Promise<void> {
+    await this.commandService.appendMovements(commands);
+  }
+
   async getParcelHistory(parcelId: string) {
     return this.queryService.getParcelHistory(parcelId);
   }

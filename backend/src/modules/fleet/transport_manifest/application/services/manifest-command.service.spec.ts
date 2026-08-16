@@ -14,6 +14,7 @@ import { TransportManifestCommandRepository } from '../../infrastructure/reposit
 import { ManifestQueryService } from './manifest-query.service';
 import { TripQueryService } from '../../../trip/application/services/trip-query.service';
 import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
+import { CustomerShipmentFacade } from '../../../../customer-shipment/facades/customer-shipment.facade';
 import { ManifestCommandService } from './manifest-command.service';
 import { installTransactionTestContainer } from '../../../../../packages/transaction/testing/transaction-test-container';
 
@@ -69,21 +70,24 @@ describe('ManifestCommandService', () => {
     create: jest.fn(),
     updateStatus: jest.fn(),
     markTripManifestsInTransit: jest.fn(),
-    createItem: jest.fn(),
+    createItems: jest.fn(),
     updateItemStatus: jest.fn(),
     deleteItem: jest.fn(),
   };
   const manifestQueryService = {
     findManifestOrThrow: jest.fn(),
     findItemOrThrow: jest.fn(),
-    existsItemForParcel: jest.fn(),
-    isParcelInActiveManifest: jest.fn(),
+    existsItemsForParcels: jest.fn(),
+    areParcelsInActiveManifest: jest.fn(),
   };
   const tripQueryService = {
     findTripOrThrow: jest.fn(),
   };
   const organizationFacade = {
     validateOrganizationUnitsExist: jest.fn(),
+  };
+  const customerShipmentFacade = {
+    markParcelsReadyForDispatch: jest.fn(),
   };
 
   let service: ManifestCommandService;
@@ -99,6 +103,7 @@ describe('ManifestCommandService', () => {
       manifestQueryService as unknown as ManifestQueryService,
       tripQueryService as unknown as TripQueryService,
       organizationFacade as unknown as OrganizationFacade,
+      customerShipmentFacade as unknown as CustomerShipmentFacade,
     );
   });
 
@@ -162,20 +167,22 @@ describe('ManifestCommandService', () => {
     });
   });
 
-  describe('addItem', () => {
-    it('adds a parcel to a pending manifest', async () => {
+  describe('addItems', () => {
+    it('adds parcels to a pending manifest', async () => {
       manifestQueryService.findManifestOrThrow.mockResolvedValue(
         manifestWithStatus(ManifestStatus.OPEN),
       );
-      manifestQueryService.existsItemForParcel.mockResolvedValue(false);
-      manifestQueryService.isParcelInActiveManifest.mockResolvedValue(false);
-      commandRepository.createItem.mockResolvedValue(pendingItem());
+      manifestQueryService.existsItemsForParcels.mockResolvedValue(false);
+      manifestQueryService.areParcelsInActiveManifest.mockResolvedValue(false);
+      commandRepository.createItems.mockResolvedValue([itemId]);
+      customerShipmentFacade.markParcelsReadyForDispatch.mockResolvedValue(undefined);
 
       await expect(
-        service.addItem(tenantId, manifestId, undefined, { parcelId }),
-      ).resolves.toBe(itemId);
+        service.addItems(tenantId, manifestId, undefined, [parcelId]),
+      ).resolves.toEqual([itemId]);
 
-      expect(commandRepository.createItem).toHaveBeenCalled();
+      expect(commandRepository.createItems).toHaveBeenCalled();
+      expect(customerShipmentFacade.markParcelsReadyForDispatch).toHaveBeenCalled();
     });
 
     it('refuses to add parcels once the manifest is in transit', async () => {
@@ -184,37 +191,37 @@ describe('ManifestCommandService', () => {
       );
 
       await expect(
-        service.addItem(tenantId, manifestId, undefined, { parcelId }),
+        service.addItems(tenantId, manifestId, undefined, [parcelId]),
       ).rejects.toBeInstanceOf(ManifestNotModifiableException);
 
-      expect(commandRepository.createItem).not.toHaveBeenCalled();
+      expect(commandRepository.createItems).not.toHaveBeenCalled();
     });
 
     it('rejects the same parcel twice on one manifest', async () => {
       manifestQueryService.findManifestOrThrow.mockResolvedValue(
         manifestWithStatus(ManifestStatus.OPEN),
       );
-      manifestQueryService.existsItemForParcel.mockResolvedValue(true);
+      manifestQueryService.existsItemsForParcels.mockResolvedValue(true);
 
       await expect(
-        service.addItem(tenantId, manifestId, undefined, { parcelId }),
+        service.addItems(tenantId, manifestId, undefined, [parcelId]),
       ).rejects.toBeInstanceOf(DuplicateManifestParcelException);
 
-      expect(commandRepository.createItem).not.toHaveBeenCalled();
+      expect(commandRepository.createItems).not.toHaveBeenCalled();
     });
 
     it('rejects a parcel already committed to another active manifest', async () => {
       manifestQueryService.findManifestOrThrow.mockResolvedValue(
         manifestWithStatus(ManifestStatus.OPEN),
       );
-      manifestQueryService.existsItemForParcel.mockResolvedValue(false);
-      manifestQueryService.isParcelInActiveManifest.mockResolvedValue(true);
+      manifestQueryService.existsItemsForParcels.mockResolvedValue(false);
+      manifestQueryService.areParcelsInActiveManifest.mockResolvedValue(true);
 
       await expect(
-        service.addItem(tenantId, manifestId, undefined, { parcelId }),
+        service.addItems(tenantId, manifestId, undefined, [parcelId]),
       ).rejects.toBeInstanceOf(ParcelAlreadyInActiveManifestException);
 
-      expect(commandRepository.createItem).not.toHaveBeenCalled();
+      expect(commandRepository.createItems).not.toHaveBeenCalled();
     });
   });
 

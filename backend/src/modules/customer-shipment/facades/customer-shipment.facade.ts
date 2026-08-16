@@ -97,4 +97,12 @@ export class CustomerShipmentFacade {
   ): Promise<void> {
     await this.parcelCommandService.dropOffParcel(parcelId, orgUnitId, tripId);
   }
+
+  /**
+   * Called by the Fleet module when parcels are added to a manifest.
+   * Updates their status to READY_FOR_DISPATCH in bulk.
+   */
+  async markParcelsReadyForDispatch(parcelIds: string[]): Promise<void> {
+    await this.parcelCommandService.markParcelsReadyForDispatch(parcelIds);
+  }
 }

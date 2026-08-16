@@ -289,14 +289,9 @@ export class ParcelQueryService {
   async getParcelsByIds(ids: string[]): Promise<ParcelResponseDto[]> {
     if (ids.length === 0) return [];
 
-    const scope = this.authorizationFacade.buildScope({
-      builder: ParcelVisibilityScope,
-    });
     const records = await this.queryRepository.findRawByIds(ids);
 
-    return records
-      .filter((record) => this.isWithinScope(record, scope))
-      .map((record) => this.mapper.toResponse(record));
+    return records.map((record) => this.mapper.toResponse(record));
   }
 
   /** The same visibility rule the filtered queries apply, checked in memory. */
@@ -414,6 +409,39 @@ export class ParcelQueryService {
     }
 
     return record;
+  }
+
+  /**
+   * Fetches parcels by ID, filtering out any that the user's scope does not allow.
+   * Returns the domain Aggregates (carrying optimistic-lock versions) for bulk update operations.
+   */
+  async findAggregatesByIdsScoped(ids: string[]): Promise<Parcel[]> {
+    if (ids.length === 0) return [];
+
+    const scope = this.authorizationFacade.buildScope({
+      builder: ParcelVisibilityScope,
+    });
+
+    const records = await this.queryRepository.findRawByIds(ids);
+    const validRecords = records.filter((r) => this.isWithinScope(r, scope));
+
+    return validRecords.map((record) =>
+      Parcel.restore({
+        id: record.id,
+        version: record.version,
+        tenantId: record.tenant_id,
+        customerShipmentId: record.customer_shipment_id,
+        trackingNumber: record.tracking_number,
+        currentStatus: record.current_status,
+        currentCondition: record.current_condition,
+        currentOrgUnitId: record.current_org_unit_id,
+        destinationOrgUnitId: record.destination_org_unit_id,
+        labelKey: record.label_key,
+        senderPhone: record.sender_phone,
+        receiverPhone: record.receiver_phone,
+        originOrgUnitId: record.origin_org_unit_id,
+      }),
+    );
   }
 
   /** Used by the shipment side to derive a shipment status from its parcels. */

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { TransportManifestQueryRepository } from '../../infrastructure/repositories/transport-manifest-query.repository';
 import { TransportManifest } from '../../domain/entities/transport-manifest.entity';
 import { ManifestItem } from '../../domain/entities/manifest-item.entity';
@@ -9,12 +9,6 @@ import { ManifestDetailsDto } from '../dtos/responses/manifest-details.dto';
 import { ManifestItemDto } from '../dtos/responses/manifest-item.dto';
 import { PaginatedManifestListDto } from '../dtos/responses/manifest-list.dto';
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
-import { PARCEL_LOOKUP } from '../../../contracts/parcel-lookup';
-import { Inject } from '@nestjs/common';
-import type {
-  ParcelLookup,
-  ParcelSummary,
-} from '../../../contracts/parcel-lookup';
 import { ManifestQueryCriteria } from '../builders/query/manifest-query-criteria';
 import { OffsetPaginationBuilder } from '../../../../../common/pagination';
 import {
@@ -23,16 +17,16 @@ import {
 } from '../../../../../packages/authorization';
 import { Policy } from '../../../../../packages/authorization/policy';
 import { ManifestVisibilityScope } from '../../domain/authorization/scopes/manifest-visibility.scope';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { ManifestPolicy } from '../../domain/authorization/policies/manifest.policy';
 import { ManifestAction } from '../../domain/authorization/actions/manifest.action';
+import { CustomerShipmentFacade } from '../../../../customer-shipment/facades/customer-shipment.facade';
 
 @Injectable()
 export class ManifestQueryService {
   constructor(
     private readonly queryRepository: TransportManifestQueryRepository,
     private readonly responseMapper: ManifestResponseMapper,
-    @Inject(PARCEL_LOOKUP) private readonly parcelLookup: ParcelLookup,
+    private readonly parcelLookup: CustomerShipmentFacade,
     private readonly authorizationFacade: AuthorizationFacade,
   ) {}
 
@@ -106,9 +100,7 @@ export class ManifestQueryService {
     return this.queryRepository.findAvailable(tenantId);
   }
 
-  private async loadParcels(
-    items: ManifestItem[],
-  ): Promise<Map<string, ParcelSummary>> {
+  private async loadParcels(items: ManifestItem[]): Promise<Map<string, any>> {
     if (items.length === 0) return new Map();
 
     try {
@@ -145,22 +137,21 @@ export class ManifestQueryService {
     return item;
   }
 
-  async isParcelInActiveManifest(
+  async areParcelsInActiveManifest(
     tenantId: string,
-    parcelId: string,
+    parcelIds: string[],
     excludeManifestId?: string,
   ): Promise<boolean> {
-    return this.queryRepository.isParcelInActiveManifest(
+    return this.queryRepository.areParcelsInActiveManifest(
       tenantId,
-      parcelId,
+      parcelIds,
       excludeManifestId,
     );
   }
-
-  async existsItemForParcel(
+  async existsItemsForParcels(
     manifestId: string,
-    parcelId: string,
+    parcelIds: string[],
   ): Promise<boolean> {
-    return this.queryRepository.existsItemForParcel(manifestId, parcelId);
+    return this.queryRepository.existsItemsForParcels(manifestId, parcelIds);
   }
 }

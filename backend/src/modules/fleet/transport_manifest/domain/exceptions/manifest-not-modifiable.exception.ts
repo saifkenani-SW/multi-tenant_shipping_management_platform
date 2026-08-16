@@ -1,9 +1,10 @@
 import { ConflictException } from '@nestjs/common';
 
 export class ManifestNotModifiableException extends ConflictException {
-  constructor() {
+  constructor(message?: string) {
     super(
-      'Manifest can only be modified while PENDING — parcels cannot be loaded after the trip departs, and a completed manifest is immutable',
+      message ||
+        'Manifest can only be modified while OPEN — parcels cannot be loaded after the trip departs, and a completed manifest is immutable',
     );
   }
 }

@@ -5,7 +5,7 @@ import { TransportManifestQueryRepository } from '../../infrastructure/repositor
 import { ManifestResponseMapper } from '../mappers/manifest-response.mapper';
 import { ManifestQueryDto } from '../dtos/requests/manifest-query.dto';
 import { ManifestQueryService } from './manifest-query.service';
-import { ParcelLookup } from '../../../contracts/parcel-lookup';
+import { CustomerShipmentFacade } from '../../../customer-shipment/facades/customer-shipment.facade';
 
 /**
  * A platform owner carries no tenant in the request context, so every read
@@ -37,20 +37,24 @@ describe('ManifestQueryService — tenant scoping', () => {
     existsItemForParcel: jest.fn(),
   };
 
-  /** Parcel labels are decoration on these reads; the tenant scoping is not. */
-  const parcelLookup: ParcelLookup = {
+  const shipmentFacade = {
     getParcelsByIds: jest.fn().mockResolvedValue([]),
-  };
+  } as unknown as CustomerShipmentFacade;
+
+  const authorizationFacade = {
+    buildScope: jest.fn().mockReturnValue({}),
+  } as any;
 
   let service: ManifestQueryService;
 
   beforeEach(() => {
     jest.resetAllMocks();
-    (parcelLookup.getParcelsByIds as jest.Mock).mockResolvedValue([]);
+    (shipmentFacade.getParcelsByIds as jest.Mock).mockResolvedValue([]);
     service = new ManifestQueryService(
       queryRepository as unknown as TransportManifestQueryRepository,
       new ManifestResponseMapper(),
-      parcelLookup,
+      shipmentFacade,
+      authorizationFacade,
     );
   });
 
@@ -80,12 +84,9 @@ describe('ManifestQueryService — tenant scoping', () => {
     queryRepository.findById.mockResolvedValue(manifest);
     queryRepository.findItems.mockResolvedValue([]);
 
-    const result = await service.getManifestDetails(undefined, manifestId);
+    const result = await service.getManifestDetails(manifestId);
 
-    expect(queryRepository.findById).toHaveBeenCalledWith(
-      undefined,
-      manifestId,
-    );
+    expect(queryRepository.findById).toHaveBeenCalledWith(manifestId);
     expect(result.id).toBe(manifestId);
   });
 
@@ -93,7 +94,7 @@ describe('ManifestQueryService — tenant scoping', () => {
     queryRepository.findById.mockResolvedValue(null);
 
     await expect(
-      service.getManifestDetails(undefined, manifestId),
+      service.getManifestDetails(manifestId),
     ).rejects.toBeInstanceOf(ManifestNotFoundException);
   });
 });

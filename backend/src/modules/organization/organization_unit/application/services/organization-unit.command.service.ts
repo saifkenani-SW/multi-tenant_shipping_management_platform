@@ -24,12 +24,10 @@ export class OrganizationUnitCommandService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  @CacheEvict([
-    {
-      keyPrefix: ORG_UNIT_CACHE_KEYS.LIST,
-      allEntries: true,
-    },
-  ])
+  @CacheEvict({
+    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async create(tenantId: string, dto: CreateOrganizationUnitDto) {
     if (dto.orgType === 'BRANCH') {
@@ -86,20 +84,10 @@ export class OrganizationUnitCommandService {
     return { id };
   }
 
-  @CacheEvict([
-    {
-      keyPrefix: ORG_UNIT_CACHE_KEYS.LIST,
-      allEntries: true,
-    },
-    {
-      keyPrefix: ORG_UNIT_CACHE_KEYS.DETAILS,
-      keyBuilder: (
-        tenantId: string,
-        id: string,
-        dto: UpdateOrganizationUnitDto,
-      ) => [ORG_UNIT_CACHE_KEYS.DETAILS, id],
-    },
-  ])
+  @CacheEvict({
+    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async update(tenantId: string, id: string, dto: UpdateOrganizationUnitDto) {
     const existing = await this.queryService.findById(id, tenantId);
@@ -138,19 +126,10 @@ export class OrganizationUnitCommandService {
     return { id };
   }
 
-  @CacheEvict([
-    {
-      keyPrefix: ORG_UNIT_CACHE_KEYS.LIST,
-      allEntries: true,
-    },
-    {
-      keyPrefix: ORG_UNIT_CACHE_KEYS.DETAILS,
-      keyBuilder: (tenantId: string, id: string, dto: AddLocationsDto) => [
-        ORG_UNIT_CACHE_KEYS.DETAILS,
-        id,
-      ],
-    },
-  ])
+  @CacheEvict({
+    keyPrefix: ORG_UNIT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   async addLocations(tenantId: string, id: string, dto: AddLocationsDto) {
     const existing = await this.queryService.findById(id, tenantId);
 
