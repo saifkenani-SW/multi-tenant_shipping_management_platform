@@ -21,6 +21,8 @@ import { ManifestPolicy } from '../../domain/authorization/policies/manifest.pol
 import { ManifestAction } from '../../domain/authorization/actions/manifest.action';
 import { CustomerShipmentFacade } from '../../../../customer-shipment/facades/customer-shipment.facade';
 
+import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
+
 @Injectable()
 export class ManifestQueryService {
   constructor(
@@ -28,6 +30,7 @@ export class ManifestQueryService {
     private readonly responseMapper: ManifestResponseMapper,
     private readonly parcelLookup: CustomerShipmentFacade,
     private readonly authorizationFacade: AuthorizationFacade,
+    private readonly organizationFacade: OrganizationFacade,
   ) {}
 
   async findManifests(
@@ -55,11 +58,26 @@ export class ManifestQueryService {
 
     const [records, total] = await this.queryRepository.findMany(criteria);
 
+    if (!records.length) {
+      return this.responseMapper.toPaginatedListDto(
+        records,
+        total,
+        criteria.pagination,
+        scope,
+        {},
+      );
+    }
+
+    const orgUnitNamesMap = await this.resolveOrgUnitNames(
+      records.map((r) => r.manifest),
+    );
+
     return this.responseMapper.toPaginatedListDto(
       records,
       total,
       criteria.pagination,
       scope,
+      orgUnitNamesMap,
     );
   }
 
@@ -70,11 +88,15 @@ export class ManifestQueryService {
   async getManifestDetails(id: string): Promise<ManifestDetailsDto> {
     const manifest = await this.findManifestOrThrow(id);
     const items = await this.queryRepository.findItems(id);
+    
+    const orgUnitNamesMap = await this.resolveOrgUnitNames([manifest]);
 
     return this.responseMapper.toDetailsDto(
       manifest,
       items,
       await this.loadParcels(items),
+      orgUnitNamesMap[manifest.originOrgUnitId],
+      orgUnitNamesMap[manifest.destinationOrgUnitId],
     );
   }
 
@@ -112,6 +134,29 @@ export class ManifestQueryService {
     } catch {
       return new Map();
     }
+  }
+
+  private async resolveOrgUnitNames(
+    manifests: TransportManifest[],
+  ): Promise<Record<string, string>> {
+    const orgUnitIds = [
+      ...new Set(
+        manifests.flatMap((m) => [m.originOrgUnitId, m.destinationOrgUnitId]),
+      ),
+    ];
+
+    if (orgUnitIds.length === 0) return {};
+
+    const orgUnits =
+      await this.organizationFacade.getOrganizationUnitsByIds(orgUnitIds);
+
+    return orgUnits.reduce(
+      (map, orgUnit) => {
+        map[orgUnit.id] = orgUnit.name;
+        return map;
+      },
+      {} as Record<string, string>,
+    );
   }
 
   async findManifestOrThrow(id: string): Promise<TransportManifest> {
