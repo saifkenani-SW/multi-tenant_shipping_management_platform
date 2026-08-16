@@ -255,7 +255,7 @@ export class ParcelCommandService {
   })
   @CacheEvict({
     keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
-    allEntries: true,
+    allEntries: true, 
   })
   async recordDelivery(
     trackingNumber: string,

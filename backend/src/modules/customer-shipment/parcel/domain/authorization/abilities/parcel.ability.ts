@@ -52,10 +52,10 @@ export class ParcelAbility implements CaslAbilityContributor<
 
     if (type === SubjectType.TENANT_ADMIN) {
       builder.can(ParcelAction.View, ParcelSubject, ownTenant);
-      builder.can(ParcelAction.UpdateStatus, ParcelSubject, ownTenant);
+     // builder.can(ParcelAction.UpdateStatus, ParcelSubject, ownTenant);
       builder.can(ParcelAction.Receive, ParcelSubject, {
         tenantId: principal.tenantId,
-        currentStatus: ParcelStatus.IN_TRANSIT,
+        currentStatus: ParcelStatus.ARRIVED_AT_UNIT,
       } as any);
       builder.can(ParcelAction.Dispatch, ParcelSubject, {
         tenantId: principal.tenantId,
@@ -63,13 +63,7 @@ export class ParcelAbility implements CaslAbilityContributor<
       } as any);
       builder.can(ParcelAction.Collect, ParcelSubject, {
         tenantId: principal.tenantId,
-        currentStatus: {
-          $in: [
-            ParcelStatus.IN_TRANSIT, // Deliver uses collect permission logically, but must be in transit
-            ParcelStatus.READY_FOR_COLLECTION,
-            ParcelStatus.PROCESSING,
-          ],
-        },
+        currentStatus: ParcelStatus.READY_FOR_COLLECTION,
       } as any);
       return;
     }
