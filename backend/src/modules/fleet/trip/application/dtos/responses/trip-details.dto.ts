@@ -8,17 +8,23 @@ export class TripDetailsDto {
   @ApiProperty({ description: 'Owning tenant identifier' })
   tenantId: string;
 
-  @ApiProperty({ description: 'Employee (driver) operating this trip' })
-  driverId: string;
-
   @ApiProperty({ description: 'Vehicle used for this trip', nullable: true })
   vehicleId: string | null;
 
-  @ApiProperty({ description: 'Organization unit the trip departs from' })
+  @ApiProperty({ description: 'Plate number of the vehicle', required: false })
+  vehiclePlateNumber?: string;
+
+  @ApiProperty({ description: 'ID of the origin organization unit' })
   originOrgUnitId: string;
 
-  @ApiProperty({ description: 'Organization unit the trip arrives at' })
+  @ApiProperty({ description: 'Name of the origin organization unit', required: false })
+  originOrgUnitName?: string;
+
+  @ApiProperty({ description: 'ID of the destination organization unit' })
   destinationOrgUnitId: string;
+
+  @ApiProperty({ description: 'Name of the destination organization unit', required: false })
+  destinationOrgUnitName?: string;
 
   @ApiProperty({ enum: TripStatus })
   status: TripStatus;
@@ -34,6 +40,12 @@ export class TripDetailsDto {
     nullable: true,
   })
   endedAt: Date | null;
+
+  @ApiProperty({ description: 'ID of the assigned driver', required: false })
+  driverId: string | null;
+
+  @ApiProperty({ description: 'Name of the assigned driver', required: false })
+  driverName?: string;
 
   @ApiProperty({ description: 'Operational notes', nullable: true })
   notes: string | null;

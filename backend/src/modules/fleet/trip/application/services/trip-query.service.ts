@@ -11,12 +11,19 @@ import { OffsetPaginationBuilder } from '../../../../../common/pagination';
 import { AuthorizationFacade } from '../../../../../packages/authorization/facade/authorization.facade';
 import { TripVisibilityScope } from '../../domain/authorization/scopes/trip-visibility.scope';
 
+import { EmployeeFacade } from '../../../../employee2/facades/employee.facade';
+import { OrganizationFacade } from '../../../../organization/facades/organization.facade';
+import { VehicleQueryService } from '../../../vehicle/application/services/vehicle-query.service';
+
 @Injectable()
 export class TripQueryService {
   constructor(
     private readonly tripQueryRepository: TripQueryRepository,
     private readonly tripResponseMapper: TripResponseMapper,
     private readonly authorizationFacade: AuthorizationFacade,
+    private readonly employeeFacade: EmployeeFacade,
+    private readonly organizationFacade: OrganizationFacade,
+    private readonly vehicleQueryService: VehicleQueryService,
   ) {}
 
   async findTrips(
@@ -60,10 +67,27 @@ export class TripQueryService {
 
     const [trips, total] = await this.tripQueryRepository.findMany(criteria);
 
+    if (!trips.length) {
+      return this.tripResponseMapper.toPaginatedListDto(
+        trips,
+        total,
+        criteria.pagination,
+        {},
+        {},
+        {},
+      );
+    }
+
+    const { driverNamesMap, vehiclePlatesMap, orgUnitNamesMap } =
+      await this.resolveNames(tenantId, trips);
+
     return this.tripResponseMapper.toPaginatedListDto(
       trips,
       total,
       criteria.pagination,
+      driverNamesMap,
+      vehiclePlatesMap,
+      orgUnitNamesMap,
     );
   }
 
@@ -72,7 +96,7 @@ export class TripQueryService {
     id: string,
   ): Promise<TripDetailsDto> {
     const trip = await this.findTripOrThrow(tenantId, id);
-    return this.tripResponseMapper.toDetailsDto(trip);
+    return this.toDetailsDtoWithNames(tenantId, trip);
   }
 
   async findTripOrThrow(
@@ -101,6 +125,73 @@ export class TripQueryService {
       driverId,
     );
     if (!trip) return null;
-    return this.tripResponseMapper.toDetailsDto(trip);
+    return this.toDetailsDtoWithNames(tenantId, trip);
+  }
+
+  private async toDetailsDtoWithNames(
+    tenantId: string | undefined,
+    trip: Trip,
+  ): Promise<TripDetailsDto> {
+    const { driverNamesMap, vehiclePlatesMap, orgUnitNamesMap } =
+      await this.resolveNames(tenantId, [trip]);
+
+    return this.tripResponseMapper.toDetailsDto(
+      trip,
+      driverNamesMap[trip.driverId],
+      trip.vehicleId ? vehiclePlatesMap[trip.vehicleId] : undefined,
+      orgUnitNamesMap[trip.originOrgUnitId],
+      orgUnitNamesMap[trip.destinationOrgUnitId],
+    );
+  }
+
+  private async resolveNames(
+    tenantId: string | undefined,
+    trips: Trip[],
+  ): Promise<{
+    driverNamesMap: Record<string, string>;
+    vehiclePlatesMap: Record<string, string>;
+    orgUnitNamesMap: Record<string, string>;
+  }> {
+    const driverIds = [...new Set(trips.map((t) => t.driverId))];
+    const vehicleIds = [
+      ...new Set(trips.map((t) => t.vehicleId).filter((id): id is string => !!id)),
+    ];
+    const orgUnitIds = [
+      ...new Set(
+        trips.flatMap((t) => [t.originOrgUnitId, t.destinationOrgUnitId]),
+      ),
+    ];
+
+    const [drivers, vehicles, orgUnits] = await Promise.all([
+      this.employeeFacade.getEmployeesBasicDetails(driverIds),
+      this.vehicleQueryService.findVehiclesByIds(tenantId, vehicleIds),
+      this.organizationFacade.getOrganizationUnitsByIds(orgUnitIds),
+    ]);
+
+    const driverNamesMap = drivers.reduce(
+      (map, driver) => {
+        map[driver.id] = driver.full_name;
+        return map;
+      },
+      {} as Record<string, string>,
+    );
+
+    const vehiclePlatesMap = vehicles.reduce(
+      (map, vehicle) => {
+        map[vehicle.id] = vehicle.plateNumber;
+        return map;
+      },
+      {} as Record<string, string>,
+    );
+
+    const orgUnitNamesMap = orgUnits.reduce(
+      (map, orgUnit) => {
+        map[orgUnit.id] = orgUnit.name;
+        return map;
+      },
+      {} as Record<string, string>,
+    );
+
+    return { driverNamesMap, vehiclePlatesMap, orgUnitNamesMap };
   }
 }

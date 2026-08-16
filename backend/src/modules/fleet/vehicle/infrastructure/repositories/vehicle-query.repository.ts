@@ -103,6 +103,25 @@ export class VehicleQueryRepository {
     return record ? this.vehiclePersistenceMapper.toDomain(record) : null;
   }
 
+  async findByIds(
+    tenantId: string | undefined,
+    ids: string[],
+  ): Promise<Vehicle[]> {
+    if (!ids.length) return [];
+
+    let query = this.kysely
+      .selectFrom('vehicle')
+      .select(VEHICLE_COLUMNS)
+      .where('id', 'in', ids);
+
+    if (tenantId) {
+      query = query.where('tenant_id', '=', tenantId);
+    }
+
+    const records = await query.execute();
+    return records.map((record) => this.vehiclePersistenceMapper.toDomain(record));
+  }
+
   async existsByPlateNumber(
     tenantId: string,
     plateNumber: string,

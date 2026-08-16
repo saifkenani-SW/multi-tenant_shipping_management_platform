@@ -9,13 +9,23 @@ import {
 
 @Injectable()
 export class TripResponseMapper {
-  toListDto(trip: Trip): TripListDto {
+  toListDto(
+    trip: Trip,
+    driverName?: string,
+    vehiclePlateNumber?: string,
+    originOrgUnitName?: string,
+    destinationOrgUnitName?: string,
+  ): TripListDto {
     const dto = new TripListDto();
     dto.id = trip.id;
     dto.driverId = trip.driverId;
+    dto.driverName = driverName;
     dto.vehicleId = trip.vehicleId;
+    dto.vehiclePlateNumber = vehiclePlateNumber;
     dto.originOrgUnitId = trip.originOrgUnitId;
+    dto.originOrgUnitName = originOrgUnitName;
     dto.destinationOrgUnitId = trip.destinationOrgUnitId;
+    dto.destinationOrgUnitName = destinationOrgUnitName;
     dto.status = trip.status;
     dto.scheduledAt = trip.scheduledAt;
     dto.createdByEmployeeId = trip.createdByEmployeeId;
@@ -23,14 +33,24 @@ export class TripResponseMapper {
     return dto;
   }
 
-  toDetailsDto(trip: Trip): TripDetailsDto {
+  toDetailsDto(
+    trip: Trip,
+    driverName?: string,
+    vehiclePlateNumber?: string,
+    originOrgUnitName?: string,
+    destinationOrgUnitName?: string,
+  ): TripDetailsDto {
     const dto = new TripDetailsDto();
     dto.id = trip.id;
     dto.tenantId = trip.tenantId;
     dto.driverId = trip.driverId;
+    dto.driverName = driverName;
     dto.vehicleId = trip.vehicleId;
+    dto.vehiclePlateNumber = vehiclePlateNumber;
     dto.originOrgUnitId = trip.originOrgUnitId;
+    dto.originOrgUnitName = originOrgUnitName;
     dto.destinationOrgUnitId = trip.destinationOrgUnitId;
+    dto.destinationOrgUnitName = destinationOrgUnitName;
     dto.status = trip.status;
     dto.scheduledAt = trip.scheduledAt;
     dto.startedAt = trip.startedAt;
@@ -47,9 +67,20 @@ export class TripResponseMapper {
     trips: Trip[],
     total: number,
     pagination: Pagination,
+    driverNamesMap: Record<string, string>,
+    vehiclePlatesMap: Record<string, string>,
+    orgUnitNamesMap: Record<string, string>,
   ): PaginatedTripListDto {
     const dto = new PaginatedTripListDto();
-    dto.data = trips.map((trip) => this.toListDto(trip));
+    dto.data = trips.map((trip) =>
+      this.toListDto(
+        trip,
+        driverNamesMap[trip.driverId],
+        trip.vehicleId ? vehiclePlatesMap[trip.vehicleId] : undefined,
+        orgUnitNamesMap[trip.originOrgUnitId],
+        orgUnitNamesMap[trip.destinationOrgUnitId],
+      ),
+    );
     dto.meta = new PaginationMeta(pagination, total);
     return dto;
   }

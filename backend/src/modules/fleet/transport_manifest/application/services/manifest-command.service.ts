@@ -63,6 +63,19 @@ export class ManifestCommandService {
       throw new InvalidManifestOrgUnitsException();
     }
 
+    if (employeeId) {
+      const assigned = await this.employeeFacade.isAssignedToOrgUnit(
+        employeeId,
+        dto.originOrgUnitId,
+      );
+
+      if (!assigned) {
+        throw new ForbiddenException(
+          'You are not assigned to the origin organization unit of this manifest',
+        );
+      }
+    }
+
     let creatorName: string | null = null;
     if (employeeId) {
       creatorName = await this.employeeFacade.getEmployeeName(employeeId);

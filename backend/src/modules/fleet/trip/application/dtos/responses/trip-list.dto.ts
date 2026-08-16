@@ -5,17 +5,29 @@ export class TripListDto {
   @ApiProperty({ description: 'Unique identifier' })
   id: string;
 
-  @ApiProperty({ description: 'Employee (driver) operating this trip' })
-  driverId: string;
+  @ApiProperty({ description: 'ID of the assigned driver', required: false })
+  driverId: string | null;
+
+  @ApiProperty({ description: 'Name of the assigned driver', required: false })
+  driverName?: string;
 
   @ApiProperty({ description: 'Vehicle used for this trip', nullable: true })
   vehicleId: string | null;
 
-  @ApiProperty({ description: 'Organization unit the trip departs from' })
+  @ApiProperty({ description: 'Plate number of the vehicle', required: false })
+  vehiclePlateNumber?: string;
+
+  @ApiProperty({ description: 'ID of the origin organization unit' })
   originOrgUnitId: string;
 
-  @ApiProperty({ description: 'Organization unit the trip arrives at' })
+  @ApiProperty({ description: 'Name of the origin organization unit', required: false })
+  originOrgUnitName?: string;
+
+  @ApiProperty({ description: 'ID of the destination organization unit' })
   destinationOrgUnitId: string;
+
+  @ApiProperty({ description: 'Name of the destination organization unit', required: false })
+  destinationOrgUnitName?: string;
 
   @ApiProperty({ enum: TripStatus })
   status: TripStatus;

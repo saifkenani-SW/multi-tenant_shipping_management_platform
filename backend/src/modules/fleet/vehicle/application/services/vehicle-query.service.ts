@@ -96,6 +96,13 @@ export class VehicleQueryService {
     return vehicle;
   }
 
+  async findVehiclesByIds(
+    tenantId: string | undefined,
+    ids: string[],
+  ): Promise<Vehicle[]> {
+    return this.vehicleQueryRepository.findByIds(tenantId, ids);
+  }
+
   async getActiveVehicleIdForDriver(
     tenantId: string,
     employeeId: string,
