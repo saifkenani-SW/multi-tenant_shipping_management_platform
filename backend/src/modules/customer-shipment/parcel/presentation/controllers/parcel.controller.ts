@@ -115,7 +115,7 @@ export class ParcelController {
     return this.queryService.findByTrackingNumber(trackingNumber);
   }
 
-  @Patch('parcels/:trackingNumber/status')
+/*  @Patch('parcels/:trackingNumber/status')
   @HttpCode(HttpStatus.OK)
   @Roles(RoleType.EMPLOYEE)
   @ApiOperation({
@@ -128,7 +128,7 @@ export class ParcelController {
     @Body() dto: UpdateParcelStatusDto,
   ): Promise<void> {
     await this.commandService.updateStatus(trackingNumber, dto);
-  }
+  }*/
 
   @Patch('parcels/:trackingNumber/receive')
   @HttpCode(HttpStatus.OK)
