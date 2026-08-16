@@ -117,26 +117,44 @@ export class SuperUserSeeder implements Seeder {
     }
 
     // 5. Driver Profile (Vehicle Assignment)
-    const vehicle = await this.prisma.vehicle.findFirst({
-      where: { tenant_id: tenant.id },
+    const existingVehicleAssignment = await this.prisma.vehicle_assignment.findFirst({
+      where: { employee_id: superEmployee.id, is_active: true },
     });
 
-    if (vehicle) {
-      const existingVehicleAssignment =
-        await this.prisma.vehicle_assignment.findFirst({
-          where: { employee_id: superEmployee.id, vehicle_id: vehicle.id },
-        });
+    if (!existingVehicleAssignment) {
+      const activeAssignments = await this.prisma.vehicle_assignment.findMany({
+        where: { tenant_id: tenant.id, is_active: true },
+        select: { vehicle_id: true },
+      });
+      const assignedVehicleIds = activeAssignments.map((a) => a.vehicle_id);
 
-      if (!existingVehicleAssignment) {
-        await this.prisma.vehicle_assignment.create({
+      let vehicle = await this.prisma.vehicle.findFirst({
+        where: {
+          tenant_id: tenant.id,
+          id: { notIn: assignedVehicleIds },
+        },
+      });
+
+      if (!vehicle) {
+        vehicle = await this.prisma.vehicle.create({
           data: {
             tenant_id: tenant.id,
-            employee_id: superEmployee.id,
-            vehicle_id: vehicle.id,
-            is_active: true,
+            plate_number: `SUP-${Date.now().toString().slice(-4)}`,
+            type: 'Van',
+            capacity_kg: 1000,
+            status: 'ACTIVE',
           },
         });
       }
+
+      await this.prisma.vehicle_assignment.create({
+        data: {
+          tenant_id: tenant.id,
+          employee_id: superEmployee.id,
+          vehicle_id: vehicle.id,
+          is_active: true,
+        },
+      });
     }
 
     // 6. Customer Profile
