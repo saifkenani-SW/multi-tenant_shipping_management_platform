@@ -34,6 +34,13 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException('User is not authenticated.');
     }
 
+    if (
+      user.type === UserLoginType.PLATFORM_OWNER ||
+      user.type === UserLoginType.TENANT_ADMIN
+    ) {
+      return true;
+    }
+
     if (user.type !== UserLoginType.EMPLOYEE) {
       throw new ForbiddenException(
         'Only employees can have permissions evaluated.',
