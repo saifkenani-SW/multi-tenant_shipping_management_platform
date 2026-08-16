@@ -144,14 +144,20 @@ export class ShipmentRequestCommandService {
       requestEntity.status,
     );
 
-    const userSummary = await this.userFacade.getUserSummaryByPhone(
-      rawRequest.senderPhone,
-    );
-    if (userSummary) {
-      await this.notificationFacade.notifyUser(userSummary.id, {
-        title: 'تمت الموافقة على طلب الشحن',
-        body: `تم الموافقة على طلب الشحن الخاص بك، تستطيع الآن التوجه للشحن. رقم الطلب: ${rawRequest.id}`,
-      });
+    if (rawRequest.senderPhone) {
+      try {
+        const userSummary = await this.userFacade.getUserSummaryByPhone(
+          rawRequest.senderPhone,
+        );
+        if (userSummary) {
+          await this.notificationFacade.notifyUser(userSummary.id, {
+            title: 'تمت الموافقة على طلب الشحن',
+            body: `تم الموافقة على طلب الشحن الخاص بك، تستطيع الآن التوجه للشحن. رقم الطلب: ${rawRequest.id}`,
+          });
+        }
+      } catch (error) {
+        // Swallow errors to avoid blocking the main transaction
+      }
     }
   }
 
@@ -174,6 +180,22 @@ export class ShipmentRequestCommandService {
       requestEntity.id,
       requestEntity.status,
     );
+
+    if (rawRequest.senderPhone) {
+      try {
+        const userSummary = await this.userFacade.getUserSummaryByPhone(
+          rawRequest.senderPhone,
+        );
+        if (userSummary) {
+          await this.notificationFacade.notifyUser(userSummary.id, {
+            title: 'تم رفض طلب الشحن',
+            body: `نعتذر منك، تم رفض طلب الشحن الخاص بك. رقم الطلب: ${rawRequest.id}`,
+          });
+        }
+      } catch (error) {
+        // Swallow errors
+      }
+    }
   }
 
   @CacheEvict({
