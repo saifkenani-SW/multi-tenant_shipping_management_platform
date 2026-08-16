@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تجربة تتبع الشحنات</title>
+  <style>
+    body { font-family: Tahoma, Arial, sans-serif; margin: 20px; background-color: #f9f9f9; }
+    .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { color: #333; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 5px; font-weight: bold; }
+    input[type="text"] { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    .log { margin-top: 20px; background: #222; color: #0f0; padding: 15px; border-radius: 4px; height: 300px; overflow-y: auto; font-family: monospace; direction: ltr; text-align: left; }
+    .log p { margin: 5px 0; }
+    .actions { display: flex; gap: 10px; margin-top: 15px; }
+    .card { padding: 15px; border: 1px solid #ddd; border-radius: 4px; margin-top: 15px; background: #fafafa; }
+  </style>
+  <!-- استيراد مكتبة socket.io من الـ CDN -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+  <h1>تجربة التتبع الحي (WebSocket)</h1>
+  
+  <div class="form-group">
+    <label for="token">JWT Token (الرجاء وضع التوكن الخاص بالمستخدم هنا):</label>
+    <input type="text" id="token" placeholder="eyJhbGciOiJIUzI1NiIs... أو اتركه فارغاً إذا لم يتطلب">
+  </div>
+
+  <button onclick="connectSocket()">1. اتصل بالسيرفر (Connect)</button>
+  <button onclick="disconnectSocket()" style="background-color: #dc3545;">قطع الاتصال</button>
+
+  <div class="card">
+    <h3>دور العميل/الموظف (تتبع شحنة)</h3>
+    <div class="form-group">
+      <label for="trackingNumber">رقم تتبع الشحنة:</label>
+      <input type="text" id="trackingNumber" placeholder="مثال: TRK-12345">
+    </div>
+    <button onclick="subscribeParcelTrip()">2. اشترك في الشحنة</button>
+  </div>
+
+  <div class="card">
+    <h3>دور السائق (إرسال الموقع)</h3>
+    <div class="form-group">
+      <label for="tripId">معرف الرحلة (Trip ID):</label>
+      <input type="text" id="tripId" placeholder="UUID الخاص بالرحلة">
+    </div>
+    <div class="actions">
+      <button onclick="sendLocation(24.7136, 46.6753)">إرسال موقع 1 (الرياض)</button>
+      <button onclick="sendLocation(21.4858, 39.1925)">إرسال موقع 2 (جدة)</button>
+    </div>
+  </div>
+
+  <h3>سجل الأحداث (Logs)</h3>
+  <div class="log" id="logArea"></div>
+</div>
+
+<script>
+  let socket;
+
+  function logMessage(msg) {
+    const logArea = document.getElementById('logArea');
+    const p = document.createElement('p');
+    p.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    logArea.appendChild(p);
+    logArea.scrollTop = logArea.scrollHeight;
+  }
+
+  function connectSocket() {
+    const token = document.getElementById('token').value;
+    
+    if (socket && socket.connected) {
+      logMessage("Already connected!");
+      return;
+    }
+
+    logMessage("Connecting to ws://localhost:3000/tracking ...");
+    
+    // إعداد الاتصال
+    socket = io('http://localhost:3000/tracking', {
+      auth: { token: token },
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect', () => {
+      logMessage(`Connected successfully! Socket ID: ${socket.id}`);
+    });
+
+    socket.on('disconnect', (reason) => {
+      logMessage(`Disconnected: ${reason}`);
+    });
+
+    socket.on('connect_error', (err) => {
+      logMessage(`Connection Error: ${err.message}`);
+    });
+
+    // الاستماع للأحداث القادمة من السيرفر
+    socket.on('subscribed', (data) => {
+      logMessage(`Event [subscribed]: ${JSON.stringify(data)}`);
+      // تعبئة معرف الرحلة تلقائياً للسائق لتسهيل التجربة
+      if (data.tripId) {
+        document.getElementById('tripId').value = data.tripId;
+      }
+    });
+
+    socket.on('driver_location', (data) => {
+      logMessage(`Event [driver_location]: ${JSON.stringify(data)}`);
+    });
+
+    socket.on('parcel_movement', (data) => {
+      logMessage(`Event [parcel_movement]: ${JSON.stringify(data)}`);
+    });
+  }
+
+  function disconnectSocket() {
+    if (socket) {
+      socket.disconnect();
+      socket = null;
+    }
+  }
+
+  function subscribeParcelTrip() {
+    if (!socket || !socket.connected) {
+      alert("الرجاء الاتصال بالسيرفر أولاً!");
+      return;
+    }
+    const trackingNumber = document.getElementById('trackingNumber').value;
+    logMessage(`Sending [subscribe_parcel_trip] for: ${trackingNumber}`);
+    socket.emit('subscribe_parcel_trip', { trackingNumber });
+  }
+
+  function sendLocation(lat, lng) {
+    if (!socket || !socket.connected) {
+      alert("الرجاء الاتصال بالسيرفر أولاً!");
+      return;
+    }
+    const tripId = document.getElementById('tripId').value;
+    if (!tripId) {
+      alert("الرجاء إدخال معرف الرحلة!");
+      return;
+    }
+    const payload = { tripId, latitude: lat, longitude: lng };
+    logMessage(`Sending [driver_location]: ${JSON.stringify(payload)}`);
+    socket.emit('driver_location', payload);
+  }
+</script>
+
+</body>
+</html>

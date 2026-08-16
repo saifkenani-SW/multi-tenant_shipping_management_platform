@@ -1,0 +1,36 @@
+meta {
+  name: Socket.io Tracking
+  type: http
+  seq: 1
+}
+
+get {
+  url: ws://localhost:3000/socket.io/?EIO=4&transport=websocket
+  body: none
+  auth: none
+}
+
+headers {
+  # لا تنسَ إضافة الـ JWT في حدث الاتصال 40 كما هو موضح أدناه
+}
+
+docs {
+  # تنبيه هام
+  برنامج Bruno (وكذلك Postman / Swagger) لا يدعم بروتوكول Socket.io بشكل مثالي مباشرة عبر واجهة الويب سوكيت العادية (لأن Socket.io يستخدم بروتوكوله الخاص فوق الـ WebSockets).
+  
+  إذا قمت بتشغيل هذا الطلب، عليك إرسال الرسائل يدوياً بصيغة Socket.io كالتالي:
+  
+  1. **للاتصال وتمرير التوكن:**
+  أرسل الرسالة التالية (الرقم 40 يعني Connect):
+  `40{"token":"YOUR_JWT_TOKEN_HERE"}`
+  
+  2. **للاشتراك كعميل/موظف:**
+  أرسل الرسالة التالية (الرقم 42 يعني Event message):
+  `42["subscribe_parcel_trip", {"trackingNumber": "TRK-123"}]`
+  
+  3. **لإرسال موقع السائق:**
+  أرسل الرسالة التالية:
+  `42["driver_location", {"tripId": "UUID", "latitude": 24.71, "longitude": 46.67}]`
+  
+  **يفضل بشدة** استخدام ملف الـ HTML المخصص للتجربة المتوفر في مجلد `public/tracking-test.html` لتسهيل العملية لأن مكتبة `socket.io-client` تقوم بجميع هذه التحويلات تلقائياً.
+}
