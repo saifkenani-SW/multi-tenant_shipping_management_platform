@@ -8,6 +8,8 @@ import { SelectProfileDto } from './dtos/select-profile.dto';
 import { JwtPayload, UserLoginType } from './types/auth.types';
 import { generateUuid } from '../../common/uuid';
 import { UserFacade } from '../user/application/facades/user.facade';
+import { NotificationFacade } from '../notification/facades/notification.facade';
+import { UserProfileInfo } from '../user/application/services/user.query.service';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +17,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly userFacade: UserFacade,
+    private readonly notificationFacade: NotificationFacade,
   ) {}
 
   async login(loginDto: LoginDto) {
@@ -63,6 +66,9 @@ export class AuthService {
         );
       }
 
+      // Handle FCM Subscription
+      await this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken, [requestedProfile]);
+
       const tokens = await this.generateTokens(
         identity.userId,
         requestedProfile.type,
@@ -84,6 +90,9 @@ export class AuthService {
     // If only one profile, log them in directly
     if (activeProfiles.length === 1) {
       const profile = activeProfiles[0];
+      
+      // Handle FCM Subscription
+      await this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken, [profile]);
       const tokens = await this.generateTokens(
         identity.userId,
         profile.type,
@@ -110,6 +119,9 @@ export class AuthService {
         expiresIn: '15m',
       },
     );
+
+    // Handle FCM Subscription for all active profiles
+    await this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken, activeProfiles);
 
     const profilesForClient = activeProfiles.map((p) => ({
       type: p.type,
@@ -270,5 +282,64 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  private async handleFcmTokenSubscription(
+    userId: string,
+    fcmToken: string,
+    profiles: UserProfileInfo[],
+  ) {
+    if (!fcmToken) return;
+
+    // 1. Register token
+    await this.notificationFacade.registerToken(userId, fcmToken);
+
+    // 2. Send welcome notification
+    await this.notificationFacade.notifyUser(userId, {
+      title: 'مرحباً بك',
+      body: 'مرحباً بك في المنصة',
+    });
+
+    const topicsToSubscribe = new Set<string>();
+
+    for (const profile of profiles) {
+      if (profile.type === UserLoginType.PLATFORM_OWNER) {
+        topicsToSubscribe.add('companies');
+      }
+
+      if (profile.type === UserLoginType.TENANT_ADMIN) {
+        topicsToSubscribe.add('admins');
+        if (profile.tenantId) {
+          topicsToSubscribe.add(`tenant_${profile.tenantId}_admins`);
+          // Get branches
+          const branches = await this.prisma.organization_unit.findMany({
+            where: { tenant_id: profile.tenantId },
+            select: { id: true },
+          });
+          for (const branch of branches) {
+            topicsToSubscribe.add(
+              `tenant_${profile.tenantId}_branch_${branch.id}_admins`,
+            );
+          }
+        }
+      }
+
+      if (
+        profile.type === UserLoginType.EMPLOYEE ||
+        profile.type === UserLoginType.DRIVER
+      ) {
+        topicsToSubscribe.add('employees');
+        if (profile.tenantId) {
+          topicsToSubscribe.add(`tenant_${profile.tenantId}_employees`);
+        }
+      }
+    }
+
+    if (topicsToSubscribe.size > 0) {
+      await this.notificationFacade.subscribeTokenToTopics(
+        fcmToken,
+        Array.from(topicsToSubscribe),
+      );
+    }
   }
 }

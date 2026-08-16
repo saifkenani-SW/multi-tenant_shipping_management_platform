@@ -62,4 +62,14 @@ export class NotificationService {
   ): Promise<void> {
     await this.firebase.sendToTopic(topic, message);
   }
+
+  /**
+   * يشترك توكن (أو توكنات) في توبيك
+   */
+  async subscribeTokenToTopic(
+    tokens: string[],
+    topic: string,
+  ): Promise<void> {
+    await this.firebase.subscribeToTopic(tokens, topic);
+  }
 }

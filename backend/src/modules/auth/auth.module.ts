@@ -13,6 +13,7 @@ import { PermissionCacheService } from './authorization/services/permission-cach
 import { UserTypeGuard } from './authorization/guards/user-type.guard';
 import { PermissionsGuard } from './authorization/guards/permissions.guard';
 import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { UserModule } from '../user/user.module';
       },
     ]),
     UserModule,
+    NotificationModule,
   ],
   controllers: [AuthController],
   providers: [
