@@ -9,6 +9,7 @@ import {
   Patch,
   Post,
   Query,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -74,7 +75,7 @@ export class TripController {
       driverId,
     );
     if (!trip) {
-      throw new Error('No active trip found for this driver');
+      throw new NotFoundException('No active trip found');
     }
     return trip;
   }
@@ -185,7 +186,7 @@ export class TripController {
       driverId,
     );
     if (!trip) {
-      throw new Error('No active trip found to start');
+      throw new NotFoundException('No active trip found to start');
     }
     await this.tripCommandService.startTrip(tenantId, trip.id);
   }
@@ -216,7 +217,7 @@ export class TripController {
       driverId,
     );
     if (!trip) {
-      throw new Error('No active trip found to complete');
+      throw new NotFoundException('No active trip found to complete');
     }
     await this.tripCommandService.completeTrip(tenantId, trip.id);
   }
