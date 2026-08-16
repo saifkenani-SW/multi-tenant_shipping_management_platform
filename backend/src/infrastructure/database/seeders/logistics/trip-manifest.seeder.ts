@@ -156,6 +156,113 @@ export class TripManifestSeeder implements Seeder {
       });
     }
 
+    const pharmacyParcel = await this.prisma.parcel.findUnique({
+      where: { id: '00000000-0000-7000-8000-000000001111' },
+    });
+    if (pharmacyParcel) {
+      await this.prisma.manifest_item.upsert({
+        where: {
+          manifest_id_parcel_id: {
+            manifest_id: manifest.id,
+            parcel_id: pharmacyParcel.id,
+          },
+        },
+        update: { status: ManifestItemStatus.LOADED },
+        create: {
+          manifest_id: manifest.id,
+          parcel_id: pharmacyParcel.id,
+          status: ManifestItemStatus.LOADED,
+          loaded_at: new Date(),
+        },
+      });
+    }
+
+    const latakia = await this.prisma.organization_unit.findFirst({
+      where: { tenant_id: tenant1.id, name: 'فرع اللاذقية — المشروع العاشر' },
+    });
+    const dispatchParcel = await this.prisma.parcel.findUnique({
+      where: { id: '00000000-0000-7000-8000-000000001110' },
+    });
+    if (latakia && dispatchParcel) {
+      const scheduledTrip = await this.prisma.trip.upsert({
+        where: { id: '00000000-0000-7000-8000-000000001250' },
+        update: { status: TripStatus.SCHEDULED },
+        create: {
+          id: '00000000-0000-7000-8000-000000001250',
+          tenant_id: tenant1.id,
+          driver_id: driver.id,
+          vehicle_id: vehicle ? vehicle.id : null,
+          origin_org_unit_id: origin.id,
+          destination_org_unit_id: latakia.id,
+          status: TripStatus.SCHEDULED,
+          scheduled_at: new Date(Date.now() + 6 * 60 * 60 * 1000),
+        },
+      });
+      const scheduledManifest = await this.prisma.transport_manifest.upsert({
+        where: { id: '00000000-0000-7000-8000-000000001251' },
+        update: { status: ManifestStatus.OPEN },
+        create: {
+          id: '00000000-0000-7000-8000-000000001251',
+          tenant_id: tenant1.id,
+          trip_id: scheduledTrip.id,
+          origin_org_unit_id: origin.id,
+          destination_org_unit_id: latakia.id,
+          status: ManifestStatus.OPEN,
+        },
+      });
+      await this.prisma.manifest_item.upsert({
+        where: {
+          manifest_id_parcel_id: {
+            manifest_id: scheduledManifest.id,
+            parcel_id: dispatchParcel.id,
+          },
+        },
+        update: { status: ManifestItemStatus.PENDING_LOAD },
+        create: {
+          manifest_id: scheduledManifest.id,
+          parcel_id: dispatchParcel.id,
+          status: ManifestItemStatus.PENDING_LOAD,
+        },
+      });
+    }
+
+    const mezzeh = await this.prisma.organization_unit.findFirst({
+      where: { tenant_id: tenant1.id, name: 'مستودع المزة' },
+    });
+    const silkParcel = await this.prisma.parcel.findUnique({
+      where: { id: '00000000-0000-7000-8000-000000001114' },
+    });
+    if (destination && mezzeh && silkParcel) {
+      const doneTrip = await this.prisma.trip.upsert({
+        where: { id: '00000000-0000-7000-8000-000000001252' },
+        update: { status: TripStatus.COMPLETED },
+        create: {
+          id: '00000000-0000-7000-8000-000000001252',
+          tenant_id: tenant1.id,
+          driver_id: driver.id,
+          vehicle_id: vehicle ? vehicle.id : null,
+          origin_org_unit_id: destination.id,
+          destination_org_unit_id: mezzeh.id,
+          status: TripStatus.COMPLETED,
+          scheduled_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          started_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+          ended_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        },
+      });
+      await this.prisma.transport_manifest.upsert({
+        where: { id: '00000000-0000-7000-8000-000000001253' },
+        update: { status: ManifestStatus.COMPLETED },
+        create: {
+          id: '00000000-0000-7000-8000-000000001253',
+          tenant_id: tenant1.id,
+          trip_id: doneTrip.id,
+          origin_org_unit_id: destination.id,
+          destination_org_unit_id: mezzeh.id,
+          status: ManifestStatus.COMPLETED,
+        },
+      });
+    }
+
     this.logger.log('TripManifestSeeder completed.');
   }
 }

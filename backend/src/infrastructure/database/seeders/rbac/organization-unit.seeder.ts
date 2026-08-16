@@ -72,13 +72,13 @@ export class OrganizationUnitSeeder implements Seeder {
         const mapId = `00000000-0000-7000-8000-00000000${i}55${j}`;
 
         await this.prisma.org_unit_location_mapping.upsert({
-          where: {
-            organization_unit_id_global_location_id: {
-              organization_unit_id: orgId,
-              global_location_id: unit.locId,
-            },
+          where: { id: mapId },
+          update: {
+            tenant_id: tenant.id,
+            organization_unit_id: orgId,
+            global_location_id: unit.locId,
+            coverage_type: 'BOTH',
           },
-          update: { coverage_type: 'BOTH' },
           create: {
             id: mapId,
             tenant_id: tenant.id,

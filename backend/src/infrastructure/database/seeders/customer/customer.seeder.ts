@@ -44,6 +44,36 @@ const CUSTOMERS = [
     lng: 35.7812,
     tenantIndexes: [1, 2],
   },
+  {
+    id: '00000000-0000-7000-8000-000000000705',
+    email: 'bassam.qabbani@email.sy',
+    full_name: 'بسام عدنان القباني',
+    address: 'الشعلان، بناء العابد، دمشق',
+    label: 'المكتب',
+    lat: 33.5148,
+    lng: 36.2912,
+    tenantIndexes: [0],
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000706',
+    email: 'ghadah.hamdan@email.sy',
+    full_name: 'غادة سليم حمدان',
+    address: 'حي الإنشاءات، شارع الحضارة، حمص',
+    label: 'المنزل',
+    lat: 34.7281,
+    lng: 36.7094,
+    tenantIndexes: [0, 1],
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000707',
+    email: 'tareq.atasi@email.sy',
+    full_name: 'طارق الأتاسي',
+    address: 'العزيزية، بناء الكواكبي، حلب',
+    label: 'المحل',
+    lat: 36.2088,
+    lng: 37.1499,
+    tenantIndexes: [0],
+  },
 ] as const;
 
 @Injectable()

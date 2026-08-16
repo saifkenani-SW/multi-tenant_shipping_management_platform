@@ -69,6 +69,21 @@ export const SEEDED_USERS = [
     email: 'hiba.atri@email.sy',
     phone: '+963966444004',
   },
+  {
+    id: '00000000-0000-7000-8000-000000000024',
+    email: 'bassam.qabbani@email.sy',
+    phone: '+963933777001',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000025',
+    email: 'ghadah.hamdan@email.sy',
+    phone: '+963944888002',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000026',
+    email: 'tareq.atasi@email.sy',
+    phone: '+963955999003',
+  },
 ] as const;
 
 @Injectable()
