@@ -105,4 +105,33 @@ export class CustomerShipmentFacade {
   async markParcelsReadyForDispatch(parcelIds: string[]): Promise<void> {
     await this.parcelCommandService.markParcelsReadyForDispatch(parcelIds);
   }
+
+  /**
+   * Called by the Fleet module when a driver marks a manifest item as LOADED.
+   * Transitions the parcel to IN_TRANSIT.
+   *
+   * Bypasses ParcelPolicy — authorization is enforced at the manifest level
+   * (the manifest must belong to the driver's trip).
+   */
+  async markParcelLoadedOnManifest(
+    parcelId: string,
+    tripId: string,
+  ): Promise<void> {
+    await this.parcelCommandService.pickUpParcel(parcelId, tripId);
+  }
+
+  /**
+   * Called by the Fleet module when a driver marks a manifest item as UNLOADED.
+   * Transitions the parcel to ARRIVED_AT_UNIT and updates its current location.
+   *
+   * Bypasses ParcelPolicy — authorization is enforced at the manifest level
+   * (the manifest must belong to the driver's trip).
+   */
+  async markParcelUnloadedFromManifest(
+    parcelId: string,
+    orgUnitId: string,
+    tripId?: string,
+  ): Promise<void> {
+    await this.parcelCommandService.dropOffParcel(parcelId, orgUnitId, tripId);
+  }
 }

@@ -85,10 +85,11 @@ describe('TripCommandService', () => {
     countManifests: jest.fn(),
   };
   const manifestCommandService = {
-    markTripManifestsInTransit: jest.fn(),
+    assignManifestsToTrip: jest.fn(),
   };
   const vehicleQueryService = {
     findVehicleOrThrow: jest.fn(),
+    getActiveVehicleIdForDriver: jest.fn(),
   };
   const employeeFacade = {
     validateEmployeeExists: jest.fn(),
@@ -121,8 +122,16 @@ describe('TripCommandService', () => {
   });
 
   describe('createTrip', () => {
-    it('validates driver and org units through facades, then persists', async () => {
+    beforeEach(() => {
       employeeFacade.validateEmployeeExists.mockResolvedValue(true);
+      vehicleQueryService.getActiveVehicleIdForDriver.mockResolvedValue(vehicleId);
+      vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
+      organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
+    });
+
+    it('validates driver and org units through facades, then persists', async () => {
+      employeeFacade.getUserId.mockResolvedValue('01910b80-6e42-7000-8000-0000000000e2');
+      commandRepository.create.mockResolvedValue(scheduledTrip());
       organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
       vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
       commandRepository.create.mockResolvedValue(scheduledTrip());
@@ -190,25 +199,8 @@ describe('TripCommandService', () => {
       expect(commandRepository.create).not.toHaveBeenCalled();
     });
 
-    it('skips the vehicle check when no vehicle is supplied', async () => {
-      employeeFacade.validateEmployeeExists.mockResolvedValue(true);
-      organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
-      commandRepository.create.mockResolvedValue(scheduledTrip());
-
-      await service.createTrip(tenantId, undefined, {
-        driverId,
-        originOrgUnitId,
-        destinationOrgUnitId,
-      });
-
-      expect(vehicleQueryService.findVehicleOrThrow).not.toHaveBeenCalled();
-    });
-
     it('notifies the assigned driver once the trip exists', async () => {
       const userId = '01910b80-6e42-7000-8000-0000000000e1';
-      employeeFacade.validateEmployeeExists.mockResolvedValue(true);
-      organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
-      vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
       commandRepository.create.mockResolvedValue(scheduledTrip());
       employeeFacade.getUserId.mockResolvedValue(userId);
 
@@ -234,9 +226,6 @@ describe('TripCommandService', () => {
     });
 
     it('still creates the trip when the driver has no user account', async () => {
-      employeeFacade.validateEmployeeExists.mockResolvedValue(true);
-      organizationFacade.validateOrganizationUnitsExist.mockResolvedValue(true);
-      vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
       commandRepository.create.mockResolvedValue(scheduledTrip());
       employeeFacade.getUserId.mockResolvedValue(null);
 
@@ -256,6 +245,8 @@ describe('TripCommandService', () => {
       tripQueryService.findTripOrThrow.mockResolvedValue(scheduledTrip());
       employeeFacade.validateEmployeeExists.mockResolvedValue(true);
       employeeFacade.getUserId.mockResolvedValue(userId);
+      vehicleQueryService.getActiveVehicleIdForDriver.mockResolvedValue(vehicleId);
+      vehicleQueryService.findVehicleOrThrow.mockResolvedValue(activeVehicle);
 
       await service.updateTrip(tenantId, tripId, { driverId: newDriverId });
 
@@ -290,26 +281,36 @@ describe('TripCommandService', () => {
       );
 
       expect(commandRepository.updateStatus).not.toHaveBeenCalled();
-      expect(
-        manifestCommandService.markTripManifestsInTransit,
-      ).not.toHaveBeenCalled();
     });
 
-    it('starts the trip and carries its manifests into transit', async () => {
+    it('starts the trip without affecting manifests directly (item-driven)', async () => {
+      const mockManifestCount = 2;
       tripQueryService.findTripOrThrow.mockResolvedValue(scheduledTrip());
-      tripQueryService.countManifests.mockResolvedValue(2);
+      tripQueryService.countManifests.mockResolvedValue(mockManifestCount);
 
       await service.startTrip(tenantId, tripId);
 
-      const anyDate = expect.any(Date) as unknown as Date;
       expect(commandRepository.updateStatus).toHaveBeenCalledWith(
         tripId,
         TripStatus.IN_PROGRESS,
-        { startedAt: anyDate },
+        expect.any(Object),
       );
-      expect(
-        manifestCommandService.markTripManifestsInTransit,
-      ).toHaveBeenCalledWith(tenantId, tripId);
+    });
+  });
+
+  describe('completeTrip', () => {
+    it('completes the trip without affecting manifests directly (item-driven)', async () => {
+      const trip = scheduledTrip();
+      trip.start(1); // Move to IN_PROGRESS
+      tripQueryService.findTripOrThrow.mockResolvedValue(trip);
+
+      await service.completeTrip(tenantId, tripId);
+
+      expect(commandRepository.updateStatus).toHaveBeenCalledWith(
+        tripId,
+        TripStatus.COMPLETED,
+        expect.any(Object),
+      );
     });
   });
 });

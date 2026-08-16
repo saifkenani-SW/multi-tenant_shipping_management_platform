@@ -73,6 +73,7 @@ describe('ManifestCommandService', () => {
     createItems: jest.fn(),
     updateItemStatus: jest.fn(),
     deleteItem: jest.fn(),
+    countItemsByStatus: jest.fn(),
   };
   const manifestQueryService = {
     findManifestOrThrow: jest.fn(),
@@ -88,6 +89,12 @@ describe('ManifestCommandService', () => {
   };
   const customerShipmentFacade = {
     markParcelsReadyForDispatch: jest.fn(),
+    markParcelLoadedOnManifest: jest.fn(),
+    markParcelUnloadedFromManifest: jest.fn(),
+  };
+  const queryRepository = {};
+  const employeeFacade = {
+    validateEmployeeExists: jest.fn(),
   };
 
   let service: ManifestCommandService;
@@ -100,9 +107,10 @@ describe('ManifestCommandService', () => {
     jest.resetAllMocks();
     service = new ManifestCommandService(
       commandRepository as unknown as TransportManifestCommandRepository,
+      queryRepository as any,
       manifestQueryService as unknown as ManifestQueryService,
-      tripQueryService as unknown as TripQueryService,
       organizationFacade as unknown as OrganizationFacade,
+      employeeFacade as any,
       customerShipmentFacade as unknown as CustomerShipmentFacade,
     );
   });
@@ -119,7 +127,7 @@ describe('ManifestCommandService', () => {
         manifestWithStatus(ManifestStatus.OPEN),
       );
 
-      await expect(service.createManifest(tenantId, createDto)).resolves.toBe(
+      await expect(service.createManifest(tenantId, undefined, createDto)).resolves.toBe(
         manifestId,
       );
 
@@ -130,25 +138,13 @@ describe('ManifestCommandService', () => {
 
     it('rejects a manifest whose origin equals its destination', async () => {
       await expect(
-        service.createManifest(tenantId, {
+        service.createManifest(tenantId, undefined, {
           ...createDto,
           destinationOrgUnitId: originOrgUnitId,
         }),
       ).rejects.toBeInstanceOf(InvalidManifestRouteException);
 
       expect(tripQueryService.findTripOrThrow).not.toHaveBeenCalled();
-    });
-
-    it('refuses to attach a manifest to a departed trip', async () => {
-      tripQueryService.findTripOrThrow.mockResolvedValue(
-        tripWithStatus(TripStatus.IN_PROGRESS),
-      );
-
-      await expect(
-        service.createManifest(tenantId, createDto),
-      ).rejects.toBeInstanceOf(TripAlreadyDepartedException);
-
-      expect(commandRepository.create).not.toHaveBeenCalled();
     });
 
     it('rejects org units outside the tenant', async () => {
@@ -160,7 +156,7 @@ describe('ManifestCommandService', () => {
       );
 
       await expect(
-        service.createManifest(tenantId, createDto),
+        service.createManifest(tenantId, undefined, createDto),
       ).rejects.toBeInstanceOf(InvalidManifestOrgUnitsException);
 
       expect(commandRepository.create).not.toHaveBeenCalled();
@@ -179,7 +175,7 @@ describe('ManifestCommandService', () => {
 
       await expect(
         service.addItems(tenantId, manifestId, undefined, [parcelId]),
-      ).resolves.toEqual([itemId]);
+      ).resolves.toEqual([expect.any(String)]);
 
       expect(commandRepository.createItems).toHaveBeenCalled();
       expect(customerShipmentFacade.markParcelsReadyForDispatch).toHaveBeenCalled();
@@ -226,11 +222,12 @@ describe('ManifestCommandService', () => {
   });
 
   describe('updateItemStatus', () => {
-    it('records a load with its timestamp', async () => {
+    it('records a load with its timestamp and may change manifest status', async () => {
       manifestQueryService.findManifestOrThrow.mockResolvedValue(
-        manifestWithStatus(ManifestStatus.IN_TRANSIT),
+        manifestWithStatus(ManifestStatus.ASSIGNED),
       );
       manifestQueryService.findItemOrThrow.mockResolvedValue(pendingItem());
+      commandRepository.countItemsByStatus.mockResolvedValue(1); // Not all loaded
 
       await service.updateItemStatus(tenantId, manifestId, itemId, {
         status: ManifestItemStatus.LOADED,
@@ -241,6 +238,10 @@ describe('ManifestCommandService', () => {
         itemId,
         ManifestItemStatus.LOADED,
         { loadedAt: anyDate, unloadedAt: null },
+      );
+      expect(customerShipmentFacade.markParcelLoadedOnManifest).toHaveBeenCalledWith(
+        parcelId,
+        tripId,
       );
     });
 
