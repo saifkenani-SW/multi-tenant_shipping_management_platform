@@ -123,19 +123,40 @@ export class SuperUserSeeder implements Seeder {
     }
 
     // 5. Driver Profile (Vehicle Assignment)
-    const alreadyAssigned = await this.prisma.vehicle_assignment.findFirst({
+    // 5. Driver Profile (Vehicle Assignment)
+    const existingVehicleAssignment = await this.prisma.vehicle_assignment.findFirst({
       where: { employee_id: superEmployee.id, is_active: true },
     });
-    const vehicle = alreadyAssigned
-      ? null
-      : await this.prisma.vehicle.findFirst({
-          where: {
+
+    if (!existingVehicleAssignment) {
+      let vehicle = await this.prisma.vehicle.findFirst({
+        where: {
+          tenant_id: tenant.id,
+          vehicle_assignment: { none: { is_active: true } },
+        },
+      });
+
+      if (!vehicle) {
+        vehicle = await this.prisma.vehicle.create({
+          data: {
             tenant_id: tenant.id,
-            vehicle_assignment: { none: { is_active: true } },
+            plate_number: `SUP-${Date.now().toString().slice(-4)}`,
+            type: 'Van',
+            capacity_kg: 1000,
+            status: 'ACTIVE',
           },
         });
+      }
 
-    if (vehicle) {
+      await this.prisma.vehicle_assignment.create({
+        data: {
+          tenant_id: tenant.id,
+          employee_id: superEmployee.id,
+          vehicle_id: vehicle.id,
+          is_active: true,
+        },
+      });
+    }
       await this.prisma.vehicle_assignment.create({
         data: {
           tenant_id: tenant.id,
