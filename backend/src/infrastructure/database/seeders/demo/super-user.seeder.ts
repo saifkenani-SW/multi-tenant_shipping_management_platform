@@ -90,7 +90,7 @@ export class SuperUserSeeder implements Seeder {
     });
 
     if (branch) {
-      const assignment = await this.prisma.employee_assignment.findFirst({
+      let assignment = await this.prisma.employee_assignment.findFirst({
         where: {
           employee_id: superEmployee.id,
           organization_unit_id: branch.id,
@@ -98,27 +98,33 @@ export class SuperUserSeeder implements Seeder {
       });
 
       if (!assignment) {
-        const empAssignment = await this.prisma.employee_assignment.create({
+        assignment = await this.prisma.employee_assignment.create({
           data: {
             tenant_id: tenant.id,
             employee_id: superEmployee.id,
             organization_unit_id: branch.id,
           },
         });
+      }
 
-        // Find a role to assign
-        const role = await this.prisma.role.findFirst({
-          where: { tenant_id: tenant.id },
-        });
+      const roles = await this.prisma.role.findMany({
+        where: { tenant_id: tenant.id },
+      });
 
-        if (role) {
-          await this.prisma.assignment_role.create({
-            data: {
-              assignment_id: empAssignment.id,
+      for (const role of roles) {
+        await this.prisma.assignment_role.upsert({
+          where: {
+            assignment_id_role_id: {
+              assignment_id: assignment.id,
               role_id: role.id,
             },
-          });
-        }
+          },
+          update: {},
+          create: {
+            assignment_id: assignment.id,
+            role_id: role.id,
+          },
+        });
       }
     }
 

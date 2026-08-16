@@ -12,7 +12,6 @@ const EMPLOYEES = [
     code: 'EMP-100',
     name: 'مهند رسلان',
     nationalId: '01020304051',
-    roleName: 'Administrator',
     orgType: OrgType.HUB,
   },
   {
@@ -22,7 +21,6 @@ const EMPLOYEES = [
     code: 'EMP-101',
     name: 'لينا خوري',
     nationalId: '01020304052',
-    roleName: 'Branch Manager',
     orgType: OrgType.BRANCH,
   },
   {
@@ -32,7 +30,6 @@ const EMPLOYEES = [
     code: 'EMP-102',
     name: 'سامر فوزي درويش',
     nationalId: '01020304053',
-    roleName: 'Driver',
     orgType: OrgType.BRANCH,
   },
   {
@@ -42,7 +39,6 @@ const EMPLOYEES = [
     code: 'EMP-200',
     name: 'أحمد ياسين الحسن',
     nationalId: '02030405061',
-    roleName: 'Administrator',
     orgType: OrgType.HUB,
   },
   {
@@ -52,7 +48,6 @@ const EMPLOYEES = [
     code: 'EMP-201',
     name: 'نور الدين حج حسين',
     nationalId: '02030405062',
-    roleName: 'Branch Manager',
     orgType: OrgType.BRANCH,
   },
   {
@@ -62,7 +57,6 @@ const EMPLOYEES = [
     code: 'EMP-202',
     name: 'علي محمود حمدان',
     nationalId: '02030405063',
-    roleName: 'Driver',
     orgType: OrgType.BRANCH,
   },
   {
@@ -72,7 +66,6 @@ const EMPLOYEES = [
     code: 'EMP-300',
     name: 'رنا إسماعيل الحسين',
     nationalId: '03040506071',
-    roleName: 'Administrator',
     orgType: OrgType.HUB,
   },
   {
@@ -82,7 +75,6 @@ const EMPLOYEES = [
     code: 'EMP-301',
     name: 'محمود عيسى الخضر',
     nationalId: '03040506072',
-    roleName: 'Driver',
     orgType: OrgType.BRANCH,
   },
 ] as const;
@@ -107,8 +99,8 @@ export class EmployeeSeeder implements Seeder {
         continue;
       }
 
-      const role = await this.prisma.role.findFirst({
-        where: { tenant_id: tenant.id, name: empData.roleName },
+      const roles = await this.prisma.role.findMany({
+        where: { tenant_id: tenant.id },
       });
 
       const orgUnit = await this.prisma.organization_unit.findFirst({
@@ -159,7 +151,7 @@ export class EmployeeSeeder implements Seeder {
         },
       });
 
-      if (role) {
+      for (const role of roles) {
         await this.prisma.assignment_role.upsert({
           where: {
             assignment_id_role_id: {

@@ -52,23 +52,20 @@ export class RoleSeeder implements Seeder {
           },
         });
 
-        // Grant permissions to Administrator role
-        if (roleData.name === 'Administrator') {
-          for (const perm of permissions) {
-            await this.prisma.role_permission.upsert({
-              where: {
-                role_id_permission_id: {
-                  role_id: role.id,
-                  permission_id: perm.id,
-                },
-              },
-              update: {},
-              create: {
+        for (const perm of permissions) {
+          await this.prisma.role_permission.upsert({
+            where: {
+              role_id_permission_id: {
                 role_id: role.id,
                 permission_id: perm.id,
               },
-            });
-          }
+            },
+            update: {},
+            create: {
+              role_id: role.id,
+              permission_id: perm.id,
+            },
+          });
         }
       }
     }
