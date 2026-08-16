@@ -29,11 +29,11 @@ export class PlatformOwnerSeeder implements Seeder {
     await this.prisma.platform_admin.upsert({
       where: { user_id: owner.id },
       update: {
-        full_name: 'عبد الرحمن الخطيب',
+        full_name: 'عبدالرحمن السيد أحمد',
       },
       create: {
         user_id: owner.id,
-        full_name: 'عبد الرحمن الخطيب',
+        full_name: 'عبدالرحمن السيد أحمد',
         role: 'SUPER_ADMIN',
       },
     });

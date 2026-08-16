@@ -21,6 +21,9 @@ export const LOCATION = {
   DEIR_EZ_ZOR_GOV: '00000000-0000-7000-8000-000000000054',
   DEIR_EZ_ZOR: '00000000-0000-7000-8000-000000000055',
   QUSOUR: '00000000-0000-7000-8000-000000000056',
+  TARTOUS_GOV: '00000000-0000-7000-8000-000000000057',
+  TARTOUS: '00000000-0000-7000-8000-000000000058',
+  TARTOUS_CORNICHE: '00000000-0000-7000-8000-000000000059',
 } as const;
 
 export const SEEDED_GLOBAL_LOCATIONS = [
@@ -159,6 +162,30 @@ export const SEEDED_GLOBAL_LOCATIONS = [
     type: LocationType.DISTRICT,
     lat: 35.3381,
     lng: 40.1402,
+  },
+  {
+    id: LOCATION.TARTOUS_GOV,
+    parent_id: LOCATION.SYRIA,
+    name: 'محافظة طرطوس',
+    type: LocationType.GOVERNORATE,
+    lat: 34.895,
+    lng: 35.8866,
+  },
+  {
+    id: LOCATION.TARTOUS,
+    parent_id: LOCATION.TARTOUS_GOV,
+    name: 'طرطوس',
+    type: LocationType.CITY,
+    lat: 34.895,
+    lng: 35.8866,
+  },
+  {
+    id: LOCATION.TARTOUS_CORNICHE,
+    parent_id: LOCATION.TARTOUS,
+    name: 'الكورنيش',
+    type: LocationType.DISTRICT,
+    lat: 34.8892,
+    lng: 35.8861,
   },
 ] as const;
 

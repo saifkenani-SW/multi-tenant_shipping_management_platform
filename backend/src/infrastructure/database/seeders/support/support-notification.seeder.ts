@@ -70,13 +70,13 @@ export class SupportNotificationSeeder implements Seeder {
     await this.prisma.support_ticket_message.upsert({
       where: { id: msgId },
       update: {
-        message: 'السلام عليكم، متى يصل طردي رقم SHAM-2026-0001 إلى فرع العزيزية في حلب؟',
+        message: 'السلام عليكم، متى يصل طردي رقم MSRT-2026-0001 إلى فرع العزيزية في حلب؟',
       },
       create: {
         id: msgId,
         ticket_id: ticket.id,
         sender_user_id: customerUser.id,
-        message: 'السلام عليكم، متى يصل طردي رقم SHAM-2026-0001 إلى فرع العزيزية في حلب؟',
+        message: 'السلام عليكم، متى يصل طردي رقم MSRT-2026-0001 إلى فرع العزيزية في حلب؟',
       },
     });
 
@@ -86,7 +86,7 @@ export class SupportNotificationSeeder implements Seeder {
       update: {
         status: NotificationStatus.DELIVERED,
         title: 'شحنتك قيد النقل',
-        body: 'تم تحميل شحنتك من مركز دمشق وهي في الطريق إلى فرع حلب.',
+        body: 'تم تحميل شحنتك من مركز مسارات في الزبلطاني وهي في الطريق إلى فرع حلب.',
       },
       create: {
         id: notifId,
@@ -94,7 +94,7 @@ export class SupportNotificationSeeder implements Seeder {
         recipient_user_id: customerUser.id,
         notification_type: NotificationType.SHIPMENT,
         title: 'شحنتك قيد النقل',
-        body: 'تم تحميل شحنتك من مركز دمشق وهي في الطريق إلى فرع حلب.',
+        body: 'تم تحميل شحنتك من مركز مسارات في الزبلطاني وهي في الطريق إلى فرع حلب.',
         channel: NotificationChannel.IN_APP,
         status: NotificationStatus.DELIVERED,
         is_read: false,

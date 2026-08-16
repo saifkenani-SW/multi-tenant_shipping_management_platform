@@ -7,7 +7,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001101',
     shipmentId: '00000000-0000-7000-8000-000000000821',
-    trackingNumber: 'SHAM-2026-0001',
+    trackingNumber: 'MSRT-2026-0001',
     description: 'كرتون ملابس شتوية',
     category: 'ملابس',
     weight: 2.5,
@@ -20,7 +20,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001102',
     shipmentId: '00000000-0000-7000-8000-000000000821',
-    trackingNumber: 'SHAM-2026-0002',
+    trackingNumber: 'MSRT-2026-0002',
     description: 'مستلزمات منزلية وأدوات مطبخ',
     category: 'منزلية',
     weight: 3.0,
@@ -33,7 +33,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001107',
     shipmentId: '00000000-0000-7000-8000-000000000824',
-    trackingNumber: 'SHAM-2026-0003',
+    trackingNumber: 'MSRT-2026-0003',
     description: 'طرد مستحضرات تجميل',
     category: 'تجميل',
     weight: 3.2,
@@ -46,7 +46,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001103',
     shipmentId: '00000000-0000-7000-8000-000000000822',
-    trackingNumber: 'BRDA-2026-0001',
+    trackingNumber: 'QADM-2026-0001',
     description: 'مستندات تجارية وكتالوجات',
     category: 'مستندات',
     weight: 1.5,
@@ -59,7 +59,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001104',
     shipmentId: '00000000-0000-7000-8000-000000000822',
-    trackingNumber: 'BRDA-2026-0002',
+    trackingNumber: 'QADM-2026-0002',
     description: 'عينات أقمشة',
     category: 'أقمشة',
     weight: 2.5,
@@ -72,7 +72,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001105',
     shipmentId: '00000000-0000-7000-8000-000000000823',
-    trackingNumber: 'FRAT-2026-0001',
+    trackingNumber: 'TRWD-2026-0001',
     description: 'أغذية مجففة وتمر ديري',
     category: 'أغذية',
     weight: 6.8,
@@ -85,7 +85,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001110',
     shipmentId: '00000000-0000-7000-8000-000000000870',
-    trackingNumber: 'SHAM-2026-0004',
+    trackingNumber: 'MSRT-2026-0004',
     description: 'غلاية كهربائية ومكواة',
     category: 'كهربائيات',
     weight: 4.4,
@@ -98,7 +98,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001111',
     shipmentId: '00000000-0000-7000-8000-000000000871',
-    trackingNumber: 'SHAM-2026-0005',
+    trackingNumber: 'MSRT-2026-0005',
     description: 'كرتون أدوية ومستلزمات صيدلية',
     category: 'أدوية',
     weight: 4.0,
@@ -111,7 +111,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001112',
     shipmentId: '00000000-0000-7000-8000-000000000871',
-    trackingNumber: 'SHAM-2026-0006',
+    trackingNumber: 'MSRT-2026-0006',
     description: 'عبوات سيرومات',
     category: 'أدوية',
     weight: 3.1,
@@ -124,7 +124,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001113',
     shipmentId: '00000000-0000-7000-8000-000000000872',
-    trackingNumber: 'SHAM-2026-0007',
+    trackingNumber: 'MSRT-2026-0007',
     description: 'طرد ملابس جاهزة',
     category: 'ملابس',
     weight: 2.8,
@@ -137,7 +137,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001114',
     shipmentId: '00000000-0000-7000-8000-000000000873',
-    trackingNumber: 'SHAM-2026-0008',
+    trackingNumber: 'MSRT-2026-0008',
     description: 'أقمشة حرير حلبي',
     category: 'أقمشة',
     weight: 9.5,
@@ -150,7 +150,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001115',
     shipmentId: '00000000-0000-7000-8000-000000000874',
-    trackingNumber: 'SHAM-2026-0009',
+    trackingNumber: 'MSRT-2026-0009',
     description: 'كرتون كتب مدرسية',
     category: 'قرطاسية',
     weight: 6.0,
@@ -163,7 +163,7 @@ const PARCELS = [
   {
     id: '00000000-0000-7000-8000-000000001116',
     shipmentId: '00000000-0000-7000-8000-000000000876',
-    trackingNumber: 'BRDA-2026-0003',
+    trackingNumber: 'QADM-2026-0003',
     description: 'مواد غذائية معلبة',
     category: 'أغذية',
     weight: 5.2,

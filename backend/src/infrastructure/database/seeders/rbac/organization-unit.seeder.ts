@@ -5,6 +5,18 @@ import { Seeder } from '../seeder.interface';
 import { LOCATION } from '../system/global-location.seeder';
 import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
+export const ORG_UNIT_NAME = {
+  MASARAT_HUB: 'مركز مسارات — الزبلطاني',
+  MASARAT_WAREHOUSE: 'مستودع عدرا',
+  MASARAT_ALEPPO: 'فرع حلب — العزيزية',
+  MASARAT_LATAKIA: 'فرع اللاذقية — المشروع العاشر',
+  QADMOUS_HUB: 'مركز القدومس — طرطوس',
+  QADMOUS_ALEPPO: 'فرع حلب',
+  QADMOUS_HOMS: 'فرع حمص — الإنشاءات',
+  TROJAN_HUB: 'مركز طروادة — دير الزور',
+  TROJAN_DAMASCUS: 'فرع دمشق — الزبلطاني',
+} as const;
+
 type BranchSeed = {
   idSuffix: string;
   name: string;
@@ -98,27 +110,27 @@ export class OrganizationUnitSeeder implements Seeder {
       return [
         {
           idSuffix: '501',
-          name: 'مركز دمشق الرئيسي',
+          name: ORG_UNIT_NAME.MASARAT_HUB,
           zoneSuffix: '301',
           locId: LOCATION.ABU_RUMMANEH,
           type: OrgType.HUB,
-          address: 'شارع أبو رمانة، بناء العابد، الطابق الأرضي، دمشق',
-          lat: 33.5194,
-          lng: 36.2872,
+          address: 'سوق الزبلطاني، جانب كراج البولمان، دمشق',
+          lat: 33.5091,
+          lng: 36.3184,
         },
         {
           idSuffix: '504',
-          name: 'مستودع المزة',
+          name: ORG_UNIT_NAME.MASARAT_WAREHOUSE,
           zoneSuffix: '301',
           locId: LOCATION.MEZZEH,
           type: OrgType.WAREHOUSE,
-          address: 'أتوستراد المزة، مقابل مشفى الرازي، دمشق',
-          lat: 33.5047,
-          lng: 36.2567,
+          address: 'المدينة الصناعية بعدرا، مستودع رقم 14، ريف دمشق',
+          lat: 33.6097,
+          lng: 36.515,
         },
         {
           idSuffix: '502',
-          name: 'فرع حلب — العزيزية',
+          name: ORG_UNIT_NAME.MASARAT_ALEPPO,
           zoneSuffix: '302',
           locId: LOCATION.AZIZIEH,
           type: OrgType.BRANCH,
@@ -128,7 +140,7 @@ export class OrganizationUnitSeeder implements Seeder {
         },
         {
           idSuffix: '503',
-          name: 'فرع اللاذقية — المشروع العاشر',
+          name: ORG_UNIT_NAME.MASARAT_LATAKIA,
           zoneSuffix: '303',
           locId: LOCATION.MASHROU_10,
           type: OrgType.BRANCH,
@@ -143,17 +155,17 @@ export class OrganizationUnitSeeder implements Seeder {
       return [
         {
           idSuffix: '505',
-          name: 'مركز بردى — دمشق',
-          zoneSuffix: '301',
-          locId: LOCATION.MEZZEH,
+          name: ORG_UNIT_NAME.QADMOUS_HUB,
+          zoneSuffix: '303',
+          locId: LOCATION.TARTOUS_CORNICHE,
           type: OrgType.HUB,
-          address: 'المزة فيلات غربية، بناء بردى، دمشق',
-          lat: 33.5012,
-          lng: 36.2591,
+          address: 'الكورنيش البحري، مقابل الكراج القديم، طرطوس',
+          lat: 34.8892,
+          lng: 35.8861,
         },
         {
           idSuffix: '506',
-          name: 'فرع حلب',
+          name: ORG_UNIT_NAME.QADMOUS_ALEPPO,
           zoneSuffix: '302',
           locId: LOCATION.AZIZIEH,
           type: OrgType.BRANCH,
@@ -163,7 +175,7 @@ export class OrganizationUnitSeeder implements Seeder {
         },
         {
           idSuffix: '509',
-          name: 'فرع حمص — الإنشاءات',
+          name: ORG_UNIT_NAME.QADMOUS_HOMS,
           zoneSuffix: '303',
           locId: LOCATION.INSHAAT,
           type: OrgType.BRANCH,
@@ -177,7 +189,7 @@ export class OrganizationUnitSeeder implements Seeder {
     return [
       {
         idSuffix: '507',
-        name: 'مركز الفرات — دير الزور',
+        name: ORG_UNIT_NAME.TROJAN_HUB,
         zoneSuffix: '303',
         locId: LOCATION.QUSOUR,
         type: OrgType.HUB,
@@ -187,13 +199,13 @@ export class OrganizationUnitSeeder implements Seeder {
       },
       {
         idSuffix: '508',
-        name: 'فرع دمشق',
+        name: ORG_UNIT_NAME.TROJAN_DAMASCUS,
         zoneSuffix: '301',
         locId: LOCATION.ABU_RUMMANEH,
         type: OrgType.BRANCH,
-        address: 'ساحة النجمة، بناء الفرات، دمشق',
-        lat: 33.5162,
-        lng: 36.2914,
+        address: 'سوق الزبلطاني، بناء طروادة، دمشق',
+        lat: 33.5098,
+        lng: 36.3171,
       },
     ];
   }

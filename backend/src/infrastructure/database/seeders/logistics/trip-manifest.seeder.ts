@@ -27,7 +27,8 @@ export class TripManifestSeeder implements Seeder {
       where: { tenant_id: tenant1.id, employee_code: 'EMP-102' },
     });
     const vehicle = await this.prisma.vehicle.findFirst({
-      where: { tenant_id: tenant1.id, plate_number: '441203-دمشق' },
+      where: { tenant_id: tenant1.id },
+      orderBy: { created_at: 'asc' },
     });
     const origin = await this.prisma.organization_unit.findFirst({
       where: { tenant_id: tenant1.id, org_type: OrgType.HUB },
@@ -226,13 +227,13 @@ export class TripManifestSeeder implements Seeder {
       });
     }
 
-    const mezzeh = await this.prisma.organization_unit.findFirst({
-      where: { tenant_id: tenant1.id, name: 'مستودع المزة' },
+    const warehouse = await this.prisma.organization_unit.findFirst({
+      where: { tenant_id: tenant1.id, name: 'مستودع عدرا' },
     });
     const silkParcel = await this.prisma.parcel.findUnique({
       where: { id: '00000000-0000-7000-8000-000000001114' },
     });
-    if (destination && mezzeh && silkParcel) {
+    if (destination && warehouse && silkParcel) {
       const doneTrip = await this.prisma.trip.upsert({
         where: { id: '00000000-0000-7000-8000-000000001252' },
         update: { status: TripStatus.COMPLETED },
@@ -242,7 +243,7 @@ export class TripManifestSeeder implements Seeder {
           driver_id: driver.id,
           vehicle_id: vehicle ? vehicle.id : null,
           origin_org_unit_id: destination.id,
-          destination_org_unit_id: mezzeh.id,
+          destination_org_unit_id: warehouse.id,
           status: TripStatus.COMPLETED,
           scheduled_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
           started_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
@@ -257,7 +258,7 @@ export class TripManifestSeeder implements Seeder {
           tenant_id: tenant1.id,
           trip_id: doneTrip.id,
           origin_org_unit_id: destination.id,
-          destination_org_unit_id: mezzeh.id,
+          destination_org_unit_id: warehouse.id,
           status: ManifestStatus.COMPLETED,
         },
       });

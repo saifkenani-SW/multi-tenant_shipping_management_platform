@@ -5,8 +5,8 @@ import { Seeder } from '../seeder.interface';
 const SUBSCRIPTION_PLANS = [
   {
     id: '00000000-0000-7000-8000-000000000001',
-    name: 'Starter',
-    description: 'مناسبة للشركات الناشئة ومكاتب الشحن الصغيرة',
+    name: 'أساسية',
+    description: 'مناسبة لمكاتب الشحن الصغيرة والشركات الناشئة',
     max_branches: 3,
     max_warehouses: 1,
     max_employees: 10,
@@ -19,8 +19,8 @@ const SUBSCRIPTION_PLANS = [
   },
   {
     id: '00000000-0000-7000-8000-000000000002',
-    name: 'Business',
-    description: 'للشركات اللوجستية المتوسطة والمتنامية',
+    name: 'أعمال',
+    description: 'لشركات النقل المتوسطة ذات الفروع في أكثر من محافظة',
     max_branches: 10,
     max_warehouses: 5,
     max_employees: 50,
@@ -33,7 +33,7 @@ const SUBSCRIPTION_PLANS = [
   },
   {
     id: '00000000-0000-7000-8000-000000000003',
-    name: 'Enterprise',
+    name: 'مؤسسات',
     description: 'للشركات الكبيرة ذات التغطية على مستوى المحافظات',
     max_branches: 50,
     max_warehouses: 20,

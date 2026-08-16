@@ -18,7 +18,7 @@ export const SEEDED_ZONES = [
   {
     idSuffix: '303',
     name: 'منطقة الساحل والوسط',
-    description: 'اللاذقية وحمص ودير الزور',
+    description: 'طرطوس واللاذقية وحمص ودير الزور',
   },
 ] as const;
 

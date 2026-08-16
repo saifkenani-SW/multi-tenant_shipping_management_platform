@@ -33,11 +33,11 @@ export class SuperUserSeeder implements Seeder {
     await this.prisma.platform_admin.upsert({
       where: { user_id: superUser.id },
       update: {
-        full_name: 'حساب العرض الشامل',
+        full_name: 'عبدالرحمن السيد أحمد',
       },
       create: {
         user_id: superUser.id,
-        full_name: 'حساب العرض الشامل',
+        full_name: 'عبدالرحمن السيد أحمد',
         role: 'SUPER_ADMIN',
       },
     });
@@ -74,13 +74,13 @@ export class SuperUserSeeder implements Seeder {
         },
       },
       update: {
-        full_name: 'حساب العرض الشامل',
+        full_name: 'عبدالرحمن السيد أحمد',
       },
       create: {
         user_id: superUser.id,
         tenant_id: tenant.id,
         employee_code: 'EMP-SUPER-1',
-        full_name: 'حساب العرض الشامل',
+        full_name: 'عبدالرحمن السيد أحمد',
       },
     });
 
@@ -150,18 +150,18 @@ export class SuperUserSeeder implements Seeder {
     await this.prisma.customer_profile.upsert({
       where: { user_id: superUser.id },
       update: {
-        full_name: 'حساب العرض الشامل',
+        full_name: 'عبدالرحمن السيد أحمد',
         phone: '+963944000099',
       },
       create: {
         user_id: superUser.id,
-        full_name: 'حساب العرض الشامل',
+        full_name: 'عبدالرحمن السيد أحمد',
         phone: '+963944000099',
       },
     });
 
     this.logger.log(
-      '✅ Super All-In-One User seeded successfully! (super@all-in-one.com / password123)',
+      'تم إنشاء حساب عبدالرحمن السيد أحمد (super@all-in-one.com / password123)',
     );
   }
 }

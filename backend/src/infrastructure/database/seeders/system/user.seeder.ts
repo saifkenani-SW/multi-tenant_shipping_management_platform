@@ -134,14 +134,14 @@ export class UserSeeder implements Seeder {
       await this.prisma.platform_admin.upsert({
         where: { user_id: ownerUser.id },
         update: {
-          full_name: 'عبد الرحمن الخطيب',
+          full_name: 'عبدالرحمن السيد أحمد',
           role: 'SUPER_ADMIN',
           is_active: true,
         },
         create: {
           id: '00000000-0000-7000-8000-000000000020',
           user_id: ownerUser.id,
-          full_name: 'عبد الرحمن الخطيب',
+          full_name: 'عبدالرحمن السيد أحمد',
           role: 'SUPER_ADMIN',
           is_active: true,
         },
