@@ -59,6 +59,10 @@ export class ProofOfDeliveryCommandService {
    * settle and deliver in one act. Then the proof row, the parcel moving to
    * COLLECTED, tracking, and the shipment status all commit together.
    */
+  @CacheEvict({
+    keyPrefix: CUSTOMER_SHIPMENT_CACHE_KEYS.PREFIX,
+    allEntries: true,
+  })
   @Transactional()
   async recordDelivery(
     trackingNumber: string,
@@ -231,22 +235,6 @@ export class ProofOfDeliveryCommandService {
       await this.shipmentRecalculator.recalculateFromParcels(
         parcel.customerShipmentId,
       );
-
-      // Evict specific details since trackingNumber argument isn't enough for the decorator
-      await Promise.all([
-        this.cache.evict([
-          CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
-          parcel.id,
-        ]),
-        this.cache.evict([
-          CUSTOMER_SHIPMENT_CACHE_KEYS.PARCEL_DETAILS,
-          trackingNumber,
-        ]),
-        this.cache.evict([
-          CUSTOMER_SHIPMENT_CACHE_KEYS.DETAILS,
-          parcel.customerShipmentId,
-        ]),
-      ]);
     }
 
     return created;
