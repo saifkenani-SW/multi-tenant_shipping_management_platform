@@ -15,4 +15,8 @@ export interface Principal {
   branches: ScopeAccess[];
 
   warehouses: ScopeAccess[];
+
+  hubs?: ScopeAccess[];
+
+  headquarters?: ScopeAccess[];
 }

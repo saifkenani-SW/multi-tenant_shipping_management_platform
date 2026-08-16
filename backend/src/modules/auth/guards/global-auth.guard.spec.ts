@@ -67,6 +67,8 @@ describe('GlobalAuthGuard tenant context', () => {
       profileId: 'employee-profile-id',
       branches: [],
       warehouses: [],
+      hubs: [],
+      headquarters: [],
     });
   });
 });

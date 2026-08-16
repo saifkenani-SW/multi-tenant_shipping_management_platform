@@ -138,6 +138,8 @@ export class GlobalAuthGuard extends AuthGuard('jwt') {
         profileId: user.profileId, // This is the employeeId
         branches: principalDetails.branches || [],
         warehouses: principalDetails.warehouses || [],
+        hubs: principalDetails.hubs || [],
+        headquarters: principalDetails.headquarters || [],
       });
       return;
     }

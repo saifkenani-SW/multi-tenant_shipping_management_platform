@@ -121,6 +121,8 @@ export class EmployeeQueryService implements IEmployeeQueryService {
 
     const branches: ScopeAccess[] = [];
     const warehouses: ScopeAccess[] = [];
+    const hubs: ScopeAccess[] = [];
+    const headquarters: ScopeAccess[] = [];
 
     for (const assignment of scopeAssignments) {
       const accessRole = accessRolesMap.get(assignment.roleId);
@@ -135,6 +137,10 @@ export class EmployeeQueryService implements IEmployeeQueryService {
         branches.push(scopeAccess);
       } else if (assignment.orgType === 'WAREHOUSE') {
         warehouses.push(scopeAccess);
+      } else if (assignment.orgType === 'HUB') {
+        hubs.push(scopeAccess);
+      } else if (assignment.orgType === 'HEADQUARTERS') {
+        headquarters.push(scopeAccess);
       }
     }
 
@@ -146,6 +152,8 @@ export class EmployeeQueryService implements IEmployeeQueryService {
       tenantId: tenantId,
       branches,
       warehouses,
+      hubs,
+      headquarters,
     };
   }
 }

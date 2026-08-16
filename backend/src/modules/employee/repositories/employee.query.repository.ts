@@ -348,7 +348,6 @@ export class EmployeeQueryRepository implements IEmployeeQueryRepository {
       .where('e.is_active', '=', true)
       .where('ea.is_active', '=', true)
       .where('child_ou.is_active', '=', true)
-      .where('child_ou.org_type', 'in', ['BRANCH', 'WAREHOUSE'])
       .select([
         'child_ou.id as scopeId',
         'child_ou.org_type as orgType',
