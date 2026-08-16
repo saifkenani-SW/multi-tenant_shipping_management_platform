@@ -122,16 +122,10 @@ export class SuperUserSeeder implements Seeder {
     });
 
     if (!existingVehicleAssignment) {
-      const activeAssignments = await this.prisma.vehicle_assignment.findMany({
-        where: { tenant_id: tenant.id, is_active: true },
-        select: { vehicle_id: true },
-      });
-      const assignedVehicleIds = activeAssignments.map((a) => a.vehicle_id);
-
       let vehicle = await this.prisma.vehicle.findFirst({
         where: {
           tenant_id: tenant.id,
-          id: { notIn: assignedVehicleIds },
+          vehicle_assignment: { none: { is_active: true } },
         },
       });
 
