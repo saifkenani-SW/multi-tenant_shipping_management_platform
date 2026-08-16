@@ -14,11 +14,51 @@ const VEHICLES = [
     driverEmail: 'driver@fastship.com',
   },
   {
+    id: '00000000-0000-7000-8000-000000001004',
+    tenantIndex: 0,
+    plate: '441811-دمشق',
+    type: VehicleType.Van,
+    capacity: 1400,
+    driverEmail: 'driver2@masarat.sy',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001005',
+    tenantIndex: 0,
+    plate: '338220-اللاذقية',
+    type: VehicleType.Truck,
+    capacity: 3500,
+    driverEmail: 'driver3@masarat.sy',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001006',
+    tenantIndex: 0,
+    plate: '225410-درعا',
+    type: VehicleType.Van,
+    capacity: 1200,
+    driverEmail: 'driver4@masarat.sy',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001007',
+    tenantIndex: 0,
+    plate: '119033-حلب',
+    type: VehicleType.Truck,
+    capacity: 4000,
+    driverEmail: 'driver5@masarat.sy',
+  },
+  {
     id: '00000000-0000-7000-8000-000000001003',
     tenantIndex: 0,
     plate: '112088-دمشق',
     type: VehicleType.Truck,
     capacity: 4000,
+    driverEmail: null,
+  },
+  {
+    id: '00000000-0000-7000-8000-000000001008',
+    tenantIndex: 0,
+    plate: '556701-حمص',
+    type: VehicleType.Car,
+    capacity: 600,
     driverEmail: null,
   },
   {
@@ -105,7 +145,7 @@ export class VehicleSeeder implements Seeder {
         continue;
       }
 
-      const vehicleAssignId = `00000000-0000-7000-8000-00000000101${i}`;
+      const vehicleAssignId = `00000000-0000-7000-8000-0000000018${String(i).padStart(2, '0')}`;
       await this.prisma.vehicle_assignment.create({
         data: {
           id: vehicleAssignId,

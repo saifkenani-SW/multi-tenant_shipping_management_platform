@@ -36,7 +36,7 @@ export const SEEDED_TENANTS = [
   },
 ] as const;
 
-const PLAN_ID = '00000000-0000-7000-8000-000000000002';
+const PLAN_ID = '00000000-0000-7000-8000-000000000003';
 
 @Injectable()
 export class TenantSeeder implements Seeder {
@@ -99,8 +99,7 @@ export class TenantSeeder implements Seeder {
         },
       });
 
-      const volumetricDivisor =
-        t.id === '00000000-0000-7000-8000-000000000102' ? 0 : 5000;
+      const volumetricDivisor = 5000;
 
       await this.prisma.tenant_pricing_settings.upsert({
         where: { tenant_id: t.id },
@@ -120,7 +119,13 @@ export class TenantSeeder implements Seeder {
         where: { id: subscriptionId },
         update: {
           status: SubscriptionStatus.ACTIVE,
+          plan_id: PLAN_ID,
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
+          snapshot_max_branches: 50,
+          snapshot_max_warehouses: 20,
+          snapshot_max_employees: 200,
+          snapshot_max_vehicles: 100,
+          snapshot_max_zones: 15,
         },
         create: {
           id: subscriptionId,
@@ -128,11 +133,11 @@ export class TenantSeeder implements Seeder {
           plan_id: PLAN_ID,
           status: SubscriptionStatus.ACTIVE,
           expires_at: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-          snapshot_max_branches: 10,
-          snapshot_max_warehouses: 5,
-          snapshot_max_employees: 50,
-          snapshot_max_vehicles: 25,
-          snapshot_max_zones: 5,
+          snapshot_max_branches: 50,
+          snapshot_max_warehouses: 20,
+          snapshot_max_employees: 200,
+          snapshot_max_vehicles: 100,
+          snapshot_max_zones: 15,
         },
       });
 

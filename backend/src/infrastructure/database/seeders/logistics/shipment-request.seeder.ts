@@ -8,6 +8,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../../prisma.service';
 import { Seeder } from '../seeder.interface';
+import { ORG_UNIT_NAME } from '../rbac/organization-unit.seeder';
 import { LOCATION } from '../system/global-location.seeder';
 import { SEEDED_TENANTS } from '../tenant/tenant.seeder';
 
@@ -340,6 +341,73 @@ const SHIPMENTS: ShipmentSeed[] = [
   },
 ];
 
+const EXTRA_SHIPMENTS: ShipmentSeed[] = [
+  extraShipment(0, 0, 'john.doe@email.com', LOCATION.ABU_RUMMANEH, LOCATION.INSHAAT, ORG_UNIT_NAME.MASARAT_HUB, ORG_UNIT_NAME.MASARAT_HOMS, 'أحمد خالد الحسن', '+963933111004', '01020304081', 'فادي طنوس', '+963933555010', RequestStatus.CONVERTED, ShipmentStatus.IN_TRANSIT, ServiceLevel.STANDARD, 28000, 'كرتون أدوات منزلية إلى حمص'),
+  extraShipment(1, 0, 'bassam.qabbani@email.sy', LOCATION.JARAMANA, LOCATION.DARAA_SABEEL, ORG_UNIT_NAME.MASARAT_JARAMANA, ORG_UNIT_NAME.MASARAT_DARAA, 'بسام عدنان القباني', '+963933777001', '01020304085', 'مايا قاسم', '+963933120006', RequestStatus.CONVERTED, ShipmentStatus.PROCESSING, ServiceLevel.EXPRESS, 34100, 'مستلزمات زراعية إلى درعا'),
+  extraShipment(2, 0, 'ghadah.hamdan@email.sy', LOCATION.ZABLATANI, LOCATION.QUSOUR, ORG_UNIT_NAME.MASARAT_HUB, ORG_UNIT_NAME.MASARAT_DEIR, 'غادة سليم حمدان', '+963944888002', '01020304086', 'وليد الحريري', '+963933120007', RequestStatus.CONVERTED, ShipmentStatus.IN_TRANSIT, ServiceLevel.STANDARD, 55000, 'أغذية إلى دير الزور'),
+  extraShipment(3, 0, 'jane.smith@email.com', LOCATION.JARAMANA, LOCATION.AZIZIEH, ORG_UNIT_NAME.MASARAT_JARAMANA, ORG_UNIT_NAME.MASARAT_ALEPPO, 'ليلى حسن المصري', '+963944222004', '01020304082', 'عمر نجار', '+963955333004', RequestStatus.CONVERTED, ShipmentStatus.READY_FOR_DISPATCH, ServiceLevel.EXPRESS, 54250, 'ملابس من جرمانا إلى حلب'),
+  extraShipment(4, 0, 'john.doe@email.com', LOCATION.ADRA_INDUSTRIAL, LOCATION.TARTOUS_CORNICHE, ORG_UNIT_NAME.MASARAT_WAREHOUSE, ORG_UNIT_NAME.MASARAT_TARTOUS, 'أحمد خالد الحسن', '+963933111004', '01020304081', 'ماهر عبد النور', '+963933701122', RequestStatus.CONVERTED, ShipmentStatus.PROCESSING, ServiceLevel.STANDARD, 40000, 'قطع صناعية من عدرا إلى طرطوس'),
+  extraShipment(5, 0, 'tareq.atasi@email.sy', LOCATION.INSHAAT, LOCATION.AZIZIEH, ORG_UNIT_NAME.MASARAT_HOMS, ORG_UNIT_NAME.MASARAT_ALEPPO, 'طارق الأتاسي', '+963955999003', '01020304087', 'منى العجيلي', '+963955667788', RequestStatus.CONVERTED, ShipmentStatus.IN_TRANSIT, ServiceLevel.STANDARD, 30000, 'أقمشة من حمص إلى حلب — المرحلة الثانية'),
+  extraShipment(6, 0, 'hiba.atri@email.sy', LOCATION.MASHROU_10, LOCATION.ABU_RUMMANEH, ORG_UNIT_NAME.MASARAT_LATAKIA, ORG_UNIT_NAME.MASARAT_HUB, 'هبة محمد عطري', '+963966444004', '01020304084', 'أحمد خالد الحسن', '+963933111004', RequestStatus.CONVERTED, ShipmentStatus.READY_FOR_DISPATCH, ServiceLevel.STANDARD, 40000, 'سمك معلب من اللاذقية'),
+  extraShipment(7, 0, 'omar.najjar@email.sy', LOCATION.DARAA_SABEEL, LOCATION.DAMASCUS, ORG_UNIT_NAME.MASARAT_DARAA, ORG_UNIT_NAME.MASARAT_HUB, 'عمر عبد الله نجار', '+963955333004', '01020304083', 'سلمى كيلاني', '+963933120008', RequestStatus.CONVERTED, ShipmentStatus.PROCESSING, ServiceLevel.STANDARD, 22000, 'خضار من درعا إلى دمشق'),
+  extraShipment(8, 0, 'john.doe@email.com', LOCATION.QUSOUR, LOCATION.SHAALAN, ORG_UNIT_NAME.MASARAT_DEIR, ORG_UNIT_NAME.MASARAT_HUB, 'أحمد خالد الحسن', '+963933111004', '01020304081', 'رامي قصّار', '+963933120001', RequestStatus.CONVERTED, ShipmentStatus.IN_TRANSIT, ServiceLevel.EXPRESS, 85250, 'تمور ديرية إلى دمشق'),
+  extraShipment(9, 0, 'bassam.qabbani@email.sy', LOCATION.RAQQA, LOCATION.MEZZEH, ORG_UNIT_NAME.MASARAT_RAQQA, ORG_UNIT_NAME.MASARAT_WAREHOUSE, 'بسام عدنان القباني', '+963933777001', '01020304085', 'دينا الحلبي', '+963933120002', RequestStatus.CONVERTED, ShipmentStatus.PROCESSING, ServiceLevel.STANDARD, 55000, 'قطن من الرقة إلى عدرا'),
+  extraShipment(10, 0, 'ghadah.hamdan@email.sy', LOCATION.HAMA, LOCATION.LATAKIA, ORG_UNIT_NAME.MASARAT_HAMA, ORG_UNIT_NAME.MASARAT_LATAKIA, 'غادة سليم حمدان', '+963944888002', '01020304086', 'لينا بركات', '+963933120004', RequestStatus.CONVERTED, ShipmentStatus.READY_FOR_DISPATCH, ServiceLevel.SAME_DAY, 53750, 'أدوية عاجلة من حماة إلى اللاذقية'),
+  extraShipment(11, 0, 'jane.smith@email.com', LOCATION.SWEIDA, LOCATION.JARAMANA, ORG_UNIT_NAME.MASARAT_SWEIDA, ORG_UNIT_NAME.MASARAT_JARAMANA, 'ليلى حسن المصري', '+963944222004', '01020304082', 'فادي صباغ', '+963933120003', RequestStatus.CONVERTED, ShipmentStatus.PROCESSING, ServiceLevel.STANDARD, 22000, 'تفاح السويداء إلى جرمانا'),
+  extraShipment(12, 0, 'john.doe@email.com', LOCATION.IDLIB, LOCATION.ABU_RUMMANEH, ORG_UNIT_NAME.MASARAT_IDLIB, ORG_UNIT_NAME.MASARAT_HUB, 'أحمد خالد الحسن', '+963933111004', '01020304081', 'مهند رسلان', '+963944111001', RequestStatus.CONVERTED, ShipmentStatus.PROCESSING, ServiceLevel.STANDARD, 35000, 'زيت زيتون من إدلب'),
+  extraShipment(13, 0, 'tareq.atasi@email.sy', LOCATION.HASAKAH, LOCATION.AZIZIEH, ORG_UNIT_NAME.MASARAT_HASAKAH, ORG_UNIT_NAME.MASARAT_ALEPPO, 'طارق الأتاسي', '+963955999003', '01020304087', 'لينا خوري', '+963933111003', RequestStatus.CONVERTED, ShipmentStatus.IN_TRANSIT, ServiceLevel.STANDARD, 48000, 'قمح من الحسكة إلى حلب'),
+  extraShipment(14, 1, 'hiba.atri@email.sy', LOCATION.TARTOUS_CORNICHE, LOCATION.ABU_RUMMANEH, ORG_UNIT_NAME.QADMOUS_HUB, ORG_UNIT_NAME.QADMOUS_DAMASCUS, 'هبة محمد عطري', '+963966444004', '01020304084', 'أحمد خالد الحسن', '+963933111004', RequestStatus.CONVERTED, ShipmentStatus.IN_TRANSIT, ServiceLevel.EXPRESS, 62000, 'أسماك طرطوس إلى دمشق'),
+  extraShipment(15, 1, 'john.doe@email.com', LOCATION.ABU_RUMMANEH, LOCATION.AZIZIEH, ORG_UNIT_NAME.QADMOUS_DAMASCUS, ORG_UNIT_NAME.QADMOUS_ALEPPO, 'أحمد خالد الحسن', '+963933111004', '01020304081', 'عمر نجار', '+963955333004', RequestStatus.CONVERTED, ShipmentStatus.READY_FOR_DISPATCH, ServiceLevel.STANDARD, 35000, 'كتب من دمشق إلى حلب عبر القدومس'),
+  extraShipment(16, 2, 'hiba.atri@email.sy', LOCATION.QUSOUR, LOCATION.INSHAAT, ORG_UNIT_NAME.TROJAN_HUB, ORG_UNIT_NAME.TROJAN_HOMS, 'هبة محمد عطري', '+963966444004', '01020304084', 'نبيل قضماني', '+963931112233', RequestStatus.CONVERTED, ShipmentStatus.PROCESSING, ServiceLevel.STANDARD, 50000, 'تمر ديري إلى حمص'),
+  extraShipment(17, 2, 'omar.najjar@email.sy', LOCATION.ZABLATANI, LOCATION.AZIZIEH, ORG_UNIT_NAME.TROJAN_DAMASCUS, ORG_UNIT_NAME.TROJAN_ALEPPO, 'عمر عبد الله نجار', '+963955333004', '01020304083', 'منى العجيلي', '+963955667788', RequestStatus.CONVERTED, ShipmentStatus.IN_TRANSIT, ServiceLevel.EXPRESS, 54250, 'قطع غيار عبر طروادة إلى حلب'),
+];
+
+function extraShipment(
+  index: number,
+  tenantIndex: number,
+  customerEmail: string,
+  originLocationId: string,
+  destLocationId: string,
+  originName: string,
+  destName: string,
+  senderName: string,
+  senderPhone: string,
+  senderNationalId: string,
+  receiverName: string,
+  receiverPhone: string,
+  requestStatus: RequestStatus,
+  shipmentStatus: ShipmentStatus,
+  serviceLevel: ServiceLevel,
+  basePrice: number,
+  notes: string,
+): ShipmentSeed {
+  return {
+    requestId: `00000000-0000-7000-8000-000000000${837 + index}`,
+    quoteId: `00000000-0000-7000-8000-000000000${877 + index}`,
+    shipmentId: `00000000-0000-7000-8000-000000000${880 + index}`,
+    tenantIndex,
+    customerEmail,
+    originLocationId,
+    destLocationId,
+    originName,
+    destName,
+    senderName,
+    senderPhone,
+    senderNationalId,
+    receiverName,
+    receiverPhone,
+    pieces: 1,
+    weight: 4.5,
+    requestStatus,
+    shipmentStatus,
+    quoteStatus: QuotationStatus.APPROVED,
+    serviceLevel,
+    basePrice,
+    weightCharge: 0,
+    notes,
+  };
+}
+
 @Injectable()
 export class ShipmentRequestSeeder implements Seeder {
   private readonly logger = new Logger(ShipmentRequestSeeder.name);
@@ -349,7 +417,7 @@ export class ShipmentRequestSeeder implements Seeder {
   async seed(): Promise<void> {
     this.logger.log('Starting ShipmentRequestSeeder...');
 
-    for (const item of SHIPMENTS) {
+    for (const item of [...SHIPMENTS, ...EXTRA_SHIPMENTS]) {
       const tenant = SEEDED_TENANTS[item.tenantIndex];
       const customerUser = await this.prisma.users.findUnique({
         where: { email: item.customerEmail },
@@ -464,6 +532,8 @@ export class ShipmentRequestSeeder implements Seeder {
       });
     }
 
+    await this.seedMarketplaceQuotes();
+
     await this.prisma.customer_shipment.updateMany({
       where: {
         OR: [
@@ -480,5 +550,119 @@ export class ShipmentRequestSeeder implements Seeder {
     });
 
     this.logger.log('ShipmentRequestSeeder completed.');
+  }
+
+  private async seedMarketplaceQuotes(): Promise<void> {
+    const customerUser = await this.prisma.users.findUnique({
+      where: { email: 'john.doe@email.com' },
+    });
+    const customer = customerUser
+      ? await this.prisma.customer_profile.findUnique({
+          where: { user_id: customerUser.id },
+        })
+      : null;
+    if (!customer) {
+      return;
+    }
+
+    const request = await this.prisma.shipment_request.upsert({
+      where: { id: '00000000-0000-7000-8000-000000000856' },
+      update: { status: RequestStatus.PENDING },
+      create: {
+        id: '00000000-0000-7000-8000-000000000856',
+        customer_profile_id: customer.id,
+        target_tenant_id: null,
+        origin_global_location_id: LOCATION.JARAMANA,
+        destination_global_location_id: LOCATION.AZIZIEH,
+        sender_name: 'أحمد خالد الحسن',
+        sender_phone: '+963933111004',
+        receiver_name: 'عمر عبد الله نجار',
+        receiver_phone: '+963955333004',
+        expected_pieces_count: 2,
+        expected_total_weight_kg: 6,
+        notes: 'طلب مقارنة أسعار من جرمانا إلى حلب — عروض كل الشركات',
+        status: RequestStatus.PENDING,
+      },
+    });
+
+    const routes = [
+      {
+        tenantIndex: 0,
+        originName: ORG_UNIT_NAME.MASARAT_JARAMANA,
+        destName: ORG_UNIT_NAME.MASARAT_ALEPPO,
+        prices: [
+          { level: ServiceLevel.STANDARD, amount: 35000 },
+          { level: ServiceLevel.EXPRESS, amount: 54250 },
+          { level: ServiceLevel.SAME_DAY, amount: 75250 },
+        ],
+      },
+      {
+        tenantIndex: 1,
+        originName: ORG_UNIT_NAME.QADMOUS_JARAMANA,
+        destName: ORG_UNIT_NAME.QADMOUS_ALEPPO,
+        prices: [
+          { level: ServiceLevel.STANDARD, amount: 35000 },
+          { level: ServiceLevel.EXPRESS, amount: 54250 },
+          { level: ServiceLevel.SAME_DAY, amount: 75250 },
+        ],
+      },
+      {
+        tenantIndex: 2,
+        originName: ORG_UNIT_NAME.TROJAN_DAMASCUS,
+        destName: ORG_UNIT_NAME.TROJAN_ALEPPO,
+        prices: [
+          { level: ServiceLevel.STANDARD, amount: 35000 },
+          { level: ServiceLevel.EXPRESS, amount: 54250 },
+          { level: ServiceLevel.SAME_DAY, amount: 75250 },
+        ],
+      },
+    ];
+
+    let quoteIndex = 0;
+    for (const route of routes) {
+      const tenant = SEEDED_TENANTS[route.tenantIndex];
+      const origin = await this.prisma.organization_unit.findFirst({
+        where: { tenant_id: tenant.id, name: route.originName },
+      });
+      const destination = await this.prisma.organization_unit.findFirst({
+        where: { tenant_id: tenant.id, name: route.destName },
+      });
+      const employee = await this.prisma.employee.findFirst({
+        where: { tenant_id: tenant.id },
+        orderBy: { employee_code: 'asc' },
+      });
+      if (!origin || !destination || !employee) {
+        continue;
+      }
+
+      for (const price of route.prices) {
+        const quoteId = `00000000-0000-7000-8000-000000000${910 + quoteIndex}`;
+        quoteIndex += 1;
+        await this.prisma.quotation.upsert({
+          where: { id: quoteId },
+          update: {
+            status: QuotationStatus.PENDING,
+            amount: price.amount,
+            service_level: price.level,
+          },
+          create: {
+            id: quoteId,
+            tenant_id: tenant.id,
+            shipment_request_id: request.id,
+            origin_org_unit_id: origin.id,
+            destination_org_unit_id: destination.id,
+            quotation_type: QuotationType.AUTOMATIC,
+            base_price: price.amount,
+            weight_charge: 2500,
+            extra_fees: 0,
+            amount: price.amount + 2500,
+            status: QuotationStatus.PENDING,
+            service_level: price.level,
+            submitted_by_employee_id: employee.id,
+            notes: `عرض ${tenant.name} — ${price.level}`,
+          },
+        });
+      }
+    }
   }
 }

@@ -84,6 +84,66 @@ export const SEEDED_USERS = [
     email: 'tareq.atasi@email.sy',
     phone: '+963955999003',
   },
+  {
+    id: '00000000-0000-7000-8000-000000000027',
+    email: 'rami.kassar@masarat.sy',
+    phone: '+963933120001',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000028',
+    email: 'dina.halabi@masarat.sy',
+    phone: '+963933120002',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000029',
+    email: 'fadi.sabbagh@masarat.sy',
+    phone: '+963933120003',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000031',
+    email: 'lina.barakat@masarat.sy',
+    phone: '+963933120004',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000032',
+    email: 'hassan.nabulsi@masarat.sy',
+    phone: '+963933120005',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000033',
+    email: 'maya.qasem@masarat.sy',
+    phone: '+963933120006',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000034',
+    email: 'walid.hariri@masarat.sy',
+    phone: '+963933120007',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000035',
+    email: 'salma.kilani@masarat.sy',
+    phone: '+963933120008',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000036',
+    email: 'driver2@masarat.sy',
+    phone: '+963933130002',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000037',
+    email: 'driver3@masarat.sy',
+    phone: '+963933130003',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000038',
+    email: 'driver4@masarat.sy',
+    phone: '+963933130004',
+  },
+  {
+    id: '00000000-0000-7000-8000-000000000039',
+    email: 'driver5@masarat.sy',
+    phone: '+963933130005',
+  },
 ] as const;
 
 @Injectable()

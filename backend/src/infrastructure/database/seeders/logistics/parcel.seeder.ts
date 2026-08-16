@@ -175,6 +175,59 @@ const PARCELS = [
   },
 ] as const;
 
+const EXTRA_PARCELS = [
+  extraParcel(17, 0, 'كرتون أدوات منزلية', 'منزلية', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(18, 1, 'مستلزمات زراعية', 'زراعة', ParcelStatus.PROCESSING, false),
+  extraParcel(19, 2, 'أغذية معلبة', 'أغذية', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(20, 3, 'طرد ملابس جرمانا', 'ملابس', ParcelStatus.READY_FOR_DISPATCH, false),
+  extraParcel(21, 4, 'قطع صناعية', 'صناعة', ParcelStatus.PROCESSING, true),
+  extraParcel(22, 5, 'أقمشة حمص — المرحلة الثانية', 'أقمشة', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(23, 6, 'سمك معلب', 'أغذية', ParcelStatus.READY_FOR_DISPATCH, false),
+  extraParcel(24, 7, 'خضار درعا', 'أغذية', ParcelStatus.PROCESSING, false),
+  extraParcel(25, 8, 'تمر ديري', 'أغذية', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(26, 9, 'قطن الرقة', 'مواد خام', ParcelStatus.PROCESSING, false),
+  extraParcel(27, 10, 'أدوية عاجلة', 'أدوية', ParcelStatus.READY_FOR_DISPATCH, true),
+  extraParcel(28, 11, 'تفاح السويداء', 'أغذية', ParcelStatus.PROCESSING, false),
+  extraParcel(29, 12, 'زيت زيتون إدلب', 'أغذية', ParcelStatus.PROCESSING, false),
+  extraParcel(30, 13, 'قمح الحسكة', 'مواد خام', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(31, 14, 'أسماك طرطوس', 'أغذية', ParcelStatus.IN_TRANSIT, true),
+  extraParcel(32, 15, 'كتب عبر القدومس', 'قرطاسية', ParcelStatus.READY_FOR_DISPATCH, false),
+  extraParcel(33, 16, 'تمر إلى حمص', 'أغذية', ParcelStatus.PROCESSING, false),
+  extraParcel(34, 17, 'قطع غيار طروادة', 'قطع غيار', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(35, 0, 'طرد إضافي لرحلة حمص', 'منزلية', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(36, 5, 'عينات أقمشة ثانية', 'أقمشة', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(37, 1, 'بذور زراعية', 'زراعة', ParcelStatus.PROCESSING, false),
+  extraParcel(38, 2, 'سكر وطحين', 'أغذية', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(39, 6, 'زيتون ساحلي', 'أغذية', ParcelStatus.READY_FOR_DISPATCH, false),
+  extraParcel(40, 8, 'صابون غار', 'منزلية', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(41, 14, 'حمضيات طرطوس', 'أغذية', ParcelStatus.IN_TRANSIT, false),
+  extraParcel(42, 4, 'محركات صغيرة', 'صناعة', ParcelStatus.PROCESSING, true),
+  extraParcel(43, 11, 'عنب السويداء', 'أغذية', ParcelStatus.PROCESSING, false),
+] as const;
+
+function extraParcel(
+  seq: number,
+  extraShipmentIndex: number,
+  description: string,
+  category: string,
+  status: ParcelStatus,
+  fragile: boolean,
+) {
+  return {
+    id: `00000000-0000-7000-8000-0000000011${String(seq).padStart(2, '0')}`,
+    shipmentId: `00000000-0000-7000-8000-000000000${880 + extraShipmentIndex}`,
+    trackingNumber: `MSRT-2026-${String(seq).padStart(4, '0')}`,
+    description,
+    category,
+    weight: 3.5,
+    length: 35,
+    width: 25,
+    height: 18,
+    status,
+    fragile,
+  };
+}
+
 @Injectable()
 export class ParcelSeeder implements Seeder {
   private readonly logger = new Logger(ParcelSeeder.name);
@@ -184,7 +237,7 @@ export class ParcelSeeder implements Seeder {
   async seed(): Promise<void> {
     this.logger.log('Starting ParcelSeeder...');
 
-    for (const p of PARCELS) {
+    for (const p of [...PARCELS, ...EXTRA_PARCELS]) {
       const shipment = await this.prisma.customer_shipment.findUnique({
         where: { id: p.shipmentId },
       });
