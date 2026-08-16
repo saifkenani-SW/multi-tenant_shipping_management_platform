@@ -25,13 +25,22 @@ import { ShipmentRequestCommandRepository } from './request/infrastructure/repos
 import { ShipmentRequestQueryService } from './request/application/services/shipment-request.query.service';
 import { ShipmentRequestQueryRepository } from './request/infrastructure/repositories/shipment-request.query.repository';
 import { ShipmentRequestVisibilityScope } from './authorization/scopes/shipment-request-visibility.scope';
+import { QuotationListener } from './quotation/application/listeners/quotation.listener';
 
 // Facades
 import { ShipmentRequestFacade } from './facades/shipment-request.facade';
 import { TenantModule } from '../tenant/tenant.module';
+import { UserModule } from '../user/user.module';
+import { NotificationModule } from '../notification/notification.module';
 
 @Module({
-  imports: [OrganizationModule, GlobalLocationModule, TenantModule],
+  imports: [
+    OrganizationModule,
+    GlobalLocationModule,
+    TenantModule,
+    UserModule,
+    NotificationModule,
+  ],
   controllers: [
     ZonePricingController,
     ShipmentRequestController,
@@ -53,6 +62,7 @@ import { TenantModule } from '../tenant/tenant.module';
     ShipmentRequestQueryService,
     ShipmentRequestQueryRepository,
     ShipmentRequestVisibilityScope,
+    QuotationListener,
     ShipmentRequestFacade,
   ],
   exports: [ShipmentRequestFacade],

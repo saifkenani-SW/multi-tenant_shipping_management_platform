@@ -112,6 +112,44 @@ export class TripQueryService {
     return trip;
   }
 
+  async filterVisibleTrips(
+    principal: any,
+    tripIds: string[],
+    payloadTenantId?: string,
+  ): Promise<string[]> {
+    if (!tripIds.length) return [];
+
+    let effectiveTenantId: string | undefined;
+    let orgUnitIds: string[] | undefined;
+    const type = principal.subject.type;
+
+    if (type === 'PLATFORM_OWNER') {
+      effectiveTenantId = payloadTenantId;
+    } else if (type === 'TENANT_ADMIN') {
+      effectiveTenantId = principal.tenantId;
+    } else if (type === 'EMPLOYEE') {
+      effectiveTenantId = principal.tenantId;
+      orgUnitIds = [
+        ...(principal.branches || []).map((b: any) => b.id),
+        ...(principal.warehouses || []).map((w: any) => w.id),
+      ];
+    } else if (type === 'DRIVER') {
+      effectiveTenantId = principal.tenantId;
+    } else {
+      return [];
+    }
+
+    const criteria: TripQueryCriteria = {
+      tenantId: effectiveTenantId,
+      scopeOrgUnitIds: orgUnitIds,
+      tripIds: tripIds,
+      pagination: { skip: 0, take: tripIds.length, page: 1, limit: tripIds.length },
+    };
+
+    const [trips] = await this.tripQueryRepository.findMany(criteria);
+    return trips.map((t) => t.id);
+  }
+
   async countManifests(tenantId: string, tripId: string): Promise<number> {
     return this.tripQueryRepository.countManifests(tenantId, tripId);
   }

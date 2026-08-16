@@ -115,7 +115,7 @@ export class ParcelController {
     return this.queryService.findByTrackingNumber(trackingNumber);
   }
 
-  @Patch('parcels/:trackingNumber/status')
+/*  @Patch('parcels/:trackingNumber/status')
   @HttpCode(HttpStatus.OK)
   @Roles(RoleType.EMPLOYEE)
   @ApiOperation({
@@ -128,7 +128,7 @@ export class ParcelController {
     @Body() dto: UpdateParcelStatusDto,
   ): Promise<void> {
     await this.commandService.updateStatus(trackingNumber, dto);
-  }
+  }*/
 
   @Patch('parcels/:trackingNumber/receive')
   @HttpCode(HttpStatus.OK)
@@ -144,7 +144,7 @@ export class ParcelController {
     await this.commandService.receiveParcel(trackingNumber);
   }
 
-  @Patch('parcels/:trackingNumber/dispatch')
+  /*@Patch('parcels/:trackingNumber/dispatch')
   @HttpCode(HttpStatus.OK)
   @Roles(RoleType.EMPLOYEE)
   @ApiOperation({
@@ -159,7 +159,7 @@ export class ParcelController {
     @Param('trackingNumber') trackingNumber: string,
   ): Promise<void> {
     await this.commandService.markReadyForDispatch(trackingNumber);
-  }
+  }*/
 
   @Post('parcels/:trackingNumber/proof-of-delivery')
   @Roles(RoleType.EMPLOYEE)

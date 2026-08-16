@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { TransportManifestQueryRepository } from '../../infrastructure/repositories/transport-manifest-query.repository';
 import { TransportManifest } from '../../domain/entities/transport-manifest.entity';
 import { ManifestItem } from '../../domain/entities/manifest-item.entity';
@@ -198,5 +198,42 @@ export class ManifestQueryService {
     parcelIds: string[],
   ): Promise<boolean> {
     return this.queryRepository.existsItemsForParcels(manifestId, parcelIds);
+  }
+
+  /**
+   * Scans a tracking number to find its active manifest item.
+   * Ensures the parcel is in an active manifest in this tenant, and the user has access to it.
+   */
+  async scanParcel(
+    tenantId: string,
+    trackingNumber: string,
+  ): Promise<{ manifestId: string; itemId: string; parcel: any }> {
+    // 1. Resolve parcel ID bypassing CustomerShipment authorization (since caller is Driver scanning physical barcode)
+    const parcelId =
+      await this.parcelLookup.getParcelIdByTrackingNumber(trackingNumber);
+
+    // 2. Find the active manifest item holding this parcel in this tenant
+    const item = await this.queryRepository.findActiveItemByParcelIdAndTenant(
+      parcelId,
+      tenantId,
+    );
+
+    if (!item) {
+      throw new NotFoundException(
+        'Parcel is not assigned to any active manifest',
+      );
+    }
+
+    // 3. Authorize via existing getManifestDetails to ensure the user can see it
+    // (e.g. they are the assigned driver, or an employee with matching org scope)
+    await this.getManifestDetails(item.manifestId);
+
+    const parcels = await this.parcelLookup.getParcelsByIds([parcelId]);
+
+    return {
+      manifestId: item.manifestId,
+      itemId: item.itemId,
+      parcel: parcels[0],
+    };
   }
 }

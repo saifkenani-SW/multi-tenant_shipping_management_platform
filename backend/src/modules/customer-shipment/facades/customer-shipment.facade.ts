@@ -51,6 +51,14 @@ export class CustomerShipmentFacade {
   }
 
   /**
+   * Retrieves only the internal parcel ID by tracking number.
+   * Bypasses ParcelPolicy for internal use (e.g., Fleet manifest scanning).
+   */
+  async getParcelIdByTrackingNumber(trackingNumber: string): Promise<string> {
+    return this.parcelQueryService.findIdByTrackingNumberOrThrow(trackingNumber);
+  }
+
+  /**
    * Returns the parcel with its full movement history.
    *
    * Delegates to ParcelQueryService.findByTrackingNumber(), which is decorated

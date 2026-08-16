@@ -40,6 +40,13 @@ export class UserFacade {
   }
 
   /**
+   * Retrieves basic user summary by phone for notifications or quick lookups.
+   */
+  async getUserSummaryByPhone(phone: string): Promise<UserSummaryDto | null> {
+    return this.queryService.getUserSummaryByPhone(phone);
+  }
+
+  /**
    * Retrieves full user identity for authentication.
    */
   async getIdentityByEmail(email: string) {

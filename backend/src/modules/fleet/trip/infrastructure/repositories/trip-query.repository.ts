@@ -95,6 +95,11 @@ export class TripQueryRepository {
       );
     }
 
+    if (criteria.tripIds && criteria.tripIds.length > 0) {
+      query = query.where('id', 'in', criteria.tripIds);
+      countQuery = countQuery.where('id', 'in', criteria.tripIds);
+    }
+
     query = query
       .orderBy('created_at', 'desc')
       .offset(criteria.pagination.skip)

@@ -29,4 +29,59 @@ export class NotificationFacade {
       );
     }
   }
+
+  async notifyUsers(
+    userIds: string[],
+    message: INotificationMessage,
+  ): Promise<void> {
+    try {
+      await this.notificationService.sendToUsers(userIds, message);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to notify users: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async notifyTopic(
+    topic: string,
+    message: INotificationMessage,
+  ): Promise<void> {
+    try {
+      await this.notificationService.sendToTopic(topic, message);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to notify topic ${topic}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async registerToken(
+    userId: string,
+    fcmToken: string,
+    platform: string = 'unknown',
+  ): Promise<void> {
+    try {
+      await this.notificationService.registerToken(userId, fcmToken, platform);
+    } catch (error) {
+      this.logger.warn(
+        `Failed to register token for user ${userId}: ${(error as Error).message}`,
+      );
+    }
+  }
+
+  async subscribeTokenToTopics(
+    fcmToken: string,
+    topics: string[],
+  ): Promise<void> {
+    try {
+      for (const topic of topics) {
+        await this.notificationService.subscribeTokenToTopic([fcmToken], topic);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Failed to subscribe token to topics: ${(error as Error).message}`,
+      );
+    }
+  }
 }

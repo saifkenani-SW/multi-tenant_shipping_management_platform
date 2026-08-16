@@ -41,6 +41,8 @@ import type { ParcelMovementAppendedPayload } from '../../events/parcel-movement
 @WebSocketGateway({
   namespace: '/tracking',
   cors: { origin: '*', credentials: false },
+  pingInterval: 10000,
+  pingTimeout: 5000,
 })
 export class TrackingGateway {
   @WebSocketServer()
@@ -203,6 +205,125 @@ export class TrackingGateway {
       tenantId,
       expiresAt: Date.now() + TrackingGateway.TRIP_AUTH_TTL_MS,
     });
+  }
+
+  // ─── Dashboard Subscriptions ──────────────────────────────────────────────────
+
+  @UseInterceptors(WsContextInterceptor)
+  @SubscribeMessage('subscribe_trip')
+  async handleSubscribeTrip(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { tripId: string; tenantId?: string },
+  ): Promise<void> {
+    const principal = this.requestContextService.getPrincipal();
+
+    const visibleTrips = await this.fleetFacade.filterVisibleTrips(
+      principal,
+      [data.tripId],
+      data.tenantId,
+    );
+
+    if (visibleTrips.length === 0) {
+      client.emit('subscribe_error', {
+        tripId: data.tripId,
+        reason: 'FORBIDDEN',
+      });
+      return;
+    }
+
+    await client.join(`trip:${data.tripId}`);
+    client.emit('subscribed', { tripId: data.tripId });
+  }
+
+  @UseInterceptors(WsContextInterceptor)
+  @SubscribeMessage('subscribe_trips')
+  async handleSubscribeTrips(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { tripIds: string[]; tenantId?: string },
+  ): Promise<{ subscribed: string[]; rejected: string[] }> {
+    const principal = this.requestContextService.getPrincipal();
+
+    const visibleTripIds = await this.fleetFacade.filterVisibleTrips(
+      principal,
+      data.tripIds,
+      data.tenantId,
+    );
+
+    const subscribed: string[] = [];
+    const rejected: string[] = [];
+    const visibleSet = new Set(visibleTripIds);
+
+    for (const tripId of data.tripIds) {
+      if (visibleSet.has(tripId)) {
+        await client.join(`trip:${tripId}`);
+        subscribed.push(tripId);
+      } else {
+        rejected.push(tripId);
+      }
+    }
+
+    return { subscribed, rejected };
+  }
+
+  @SubscribeMessage('unsubscribe_trip')
+  async handleUnsubscribeTrip(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { tripId: string },
+  ): Promise<void> {
+    await client.leave(`trip:${data.tripId}`);
+  }
+
+  @SubscribeMessage('unsubscribe_trips')
+  async handleUnsubscribeTrips(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { tripIds: string[] },
+  ): Promise<void> {
+    for (const id of data.tripIds) {
+      await client.leave(`trip:${id}`);
+    }
+  }
+
+  // ─── Application-Level Heartbeat ──────────────────────────────────────────────
+
+  /**
+   * Called periodically by clients (e.g., every 10 seconds).
+   * 1. WsContextInterceptor validates the JWT signature and expiration. If expired,
+   *    it throws WsException before this runs.
+   * 2. This handler re-evaluates visibility for all currently joined trip rooms
+   *    to catch mid-session permission revocations (e.g., employee transferred).
+   */
+  @UseInterceptors(WsContextInterceptor)
+  @SubscribeMessage('ping')
+  async handlePing(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { tenantId?: string } = {},
+  ): Promise<void> {
+    const principal = this.requestContextService.getPrincipal();
+
+    const tripRooms = Array.from(client.rooms)
+      .filter((r) => r.startsWith('trip:'))
+      .map((r) => r.replace('trip:', ''));
+
+    if (tripRooms.length === 0) {
+      client.emit('pong', { valid: true });
+      return;
+    }
+
+    const visibleTripIds = await this.fleetFacade.filterVisibleTrips(
+      principal,
+      tripRooms,
+      data.tenantId,
+    );
+
+    const visibleSet = new Set(visibleTripIds);
+
+    for (const tripId of tripRooms) {
+      if (!visibleSet.has(tripId)) {
+        await client.leave(`trip:${tripId}`);
+      }
+    }
+
+    client.emit('pong', { valid: true });
   }
 
   // ─── Internal Events ─────────────────────────────────────────────────────────

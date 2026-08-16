@@ -46,30 +46,31 @@ export class AuthController {
     examples: {
       'Super All-in-One': {
         summary: 'Super Account (All Roles)',
-        value: { email: 'super@all-in-one.com', password: 'password123' },
+        value: { email: 'super@all-in-one.com', password: 'password123', fcmToken: 'test-fcm-token-123' },
       },
       'Platform Owner': {
         summary: 'Platform Owner (System Admin)',
         value: {
           email: 'owner@logisticsplatform.com',
           password: 'password123',
+          fcmToken: 'test-fcm-token-123',
         },
       },
       'Company Owner': {
         summary: 'Tenant Admin (Company Owner)',
-        value: { email: 'admin@fastship.com', password: 'password123' },
+        value: { email: 'admin@fastship.com', password: 'password123', fcmToken: 'test-fcm-token-123' },
       },
       Employee: {
         summary: 'Employee Account',
-        value: { email: 'employee@fastship.com', password: 'password123' },
+        value: { email: 'employee@fastship.com', password: 'password123', fcmToken: 'test-fcm-token-123' },
       },
       Driver: {
         summary: 'Driver Account',
-        value: { email: 'driver@fastship.com', password: 'password123' },
+        value: { email: 'driver@fastship.com', password: 'password123', fcmToken: 'test-fcm-token-123' },
       },
       Customer: {
         summary: 'Customer Account',
-        value: { email: 'john.doe@email.com', password: 'password123' },
+        value: { email: 'john.doe@email.com', password: 'password123', fcmToken: 'test-fcm-token-123' },
       },
     },
   })
