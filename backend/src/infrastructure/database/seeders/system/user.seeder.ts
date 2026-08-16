@@ -98,14 +98,26 @@ export class UserSeeder implements Seeder {
     const passwordHash = await bcrypt.hash('password123', 10);
 
     for (const u of SEEDED_USERS) {
-      await this.prisma.users.upsert({
-        where: { id: u.id },
-        update: {
-          email: u.email,
-          phone: u.phone,
-          password_hash: passwordHash,
+      const existing = await this.prisma.users.findFirst({
+        where: {
+          OR: [{ email: u.email }, { phone: u.phone }],
         },
-        create: {
+      });
+
+      if (existing) {
+        await this.prisma.users.update({
+          where: { id: existing.id },
+          data: {
+            email: u.email,
+            phone: u.phone,
+            password_hash: passwordHash,
+          },
+        });
+        continue;
+      }
+
+      await this.prisma.users.create({
+        data: {
           id: u.id,
           email: u.email,
           phone: u.phone,

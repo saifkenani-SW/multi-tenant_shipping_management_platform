@@ -53,9 +53,13 @@ export class VehicleSeeder implements Seeder {
       const tenant = SEEDED_TENANTS[item.tenantIndex];
 
       const vehicle = await this.prisma.vehicle.upsert({
-        where: { id: item.id },
+        where: {
+          tenant_id_plate_number: {
+            tenant_id: tenant.id,
+            plate_number: item.plate,
+          },
+        },
         update: {
-          plate_number: item.plate,
           type: item.type,
           capacity_kg: item.capacity,
           status: VehicleStatus.ACTIVE,
@@ -88,11 +92,22 @@ export class VehicleSeeder implements Seeder {
         continue;
       }
 
+      const existingAssignment = await this.prisma.vehicle_assignment.findFirst({
+        where: {
+          OR: [
+            { employee_id: driverEmp.id, is_active: true },
+            { vehicle_id: vehicle.id, is_active: true },
+          ],
+        },
+      });
+
+      if (existingAssignment) {
+        continue;
+      }
+
       const vehicleAssignId = `00000000-0000-7000-8000-00000000101${i}`;
-      await this.prisma.vehicle_assignment.upsert({
-        where: { id: vehicleAssignId },
-        update: { is_active: true },
-        create: {
+      await this.prisma.vehicle_assignment.create({
+        data: {
           id: vehicleAssignId,
           tenant_id: tenant.id,
           employee_id: driverEmp.id,
