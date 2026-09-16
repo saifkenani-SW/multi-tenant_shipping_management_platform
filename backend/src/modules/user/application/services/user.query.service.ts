@@ -8,6 +8,7 @@ import { UserLoginType } from '../../../auth/types/auth.types';
 export interface UserProfileInfo {
   type: UserLoginType;
   tenantId?: string;
+  tenantName?: string;
   isActive: boolean;
   employeeId?: string;
   vehicleId?: string;
@@ -51,6 +52,7 @@ export class UserQueryService {
         profiles.push({
           type: UserLoginType.TENANT_ADMIN,
           tenantId: owner.tenant_id,
+          tenantName: data.tenantNames.get(owner.tenant_id),
           isActive: true, // Assuming intrinsic active state
         });
       }
@@ -58,9 +60,12 @@ export class UserQueryService {
 
     if (data.employees.length > 0) {
       for (const emp of data.employees) {
+        const tenantName = data.tenantNames.get(emp.tenant_id);
+
         profiles.push({
           type: UserLoginType.EMPLOYEE,
           tenantId: emp.tenant_id,
+          tenantName,
           isActive: emp.is_active,
           employeeId: emp.id,
         });
@@ -74,6 +79,7 @@ export class UserQueryService {
           profiles.push({
             type: UserLoginType.DRIVER,
             tenantId: emp.tenant_id,
+            tenantName,
             isActive: emp.is_active, // Driver is active if employee is active
             employeeId: emp.id,
             vehicleId: activeVehicleAssignment.vehicle_id,

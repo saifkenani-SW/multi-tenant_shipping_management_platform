@@ -1,0 +1,861 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>تصميم نظام سجل التدقيق — Audit Log</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #0c1a2d;
+      --panel-2: #10233b;
+      --panel-3: #132a45;
+      --text: #ecf5ff;
+      --muted: #a7b8cb;
+      --line: #23405f;
+      --primary: #48d7c8;
+      --primary-2: #82f0df;
+      --blue: #63a8ff;
+      --amber: #ffcb6b;
+      --red: #ff7b88;
+      --green: #70e1a1;
+      --shadow: 0 18px 55px rgba(0, 0, 0, .28);
+      --radius: 18px;
+    }
+
+    [data-theme="light"] {
+      --bg: #f3f7fb;
+      --panel: #ffffff;
+      --panel-2: #f7fbff;
+      --panel-3: #edf5fb;
+      --text: #112136;
+      --muted: #52677e;
+      --line: #d5e2ec;
+      --primary: #007f78;
+      --primary-2: #006f69;
+      --blue: #286dc4;
+      --amber: #8a5b00;
+      --red: #b12e40;
+      --green: #147a45;
+      --shadow: 0 18px 55px rgba(27, 58, 90, .12);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 85% 0%, rgba(72, 215, 200, .10), transparent 28rem),
+        radial-gradient(circle at 5% 35%, rgba(99, 168, 255, .08), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Tahoma, Arial, "Segoe UI", sans-serif;
+      line-height: 1.85;
+    }
+    a { color: inherit; }
+    code, pre { font-family: Consolas, "Courier New", monospace; direction: ltr; text-align: left; }
+    code { color: var(--primary-2); }
+    .shell { display: grid; grid-template-columns: 280px minmax(0, 1fr); min-height: 100vh; }
+
+    aside {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      padding: 24px 18px;
+      border-left: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 92%, transparent);
+      backdrop-filter: blur(18px);
+      overflow: auto;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 5px 7px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: linear-gradient(145deg, var(--primary), var(--blue));
+      color: #04151c;
+      font-weight: 900;
+      box-shadow: 0 10px 28px rgba(72, 215, 200, .22);
+    }
+    .brand strong { display: block; line-height: 1.25; }
+    .brand small { color: var(--muted); }
+    nav { padding: 16px 0; }
+    nav a {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 8px 10px;
+      margin: 3px 0;
+      color: var(--muted);
+      text-decoration: none;
+      border-radius: 10px;
+      font-size: 13px;
+      transition: .18s ease;
+    }
+    nav a::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--line); }
+    nav a:hover, nav a.active { color: var(--text); background: var(--panel-3); }
+    nav a.active::before { background: var(--primary); box-shadow: 0 0 0 4px rgba(72, 215, 200, .12); }
+    .side-note {
+      padding: 12px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    main { width: min(1180px, 100%); margin: 0 auto; padding: 30px 38px 90px; }
+    .toolbar { display: flex; justify-content: flex-end; gap: 9px; margin-bottom: 14px; }
+    button {
+      border: 1px solid var(--line);
+      color: var(--text);
+      background: var(--panel);
+      padding: 9px 13px;
+      border-radius: 10px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+    }
+    button:hover { border-color: var(--primary); }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 42px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(72, 215, 200, .11), rgba(99, 168, 255, .07) 55%, var(--panel));
+      border-radius: 26px;
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "AUDIT";
+      position: absolute;
+      left: -6px;
+      bottom: -35px;
+      font-size: 126px;
+      line-height: 1;
+      letter-spacing: -8px;
+      font-weight: 900;
+      color: rgba(255,255,255,.025);
+      direction: ltr;
+    }
+    .eyebrow { color: var(--primary-2); font-size: 13px; font-weight: 700; letter-spacing: .4px; }
+    h1 { margin: 8px 0 12px; font-size: clamp(32px, 5vw, 57px); line-height: 1.25; }
+    .hero p { max-width: 780px; margin: 0; color: var(--muted); font-size: 17px; }
+    .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+    .pill { padding: 6px 10px; border: 1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; background: rgba(0,0,0,.08); }
+    .pill.good { color: var(--green); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); }
+    .pill.warn { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 40%, var(--line)); }
+
+    section { margin-top: 50px; }
+    .section-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 18px; }
+    .num {
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      width: 35px;
+      height: 35px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      color: var(--primary-2);
+      background: var(--panel-2);
+      font: 700 13px Consolas, monospace;
+    }
+    h2 { margin: 0; font-size: 28px; line-height: 1.35; }
+    h3 { margin: 25px 0 10px; font-size: 19px; }
+    h4 { margin: 14px 0 7px; font-size: 15px; }
+    .section-head p { margin: 4px 0 0; color: var(--muted); }
+    .lead { color: var(--muted); font-size: 16px; }
+
+    .grid { display: grid; gap: 14px; }
+    .grid.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: linear-gradient(145deg, var(--panel), var(--panel-2));
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .card p:last-child { margin-bottom: 0; }
+    .card.accent { border-top: 3px solid var(--primary); }
+    .card.risk { border-top: 3px solid var(--red); }
+    .card.future { border-top: 3px solid var(--blue); }
+    .metric { font-size: 32px; font-weight: 800; color: var(--primary-2); line-height: 1.1; }
+    .muted { color: var(--muted); }
+    .good { color: var(--green); }
+    .warning { color: var(--amber); }
+    .danger { color: var(--red); }
+    .blue { color: var(--blue); }
+
+    .callout {
+      margin: 18px 0;
+      padding: 17px 19px;
+      border-right: 4px solid var(--primary);
+      border-radius: 13px;
+      background: color-mix(in srgb, var(--primary) 8%, var(--panel));
+    }
+    .callout.warn { border-color: var(--amber); background: color-mix(in srgb, var(--amber) 8%, var(--panel)); }
+    .callout.danger { border-color: var(--red); background: color-mix(in srgb, var(--red) 7%, var(--panel)); }
+    .callout strong { display: block; margin-bottom: 3px; }
+
+    ul, ol { padding-right: 22px; }
+    li { margin: 6px 0; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li { position: relative; padding-right: 27px; }
+    .checklist li::before { content: "✓"; position: absolute; right: 0; color: var(--green); font-weight: 900; }
+    .xlist { list-style: none; padding: 0; }
+    .xlist li { position: relative; padding-right: 27px; }
+    .xlist li::before { content: "×"; position: absolute; right: 0; color: var(--red); font-weight: 900; }
+
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 15px; }
+    table { width: 100%; border-collapse: collapse; min-width: 720px; background: var(--panel); font-size: 14px; }
+    th, td { padding: 13px 14px; text-align: right; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--primary-2); background: var(--panel-3); font-size: 13px; white-space: nowrap; }
+    tr:last-child td { border-bottom: 0; }
+    td code { font-size: 12px; }
+
+    pre {
+      margin: 14px 0;
+      padding: 18px;
+      overflow: auto;
+      color: #d9eaff;
+      background: #06101c;
+      border: 1px solid #203952;
+      border-radius: 13px;
+      font-size: 12.5px;
+      line-height: 1.65;
+      tab-size: 2;
+    }
+    [data-theme="light"] pre { color: #e7f2ff; }
+
+    .architecture {
+      direction: ltr;
+      display: grid;
+      grid-template-columns: 1fr auto 1.1fr auto 1fr;
+      align-items: stretch;
+      gap: 10px;
+      margin: 22px 0;
+    }
+    .arch-node {
+      direction: rtl;
+      padding: 18px 14px;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      background: var(--panel-2);
+      text-align: center;
+    }
+    .arch-node strong { display: block; color: var(--primary-2); }
+    .arch-node small { display: block; color: var(--muted); margin-top: 5px; }
+    .arrow { align-self: center; color: var(--blue); font-size: 25px; }
+    .architecture.secondary { grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; }
+
+    .flow { counter-reset: flow; display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    .flow > div {
+      position: relative;
+      padding: 39px 13px 14px;
+      min-height: 125px;
+      border: 1px solid var(--line);
+      background: var(--panel-2);
+      border-radius: 14px;
+      font-size: 13px;
+    }
+    .flow > div::before {
+      counter-increment: flow;
+      content: counter(flow);
+      position: absolute;
+      top: 10px;
+      right: 11px;
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 7px;
+      background: var(--primary);
+      color: #052029;
+      font: 800 12px Consolas, monospace;
+    }
+
+    .decision {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 15px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .decision:last-child { border-bottom: 0; }
+    .decision .label { color: var(--primary-2); font-weight: 700; }
+    .decision p { margin: 0; }
+
+    .summary-box {
+      padding: 25px;
+      border: 1px solid color-mix(in srgb, var(--primary) 50%, var(--line));
+      border-radius: 18px;
+      background: linear-gradient(135deg, color-mix(in srgb, var(--primary) 11%, var(--panel)), var(--panel));
+    }
+    footer { margin-top: 55px; padding-top: 20px; color: var(--muted); border-top: 1px solid var(--line); font-size: 12px; }
+
+    @media (max-width: 980px) {
+      .shell { display: block; }
+      aside { position: static; height: auto; border: 0; border-bottom: 1px solid var(--line); }
+      aside nav { display: none; }
+      .side-note { display: none; }
+      main { padding: 22px 18px 70px; }
+      .grid.three { grid-template-columns: 1fr; }
+      .architecture, .architecture.secondary { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); justify-self: center; }
+      .flow { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .grid.two { grid-template-columns: 1fr; }
+      .hero { padding: 28px 22px; }
+      .decision { grid-template-columns: 1fr; gap: 4px; }
+      h2 { font-size: 23px; }
+    }
+    @media print {
+      :root { --bg: #fff; --panel: #fff; --panel-2: #fff; --panel-3: #f3f5f7; --text: #111; --muted: #444; --line: #ccc; --primary: #006f69; --primary-2: #006f69; --blue: #175fa8; --amber: #7d5100; --red: #9b2433; --green: #126b3d; }
+      body { background: white; font-size: 10pt; }
+      .shell { display: block; }
+      aside, .toolbar { display: none !important; }
+      main { width: 100%; padding: 0; }
+      .hero { box-shadow: none; page-break-after: always; }
+      section { break-inside: auto; margin-top: 28px; }
+      .card, .callout, .table-wrap, pre { break-inside: avoid; box-shadow: none; }
+      a { text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">
+        <div class="brand-mark">AL</div>
+        <div><strong>Audit Log</strong><small>مقترح معماري للنقاش</small></div>
+      </div>
+      <nav id="toc" aria-label="فهرس الصفحة">
+        <a href="#executive">الخلاصة التنفيذية</a>
+        <a href="#current">الوضع الحالي بالكود</a>
+        <a href="#purpose">ماذا نسجل؟</a>
+        <a href="#architecture">التصميم المقترح</a>
+        <a href="#interceptor">دور الـ Interceptor</a>
+        <a href="#schema">تصميم الجدول</a>
+        <a href="#events">أسماء الأحداث</a>
+        <a href="#api">API القراءة</a>
+        <a href="#performance">تقليل الطلبات والحِمل</a>
+        <a href="#security">الأمان والخصوصية</a>
+        <a href="#problems">المشاكل والحلول</a>
+        <a href="#options">مقارنة الطرق</a>
+        <a href="#rollout">خطة التنفيذ</a>
+        <a href="#tests">خطة الاختبار</a>
+        <a href="#decisions">قرارات الفريق</a>
+      </nav>
+      <div class="side-note">
+        هذه الصفحة تعمل بالكامل دون إنترنت. لا تستدعي API ولا تحمل خطوطاً أو مكتبات خارجية.
+      </div>
+    </aside>
+
+    <main>
+      <div class="toolbar">
+        <button type="button" id="copySummary">نسخ الملخص</button>
+        <button type="button" id="themeToggle">تبديل المظهر</button>
+        <button type="button" onclick="window.print()">طباعة / PDF</button>
+      </div>
+
+      <header class="hero">
+        <div class="eyebrow">MULTI-TENANT SHIPPING MANAGEMENT PLATFORM</div>
+        <h1>تصميم نظام سجل التدقيق<br><span class="blue">Audit Log</span></h1>
+        <p>وثيقة تقنية تشرح ما هو موجود حالياً، وما الذي ينقصه، وكيف ننفذ سجلاً موثوقاً دون ربط الموديولات ببعضها بشكل خاطئ، مع تصميم قراءة سريع يقلل الطلبات المتكررة والـ N+1.</p>
+        <div class="meta">
+          <span class="pill good">النتيجة: Facade + Transaction</span>
+          <span class="pill warn">الحالة: مقترح — لم يُعدّل كود التطبيق</span>
+          <span class="pill">نسخة 1.0</span>
+          <span class="pill">2026-08-06</span>
+          <span class="pill">Offline</span>
+        </div>
+      </header>
+
+      <section id="executive">
+        <div class="section-head"><span class="num">01</span><div><h2>الخلاصة التنفيذية</h2><p>القرار الذي أنصح أن نبدأ به الآن.</p></div></div>
+        <div class="summary-box" id="shareableSummary">
+          <strong>الاقتراح الأنسب للمشروع حالياً:</strong>
+          <ol>
+            <li>إنشاء <code>AuditModule</code> مستقل يملك الجدول والـRepository ومنطق التنظيف والقراءة.</li>
+            <li>الموديولات الأخرى تتعامل معه فقط عبر <code>AuditFacade.record()</code>، ولا تصل إلى Repository أو Prisma الخاص به.</li>
+            <li>الـInterceptor يجمع معلومات HTTP فقط: IP، User-Agent، Request ID، Correlation ID، method وpath؛ لكنه لا يقرر الحدث التجاري.</li>
+            <li>الـCommand Service الذي نفّذ العملية يحدد الحدث الحقيقي مثل <code>ORGANIZATION_UNIT.CREATED</code> ويرسل القيم القديمة والجديدة بعد تنقيحها.</li>
+            <li>تسجيل العمليات الناجحة الحرجة يتم ضمن نفس <code>@Transactional()</code> حتى لا نحصل على سجل لعملية فشلت أو عملية نجحت بلا سجل.</li>
+            <li>نبدأ بجدول واحد وفهارس مناسبة وCursor Pagination. لا نضيف Kafka ولا Partitioning ولا Outbox قبل وجود حاجة مقاسة.</li>
+          </ol>
+        </div>
+        <div class="callout warn">
+          <strong>الـInterceptor لوحده ليس Audit Business.</strong>
+          هو يرى أن الطلب <code>PATCH /...</code> نجح، لكنه لا يعرف ماذا تغير فعلياً، ولا يعرف أحياناً معرّف الكيان الناتج، ولا يستطيع ضمان نفس Transaction.
+        </div>
+      </section>
+
+      <section id="current">
+        <div class="section-head"><span class="num">02</span><div><h2>الوضع الحالي الموجود بالكود</h2><p>هذا القسم مبني على فحص المشروع، وليس افتراضاً عاماً.</p></div></div>
+        <div class="grid three">
+          <article class="card accent"><div class="metric">12</div><h3>عموداً موجوداً</h3><p class="muted">هوية السجل، tenant، الفاعل، IP، User-Agent، نوع الحدث والكيان، before/after، metadata، والوقت.</p></article>
+          <article class="card risk"><div class="metric danger">0</div><h3>خدمات Audit فعلية</h3><p class="muted">لا يوجد حالياً Audit Module أو Service أو Repository أو Controller مخصص للتدقيق.</p></article>
+          <article class="card future"><div class="metric blue">1</div><h3>سجل تجريبي</h3><p class="muted">الاستخدام الوحيد المكتشف هو Seed لحدث <code>SHIPMENT_CREATED</code>، وليس تسجيل عمليات النظام آلياً.</p></article>
+        </div>
+
+        <h3>البنية الحالية</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>الحقل</th><th>النوع الحالي</th><th>وظيفته</th><th>الملاحظة</th></tr></thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>UUID v7</td><td>معرّف السجل</td><td class="good">مناسب للترتيب الزمني تقريباً</td></tr>
+              <tr><td><code>tenant_id</code></td><td>UUID nullable</td><td>عزل بيانات كل شركة</td><td>مهم جداً ويجب فرضه من السيرفر</td></tr>
+              <tr><td><code>actor_user_id</code></td><td>UUID nullable</td><td>المستخدم الذي نفّذ العملية</td><td>لا يغطي system/API key وحده</td></tr>
+              <tr><td><code>actor_ip</code></td><td>INET nullable</td><td>عنوان مصدر الطلب</td><td>يجب ضبط Trusted Proxy قبل الاعتماد عليه</td></tr>
+              <tr><td><code>actor_user_agent</code></td><td>TEXT</td><td>معلومات الجهاز/المتصفح</td><td>نحدد حجماً أقصى ونعتبره نصاً غير موثوق</td></tr>
+              <tr><td><code>event_type</code></td><td>VARCHAR(50)</td><td>نوع الحدث</td><td>نحتاج Naming Convention ثابتاً</td></tr>
+              <tr><td><code>entity_type</code></td><td>VARCHAR(50)</td><td>نوع العنصر المتأثر</td><td>يفضل اسم Domain ثابتاً لا اسم جدول عشوائياً</td></tr>
+              <tr><td><code>entity_id</code></td><td>UUID nullable</td><td>معرّف العنصر</td><td>مفيد لتاريخ الكيان</td></tr>
+              <tr><td><code>old_values</code></td><td>JSONB</td><td>القيم قبل التغيير</td><td>لا نخزن كامل Entity بشكل أعمى</td></tr>
+              <tr><td><code>new_values</code></td><td>JSONB</td><td>القيم بعد التغيير</td><td>نخزن الحقول المتغيرة فقط عند الإمكان</td></tr>
+              <tr><td><code>metadata</code></td><td>JSONB</td><td>سياق إضافي</td><td>يفضل Schema/version واضح لكل حدث</td></tr>
+              <tr><td><code>created_at</code></td><td>TIMESTAMP(6)</td><td>زمن إنشاء السجل</td><td>نعرض UTC ونحوّله بالواجهة</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid two" style="margin-top:14px">
+          <div class="card risk">
+            <h3>فجوات مؤكدة</h3>
+            <ul class="xlist">
+              <li>لا توجد فهارس مخصصة لاستعلامات Audit.</li>
+              <li>لا يوجد Listener لحدث الشحنة المكتشف.</li>
+              <li><code>EventEmitter2</code> داخل الذاكرة وغير دائم.</li>
+              <li>Request Context لا يلتقط IP وUser-Agent حالياً.</li>
+              <li>لا توجد سياسة Redaction أو Retention.</li>
+              <li>لا يوجد API قراءة وصلاحيات مخصصة.</li>
+            </ul>
+          </div>
+          <div class="card future">
+            <h3>أشياء مفيدة جاهزة</h3>
+            <ul class="checklist">
+              <li><code>RequestContext</code> يحوي request/correlation/principal.</li>
+              <li>يوجد <code>TransactionalPrismaService</code> يعيد استخدام Transaction الحالية.</li>
+              <li>المشروع يعمل بموديولات وFacades.</li>
+              <li>PostgreSQL وJSONB مناسبان لهذا الحجم كبداية.</li>
+              <li>UUID v7 مناسب للـCursor Pagination.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="callout danger">
+          <strong>تعارض يجب تنظيفه:</strong>
+          ملف الـmigration الفعلي يستخدم <code>ON DELETE SET NULL</code> لعلاقات المستخدم والـtenant، بينما ملف <code>DDL.sql</code> القديم يذكر <code>CASCADE</code> للـtenant. المرجع التنفيذي يجب أن يكون migrations/Prisma، ثم يتم تحديث DDL كي لا يضلل الفريق.
+        </div>
+      </section>
+
+      <section id="purpose">
+        <div class="section-head"><span class="num">03</span><div><h2>ما هو الـAudit وما الذي نسجله؟</h2><p>الهدف هو إثبات من فعل ماذا ومتى وعلى أي كيان وبأي نتيجة.</p></div></div>
+        <div class="grid three">
+          <div class="card accent"><h3>Audit Log</h3><p>سجل أعمال وأمان طويل العمر: تغيير صلاحية، إلغاء اشتراك، إنشاء فرع، تعديل حالة شحنة.</p></div>
+          <div class="card"><h3>Application Log</h3><p>تشخيص تقني: stack trace، latency، SQL error. غالباً يذهب إلى Pino/monitoring وليس جدول Audit.</p></div>
+          <div class="card"><h3>Entity History</h3><p>تاريخ كامل لكيان معين وقد يحتاج snapshot/versioning. قد يستخدم Audit لكن ليس دائماً نفس الحاجة.</p></div>
+        </div>
+        <h3>نسجل هذه العمليات</h3>
+        <div class="grid two">
+          <ul class="checklist card">
+            <li>تسجيل الدخول الناجح والفاشل، تغيير/استعادة كلمة السر.</li>
+            <li>إنشاء، تعديل، تعطيل أو حذف المستخدمين والموظفين.</li>
+            <li>تعديل الأدوار والصلاحيات والتعيينات.</li>
+            <li>تعديل إعدادات الـtenant والأسعار والاشتراك.</li>
+            <li>إنشاء/إلغاء الطلب وتغيير حالة الشحنة أو التسليم.</li>
+            <li>التصدير أو القراءة الحساسة على نطاق واسع.</li>
+          </ul>
+          <ul class="xlist card">
+            <li>لا نسجل كل <code>GET</code> عادي تلقائياً.</li>
+            <li>لا نسجل health checks أو Swagger assets.</li>
+            <li>لا نسجل body كامل لكل Request.</li>
+            <li>لا نسجل كلمات السر وOTP والتوكن والكوكيز.</li>
+            <li>لا نكرر logs التقنية داخل Audit.</li>
+            <li>لا نخزن ملفات مرفوعة أو Base64 داخل JSONB.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="architecture">
+        <div class="section-head"><span class="num">04</span><div><h2>التصميم المقترح</h2><p>حل متوافق مع modular monolith وقاعدة التواصل عبر Facades.</p></div></div>
+        <div class="architecture" aria-label="مخطط التصميم المقترح">
+          <div class="arch-node"><strong>HTTP Context</strong><small>Middleware / Interceptor<br>IP · UA · requestId</small></div>
+          <div class="arrow">→</div>
+          <div class="arch-node"><strong>Feature Command Service</strong><small>يعرف الحدث التجاري<br>ويحدد before / after</small></div>
+          <div class="arrow">→</div>
+          <div class="arch-node"><strong>Audit Facade</strong><small>Redaction · Validation<br>Repository · Query API</small></div>
+        </div>
+        <div class="callout">
+          <strong>حدود الربط:</strong>
+          موديول الشحن أو الـtenant لا يحقن Audit Repository ولا Prisma Model. يتعامل فقط مع Facade بعقد بسيط يحتوي primitives وJSON منقحاً. الـAuditModule وحده يملك التخزين والفهارس وسياسة القراءة.
+        </div>
+        <p class="muted">وبحسب قاعدة المشروع الخاصة بالـFacades: يوضع عقد الـFacade عند الموديول المستهلك، وينفّذ <code>AuditModule</code> هذا العقد. بهذه الطريقة لا يعرف موديول الشحن أو الـtenant أي تفاصيل داخلية عن Audit ولا يصبح هناك coupling بين الـrepositories أو الـentities.</p>
+
+        <h3>تدفق عملية ناجحة وحرجة</h3>
+        <div class="flow">
+          <div>الـMiddleware ينشئ Request Context ويجمع معلومات المصدر.</div>
+          <div>الـGuard يثبت principal وtenant من التوكن، لا من body.</div>
+          <div>Command Service يقرأ القديم وينفذ التعديل.</div>
+          <div>داخل نفس Transaction يستدعي <code>AuditFacade.record()</code>.</div>
+          <div>ينجح التعديل والسجل معاً، أو يتراجعان معاً.</div>
+        </div>
+
+        <h3>شكل عقد التسجيل المقترح</h3>
+        <pre><code>type AuditRecordInput = {
+  eventType: 'ORGANIZATION_UNIT.CREATED' | 'ROLE.UPDATED' | string;
+  entity: { type: string; id?: string };
+  tenantId?: string;                  // يؤخذ من principal/السياق متى أمكن
+  actor?: { type: 'USER' | 'SYSTEM' | 'API_KEY'; userId?: string };
+  outcome: 'SUCCESS' | 'FAILURE' | 'DENIED';
+  changes?: {
+    before?: Record&lt;string, unknown&gt;;
+    after?: Record&lt;string, unknown&gt;;
+  };
+  metadata?: Record&lt;string, unknown&gt;; // تُفلتر داخل AuditModule
+};</code></pre>
+
+        <h3>مثال استخدام داخل Command Service</h3>
+        <pre><code>@Transactional()
+async updateOrganizationUnit(id: string, input: UpdateInput) {
+  const before = await this.repository.findById(id);
+  const updated = await this.repository.update(id, input);
+
+  await this.auditFacade.record({
+    eventType: 'ORGANIZATION_UNIT.UPDATED',
+    entity: { type: 'ORGANIZATION_UNIT', id },
+    outcome: 'SUCCESS',
+    changes: pickChangedFields(before, updated),
+  });
+
+  return updated;
+}</code></pre>
+        <p class="muted">الـFacade يكمّل actor/IP/requestId/correlationId من RequestContext؛ لذلك لا نكرر تمريرها من كل خدمة. أما معنى الحدث والكيان والتغيير فيأتي من Command Service لأنه الوحيد الذي يفهم العملية.</p>
+      </section>
+
+      <section id="interceptor">
+        <div class="section-head"><span class="num">05</span><div><h2>هل طريقة الـInterceptor صحيحة؟</h2><p>نعم كجزء من الحل، وليست الحل الكامل.</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ما يستطيع فعله جيداً</th><th>ما لا يستطيع ضمانه</th></tr></thead>
+            <tbody>
+              <tr><td>التقاط method، route، status code، latency</td><td>معرفة المعنى التجاري الحقيقي للعملية</td></tr>
+              <tr><td>التقاط IP وUser-Agent وRequest ID</td><td>استخراج before/after الصحيحين دون Queries إضافية</td></tr>
+              <tr><td>تسجيل Access Log أو طلبات حساسة مختارة</td><td>معرفة كل الكيانات الناتجة من أمر واحد</td></tr>
+              <tr><td>إغناء RequestContext ليستفيد منه AuditFacade</td><td>الدخول تلقائياً في Transaction الخاصة بالخدمة</td></tr>
+              <tr><td>قياس النجاح أو الخطأ على مستوى HTTP</td><td>تمييز نجاح HTTP من نجاح business جزئي داخل workflow</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout warn"><strong>القاعدة:</strong> استخدم Interceptor للسياق والـAccess، واستخدم Command Service + AuditFacade للـBusiness Audit.</div>
+      </section>
+
+      <section id="schema">
+        <div class="section-head"><span class="num">06</span><div><h2>تطوير تصميم الجدول</h2><p>نحافظ على الموجود ونضيف فقط ما يحل فجوات حقيقية.</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>الحقل المقترح</th><th>الحاجة</th><th>الأولوية</th><th>ملاحظة</th></tr></thead>
+            <tbody>
+              <tr><td><code>actor_type</code></td><td>USER / SYSTEM / API_KEY / ANONYMOUS</td><td class="good">عالية</td><td>لأن actor_user_id وحده لا يغطي jobs والفشل قبل تسجيل الدخول</td></tr>
+              <tr><td><code>outcome</code></td><td>SUCCESS / FAILURE / DENIED</td><td class="good">عالية</td><td>يسهّل التحقيق والفلترة</td></tr>
+              <tr><td><code>request_id</code></td><td>ربط الـAudit بالـapplication logs</td><td class="good">عالية</td><td>موجود أصلاً في RequestContext</td></tr>
+              <tr><td><code>correlation_id</code></td><td>ربط عدة طلبات/خدمات</td><td class="good">عالية</td><td>مفيد للـworkflows</td></tr>
+              <tr><td><code>event_version</code></td><td>تطوير metadata مستقبلاً</td><td class="warning">متوسطة</td><td>ابدأ بقيمة 1</td></tr>
+              <tr><td><code>actor_snapshot</code></td><td>اسم/إيميل مختصر وقت الحدث</td><td class="warning">متوسطة</td><td>يمنع N+1 ويحفظ التاريخ بعد حذف المستخدم؛ يُنقح بعناية</td></tr>
+              <tr><td><code>idempotency_key</code></td><td>منع السجلات المكررة</td><td>حسب الحاجة</td><td>مهم مع retries/outbox؛ Unique عند إضافته</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>الفهارس التي نبدأ بها</h3>
+        <pre><code>CREATE INDEX idx_audit_tenant_time
+  ON audit_log (tenant_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_audit_entity_time
+  ON audit_log (entity_type, entity_id, created_at DESC);
+
+CREATE INDEX idx_audit_actor_time
+  ON audit_log (actor_user_id, created_at DESC);
+
+CREATE INDEX idx_audit_event_time
+  ON audit_log (event_type, created_at DESC);</code></pre>
+        <div class="grid two">
+          <div class="card"><h3>لماذا هذه الفهارس؟</h3><p>تغطي أكثر أسئلة النظام شيوعاً: سجل tenant، تاريخ كيان، نشاط مستخدم، ونوع حدث خلال مدة. ترتيب <code>created_at + id</code> يدعم Cursor ثابتاً عند تساوي الوقت.</p></div>
+          <div class="card risk"><h3>ما الذي لا نفعله الآن؟</h3><p>لا نضيف GIN لكل JSONB ولا Partition شهرياً قبل قياس الحجم وخطط التنفيذ. كثرة الفهارس تبطئ الكتابة وتزيد مساحة التخزين.</p></div>
+        </div>
+
+        <h3>JSONB بدون تضخم</h3>
+        <pre><code>// أفضل: الحقول المتغيرة فقط
+old_values: { "status": "ACTIVE" }
+new_values: { "status": "SUSPENDED" }
+
+// سيئ: نسخ المستخدم أو الشحنة كاملة مع العلاقات والتوكنات
+new_values: { "...fullEntity": "..." }</code></pre>
+        <p class="muted">ضع حداً منطقياً لحجم السجل (مثلاً عشرات KB لا MB)، واستبدل القيم الكبيرة بوصف مختصر أو hash أو reference آمن.</p>
+      </section>
+
+      <section id="events">
+        <div class="section-head"><span class="num">07</span><div><h2>قاموس الأحداث</h2><p>أسماء ثابتة تجعل البحث والتقارير مفهومة.</p></div></div>
+        <p>التسمية المقترحة: <code>RESOURCE.ACTION</code> بحروف كبيرة. لا نخلط مرة اسم جدول ومرة اسم route.</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>المجال</th><th>أمثلة</th><th>قبل/بعد؟</th></tr></thead>
+            <tbody>
+              <tr><td>Authentication</td><td><code>AUTH.LOGIN_SUCCEEDED</code>، <code>AUTH.LOGIN_FAILED</code>، <code>AUTH.PASSWORD_RESET</code></td><td>لا نخزن أسراراً؛ metadata محدودة</td></tr>
+              <tr><td>Organization Unit</td><td><code>ORGANIZATION_UNIT.CREATED</code>، <code>.UPDATED</code>، <code>.DELETED</code></td><td>الحقول التجارية المتغيرة</td></tr>
+              <tr><td>Authorization</td><td><code>ROLE.CREATED</code>، <code>ROLE.PERMISSIONS_CHANGED</code></td><td>قائمة permission IDs قبل/بعد</td></tr>
+              <tr><td>Shipment</td><td><code>SHIPMENT.CREATED</code>، <code>SHIPMENT.STATUS_CHANGED</code>، <code>SHIPMENT.CANCELLED</code></td><td>الحالة والمعرّفات المهمة</td></tr>
+              <tr><td>Tenant</td><td><code>TENANT.SETTINGS_CHANGED</code>، <code>SUBSCRIPTION.CANCELLED</code></td><td>الإعدادات المتغيرة فقط</td></tr>
+              <tr><td>Security</td><td><code>ACCESS.DENIED</code>، <code>DATA.EXPORTED</code></td><td>السبب والنطاق، دون body حساس</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="api">
+        <div class="section-head"><span class="num">08</span><div><h2>API قراءة سجل التدقيق</h2><p>Endpoint واحد مرن، بلا تعديل أو حذف من الواجهة.</p></div></div>
+        <pre><code>GET /audit-logs
+  ?tenantId=...                 // Platform فقط؛ tenant يُفرض تلقائياً لغيره
+  &amp;eventType=SHIPMENT.STATUS_CHANGED
+  &amp;entityType=SHIPMENT
+  &amp;entityId=...
+  &amp;actorUserId=...
+  &amp;outcome=SUCCESS
+  &amp;from=2026-08-01T00:00:00Z
+  &amp;to=2026-08-06T23:59:59Z
+  &amp;limit=25
+  &amp;cursor=eyJjcmVhdGVkQXQiOiIuLi4iLCJpZCI6Ii4uLiJ9
+  &amp;include=summary</code></pre>
+        <pre><code>{
+  "success": true,
+  "data": {
+    "items": [
+      {
+        "id": "...",
+        "eventType": "ORGANIZATION_UNIT.UPDATED",
+        "outcome": "SUCCESS",
+        "entity": { "type": "ORGANIZATION_UNIT", "id": "..." },
+        "actor": { "id": "...", "displayName": "Saif" },
+        "changes": {
+          "before": { "name": "Old branch" },
+          "after":  { "name": "Main branch" }
+        },
+        "requestId": "...",
+        "createdAt": "2026-08-06T13:20:10.123Z"
+      }
+    ],
+    "pageInfo": { "nextCursor": "...", "hasNextPage": true },
+    "summary": { "totalApprox": 1240, "failures": 7 }
+  }
+}</code></pre>
+        <div class="grid two">
+          <div class="card accent"><h3>الصلاحيات</h3><ul><li>Platform Admin: يرى جميع الـtenants عند امتلاك permission صريح.</li><li>Tenant Admin/Auditor: يرى tenant الخاص به فقط.</li><li>المستخدم العادي: لا يرى الجدول إلا إذا كانت هناك حاجة محددة.</li><li>لا يوجد public <code>POST/PATCH/DELETE</code> على audit logs.</li></ul></div>
+          <div class="card risk"><h3>قاعدة العزل</h3><p>لا نثق بـ<code>tenantId</code> القادم من query أو body للمستخدم العادي. السيرفر يستخرجه من Principal ويضيفه للاستعلام دائماً. اختباره إلزامي ضد IDOR.</p></div>
+        </div>
+      </section>
+
+      <section id="performance">
+        <div class="section-head"><span class="num">09</span><div><h2>كيف نقلل الطلبات والحِمل؟</h2><p>المشكلة لا تُحل بالكاش وحده؛ تبدأ من شكل API والاستعلام.</p></div></div>
+        <div class="grid two">
+          <div class="card accent">
+            <h3>في الـBackend</h3>
+            <ol>
+              <li><strong>Endpoint واحد:</strong> يعيد items وpageInfo، وsummary اختيارياً بدلاً من 3–5 طلبات متتابعة.</li>
+              <li><strong>Cursor Pagination:</strong> أسرع وأكثر ثباتاً من offset في الجداول المتزايدة.</li>
+              <li><strong>Projection:</strong> نستخدم <code>select</code> للحقول الظاهرة فقط، ولا نعيد JSON الكبير بقائمة الجدول؛ التفاصيل تُطلب عند فتح سجل واحد.</li>
+              <li><strong>لا N+1:</strong> actor snapshot مختصر أو join/batch واحد، وليس طلب user لكل صف.</li>
+              <li><strong>ETag:</strong> الطلب المتكرر لنفس الفلاتر يمكن أن يحصل على <code>304 Not Modified</code>.</li>
+              <li><strong>حدود:</strong> default 25، max 100، ومدى زمني مطلوب للتقارير الثقيلة.</li>
+            </ol>
+          </div>
+          <div class="card future">
+            <h3>في الـFrontend</h3>
+            <ol>
+              <li><strong>Debounce 350–500ms</strong> عند البحث والفلترة.</li>
+              <li><strong>إلغاء الطلب السابق</strong> بـAbortController عند تغيير الفلتر بسرعة.</li>
+              <li><strong>Query cache</strong> حسب filters + cursor مع <code>staleTime</code> قصير 30–60 ثانية.</li>
+              <li><strong>Prefetch صفحة واحدة</strong> تالية، وليس جميع الصفحات.</li>
+              <li><strong>لا Polling افتراضي:</strong> زر تحديث؛ SSE لاحقاً فقط إذا كانت real-time ضرورة.</li>
+              <li><strong>تفاصيل عند الطلب:</strong> القائمة خفيفة، وJSON الكامل يظهر عند فتح drawer.</li>
+            </ol>
+          </div>
+        </div>
+
+        <h3>شكل طلبات الواجهة المقترح</h3>
+        <div class="architecture secondary">
+          <div class="arch-node"><strong>تغيير Filter</strong><small>Debounce + cancel</small></div><div class="arrow">→</div>
+          <div class="arch-node"><strong>GET /audit-logs</strong><small>items + pageInfo + summary?</small></div><div class="arrow">→</div>
+          <div class="arch-node"><strong>Cache بالـQuery Key</strong><small>لا تكرار لنفس الفلاتر</small></div><div class="arrow">→</div>
+          <div class="arch-node"><strong>GET /audit-logs/:id</strong><small>فقط عند فتح التفاصيل</small></div>
+        </div>
+        <div class="callout warn"><strong>الكاش والخصوصية:</strong> لا نضع قائمة Audit حساسة في cache مشترك بلا tenant/user scope. الأفضل بدايةً ETag + frontend query cache، ثم Redis فقط للـfacets أو الإحصاءات غير الحساسة وبـTTL قصير.</div>
+      </section>
+
+      <section id="security">
+        <div class="section-head"><span class="num">10</span><div><h2>الأمان والخصوصية</h2><p>سجل التدقيق نفسه قد يتحول إلى تسريب بيانات إن خزّنا كل شيء.</p></div></div>
+        <div class="grid two">
+          <div class="card risk"><h3>يُمنع تخزينه</h3><ul class="xlist"><li>password أو password_hash.</li><li>OTP وأكواد الاستعادة.</li><li>Access/Refresh tokens وAuthorization header.</li><li>Cookies وsession secrets وAPI keys.</li><li>بيانات دفع حساسة أو أرقام بطاقات.</li><li>محتوى الملفات أو Base64.</li><li>Request/response body كامل بشكل تلقائي.</li></ul></div>
+          <div class="card accent"><h3>سياسة Redaction</h3><ul class="checklist"><li>Allowlist للحقول المسموحة أفضل من blacklist فقط.</li><li>مُنقّح مركزي داخل AuditModule.</li><li>حد أقصى للعمق والحجم وطول النص.</li><li>إخفاء phone/email عند عدم الحاجة الكاملة.</li><li>اختبارات تمنع تسرب أسرار مع حقول nested.</li><li>الوصول للـAudit نفسه يُسجل كحدث حساس عند التصدير.</li></ul></div>
+        </div>
+        <h3>عدم العبث والاحتفاظ</h3>
+        <ul>
+          <li><strong>Append-only:</strong> التطبيق لا يوفّر update/delete عاديين للسجلات.</li>
+          <li><strong>صلاحية DB محدودة:</strong> مستخدم التطبيق يملك INSERT/SELECT المطلوبين، ولا يملك تعديل السجل إن أمكن تشغيلياً.</li>
+          <li><strong>Retention:</strong> اتفقوا على 12 أو 24 شهراً حسب الحاجة القانونية، ثم archive مشفّر قبل الحذف.</li>
+          <li><strong>Integrity لاحقاً:</strong> عند حاجة compliance قوية يمكن إضافة hash chaining أو تصدير immutable storage؛ ليس ضرورياً للنسخة الأولى.</li>
+        </ul>
+      </section>
+
+      <section id="problems">
+        <div class="section-head"><span class="num">11</span><div><h2>المشاكل المحتملة وحلولها</h2><p>قائمة عملية للمراجعة قبل التنفيذ.</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>المشكلة</th><th>ماذا قد يحدث؟</th><th>الحل</th></tr></thead>
+            <tbody>
+              <tr><td>Interceptor فقط</td><td>أحداث عامة بلا معنى أو before/after دقيق</td><td>Interceptor للسياق، Command Service للحدث</td></tr>
+              <tr><td>EventEmitter كمرجع وحيد</td><td>ضياع الحدث عند crash/restart أو غياب listener</td><td>Transactional Facade الآن؛ Outbox عند الحاجة</td></tr>
+              <tr><td>السجل خارج Transaction</td><td>عملية فشلت لكن audit يقول نجحت، أو العكس</td><td>critical success audit في نفس Transaction</td></tr>
+              <tr><td>فشل login داخل Transaction فاشلة</td><td>سجل الفشل يتراجع معها</td><td>سجل security failure مستقلاً بعد rollback مع rate limit</td></tr>
+              <tr><td>الاعتماد على tenantId من العميل</td><td>تسريب سجلات شركة لشركة أخرى</td><td>اشتقاق tenant من Principal واختبارات IDOR</td></tr>
+              <tr><td>حذف user/tenant</td><td>ضياع هوية الفاعل أو حذف التاريخ</td><td>SET NULL + actor/tenant snapshot محدود، لا CASCADE</td></tr>
+              <tr><td>JSONB ضخم</td><td>مساحة عالية واستعلامات بطيئة وتسريب بيانات</td><td>diff فقط + allowlist + size limit</td></tr>
+              <tr><td>N+1</td><td>طلب/Query لكل actor أو entity</td><td>snapshot أو batch/join واحد، ولا fetch لكل row</td></tr>
+              <tr><td>Offset عالٍ</td><td>صفحات بطيئة ونتائج تتحرك أثناء التصفح</td><td>cursor مركب من created_at وid</td></tr>
+              <tr><td>لا فهارس</td><td>Sequential scan مع نمو الجدول</td><td>الفهارس الأربعة الأساسية ثم EXPLAIN ANALYZE</td></tr>
+              <tr><td>تكرار event مع retry</td><td>سجلان لنفس العملية</td><td>idempotency key عند workflows القابلة للإعادة</td></tr>
+              <tr><td>فشل كتابة Audit</td><td>هل نفشل طلب المستخدم كله؟</td><td>سياسة حسب criticality: fail-closed للحرج، outbox لغيره</td></tr>
+              <tr><td>IP خاطئ خلف Nginx</td><td>تسجيل IP البروكسي بدلاً من العميل أو spoofing</td><td>ضبط trust proxy بدقة وقراءة X-Forwarded-For من proxy موثوق فقط</td></tr>
+              <tr><td>أسماء أحداث عشوائية</td><td>تقارير وفلترة غير مستقرة</td><td>Event catalog + convention + tests</td></tr>
+              <tr><td>اختلاف DDL/migration</td><td>بيئات بسلوك حذف مختلف</td><td>migrations مصدر الحقيقة وتحديث الوثيقة القديمة</td></tr>
+              <tr><td>Polling متكرر</td><td>طلبات كثيرة بلا فائدة</td><td>cache + debounce + manual refresh؛ SSE فقط عند الحاجة</td></tr>
+              <tr><td>قراءة JSON في القائمة</td><td>حجم response كبير وزمن parsing</td><td>list projection وتفاصيل منفصلة عند فتح السجل</td></tr>
+              <tr><td>Timezone</td><td>ارتباك بوقت الحدث</td><td>تخزين/إرجاع UTC وتحويله في UI مع إظهار المنطقة</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="options">
+        <div class="section-head"><span class="num">12</span><div><h2>مقارنة طرق التنفيذ</h2><p>لماذا اخترنا الحل الهجين البسيط الآن؟</p></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>الطريقة</th><th>موثوقية</th><th>Business context</th><th>التعقيد</th><th>القرار</th></tr></thead>
+            <tbody>
+              <tr><td>Interceptor فقط</td><td class="danger">ضعيفة</td><td class="danger">ضعيف</td><td class="good">منخفض</td><td>لا يصلح وحده</td></tr>
+              <tr><td>AuditFacade ضمن Transaction</td><td class="good">عالية</td><td class="good">كامل</td><td class="good">مقبول</td><td><strong class="good">الموصى به الآن</strong></td></tr>
+              <tr><td>EventEmitter داخل الذاكرة</td><td class="danger">متوسطة/ضعيفة</td><td class="good">جيد</td><td class="good">منخفض</td><td>إشعارات غير حرجة فقط</td></tr>
+              <tr><td>Transactional Outbox</td><td class="good">عالية جداً</td><td class="good">جيد</td><td class="warning">مرتفع</td><td>مرحلة لاحقة عند الحاجة</td></tr>
+              <tr><td>Database Triggers</td><td class="good">تلتقط DB changes</td><td class="danger">سياق business ضعيف</td><td class="warning">صيانة أصعب</td><td>ليس الخيار الأساسي</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="callout"><strong>متى ننتقل إلى Outbox؟</strong> عندما يصبح لدينا worker/queue فعلي، أو أكثر من خدمة، أو ضرورة ألا تضيف كتابة Audit زمناً للطلب، أو نحتاج ضمان delivery مع retries. عندها تُكتب رسالة outbox في نفس Transaction ويعالجها worker بصورة idempotent.</div>
+      </section>
+
+      <section id="rollout">
+        <div class="section-head"><span class="num">13</span><div><h2>خطة تنفيذ تدريجية</h2><p>نقلل المخاطر ولا نبني بنية أكبر من الحاجة.</p></div></div>
+        <div class="grid two">
+          <div class="card"><h3>المرحلة 0 — قرارات</h3><ul><li>من يستطيع القراءة؟</li><li>مدة الاحتفاظ والأرشفة.</li><li>أول 5–10 أحداث حرجة.</li><li>سياسة فشل كتابة Audit.</li><li>الحقول الحساسة وقواعد الإخفاء.</li></ul></div>
+          <div class="card accent"><h3>المرحلة 1 — الأساس</h3><ul><li>Migration للحقول والفهارس.</li><li>AuditModule + Facade + Repository.</li><li>إغناء RequestContext.</li><li>Redactor مركزي وحدود الحجم.</li><li>ربط أول العمليات الحرجة داخل Transaction.</li></ul></div>
+          <div class="card future"><h3>المرحلة 2 — القراءة</h3><ul><li>GET بفلترة وCursor.</li><li>صلاحيات Platform/Tenant.</li><li>قائمة خفيفة + تفاصيل عند الفتح.</li><li>ETag وfrontend cache/debounce.</li><li>قياس EXPLAIN وحجم response.</li></ul></div>
+          <div class="card"><h3>المرحلة 3 — حسب القياس</h3><ul><li>Outbox/worker للأحداث غير المتزامنة.</li><li>Partitioning عند أحجام كبيرة فعلياً.</li><li>Archive إلى storage غير قابل للتعديل.</li><li>SSE أو live updates إن طلبها المنتج.</li><li>تقارير أو dashboards.</li></ul></div>
+        </div>
+      </section>
+
+      <section id="tests">
+        <div class="section-head"><span class="num">14</span><div><h2>خطة الاختبار</h2><p>نجاح الـAPI وحده لا يثبت صحة Audit.</p></div></div>
+        <div class="grid three">
+          <div class="card"><h3>Unit</h3><ul><li>Redaction للحقول nested.</li><li>حساب diff.</li><li>توحيد event names.</li><li>حد الحجم والقص.</li></ul></div>
+          <div class="card"><h3>Integration</h3><ul><li>نجاح الأمر والسجل معاً.</li><li>Rollback يمسحهما معاً.</li><li>فشل auth يُسجل مستقلاً.</li><li>Idempotency يمنع التكرار.</li></ul></div>
+          <div class="card"><h3>Security & Performance</h3><ul><li>tenant isolation وIDOR.</li><li>لا أسرار في JSON.</li><li>EXPLAIN ANALYZE للفلاتر.</li><li>استجابة ثابتة مع 1M سجل تجريبي.</li></ul></div>
+        </div>
+        <h3>معايير قبول مختصرة</h3>
+        <ul class="checklist card">
+          <li>كل عملية حرجة متفق عليها تنتج سجلاً واحداً فقط.</li>
+          <li>السجل يحوي actor/tenant/event/entity/outcome/time/requestId.</li>
+          <li>لا يظهر password أو OTP أو token في أي سجل أو response.</li>
+          <li>Tenant A لا يستطيع رؤية سجل Tenant B حتى بتعديل query يدوياً.</li>
+          <li>فشل العملية داخل Transaction لا يترك success audit.</li>
+          <li>فتح قائمة 25 عنصراً لا يسبب N+1 ولا يعيد JSON الكامل.</li>
+        </ul>
+      </section>
+
+      <section id="decisions">
+        <div class="section-head"><span class="num">15</span><div><h2>قرارات يجب أن نحسمها كفريق</h2><p>بعد الاتفاق عليها يصبح التنفيذ مباشراً وواضحاً.</p></div></div>
+        <div class="card">
+          <div class="decision"><div class="label">نطاق النسخة الأولى</div><p>ما أول الأحداث؟ المقترح: auth، roles، tenant settings، organization units، shipment status/cancel.</p></div>
+          <div class="decision"><div class="label">سياسة الفشل</div><p>المقترح: العمليات الحرجة fail-closed داخل Transaction؛ الأحداث الثانوية تنتقل لاحقاً عبر outbox.</p></div>
+          <div class="decision"><div class="label">الاحتفاظ</div><p>12 أم 24 شهراً؟ ومن يملك قرار الأرشفة والحذف؟</p></div>
+          <div class="decision"><div class="label">من يقرأ؟</div><p>Platform Owner، Tenant Admin، ودور Auditor بصلاحية مستقلة.</p></div>
+          <div class="decision"><div class="label">هوية الفاعل</div><p>هل نضيف actor snapshot الآن لتجنب N+1 وحفظ الاسم بعد حذف الحساب؟ أو نكتفي بالـID مع batch join؟</p></div>
+          <div class="decision"><div class="label">حجم متوقع</div><p>عدد العمليات/اليوم وعدد سنوات الاحتفاظ؛ بناءً عليه نقرر متى نحتاج partition/archive.</p></div>
+        </div>
+
+        <div class="callout" style="margin-top:20px">
+          <strong>القرار النهائي المقترح:</strong>
+          نبدأ بـAuditFacade transactional + HTTP context collector + فهارس + Cursor API. نؤجل Outbox وPartitioning حتى تظهر حاجة تشغيلية مقاسة. بهذه الطريقة نحصل على موثوقية جيدة، لا نربط الموديولات بمستودعات بعضها، ولا نزيد عدد طلبات الواجهة بلا داعٍ.
+        </div>
+      </section>
+
+      <footer>
+        وثيقة Offline قابلة للإرسال والفتح مباشرة بالمتصفح — أُعدّت اعتماداً على بنية المشروع الحالية. هذه وثيقة اقتراح ونقاش؛ لم تُجرَ عبرها أي تعديلات على كود التطبيق أو قاعدة البيانات.
+      </footer>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const themeButton = document.getElementById('themeToggle');
+      const copyButton = document.getElementById('copySummary');
+      const stored = localStorage.getItem('audit-doc-theme');
+      if (stored) root.dataset.theme = stored;
+
+      themeButton.addEventListener('click', function () {
+        const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+        root.dataset.theme = next;
+        localStorage.setItem('audit-doc-theme', next);
+      });
+
+      copyButton.addEventListener('click', async function () {
+        const text = document.getElementById('shareableSummary').innerText.trim();
+        try {
+          await navigator.clipboard.writeText(text);
+          copyButton.textContent = 'تم نسخ الملخص';
+        } catch (_) {
+          const area = document.createElement('textarea');
+          area.value = text;
+          document.body.appendChild(area);
+          area.select();
+          document.execCommand('copy');
+          area.remove();
+          copyButton.textContent = 'تم نسخ الملخص';
+        }
+        setTimeout(() => { copyButton.textContent = 'نسخ الملخص'; }, 1800);
+      });
+
+      const links = Array.from(document.querySelectorAll('#toc a'));
+      const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id));
+        });
+      }, { rootMargin: '-15% 0px -75% 0px' });
+      targets.forEach(target => observer.observe(target));
+    })();
+  </script>
+</body>
+</html>

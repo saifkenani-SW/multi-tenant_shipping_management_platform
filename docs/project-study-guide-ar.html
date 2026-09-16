@@ -1,0 +1,2224 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="دليل عربي لفهم مشروع Multi-Tenant Shipping Management Platform قبل التسليم أو المناقشة."
+    />
+    <title>دليل دراسة المشروع | منصة الشحن متعددة المستأجرين</title>
+    <style>
+      :root {
+        --ink: #14213d;
+        --muted: #536174;
+        --paper: #f6f8fc;
+        --surface: #ffffff;
+        --line: #dce4f0;
+        --primary: #2563eb;
+        --primary-dark: #1e40af;
+        --teal: #0f766e;
+        --amber: #b45309;
+        --red: #b42318;
+        --green: #15803d;
+        --purple: #7e22ce;
+        --shadow: 0 14px 34px rgba(27, 47, 85, 0.09);
+        --radius: 18px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 88% -5%, #dbeafe 0, transparent 27rem),
+          radial-gradient(circle at -8% 40%, #d1fae5 0, transparent 24rem),
+          var(--paper);
+        font-family: Tahoma, Arial, "Segoe UI", sans-serif;
+        font-size: 16px;
+        line-height: 1.8;
+      }
+
+      a {
+        color: var(--primary-dark);
+      }
+
+      code,
+      .code {
+        direction: ltr;
+        unicode-bidi: embed;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.9em;
+        color: #1e3a8a;
+        background: #eff6ff;
+        border: 1px solid #dbeafe;
+        border-radius: 6px;
+        padding: 0.08rem 0.34rem;
+      }
+
+      .hero {
+        color: #fff;
+        padding: 3.8rem max(1.25rem, calc((100vw - 1160px) / 2));
+        background:
+          radial-gradient(circle at 83% 10%, rgba(56, 189, 248, 0.36), transparent 22rem),
+          linear-gradient(125deg, #0f172a 0%, #172554 52%, #1d4ed8 120%);
+      }
+
+      .hero-inner {
+        max-width: 1160px;
+        margin: auto;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        gap: 0.45rem;
+        align-items: center;
+        margin-bottom: 0.9rem;
+        padding: 0.3rem 0.7rem;
+        color: #bfdbfe;
+        background: rgba(191, 219, 254, 0.12);
+        border: 1px solid rgba(191, 219, 254, 0.25);
+        border-radius: 999px;
+        font-size: 0.88rem;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        max-width: 900px;
+        margin-bottom: 0.8rem;
+        font-size: clamp(2rem, 5vw, 3.75rem);
+        line-height: 1.16;
+        letter-spacing: -0.025em;
+      }
+
+      .hero p {
+        max-width: 780px;
+        margin-bottom: 1.35rem;
+        color: #dbeafe;
+        font-size: clamp(1rem, 2vw, 1.18rem);
+      }
+
+      .stats {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin: 1.3rem 0;
+      }
+
+      .stat {
+        min-width: 118px;
+        padding: 0.64rem 0.82rem;
+        color: #eff6ff;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 12px;
+      }
+
+      .stat strong {
+        display: block;
+        color: #fff;
+        font-size: 1.18rem;
+        line-height: 1.2;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.63rem 0.95rem;
+        color: #fff;
+        text-decoration: none;
+        background: var(--primary);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 10px;
+        font-weight: 700;
+      }
+
+      .button.alt {
+        color: #dbeafe;
+        background: transparent;
+      }
+
+      .page {
+        display: grid;
+        grid-template-columns: 245px minmax(0, 1fr);
+        gap: 1.45rem;
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 1.5rem 1.25rem 4rem;
+      }
+
+      nav {
+        position: sticky;
+        top: 1rem;
+        align-self: start;
+        padding: 0.8rem;
+        background: rgba(255, 255, 255, 0.84);
+        border: 1px solid rgba(220, 228, 240, 0.9);
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(27, 47, 85, 0.05);
+        backdrop-filter: blur(10px);
+      }
+
+      nav strong {
+        display: block;
+        padding: 0.35rem 0.55rem 0.55rem;
+        font-size: 0.87rem;
+      }
+
+      nav a {
+        display: block;
+        padding: 0.38rem 0.55rem;
+        color: var(--muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 0.88rem;
+      }
+
+      nav a:hover,
+      nav a:focus {
+        color: var(--primary-dark);
+        background: #eff6ff;
+      }
+
+      main {
+        min-width: 0;
+      }
+
+      section {
+        margin-bottom: 1.5rem;
+        padding: clamp(1.1rem, 3vw, 1.8rem);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        scroll-margin-top: 1rem;
+      }
+
+      .section-kicker {
+        margin-bottom: 0.25rem;
+        color: var(--primary);
+        font-size: 0.8rem;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+      }
+
+      h2 {
+        margin-bottom: 0.65rem;
+        font-size: clamp(1.38rem, 3vw, 2.1rem);
+        line-height: 1.3;
+      }
+
+      h3 {
+        margin-bottom: 0.45rem;
+        font-size: 1.1rem;
+        line-height: 1.45;
+      }
+
+      h4 {
+        margin-bottom: 0.25rem;
+        font-size: 0.98rem;
+      }
+
+      .lead {
+        max-width: 880px;
+        color: #334155;
+        font-size: 1.08rem;
+      }
+
+      .callout {
+        margin: 1rem 0;
+        padding: 0.9rem 1rem;
+        border-right: 4px solid var(--primary);
+        border-radius: 10px;
+        background: #eff6ff;
+      }
+
+      .callout.warning {
+        border-color: #f59e0b;
+        background: #fffbeb;
+      }
+
+      .callout.success {
+        border-color: #16a34a;
+        background: #f0fdf4;
+      }
+
+      .callout strong {
+        color: #1e3a8a;
+      }
+
+      .callout.warning strong {
+        color: #92400e;
+      }
+
+      .callout.success strong {
+        color: #166534;
+      }
+
+      .two-col,
+      .three-col,
+      .cards {
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .two-col {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .three-col {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .cards {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .mini-card {
+        padding: 0.9rem;
+        background: linear-gradient(145deg, #ffffff, #f8fbff);
+        border: 1px solid var(--line);
+        border-radius: 13px;
+      }
+
+      .mini-card p:last-child,
+      .table-card p:last-child {
+        margin-bottom: 0;
+      }
+
+      .flow {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: stretch;
+        gap: 0.5rem;
+        margin: 1rem 0 0;
+      }
+
+      .flow-step {
+        flex: 1 1 145px;
+        position: relative;
+        min-height: 108px;
+        padding: 0.85rem;
+        background: #f8fafc;
+        border: 1px solid #dbe4f0;
+        border-radius: 12px;
+      }
+
+      .flow-step .n {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.55rem;
+        height: 1.55rem;
+        margin-left: 0.35rem;
+        color: #fff;
+        background: var(--primary);
+        border-radius: 50%;
+        font-size: 0.8rem;
+        font-weight: 800;
+      }
+
+      .flow-step p {
+        margin: 0.35rem 0 0;
+        color: var(--muted);
+        font-size: 0.89rem;
+        line-height: 1.55;
+      }
+
+      .flow-arrow {
+        display: flex;
+        align-items: center;
+        color: #93a4bf;
+        font-size: 1.4rem;
+      }
+
+      .architecture {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 105px minmax(0, 1fr);
+        gap: 0.8rem;
+        align-items: center;
+        margin: 1rem 0;
+      }
+
+      .arch-stack {
+        display: grid;
+        gap: 0.55rem;
+      }
+
+      .arch-box {
+        padding: 0.72rem;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #f8fafc;
+        text-align: center;
+        font-size: 0.91rem;
+        font-weight: 700;
+      }
+
+      .arch-box.primary {
+        color: #fff;
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        border-color: #2563eb;
+      }
+
+      .arch-box.teal {
+        color: #115e59;
+        background: #ecfdf5;
+        border-color: #99f6e4;
+      }
+
+      .arch-middle {
+        color: var(--primary);
+        text-align: center;
+        font-size: 1.6rem;
+      }
+
+      .folder-map {
+        display: grid;
+        gap: 0.1rem;
+        margin: 0;
+        padding: 0.85rem 1rem;
+        overflow: auto;
+        color: #1e293b;
+        background: #0f172a;
+        border-radius: 12px;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.84rem;
+        line-height: 1.6;
+        direction: ltr;
+        text-align: left;
+      }
+
+      .folder-map span {
+        color: #bfdbfe;
+      }
+
+      table {
+        width: 100%;
+        margin: 0.8rem 0;
+        border-collapse: collapse;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        font-size: 0.92rem;
+      }
+
+      th,
+      td {
+        padding: 0.7rem;
+        text-align: right;
+        vertical-align: top;
+        border-bottom: 1px solid var(--line);
+      }
+
+      th {
+        color: #1e3a8a;
+        background: #eff6ff;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem;
+        margin: 0.8rem 0;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.27rem 0.55rem;
+        color: #334155;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        font-size: 0.82rem;
+      }
+
+      .pill.blue {
+        color: #1d4ed8;
+        background: #eff6ff;
+        border-color: #bfdbfe;
+      }
+
+      .pill.green {
+        color: #166534;
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+      }
+
+      .pill.amber {
+        color: #92400e;
+        background: #fffbeb;
+        border-color: #fde68a;
+      }
+
+      .pill.purple {
+        color: #6b21a8;
+        background: #faf5ff;
+        border-color: #e9d5ff;
+      }
+
+      .definition-list {
+        display: grid;
+        grid-template-columns: 145px minmax(0, 1fr);
+        gap: 0.5rem 0.85rem;
+        margin: 0.8rem 0;
+      }
+
+      .definition-list dt {
+        color: #1e3a8a;
+        font-weight: 800;
+      }
+
+      .definition-list dd {
+        margin: 0;
+        color: #334155;
+      }
+
+      .search-row {
+        display: flex;
+        gap: 0.6rem;
+        align-items: center;
+        margin: 1rem 0;
+      }
+
+      .search-row input {
+        width: 100%;
+        padding: 0.68rem 0.8rem;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid #b7c6da;
+        border-radius: 10px;
+        font: inherit;
+      }
+
+      .search-row input:focus {
+        outline: 3px solid #bfdbfe;
+        border-color: var(--primary);
+      }
+
+      .table-group {
+        margin: 0.8rem 0;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+
+      .table-group summary {
+        cursor: pointer;
+        padding: 0.85rem 1rem;
+        background: #f8fafc;
+        font-weight: 800;
+      }
+
+      .table-group[open] summary {
+        color: #1e3a8a;
+        background: #eff6ff;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .table-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+        gap: 0.75rem;
+        padding: 0.8rem;
+      }
+
+      .table-card {
+        padding: 0.84rem;
+        background: #fff;
+        border: 1px solid #dce4f0;
+        border-radius: 11px;
+      }
+
+      .table-card h4 {
+        color: #1e3a8a;
+      }
+
+      .table-card .en {
+        display: inline-block;
+        direction: ltr;
+        margin-bottom: 0.35rem;
+        color: var(--purple);
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.83rem;
+        font-weight: 700;
+      }
+
+      .table-card p {
+        margin-bottom: 0.35rem;
+        color: #475569;
+        font-size: 0.88rem;
+        line-height: 1.6;
+      }
+
+      .table-card b {
+        color: #334155;
+      }
+
+      .table-group.is-hidden,
+      .table-card.is-hidden {
+        display: none;
+      }
+
+      .formula {
+        margin: 0.75rem 0;
+        padding: 0.8rem;
+        overflow: auto;
+        color: #e0f2fe;
+        background: #0f172a;
+        border-radius: 11px;
+        direction: ltr;
+        text-align: left;
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 0.9rem;
+      }
+
+      details.question {
+        margin: 0.65rem 0;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 11px;
+        background: #fff;
+      }
+
+      details.question summary {
+        cursor: pointer;
+        padding: 0.78rem 0.9rem;
+        color: #1e3a8a;
+        font-weight: 800;
+      }
+
+      details.question[open] summary {
+        background: #eff6ff;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .answer {
+        padding: 0.8rem 0.9rem;
+        color: #334155;
+      }
+
+      .answer p:last-child {
+        margin-bottom: 0;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 0.65rem;
+        margin: 0.9rem 0;
+      }
+
+      .timeline-item {
+        display: grid;
+        grid-template-columns: 4.7rem minmax(0, 1fr);
+        gap: 0.75rem;
+        align-items: start;
+      }
+
+      .timeline-time {
+        padding: 0.3rem;
+        color: #1d4ed8;
+        background: #eff6ff;
+        border-radius: 8px;
+        text-align: center;
+        font-weight: 800;
+        font-size: 0.82rem;
+      }
+
+      .timeline-item > div:last-child {
+        padding: 0.1rem 0 0.45rem;
+        border-bottom: 1px dashed #cbd5e1;
+      }
+
+      .timeline-item:last-child > div:last-child {
+        border-bottom: 0;
+      }
+
+      .source-list {
+        margin: 0;
+        padding-right: 1.2rem;
+        color: #475569;
+      }
+
+      .source-list li {
+        margin: 0.3rem 0;
+      }
+
+      footer {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 0 1.25rem 2.4rem;
+        color: #64748b;
+        font-size: 0.86rem;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .nowrap {
+        white-space: nowrap;
+      }
+
+      @media (max-width: 850px) {
+        .page {
+          display: block;
+          padding-top: 1rem;
+        }
+
+        nav {
+          position: static;
+          display: flex;
+          gap: 0.15rem;
+          margin-bottom: 1rem;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+
+        nav strong {
+          display: none;
+        }
+
+        nav a {
+          flex: 0 0 auto;
+        }
+
+        .architecture {
+          grid-template-columns: 1fr;
+        }
+
+        .arch-middle {
+          transform: rotate(90deg);
+        }
+
+        .three-col,
+        .two-col {
+          grid-template-columns: 1fr;
+        }
+
+        .flow-arrow {
+          width: 100%;
+          justify-content: center;
+          transform: rotate(90deg);
+        }
+      }
+
+      @media (max-width: 560px) {
+        .hero {
+          padding-top: 2.4rem;
+          padding-bottom: 2.4rem;
+        }
+
+        section {
+          padding: 1rem;
+          border-radius: 14px;
+        }
+
+        .definition-list {
+          grid-template-columns: 1fr;
+          gap: 0.1rem;
+        }
+
+        .definition-list dd {
+          margin-bottom: 0.65rem;
+        }
+
+        .timeline-item {
+          grid-template-columns: 3.7rem minmax(0, 1fr);
+        }
+
+        th,
+        td {
+          padding: 0.55rem;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+          font-size: 11pt;
+        }
+
+        .hero {
+          color: #000;
+          padding: 0;
+          background: #fff;
+        }
+
+        .hero p,
+        .eyebrow {
+          color: #111827;
+        }
+
+        .stats,
+        .hero-actions,
+        nav,
+        .search-row {
+          display: none;
+        }
+
+        .page {
+          display: block;
+          max-width: none;
+          padding: 0;
+        }
+
+        section {
+          box-shadow: none;
+          border: 0;
+          page-break-inside: avoid;
+        }
+
+        .table-group {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero-inner">
+        <div class="eyebrow">دليل مراجعة قبل التسليم — مبني على الكود الموجود في المشروع</div>
+        <h1>افهم مشروع الشحن من الصفر، واحكِ عنه بثقة</h1>
+        <p>
+          هذا المشروع هو منصة SaaS لإدارة شركات الشحن والطرود. فيه أكثر من شركة
+          <b>(tenant)</b> على نفس المنصة، وكل شركة تدير موظفيها وفروعها وأسعارها
+          وشحناتها بشكل معزول عن الشركات الأخرى.
+        </p>
+        <div class="stats" aria-label="ملخص أرقام المشروع">
+          <div class="stat"><strong>45 + 31</strong> جدول وenum في Prisma</div>
+          <div class="stat"><strong>16</strong> موديول أعمال في الـ backend</div>
+          <div class="stat"><strong>Prisma + Kysely</strong> وليس TypeORM</div>
+          <div class="stat"><strong>Flutter</strong> تطبيق موبايل للواجهة</div>
+        </div>
+        <div class="hero-actions">
+          <a class="button" href="#quick-answer">ابدأ بالجواب المختصر</a>
+          <a class="button alt" href="#interview">اذهب لأسئلة المقابلة</a>
+        </div>
+      </div>
+    </header>
+
+    <div class="page">
+      <nav aria-label="فهرس الدليل">
+        <strong>فهرس سريع</strong>
+        <a href="#quick-answer">الفكرة بجملة</a>
+        <a href="#story">قصة الشحنة</a>
+        <a href="#architecture">البنية والتقنيات</a>
+        <a href="#tenancy">العزل والأمان</a>
+        <a href="#database">الجداول والعلاقات</a>
+        <a href="#orm">Prisma وTypeORM وKysely</a>
+        <a href="#workflows">أهم التدفقات</a>
+        <a href="#api">الـ API والتشغيل</a>
+        <a href="#interview">أسئلة المقابلة</a>
+        <a href="#roadmap">خطة مراجعة 90 دقيقة</a>
+        <a href="#sources">مصادر الكلام</a>
+      </nav>
+
+      <main>
+        <section id="quick-answer">
+          <div class="section-kicker">01 — احفظ هذا أولاً</div>
+          <h2>ما هو المشروع؟</h2>
+          <p class="lead">
+            هو <b>Modular Monolith</b> مبني بـ NestJS لإدارة عمليات الشحن لشركات
+            متعددة: العميل يطلب شحنة، النظام يولّد عروض أسعار بحسب المناطق، الشركة
+            تقبل الطلب، ينشئ الموظف الشحنة وطرودها وفاتورتها، ثم تُنقَل الطرود في
+            رحلات وبيانات شحن، وأخيراً يُسجَّل إثبات التسليم والدفع.
+          </p>
+
+          <div class="callout success">
+            <strong>جواب تسليم جاهز:</strong>
+            اخترنا Multi-Tenancy لأن المنصة تخدم شركات شحن متعددة من تطبيق واحد.
+            العزل يكون منطقياً عبر <code>tenant_id</code>، وصلاحيات المستخدم
+            وسياق الطلب يمنعان مستخدم شركة من رؤية أو تعديل بيانات شركة أخرى.
+          </div>
+
+          <div class="callout warning">
+            <strong>تصحيح مهم جداً:</strong>
+            لا تقل إن المشروع يستخدم TypeORM. لا توجد حزمة أو import لـ
+            <code>typeorm</code> في الـ backend. الموجود فعلياً هو
+            <b>Prisma 7 للكتابة</b> و<b>Kysely للقراءة والاستعلامات المركّبة</b>.
+            المقارنة مع TypeORM موجودة لاحقاً لأن السؤال وارد في المناقشة.
+          </div>
+
+          <div class="three-col">
+            <article class="mini-card">
+              <h3>من هم المستخدمون؟</h3>
+              <p>مالك المنصة، مالك/مدير الشركة، الموظف، السائق، والعميل.</p>
+            </article>
+            <article class="mini-card">
+              <h3>ما الذي تديره الشركة؟</h3>
+              <p>الفروع والمستودعات والمناطق والأسعار والموظفون والمركبات والشحنات.</p>
+            </article>
+            <article class="mini-card">
+              <h3>ما الذي يحمي البيانات؟</h3>
+              <p>JWT، صلاحيات، سياسات Authorization، سياق request، وقيود قاعدة البيانات.</p>
+            </article>
+          </div>
+        </section>
+
+        <section id="story">
+          <div class="section-kicker">02 — افهم المشروع كقصة</div>
+          <h2>رحلة الشحنة من أول طلب العميل حتى التسليم</h2>
+          <p class="lead">
+            إذا فهمت التسلسل التالي، ستفهم لماذا توجد أغلب الجداول والموديولات.
+          </p>
+
+          <div class="flow" aria-label="تدفق أعمال الشحنة">
+            <article class="flow-step">
+              <span class="n">1</span><b>العميل يطلب</b>
+              <p>ينشئ طلب شحن فيه نقطة الانطلاق والوجهة والوزن والأبعاد.</p>
+            </article>
+            <div class="flow-arrow" aria-hidden="true">←</div>
+            <article class="flow-step">
+              <span class="n">2</span><b>تسعير وعروض</b>
+              <p>يُحدَّد المسار والمناطق وتُولَّد quotations للشركات القادرة على الخدمة.</p>
+            </article>
+            <div class="flow-arrow" aria-hidden="true">←</div>
+            <article class="flow-step">
+              <span class="n">3</span><b>إنشاء الشحنة</b>
+              <p>تُنشأ shipment وparcels وفاتورة في transaction قصيرة واحدة.</p>
+            </article>
+            <div class="flow-arrow" aria-hidden="true">←</div>
+            <article class="flow-step">
+              <span class="n">4</span><b>نقل وتتبع</b>
+              <p>المركبة والرحلة وmanifest تنقل الطرود، وكل تغيير يسجل movement.</p>
+            </article>
+            <div class="flow-arrow" aria-hidden="true">←</div>
+            <article class="flow-step">
+              <span class="n">5</span><b>تسليم ودفع</b>
+              <p>إثبات تسليم للطرْد، وربما دفع عند الاستلام، ثم تحديث الحالة.</p>
+            </article>
+          </div>
+
+          <div class="two-col" style="margin-top: 1rem">
+            <article class="mini-card">
+              <h3>الفرق بين Request وShipment</h3>
+              <p>
+                <code>shipment_request</code> هو <b>طلب/نية قبل التنفيذ</b> وقد
+                يحصل على عدة عروض. أما <code>customer_shipment</code> فهي
+                <b>شحنة فعلية</b> لدى شركة محددة، تنشأ بعد القبول.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>الفرق بين Shipment وParcel</h3>
+              <p>
+                الشحنة هي العملية التجارية الكاملة بين مرسل ومستلم؛ قد تضم عدة
+                طرود. كل <code>parcel</code> له tracking number وحالة وتاريخ حركة
+                وإثبات تسليم مستقل.
+              </p>
+            </article>
+          </div>
+        </section>
+
+        <section id="architecture">
+          <div class="section-kicker">03 — البنية والتقنيات</div>
+          <h2>كيف مبني المشروع؟</h2>
+          <p class="lead">
+            الـ backend هو <b>Modular Monolith</b>: تطبيق NestJS واحد، لكن مقسّم
+            إلى موديولات أعمال مستقلة نسبياً، وليس Microservices.
+          </p>
+
+          <div class="architecture" aria-label="مخطط طبقات النظام">
+            <div class="arch-stack">
+              <div class="arch-box">Flutter Mobile</div>
+              <div class="arch-box">Swagger وBruno للتجربة</div>
+              <div class="arch-box">Nginx / Docker</div>
+            </div>
+            <div class="arch-middle" aria-hidden="true">⟷</div>
+            <div class="arch-stack">
+              <div class="arch-box primary">NestJS API: Controllers → Services → Repositories</div>
+              <div class="arch-box teal">PostgreSQL + PostGIS + ltree</div>
+              <div class="arch-box teal">Redis / Firebase / Local Storage / PDF</div>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <article class="mini-card">
+              <h3>طبقات الكود</h3>
+              <dl class="definition-list">
+                <dt>Controller</dt>
+                <dd>يستقبل HTTP ويرسل الطلب للخدمة؛ لا يضع منطق العمل الثقيل.</dd>
+                <dt>Service</dt>
+                <dd>ينفذ use case وقواعد العمل والتنسيق بين الموديولات.</dd>
+                <dt>Domain Entity</dt>
+                <dd>يحرس انتقالات الحالة المهمة، مثل منع إلغاء شحنة بعد dispatch.</dd>
+                <dt>Repository</dt>
+                <dd>طبقة الوصول للبيانات: Prisma للكتابة وKysely للقراءة.</dd>
+                <dt>Facade</dt>
+                <dd>البوابة المسموح بها بين الموديولات؛ تقلل الترابط المباشر.</dd>
+              </dl>
+            </article>
+            <article class="mini-card">
+              <h3>التقنيات الموجودة فعلياً</h3>
+              <div class="pill-row">
+                <span class="pill blue">NestJS 11</span>
+                <span class="pill blue">TypeScript</span>
+                <span class="pill green">PostgreSQL 16 + PostGIS</span>
+                <span class="pill green">Prisma 7</span>
+                <span class="pill purple">Kysely</span>
+                <span class="pill amber">Redis cache</span>
+                <span class="pill">JWT + Passport + bcrypt</span>
+                <span class="pill">CASL</span>
+                <span class="pill">Firebase Admin</span>
+                <span class="pill">Docker Compose</span>
+                <span class="pill">Flutter + Riverpod + GoRouter</span>
+              </div>
+              <p class="muted">
+                Prisma schema كذلك يولّد types لـ Kysely؛ أي أن الاثنين متصلان بنفس
+                تعريف البيانات، وليس عندك جدولان منفصلان لكل ORM.
+              </p>
+            </article>
+          </div>
+
+          <div class="callout warning">
+            <strong>الدقة في جواب العزل:</strong>
+            العزل هنا على مستوى التطبيق عبر <code>tenant_id</code> وPrincipal
+            والسياسات وvisibility scopes. لم يظهر في schema أو migrations الحالية
+            استخدام PostgreSQL Row-Level Security، لذلك لا تقل إن قاعدة البيانات
+            تفرض RLS بنفسها.
+          </div>
+
+          <h3 style="margin-top: 1.1rem">خريطة المجلدات التي تهمك</h3>
+          <pre class="folder-map" aria-label="خريطة مجلدات المشروع"><span>multi-tenant_shipping_management_platform/</span>
+├── backend/
+│   ├── prisma/schema.prisma        ← الجداول والعلاقات والـ enums
+│   ├── prisma/migrations/          ← تاريخ تغييرات قاعدة البيانات
+│   ├── src/main.ts                 ← تشغيل NestJS وSwagger والحماية العامة
+│   ├── src/app.module.ts           ← تجميع الموديولات
+│   ├── src/modules/                ← موديولات العمل (auth, tenant, shipment...)
+│   ├── src/infrastructure/         ← database, cache, config, mail
+│   ├── src/packages/               ← context, transaction, authorization, storage...
+│   └── bruno/                      ← طلبات API جاهزة للتجربة
+├── mobile/                         ← Flutter UI
+├── frontend/                       ← حالياً README فقط، لا واجهة ويب فعلية
+├── nginx/                          ← إعداد reverse proxy وHTTPS
+└── docker-compose.yml              ← PostgreSQL/PostGIS وRedis</pre>
+
+          <div class="callout warning">
+            <strong>حدود النسخة الحالية:</strong>
+            تطبيق Flutter يحتوي شاشات وتنقّل وحالة محلية عبر Riverpod، لكن لا يظهر
+            في <code>mobile/lib</code> عميل HTTP أو Repository متصل بالـ API. لذلك
+            من الأدق أن تصفه كواجهة/Prototype موبايل غير موصول بعد بالـ backend.
+            كما يوجد موديولان للموظف: <code>/employees</code> و
+            <code>/employee2</code>؛ كلاهما يستخدم بيانات الموظف لكنهما مساران
+            تنفيذيان مختلفان، وهي نقطة تستحق التوضيح إن سُئلت عنها.
+          </div>
+        </section>
+
+        <section id="tenancy">
+          <div class="section-kicker">04 — الفكرة الأهم: العزل والأمان</div>
+          <h2>كيف يضمن المشروع أن كل شركة ترى بياناتها فقط؟</h2>
+          <div class="two-col">
+            <article class="mini-card">
+              <h3>Multi-Tenancy في البيانات</h3>
+              <p>
+                <code>tenant</code> يمثل شركة الشحن. أغلب جداول الشركة تحمل
+                <code>tenant_id</code>: موظفون، فروع، مركبات، أسعار، شحنات، طرود،
+                فواتير، إلخ.
+              </p>
+              <p>
+                هذا يسمى <b>shared database, shared schema</b> مع عزل منطقي:
+                نفس قاعدة البيانات والجداول، لكن كل صف يخص tenant محدداً.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>Multi-Tenancy في الطلب</h3>
+              <p>
+                <code>GlobalAuthGuard</code> يقرأ JWT، ثم يبني
+                <code>Principal</code> داخل <code>AsyncLocalStorage</code>
+                (Request Context). السياسات والخدمات تستخدم هذا السياق لتقرر من
+                يرى أو يعدّل ماذا.
+              </p>
+              <p>
+                الصلاحية ليست مجرد إخفاء زر في الواجهة؛ هي تحقق backend قبل تنفيذ
+                العملية.
+              </p>
+            </article>
+          </div>
+
+          <h3 style="margin-top: 1.1rem">مسار الدخول باختصار</h3>
+          <div class="flow">
+            <article class="flow-step">
+              <span class="n">1</span><b>Login</b>
+              <p>يتحقق من البريد وكلمة المرور بـ bcrypt.</p>
+            </article>
+            <div class="flow-arrow" aria-hidden="true">←</div>
+            <article class="flow-step">
+              <span class="n">2</span><b>اختيار profile</b>
+              <p>إن كان للمستخدم أكثر من دور/شركة، يحصل أولاً على session token مؤقت.</p>
+            </article>
+            <div class="flow-arrow" aria-hidden="true">←</div>
+            <article class="flow-step">
+              <span class="n">3</span><b>JWT</b>
+              <p>يحمل user id وtype وtenant/profile/session عند الحاجة.</p>
+            </article>
+            <div class="flow-arrow" aria-hidden="true">←</div>
+            <article class="flow-step">
+              <span class="n">4</span><b>Principal + Policy</b>
+              <p>الحارس يبني Principal؛ Decorator <code>@Authorize</code> يفحص السياسة.</p>
+            </article>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>المفهوم</th>
+                <th>معناه في المشروع</th>
+                <th>مثال مهم</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Authentication</td>
+                <td>من أنت؟ إثبات الهوية عبر JWT بعد login.</td>
+                <td>هل token صالح لمستخدم حقيقي؟</td>
+              </tr>
+              <tr>
+                <td>Authorization</td>
+                <td>هل يسمح لك بفعل معين على مورد معين؟</td>
+                <td>هل هذا الموظف يستطيع تغيير حالة هذا الطرد؟</td>
+              </tr>
+              <tr>
+                <td>Role / Permission</td>
+                <td>دور الشركة يتصل بصلاحيات عبر جداول وسيطة.</td>
+                <td>Role مدير ↔ Permission تعديل شحنة.</td>
+              </tr>
+              <tr>
+                <td>Visibility Scope</td>
+                <td>ما السجلات التي يحق للمستخدم رؤيتها في القائمة.</td>
+                <td>موظف فرع يرى نطاق فرعه، لا كل الفروع.</td>
+              </tr>
+              <tr>
+                <td>Capabilities</td>
+                <td>ما الأفعال المتاحة على سجل أعيد للواجهة.</td>
+                <td>يمكنه view لكن لا يمكنه cancel.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="database">
+          <div class="section-kicker">05 — قاعدة البيانات</div>
+          <h2>كل الجداول: 45 model في schema الحالية</h2>
+          <p class="lead">
+            هذه ليست قائمة أسماء للحفظ؛ اقرأها كمجموعات أعمال. اسم الجدول بالإنكليزي
+            مطابق لـ <code>backend/prisma/schema.prisma</code>. الحقول المذكورة هي
+            المفاتيح التي تشرح الهدف والعلاقة، وليست كل الأعمدة.
+          </p>
+
+          <div class="callout">
+            <strong>كيف تقرأ العلاقات؟</strong>
+            <code>tenant_id</code> يعني “هذا السجل تابع لشركة”. الحقل الذي ينتهي
+            بـ <code>_id</code> يكون غالباً Foreign Key. جدول مثل
+            <code>role_permission</code> هو جدول ربط many-to-many بين role وpermission.
+          </div>
+
+          <div class="search-row">
+            <label for="table-search" class="nowrap"><b>ابحث عن جدول:</b></label>
+            <input
+              id="table-search"
+              type="search"
+              autocomplete="off"
+              placeholder="مثلاً parcel أو فاتورة أو موظف أو tenant"
+              aria-describedby="table-search-help"
+            />
+          </div>
+          <p id="table-search-help" class="muted" style="font-size: 0.85rem">
+            البحث يعمل على اسم الجدول وشرحه وعلاقاته.
+          </p>
+
+          <details class="table-group" open>
+            <summary>1) الهوية والعملاء والـ tenant — 10 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="users مستخدم حساب email phone password profile session token">
+                <span class="en">users</span>
+                <h4>حساب المستخدم الأساسي</h4>
+                <p><b>يحفظ:</b> email وphone وpassword_hash وتواريخ الإنشاء.</p>
+                <p><b>يرتبط بـ:</b> customer_profile وemployee وplatform_admin والجلسات والإشعارات.</p>
+              </article>
+              <article class="table-card" data-search="platform_admin مدير مالك المنصة super admin support billing">
+                <span class="en">platform_admin</span>
+                <h4>مشرف المنصة</h4>
+                <p><b>يحفظ:</b> حساب المستخدم، الاسم، ودور المنصة مثل SUPER_ADMIN.</p>
+                <p><b>العلاقة:</b> واحد إلى واحد تقريباً مع users عبر user_id الفريد.</p>
+              </article>
+              <article class="table-card" data-search="tenant شركة شحن multi tenant company">
+                <span class="en">tenant</span>
+                <h4>شركة الشحن / المستأجر</h4>
+                <p><b>يحفظ:</b> الاسم والتواصل والشعار والضريبة والحالة.</p>
+                <p><b>العلاقة:</b> هو جذر بيانات الشركة؛ تتبعه الشحنات والفروع والموظفون والأسعار.</p>
+              </article>
+              <article class="table-card" data-search="tenant_owner مالك شركة owner user tenant primary">
+                <span class="en">tenant_owner</span>
+                <h4>ربط مالك بحساب شركة</h4>
+                <p><b>يحفظ:</b> tenant_id وuser_id وis_primary.</p>
+                <p><b>العلاقة:</b> يمنع تكرار نفس المستخدم كمالك لنفس الشركة عبر unique مركب.</p>
+              </article>
+              <article class="table-card" data-search="customer_profile عميل profile user full name phone">
+                <span class="en">customer_profile</span>
+                <h4>ملف العميل</h4>
+                <p><b>يحفظ:</b> الاسم والهاتف وصورة الملف.</p>
+                <p><b>العلاقة:</b> user واحد له profile واحد؛ العميل قد يكون مرسلاً أو مستلماً.</p>
+              </article>
+              <article class="table-card" data-search="customer_address عنوان عميل postgis geometry default">
+                <span class="en">customer_address</span>
+                <h4>عناوين العميل</h4>
+                <p><b>يحفظ:</b> label والعنوان ونقطة جغرافية <code>geometry(Point, 4326)</code>.</p>
+                <p><b>العلاقة:</b> عناوين متعددة لملف عميل واحد، مع GiST index للموقع.</p>
+              </article>
+              <article class="table-card" data-search="customer_tenant عميل شركة many to many first interaction">
+                <span class="en">customer_tenant</span>
+                <h4>علاقة العميل بالشركة</h4>
+                <p><b>يحفظ:</b> متى تعامل العميل لأول مرة مع الشركة.</p>
+                <p><b>العلاقة:</b> جدول ربط many-to-many بين customer_profile وtenant.</p>
+              </article>
+              <article class="table-card" data-search="user_session جلسة refresh token hashed token expiration">
+                <span class="en">user_session</span>
+                <h4>جلسة Refresh Token</h4>
+                <p><b>يحفظ:</b> refresh token بشكل hash وexpiry ومعلومات جهاز اختيارية.</p>
+                <p><b>العلاقة:</b> جلسات متعددة للمستخدم؛ حذفها عند logout أو عند token مشبوه.</p>
+              </article>
+              <article class="table-card" data-search="user_device_token firebase FCM mobile push notification device">
+                <span class="en">user_device_token</span>
+                <h4>توكن جهاز للإشعارات</h4>
+                <p><b>يحفظ:</b> FCM token والمنصة android/ios/web.</p>
+                <p><b>العلاقة:</b> توكنات متعددة للمستخدم، لكن لا يكرر نفس التوكن لنفسه.</p>
+              </article>
+              <article class="table-card" data-search="audit_log سجل تدقيق history actor old values new values">
+                <span class="en">audit_log</span>
+                <h4>سجل التدقيق</h4>
+                <p><b>يحفظ:</b> من فعل ماذا وعلى أي entity، IP، القيم القديمة والجديدة بصيغة JSON.</p>
+                <p><b>العلاقة:</b> قد يرتبط بمستخدم وtenant، وكلاهما اختياري للسماح بأحداث عامة.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>2) الاشتراك وإعدادات الشركة — 7 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="subscription_plan خطة اشتراك limits branches employees vehicles price">
+                <span class="en">subscription_plan</span>
+                <h4>خطة الاشتراك</h4>
+                <p><b>يحفظ:</b> حدود الفروع والمستودعات والموظفين والمركبات والأسعار.</p>
+                <p><b>العلاقة:</b> الخطة عامة للمنصة، وتستخدمها اشتراكات شركات عديدة.</p>
+              </article>
+              <article class="table-card" data-search="tenant_subscription اشتراك tenant plan snapshot active trial">
+                <span class="en">tenant_subscription</span>
+                <h4>اشتراك الشركة الحالي/التاريخي</h4>
+                <p><b>يحفظ:</b> tenant، الخطة، الحالة، البداية والانتهاء وsnapshot للحدود.</p>
+                <p><b>لماذا snapshot؟</b> كي لا تتغير شروط اشتراك قديم عند تعديل الخطة لاحقاً.</p>
+              </article>
+              <article class="table-card" data-search="tenant_subscription_history تاريخ اشتراك upgrade downgrade cancel">
+                <span class="en">tenant_subscription_history</span>
+                <h4>سجل تغيّر الاشتراك</h4>
+                <p><b>يحفظ:</b> العملية، الخطة السابقة والجديدة، المنفّذ والملاحظات.</p>
+                <p><b>العلاقة:</b> يتبع اشتراكاً وشركة وخططاً.</p>
+              </article>
+              <article class="table-card" data-search="tenant_delivery_settings delivery otp signature photo representative">
+                <span class="en">tenant_delivery_settings</span>
+                <h4>إعدادات التسليم</h4>
+                <p><b>يحفظ:</b> هل OTP أو توقيع أو صور إثبات مطلوبة، وهل يسمح بمندوب.</p>
+                <p><b>العلاقة:</b> إعدادات one-to-one للشركة؛ المفتاح هو tenant_id نفسه.</p>
+              </article>
+              <article class="table-card" data-search="tenant_operational_settings operational tracking prefix quotation validity shipment">
+                <span class="en">tenant_operational_settings</span>
+                <h4>إعدادات التشغيل</h4>
+                <p><b>يحفظ:</b> prefix التتبع وقواعد إغلاق/إعادة فتح الشحنة وصلاحية العرض.</p>
+                <p><b>العلاقة:</b> one-to-one مع tenant.</p>
+              </article>
+              <article class="table-card" data-search="tenant_pricing_settings pricing divisor currency volumetric">
+                <span class="en">tenant_pricing_settings</span>
+                <h4>إعدادات التسعير</h4>
+                <p><b>يحفظ:</b> volumetric_divisor والعملة الافتراضية.</p>
+                <p><b>لماذا مهم؟</b> يدخل في حساب الوزن الحجمي وسعر العرض.</p>
+              </article>
+              <article class="table-card" data-search="handling_fee_rule رسوم handling fragile hazardous perishable temperature">
+                <span class="en">handling_fee_rule</span>
+                <h4>رسوم المناولة الخاصة</h4>
+                <p><b>يحفظ:</b> رسوم لكل نوع مثل fragile أو hazardous أو perishable.</p>
+                <p><b>العلاقة:</b> unique مركب يمنع تكرار قاعدة لنفس الشركة ونوع الرسوم.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>3) الموظفون والصلاحيات — 6 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="employee موظف tenant user employee code active">
+                <span class="en">employee</span>
+                <h4>موظف الشركة</h4>
+                <p><b>يحفظ:</b> employee_code والاسم والحالة والحساب التابع له.</p>
+                <p><b>العلاقة:</b> الموظف تابع لشركة؛ user واحد لا يتكرر كموظف لنفس tenant.</p>
+              </article>
+              <article class="table-card" data-search="employee_assignment موظف فرع organization unit assignment">
+                <span class="en">employee_assignment</span>
+                <h4>تعيين موظف في وحدة تنظيمية</h4>
+                <p><b>يحفظ:</b> الموظف والفرع/المستودع والحالة.</p>
+                <p><b>العلاقة:</b> employee قد يعمل في أكثر من unit، لكن لا يكرر نفس التعيين.</p>
+              </article>
+              <article class="table-card" data-search="assignment_role role assignment employee role">
+                <span class="en">assignment_role</span>
+                <h4>دور داخل التعيين</h4>
+                <p><b>يحفظ:</b> role_id لتعيين موظف محدد في وحدة محددة.</p>
+                <p><b>الفكرة:</b> الدور قد يختلف حسب الفرع، لا حسب الموظف عالمياً فقط.</p>
+              </article>
+              <article class="table-card" data-search="role دور tenant permission RBAC">
+                <span class="en">role</span>
+                <h4>دور داخل الشركة</h4>
+                <p><b>يحفظ:</b> الاسم والوصف وis_active، والاسم unique داخل tenant.</p>
+                <p><b>مثال:</b> مدير فرع، محاسب، عامل مستودع.</p>
+              </article>
+              <article class="table-card" data-search="permission صلاحية resource action">
+                <span class="en">permission</span>
+                <h4>صلاحية ذرّية</h4>
+                <p><b>يحفظ:</b> resource وaction ووصف؛ مثل shipment:read أو invoice:record-payment.</p>
+                <p><b>العلاقة:</b> تُمنح للأدوار، لا مباشرة للموظف في هذا التصميم.</p>
+              </article>
+              <article class="table-card" data-search="role_permission many to many role permission RBAC">
+                <span class="en">role_permission</span>
+                <h4>ربط الدور بالصلاحيات</h4>
+                <p><b>يحفظ:</b> role_id وpermission_id فقط.</p>
+                <p><b>العلاقة:</b> جدول many-to-many مع unique مركب لمنع التكرار.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>4) المواقع، الفروع، والمناطق — 4 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="global_location بلد محافظة مدينة منطقة geography parent postgis">
+                <span class="en">global_location</span>
+                <h4>هرم المواقع الجغرافي العام</h4>
+                <p><b>يحفظ:</b> name وtype (country/governorate/city...) وparent_id ونقطة جغرافية.</p>
+                <p><b>الفكرة:</b> ليس تابعاً لشركة؛ هو قاموس مواقع مشترك لكل المنصة.</p>
+              </article>
+              <article class="table-card" data-search="organization_unit فرع مستودع warehouse hub ltree tenant zone">
+                <span class="en">organization_unit</span>
+                <h4>وحدة تنظيمية للشركة</h4>
+                <p><b>يحفظ:</b> فرع/مستودع/HUB/Locker، parent_id وtree_path وموقع وإعداد zone.</p>
+                <p><b>العلاقة:</b> شجرة وحدات لكل tenant؛ <code>ltree</code> يساعد في الاستعلام الهرمي.</p>
+              </article>
+              <article class="table-card" data-search="org_unit_location_mapping تغطية فرع منطقة delivery pickup">
+                <span class="en">org_unit_location_mapping</span>
+                <h4>تغطية الوحدة للمواقع</h4>
+                <p><b>يحفظ:</b> أي global location يغطيه الفرع ونوع التغطية delivery/pickup/both.</p>
+                <p><b>الفكرة:</b> هذا ما يساعد على معرفة الفروع القادرة على خدمة طلب ما.</p>
+              </article>
+              <article class="table-card" data-search="tenant_zone منطقة تسعير tenant zone">
+                <span class="en">tenant_zone</span>
+                <h4>منطقة تسعير داخل الشركة</h4>
+                <p><b>يحفظ:</b> اسم ووصف وحالة المنطقة.</p>
+                <p><b>العلاقة:</b> تربط بالفروع وبمصفوفة أسعار الطريق.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>5) طلب الشحن والتسعير — 3 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="zone_pricing_matrix سعر منطقة route service level base weight">
+                <span class="en">zone_pricing_matrix</span>
+                <h4>مصفوفة سعر المسار</h4>
+                <p><b>يحفظ:</b> origin_zone وdestination_zone وservice_level والسعر الأساسي ووزن الأساس.</p>
+                <p><b>قيد مهم:</b> unique على tenant + الأصل + الوجهة + مستوى الخدمة.</p>
+              </article>
+              <article class="table-card" data-search="shipment_request طلب شحن customer quotation origin destination status">
+                <span class="en">shipment_request</span>
+                <h4>طلب العميل قبل التنفيذ</h4>
+                <p><b>يحفظ:</b> بيانات المرسل والمستلم والمواقع والوزن والأبعاد والحالة.</p>
+                <p><b>العلاقة:</b> يخص customer وقد يولّد quotations متعددة ويصبح shipment لاحقاً.</p>
+              </article>
+              <article class="table-card" data-search="quotation عرض سعر pricing request tenant route automatic manual">
+                <span class="en">quotation</span>
+                <h4>عرض السعر</h4>
+                <p><b>يحفظ:</b> الشركة، الطلب، نقطة البداية/النهاية، السعر ومكونات الحساب وsnapshot.</p>
+                <p><b>العلاقة:</b> عدة عروض لطلب واحد؛ approved_quotation_id في الطلب يحدد المختار.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>6) الشحن والطرود والتتبع — 4 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="customer_shipment شحنة فعلية shipment sender receiver invoice parcel tenant">
+                <span class="en">customer_shipment</span>
+                <h4>الشحنة الفعلية</h4>
+                <p><b>يحفظ:</b> الشركة والمرسل/المستلم والأصل/الوجهة وحالة الشحنة والوزن القابل للفوترة.</p>
+                <p><b>العلاقة:</b> لها parcels وفاتورة؛ وقد تعود إلى shipment_request.</p>
+              </article>
+              <article class="table-card" data-search="parcel طرد tracking number weight status condition label">
+                <span class="en">parcel</span>
+                <h4>طرد مفرد</h4>
+                <p><b>يحفظ:</b> tracking_number فريد عالمياً، الأبعاد والأوزان والحالة والموقع الحالي.</p>
+                <p><b>العلاقة:</b> يتبع shipment واحد؛ له movements عديدة وPOD واحد كحد أقصى.</p>
+              </article>
+              <article class="table-card" data-search="parcel_movement تتبع حركة timeline action status employee trip">
+                <span class="en">parcel_movement</span>
+                <h4>حدث تتبع للطرد</h4>
+                <p><b>يحفظ:</b> انتقال الحالة/condition والفعل والمنفذ ولقطات اسم المكان والموظف والرحلة.</p>
+                <p><b>الفكرة:</b> سجل زمني append-only تقريباً؛ لا تستنتج التاريخ من الحالة الحالية وحدها.</p>
+              </article>
+              <article class="table-card" data-search="proof_of_delivery POD إثبات تسليم otp signature photo">
+                <span class="en">proof_of_delivery</span>
+                <h4>إثبات التسليم</h4>
+                <p><b>يحفظ:</b> اسم المستلم، OTP، توقيع/صور وموقع التسليم وطريقة الاستلام.</p>
+                <p><b>قيد مهم:</b> parcel_id unique، أي لا يمكن لنفس الطرد أن يملك إثباتين.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>7) الأسطول والنقل — 5 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="vehicle مركبة vehicle plate capacity status">
+                <span class="en">vehicle</span>
+                <h4>مركبة الشركة</h4>
+                <p><b>يحفظ:</b> رقم اللوحة والنوع والسعة والحالة.</p>
+                <p><b>العلاقة:</b> اللوحة unique داخل tenant؛ تدخل في trips وassignments.</p>
+              </article>
+              <article class="table-card" data-search="vehicle_assignment سائق مركبة employee vehicle active">
+                <span class="en">vehicle_assignment</span>
+                <h4>تعيين سائق/موظف لمركبة</h4>
+                <p><b>يحفظ:</b> employee وvehicle ووقت التعيين والإزالة.</p>
+                <p><b>الفكرة:</b> يبيّن من يقود المركبة حالياً أو تاريخياً.</p>
+              </article>
+              <article class="table-card" data-search="trip رحلة driver vehicle origin destination scheduled">
+                <span class="en">trip</span>
+                <h4>رحلة نقل</h4>
+                <p><b>يحفظ:</b> السائق والمركبة والأصل والوجهة وحالة ومواعيد الرحلة.</p>
+                <p><b>العلاقة:</b> الرحلة قد تضم manifests وحركات طرود.</p>
+              </article>
+              <article class="table-card" data-search="transport_manifest بيان شحن manifest trip parcels">
+                <span class="en">transport_manifest</span>
+                <h4>بيان نقل لرحلة</h4>
+                <p><b>يحفظ:</b> الرحلة والأصل والوجهة وحالة البيان.</p>
+                <p><b>العلاقة:</b> يحتوي manifest_item لكل طرد مدرج في البيان.</p>
+              </article>
+              <article class="table-card" data-search="manifest_item طرد بيان loaded unloaded missing">
+                <span class="en">manifest_item</span>
+                <h4>سطر طرد داخل البيان</h4>
+                <p><b>يحفظ:</b> manifest_id وparcel_id وحالة التحميل/التفريغ.</p>
+                <p><b>قيد مهم:</b> لا يمكن إدراج نفس الطرد مرتين في البيان نفسه.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>8) الفوترة والدفع — 3 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="invoice فاتورة shipment customer total status due date">
+                <span class="en">invoice</span>
+                <h4>فاتورة الشحنة</h4>
+                <p><b>يحفظ:</b> رقم الفاتورة والمبالغ والعميل والشحنة والـ due date والحالة.</p>
+                <p><b>العلاقة:</b> تتبع tenant وقد تملك payments عديدة.</p>
+              </article>
+              <article class="table-card" data-search="invoice_counter عداد فاتورة tenant year sequence">
+                <span class="en">invoice_counter</span>
+                <h4>عداد ترقيم الفواتير</h4>
+                <p><b>يحفظ:</b> آخر رقم لكل tenant ولكل سنة؛ مفتاحه المركب tenant_id + year.</p>
+                <p><b>الفكرة:</b> يولّد أرقاماً متسلسلة آمنة داخل transaction.</p>
+              </article>
+              <article class="table-card" data-search="payment دفعة invoice employee cash online bank transfer">
+                <span class="en">payment</span>
+                <h4>دفعة على فاتورة</h4>
+                <p><b>يحفظ:</b> المبلغ والطريقة والمرجع والحالة وجامع الدفعة والفرع.</p>
+                <p><b>العلاقة:</b> دفعات متعددة قد تغيّر invoice من UNPAID إلى PARTIALLY_PAID أو PAID.</p>
+              </article>
+            </div>
+          </details>
+
+          <details class="table-group" open>
+            <summary>9) التواصل والدعم — 3 جداول</summary>
+            <div class="table-grid">
+              <article class="table-card" data-search="notification إشعار push sms email in app">
+                <span class="en">notification</span>
+                <h4>إشعار داخل النظام/خارجه</h4>
+                <p><b>يحفظ:</b> المستلم والنوع والعنوان والنص والـ channel والحالة وis_read.</p>
+                <p><b>العلاقة:</b> يخص مستخدماً وtenant اختياري.</p>
+              </article>
+              <article class="table-card" data-search="support_ticket تذكرة دعم parcel shipment priority category">
+                <span class="en">support_ticket</span>
+                <h4>تذكرة دعم</h4>
+                <p><b>يحفظ:</b> الموضوع والفئة والأولوية والحالة، وقد تشير لطرد أو شحنة.</p>
+                <p><b>العلاقة:</b> منشئ التذكرة مستخدم؛ وقد تُسند لموظف.</p>
+              </article>
+              <article class="table-card" data-search="support_ticket_message رسائل تذكرة support attachments">
+                <span class="en">support_ticket_message</span>
+                <h4>رسالة داخل التذكرة</h4>
+                <p><b>يحفظ:</b> النص والمرفقات JSON والمرسل والوقت.</p>
+                <p><b>العلاقة:</b> رسائل عديدة لتذكرة واحدة، وتحذف معها بـ cascade.</p>
+              </article>
+            </div>
+          </details>
+
+          <h3 style="margin-top: 1.2rem">أهم العلاقات التي يجب أن تحفظها</h3>
+          <div class="two-col">
+            <article class="mini-card">
+              <ul>
+                <li><code>users</code> ← 1:1 → <code>customer_profile</code> أو <code>platform_admin</code>.</li>
+                <li><code>tenant</code> ← 1:N → employees / organization_units / shipments / invoices.</li>
+                <li><code>employee</code> ← N:M → organization_unit عبر <code>employee_assignment</code>.</li>
+                <li><code>role</code> ← N:M → permission عبر <code>role_permission</code>.</li>
+              </ul>
+            </article>
+            <article class="mini-card">
+              <ul>
+                <li><code>shipment_request</code> ← 1:N → <code>quotation</code>.</li>
+                <li><code>customer_shipment</code> ← 1:N → <code>parcel</code>.</li>
+                <li><code>parcel</code> ← 1:N → <code>parcel_movement</code> و1:1 → POD.</li>
+                <li><code>invoice</code> ← 1:N → <code>payment</code>.</li>
+              </ul>
+            </article>
+          </div>
+
+          <h3 style="margin-top: 1.2rem">Enums / حالات لا تحفظها كلها حرفياً، افهم المنطق</h3>
+          <div class="pill-row">
+            <span class="pill blue">RequestStatus: PENDING → CUSTOMER_APPROVED / COMPANY_ACCEPTED → CONVERTED</span>
+            <span class="pill blue">ParcelStatus: PROCESSING → READY_FOR_DISPATCH → IN_TRANSIT → READY_FOR_COLLECTION → COLLECTED</span>
+            <span class="pill green">ShipmentStatus: PROCESSING / IN_TRANSIT / DELIVERED / CANCELLED / RETURNED</span>
+            <span class="pill amber">InvoiceStatus: UNPAID / PARTIALLY_PAID / PAID / OVERDUE</span>
+            <span class="pill purple">TripStatus: SCHEDULED / IN_PROGRESS / COMPLETED / CANCELLED</span>
+            <span class="pill">ServiceLevel: STANDARD / EXPRESS / SAME_DAY / REFRIGERATED</span>
+          </div>
+        </section>
+
+        <section id="orm">
+          <div class="section-kicker">06 — ORM بدون لخبطة</div>
+          <h2>Prisma مقابل TypeORM، وأين يأتي Kysely؟</h2>
+
+          <div class="callout success">
+            <strong>الواقع في مشروعك:</strong>
+            <code>schema.prisma</code> هو مصدر تعريف نموذج البيانات. Prisma ينفذ
+            عمليات الكتابة، وKysely يقرأ ويبني joins/filters المعقدة. TypeORM ليس
+            جزءاً من هذا المشروع.
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>النقطة</th>
+                <th>Prisma</th>
+                <th>TypeORM</th>
+                <th>Kysely في مشروعك</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>ما هو؟</td>
+                <td>ORM مع schema declarative وClient مولّد ومigrations.</td>
+                <td>ORM تقليدي TypeScript/JavaScript.</td>
+                <td>Type-safe SQL query builder، وليس ORM كاملاً.</td>
+              </tr>
+              <tr>
+                <td>تعريف البيانات</td>
+                <td><code>schema.prisma</code> مستقل عن classes.</td>
+                <td>غالباً TypeScript classes مع decorators مثل <code>@Entity()</code>.</td>
+                <td>يستهلك types مولّدة من schema Prisma هنا.</td>
+              </tr>
+              <tr>
+                <td>الوصول للبيانات</td>
+                <td><code>prisma.parcel.create()</code> ويرجع plain objects.</td>
+                <td>Repository / Entity Manager / QueryBuilder، وقد يدعم Active Record أو Data Mapper.</td>
+                <td><code>selectFrom(...).innerJoin(...)</code> لبناء SQL واضح.</td>
+              </tr>
+              <tr>
+                <td>أفضل استخدام هنا</td>
+                <td>Command side: create/update/delete وtransactions.</td>
+                <td>غير مستخدم هنا؛ خيار بديل لو اختير في البداية.</td>
+                <td>Query side: قوائم، filters، joins، pagination، read models.</td>
+              </tr>
+              <tr>
+                <td>migrations</td>
+                <td>Prisma Migrate يولّد ويحفظ SQL في <code>prisma/migrations</code>.</td>
+                <td>migrations خاصة بـ TypeORM CLI/files.</td>
+                <td>لا يدير migrations وحده.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="two-col">
+            <article class="mini-card">
+              <h3>لماذا Prisma للكتابة؟</h3>
+              <ul>
+                <li>Client مولّد ومتحقق من أنواع schema.</li>
+                <li>CRUD وnested writes مريحان.</li>
+                <li>يتكامل مع transaction service في المشروع.</li>
+                <li>الـ migrations موجودة ومؤرشفة مع الكود.</li>
+              </ul>
+            </article>
+            <article class="mini-card">
+              <h3>لماذا Kysely للقراءة؟</h3>
+              <ul>
+                <li>الاستعلامات المعقدة ذات joins كثيرة تكون صريحة وسهلة التحكم.</li>
+                <li>يعطي TypeScript types بدون تحويل كل شيء إلى entities.</li>
+                <li>يناسب CQRS الخفيف هنا: read وwrite لهما احتياجات مختلفة.</li>
+                <li>لا يعني وجود قاعدتي بيانات أو نسختين من البيانات.</li>
+              </ul>
+            </article>
+          </div>
+
+          <h3 style="margin-top: 1rem">ما المقصود بـ CQRS هنا؟</h3>
+          <p>
+            ليس Microservices ولا Event Sourcing بالضرورة. هو فصل مسؤولية
+            <b>Commands</b> (تغير الحالة) عن <b>Queries</b> (تقرأ وتعرض البيانات).
+            عندك غالباً ملفات <code>*.command.repository.ts</code> تستخدم Prisma
+            وملفات <code>*.query.repository.ts</code> تستخدم Kysely.
+          </p>
+          <div class="formula">Command: HTTP → Command Service → Prisma → PostgreSQL
+Query:   HTTP → Query Service   → Kysely → PostgreSQL</div>
+
+          <p class="muted">
+            هذه قاعدة الغالب في الموديولات الغنية، وليست قانوناً مطلقاً: مثلاً
+            موديول auth يستخدم Prisma مباشرة لبعض القراءات والكتابات البسيطة.
+          </p>
+
+          <p class="muted">
+            معلومة المقارنة العامة مستندة إلى وثائق
+            <a href="https://www.prisma.io/docs/orm" target="_blank" rel="noreferrer">Prisma ORM</a>
+            وشرح
+            <a href="https://typeorm.io/docs/guides/active-record-data-mapper/" target="_blank" rel="noreferrer">TypeORM لأنماط Active Record/Data Mapper</a>.
+          </p>
+        </section>
+
+        <section id="workflows">
+          <div class="section-kicker">07 — تدفقات قد يسألون عنها</div>
+          <h2>أهم قواعد العمل والتفاصيل الذكية</h2>
+
+          <div class="two-col">
+            <article class="mini-card">
+              <h3>1. كيف يُحسب السعر؟</h3>
+              <p>
+                يعثر النظام أولاً على وحدات الشركة القادرة على خدمة origin وdestination،
+                ثم يأخذ <code>zone_pricing_matrix</code> و
+                <code>tenant_pricing_settings</code>.
+              </p>
+              <div class="formula">volumetricWeight = (length × width × height) / divisor
+chargeableWeight = max(actualWeight, volumetricWeight)
+additionalWeight = max(0, chargeableWeight - baseWeight)
+total = basePrice + additionalWeight × pricePerExtraKg + extraFees</div>
+              <p>إن لم توجد إعدادات حجمية سليمة، ينشئ العرض كـ manual pricing بدلاً من سعر خاطئ.</p>
+            </article>
+
+            <article class="mini-card">
+              <h3>2. لماذا transaction قصيرة؟</h3>
+              <p>
+                عند إنشاء شحنة، الكود يفعل العمل البطيء (توليد label/PDF وحفظه) قبل
+                فتح المعاملة. بعدها فقط يكتب الشحنة والطرود والفاتورة وتحويل الطلب
+                داخل transaction.
+              </p>
+              <p>
+                الهدف: لا تبقى قاعدة البيانات مقفلة بينما ننتظر ملفاً أو خدمة خارجية،
+                لكن البيانات الجوهرية إما تنجح معاً أو تفشل معاً.
+              </p>
+            </article>
+
+            <article class="mini-card">
+              <h3>3. لماذا يوجد version؟</h3>
+              <p>
+                على shipment وparcel وinvoice يوجد <code>version</code> لـ
+                <b>optimistic locking</b>. التحديث يطلب نفس version الذي قُرئ؛ إن
+                سبقته عملية أخرى، يفشل update بدلاً من أن يمسح التغيير الجديد بصمت.
+              </p>
+              <p>النتيجة: رسالة Conflict وطلب retry، بدلاً من Lost Update.</p>
+            </article>
+
+            <article class="mini-card">
+              <h3>4. كيف تُرقم الفواتير بأمان؟</h3>
+              <p>
+                <code>invoice_counter</code> عدّاد لكل شركة ولكل سنة. يتم increment
+                atomically ضمن transaction التي تنشئ الفاتورة؛ بذلك لا يأخذ طلبان
+                الرقم نفسه.
+              </p>
+              <p>الشكل مثل: <code>DAM-INV-2026-00001</code>.</p>
+            </article>
+
+            <article class="mini-card">
+              <h3>5. كيف يعمل التتبع؟</h3>
+              <p>
+                الحالة الحالية في <code>parcel.current_status</code> مفيدة للعرض
+                السريع، أما التاريخ الكامل فهو في <code>parcel_movement</code>.
+                عند تغيير الحالة يسجل النظام السابق والجديد والمنفذ والموقع والرحلة.
+              </p>
+            </article>
+
+            <article class="mini-card">
+              <h3>6. ماذا يحدث عند التسليم؟</h3>
+              <p>
+                لا يكفي تغيير status فقط: ينشئ Proof of Delivery، وينقل الطرد إلى
+                COLLECTED عند الحاجة، ويسجل tracking event ويعيد حساب حالة الشحنة.
+                إن كان الدفع على المستلم فقد يسجل payment في نفس transaction.
+              </p>
+            </article>
+          </div>
+
+          <h3 style="margin-top: 1.2rem">أمثلة على حالات مسموحة/غير مسموحة</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>الحالة</th>
+                <th>قاعدة العمل</th>
+                <th>أين تُحمى؟</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>إلغاء شحنة</td>
+                <td>يسمح قبل dispatch فقط، ويُلغي الفاتورة إن لم يُسجَّل قبضها.</td>
+                <td>Domain entity + command service + billing facade.</td>
+              </tr>
+              <tr>
+                <td>إثبات تسليم</td>
+                <td>مرة واحدة فقط للطرد، ولا يكون الطرد قبل READY_FOR_COLLECTION.</td>
+                <td>unique DB constraint + entity assertion + service.</td>
+              </tr>
+              <tr>
+                <td>تغيير حالة طرد</td>
+                <td>يجب أن يكون transition قانونياً؛ ثم يسجل movement ويعيد حساب shipment.</td>
+                <td>Parcel entity + transaction + optimistic lock.</td>
+              </tr>
+              <tr>
+                <td>إنشاء فاتورة</td>
+                <td>هي جزء من إنشاء الشحنة، لا endpoint CRUD حرّ.</td>
+                <td>CustomerShipment → BillingFacade ضمن transaction.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3 style="margin-top: 1.2rem">خدمات البنية التي لا تنساها</h3>
+          <div class="cards">
+            <article class="mini-card">
+              <h3>Redis Cache-Aside</h3>
+              <p>
+                decorators مثل <code>@Cacheable</code> تقرأ cache ثم database عند
+                miss، و<code>@CacheEvict</code> تحذف المفتاح بعد تغيير البيانات.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>PostGIS وGiST</h3>
+              <p>
+                locations في العناوين والمواقع والفروع تستخدم geometry؛ GiST index
+                يساعد في استعلامات المكان لاحقاً.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>Firebase + device tokens</h3>
+              <p>
+                تخزَّن FCM tokens في user_device_token، وFirebase module يرسل
+                الإشعارات أو يتعامل مع topics.
+              </p>
+            </article>
+            <article class="mini-card">
+              <h3>Job يومي للفواتير</h3>
+              <p>
+                <code>OverdueInvoicesJob</code> يعمل عند 1 صباحاً ليحوّل الفواتير
+                غير المدفوعة ذات due date منتهٍ إلى OVERDUE.
+              </p>
+            </article>
+          </div>
+
+          <details class="question" style="margin-top: 1.15rem">
+            <summary>ملاحظات تحقق قبل الديمو — فحص static للكود، وليست ميزات تدّعي أنها مكتملة</summary>
+            <div class="answer">
+              <p>
+                هذه نقاط مفيدة إذا سألك المشرف: “ماذا راجعت؟” لا تقل إنها مشاكل
+                مؤكدة في runtime من دون test، بل قل إنك وجدتها في المراجعة وتحتاج
+                integration test أو إصلاحاً قبل الإنتاج.
+              </p>
+              <ul>
+                <li>
+                  Bruno يضع base URL على <code>/api/v1</code>، لكن
+                  <code>main.ts</code> لا يضع <code>setGlobalPrefix("api")</code>
+                  ولا يظهر <code>@Version()</code> على الـ controllers؛ تحقق من
+                  URL الحقيقي قبل العرض.
+                </li>
+                <li>
+                  <code>Dockerfile</code> يشغّل <code>docker-entrypoint.sh</code>
+                  ويعمل chmod لمساره، لكن لا يوجد فيه COPY واضح للسكريبت إلى
+                  <code>/usr/local/bin</code>؛ production image يحتاج build test.
+                </li>
+                <li>
+                  في تحديث parcel/POD، repository الخاص بالـ tracking يحقن
+                  <code>PrismaService</code> مباشرة، بينما كتابة parcel تستخدم
+                  <code>TransactionalPrismaService</code>. كما أن بعض reads داخل
+                  transaction تتم من Kysely pool مستقل. هذا يعرّض وعد
+                  “كل شيء atomic/read-your-writes” للخطر ويستحق اختباراً تكاملياً.
+                </li>
+                <li>
+                  مولد quotation اليدوي ينتج
+                  <code>WAITING_PRICING_REQUEST</code>، لكن
+                  <code>QuotationCommandRepository.createMany</code> يحفظ كل
+                  العروض كـ <code>PENDING</code> ولا يحفظ بعض حقول العرض اليدوي؛
+                  المسار اليدوي يستحق اختباراً وإصلاحاً.
+                </li>
+                <li>
+                  scope العميل للـ quotations فارغ في
+                  <code>ShipmentRequestVisibilityScope</code>، وقراءة quotation
+                  مباشرة بالـ id لا تتحقق من ملكية الطلب الأب؛ اختبر authorization
+                  لهذا المسار قبل الإنتاج.
+                </li>
+              </ul>
+            </div>
+          </details>
+        </section>
+
+        <section id="api">
+          <div class="section-kicker">08 — الـ API والتشغيل</div>
+          <h2>كيف تجرّب المشروع أو تشرح واجهاته؟</h2>
+          <p class="lead">
+            الـ backend يشغّل Swagger في <code>/api/docs</code> ويحتوي مجلد
+            <code>backend/bruno</code> فيه طلبات جاهزة، لذلك لا تحتاج تخمّن body
+            لكل endpoint أثناء العرض.
+          </p>
+
+          <div class="callout warning">
+            <strong>قبل تشغيل Bruno:</strong>
+            environment المحلي فيه <code>http://localhost:3000/api/v1</code>،
+            بينما الكود الظاهر يعرّف Swagger في <code>/api/docs</code> ولا يضع
+            global prefix صريحاً. جرّب <code>/health</code> وSwagger أولاً بدل
+            افتراض أن كل collections تعمل على <code>/api/v1</code>.
+          </div>
+
+          <div class="two-col">
+            <article class="mini-card">
+              <h3>مجموعات endpoints المهمة</h3>
+              <ul>
+                <li><code>/auth</code>: login، اختيار profile، refresh، logout.</li>
+                <li><code>/tenants</code> و<code>/subscription-plans</code>: إدارة الشركات والاشتراكات والإعدادات.</li>
+                <li><code>/employees</code> و<code>/roles</code> و<code>/permissions</code>: الإدارة والصلاحيات.</li>
+                <li><code>/shipment-requests</code> و<code>/quotations</code> و<code>/zone-pricing</code>: الطلب والتسعير.</li>
+                <li><code>/shipments</code> و<code>/parcels/track/:trackingNumber</code>: الشحنة والتتبع.</li>
+                <li><code>/vehicles</code> و<code>/trips</code> و<code>/manifests</code>: النقل.</li>
+                <li><code>/invoices</code> و<code>/notifications</code> و<code>/health</code>.</li>
+              </ul>
+            </article>
+            <article class="mini-card">
+              <h3>التشغيل محلياً</h3>
+              <ol>
+                <li>من <code>backend</code>: جهّز متغيرات البيئة من <code>.env.example</code>.</li>
+                <li>شغّل <code>docker compose up -d</code> في جذر المشروع لتشغيل PostgreSQL/PostGIS وRedis.</li>
+                <li>نفّذ <code>npm run db:generate</code> ثم migration المناسبة.</li>
+                <li>شغّل <code>npm run start:dev</code> ثم افتح Swagger.</li>
+              </ol>
+              <p class="muted">الـ README يذكر Node 20+، وDocker Compose، وPostgreSQL على المنفذ 51214 وRedis على 63791 محلياً.</p>
+            </article>
+          </div>
+
+          <h3 style="margin-top: 1rem">حماية HTTP الموجودة في main.ts</h3>
+          <div class="pill-row">
+            <span class="pill">CORS مع credentials</span>
+            <span class="pill">Helmet</span>
+            <span class="pill">cookie-parser</span>
+            <span class="pill">ValidationPipe: whitelist + transform</span>
+            <span class="pill">Global Exception Filter</span>
+            <span class="pill">Transform Interceptor</span>
+            <span class="pill">Global JWT guard</span>
+            <span class="pill">Throttler على endpoints الحساسة</span>
+          </div>
+        </section>
+
+        <section id="interview">
+          <div class="section-kicker">09 — قسم المقابلة / التسليم</div>
+          <h2>أسئلة ممكن تنسأل، مع جواب مختصر تحفظ فكرته</h2>
+          <p class="lead">
+            لا تحفظ النص حرفياً. افهم الجواب ثم قلّه بطريقتك. إن لم تكن متأكداً من
+            نقطة تنفيذية، قل “بحسب الكود الحالي…” وهذا جواب مهني وصادق.
+          </p>
+
+          <details class="question" open>
+            <summary>1. اشرح المشروع خلال 30 ثانية.</summary>
+            <div class="answer">
+              <p>
+                هو backend لمنصة شحن SaaS متعددة الشركات. كل شركة tenant معزولة
+                منطقياً ببياناتها. يغطي دورة الشحنة كاملة: طلب، تسعير، عرض، شحنة
+                وطرود، نقل، تتبع، إثبات تسليم، فاتورة ودفع. بنيته NestJS modular
+                monolith مع PostgreSQL وPrisma/Kysely.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>2. ما معنى Multi-Tenant هنا؟</summary>
+            <div class="answer">
+              <p>
+                عدة شركات تستخدم نفس التطبيق ونفس schema، لكن كل سجل تشغيلي تقريباً
+                يحمل <code>tenant_id</code>. الـ Principal والسياسات وقيود query
+                تمنع تسرب بيانات شركة إلى أخرى.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>3. ما الفرق بين tenant وuser وcustomer_profile؟</summary>
+            <div class="answer">
+              <p>
+                <code>tenant</code> هو الشركة، <code>users</code> هو حساب الدخول
+                العام، و<code>customer_profile</code> هو معلومات العميل التجارية
+                المرتبطة بحساب واحد. الموظف أيضاً قد يرتبط بحساب users لكن يمثل
+                علاقة الموظف بالشركة.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>4. هل تستخدمون TypeORM؟ وما الفرق عن Prisma؟</summary>
+            <div class="answer">
+              <p>
+                لا، المشروع يستخدم Prisma وKysely. Prisma يعتمد schema.prisma
+                ويولّد typed client وmigrations؛ TypeORM يعتمد غالباً entities مع
+                decorators وrepositories. اخترنا Prisma للـ writes وKysely للـ
+                read queries المعقدة.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>5. لماذا تجمعون Prisma وKysely؟ أليس هذا تكراراً؟</summary>
+            <div class="answer">
+              <p>
+                ليس تكراراً للبيانات. Prisma مناسب للـ command side والمعاملات
+                والكتابة، وKysely يتيح SQL-like typed queries لجلب read models ذات
+                joins وفلاتر كثيرة. الاثنان على نفس PostgreSQL ونفس schema/types.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>6. ما الفرق بين shipment request وquotation وshipment؟</summary>
+            <div class="answer">
+              <p>
+                request هو طلب العميل قبل التنفيذ، quotation هو عرض سعر ممكن أن
+                يكون واحداً من عدة عروض، وshipment هو السجل التشغيلي الفعلي لدى
+                الشركة بعد القبول وتحويل الطلب.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>7. كيف يمنع النظام lost updates عندما يغير اثنان حالة طرد؟</summary>
+            <div class="answer">
+              <p>
+                يستخدم optimistic locking. يقرأ version ثم ينفذ update حيث
+                <code>id</code> و<code>version</code> متطابقان ويزيد version. إن
+                كانت count = 0 فهذا يعني أن عملية أخرى سبقتنا، فنرجع Conflict
+                بدلاً من overwrite صامت.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>8. ما الذي يدخل في transaction عند إنشاء شحنة؟ ولماذا؟</summary>
+            <div class="answer">
+              <p>
+                إنشاء shipment والـ parcels والفاتورة وتحويل shipment request.
+                هذه حقائق أعمال يجب أن تنجح معاً أو تفشل معاً. أما توليد PDF/label
+                ورفعه فخارج transaction لأنه I/O بطيء لا يجب أن يطيل القفل.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>9. كيف يُحسب الوزن القابل للدفع؟</summary>
+            <div class="answer">
+              <p>
+                نأخذ max بين الوزن الفعلي والوزن الحجمي. الوزن الحجمي =
+                الطول×العرض×الارتفاع ÷ divisor الخاص بالشركة؛ ثم تضاف كلفة الوزن
+                الزائد فوق base weight إلى base price والرسوم الإضافية.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>10. لماذا تحتاج global_location وorganization_unit معاً؟</summary>
+            <div class="answer">
+              <p>
+                global_location هو قاموس جغرافي عام مشترك (مدينة، محافظة، منطقة).
+                organization_unit هو فرع/مستودع تابع لشركة. جدول mapping يقول أي
+                وحدات تغطي أي مواقع، وهذا مهم لاختيار مسار خدمة الطلب.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>11. كيف يمثل النظام صلاحيات الموظف داخل فرع معين؟</summary>
+            <div class="answer">
+              <p>
+                employee مرتبط بـ employee_assignment إلى organization_unit، ثم
+                assignment_role يربط التعيين بالـ role. وهكذا قد يملك الشخص دوراً
+                مختلفاً حسب الفرع. role_permission يحدد الصلاحيات النهائية.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>12. كيف يتم التتبع؟ ولماذا لا يكفي current_status؟</summary>
+            <div class="answer">
+              <p>
+                current_status يعطي الحالة الحالية بسرعة، لكن
+                parcel_movement يعطي timeline قابل للتدقيق: من غيّر ماذا، متى،
+                أين، وأي رحلة مرتبطة به. لذلك نحتاج الاثنين.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>13. ما هو Proof of Delivery؟ وما الضمانات عليه؟</summary>
+            <div class="answer">
+              <p>
+                هو دليل أن الطرد سُلّم: مستلم، OTP وتوقيع/صور وموقع عند الحاجة.
+                قاعدة البيانات تفرض uniqueness على parcel_id، والخدمة تمنع تسجيله
+                قبل أن يصبح الطرد قابلاً للاستلام.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>14. لماذا invoice_counter موجود منفصلاً؟</summary>
+            <div class="answer">
+              <p>
+                للحصول على رقم فاتورة متسلسل لكل شركة وكل سنة بأمان عند تزامن
+                الطلبات. يتم atomic upsert في نفس transaction مع إنشاء الفاتورة.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>15. ما فائدة Redis في المشروع؟</summary>
+            <div class="answer">
+              <p>
+                يستخدم Cache-Aside: القراءة من Redis أولاً، ثم database عند عدم
+                وجود القيمة. بعد التعديل تُزال المفاتيح المناسبة حتى لا تعرض
+                الواجهة بيانات قديمة.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>16. كيف تحمي API من بيانات غير صالحة؟</summary>
+            <div class="answer">
+              <p>
+                DTOs مع class-validator وValidationPipe مفعّل globally مع
+                whitelist وtransform؛ الحقول غير المسموحة تُزال والتحويلات الأساسية
+                تحدث قبل دخول الخدمة. الأخطاء تُنسق عبر GlobalExceptionFilter.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>17. لماذا Request Context وAsyncLocalStorage؟</summary>
+            <div class="answer">
+              <p>
+                حتى يتاح Principal وrequestId/correlationId في كامل سلسلة الطلب
+                من دون تمرير request يدوياً بين كل services وrepositories، مع بقاء
+                كل request معزولاً عن concurrent requests.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>18. كيف تعمل جلسة refresh token؟</summary>
+            <div class="answer">
+              <p>
+                refresh token لا يخزن plain text؛ يخزن hash في user_session. عند
+                refresh يتحقق bcrypt ثم يحذف الجلسة القديمة وينشئ tokens وجلسة
+                جديدين (rotation). التوكن المزيف/القديم قد يسبب حذف الجلسة لأمان أكبر.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>19. هل هذا Microservices أو Monolith؟</summary>
+            <div class="answer">
+              <p>
+                هو Modular Monolith: deploy واحد وprocess واحد وقاعدة واحدة، لكن
+                موديولات أعمال واضحة مثل tenant وfleet وbilling. هذا أقل تعقيداً
+                من microservices مع الحفاظ على حدود داخلية عبر facades.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>20. ما الموجود في mobile وfrontend حالياً؟</summary>
+            <div class="answer">
+              <p>
+                mobile هو Flutter وفيه login/register/OTP وشاشات شركات وإنشاء طرد،
+                مع Riverpod وGoRouter. بحسب الكود الحالي لا يوجد HTTP client يربطه
+                بالـ backend بعد. frontend يحتوي README فقط، لذلك لا أدّعي وجود
+                Web frontend مكتمل.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>21. ما الاختبارات الموجودة؟</summary>
+            <div class="answer">
+              <p>
+                في backend توجد Jest unit specs للـ services/repositories/domain
+                entities، وe2e specs تحت test، إضافة إلى Bruno collections لتجربة
+                endpoints. الجواب الأقوى: نركز الاختبارات على business rules
+                والعمليات الحرجة مثل transaction والحالات والتزامن.
+              </p>
+            </div>
+          </details>
+
+          <details class="question">
+            <summary>22. ما الشيء الذي ستطوره لاحقاً لو أعطوك وقتاً؟</summary>
+            <div class="answer">
+              <p>
+                أربط Flutter بالـ API مع طبقة networking/auth/secure token storage،
+                أو أوحّد مساري employee وemployee2 بعد تحديد المعتمد، أو أضيف
+                observability ومراقبة cache والأخطاء. لا تقل “سأعيد كتابة كل شيء”؛
+                اقترح تحسيناً محدداً ومبرراً.
+              </p>
+            </div>
+          </details>
+
+          <div class="callout warning">
+            <strong>فخّان شائعان في الإجابة:</strong>
+            لا تسمّي Kysely ORM، ولا تقل إن CQRS يعني أن لديك microservices أو
+            قاعدتي بيانات. ولا تخترع أن واجهة الويب مكتملة بينما مجلد
+            <code>frontend</code> لا يحتوي إلا README.
+          </div>
+        </section>
+
+        <section id="roadmap">
+          <div class="section-kicker">10 — إن كان معك وقت قليل</div>
+          <h2>خطة مراجعة 90 دقيقة قبل التسليم</h2>
+          <div class="timeline">
+            <div class="timeline-item">
+              <div class="timeline-time">15 د</div>
+              <div>
+                <h3>احفظ الجواب المختصر وقصة الشحنة</h3>
+                <p>ارجع إلى “ما هو المشروع؟” ثم “رحلة الشحنة”. حاول تشرحها بصوت عالٍ بلا قراءة.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">20 د</div>
+              <div>
+                <h3>احفظ 9 مجموعات جداول لا 45 اسماً منفصلاً</h3>
+                <p>هوية، اشتراك، صلاحيات، جغرافيا، تسعير، شحن، أسطول، فوترة، دعم.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">15 د</div>
+              <div>
+                <h3>Prisma / Kysely / TypeORM</h3>
+                <p>هذه أكثر نقطة قابلة للسؤال: Prisma writes، Kysely reads، TypeORM غير مستخدم.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">20 د</div>
+              <div>
+                <h3>راجع 6 تدفقات حرجة</h3>
+                <p>التسعير، transaction، optimistic lock، tracking، POD، invoice counter.</p>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-time">20 د</div>
+              <div>
+                <h3>اختبر نفسك من الأسئلة</h3>
+                <p>افتح الأسئلة واحدة واحدة. أجب أولاً، ثم افتح الجواب. ركز على الأسئلة 1 إلى 10.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="callout success">
+            <strong>آخر جملة ممتازة في العرض:</strong>
+            “ركزنا على فصل مسؤوليات الموديولات وعلى حماية العمليات الحساسة:
+            الصلاحيات قبل التنفيذ، transactions للكتابات المرتبطة، وoptimistic
+            locking لتجنب تعارض تحديث حالات الشحن.”
+          </div>
+        </section>
+
+        <section id="sources">
+          <div class="section-kicker">11 — من أين جاءت هذه المعلومات؟</div>
+          <h2>خريطة الدليل إلى الكود</h2>
+          <p class="lead">
+            كل الكلام المتعلق بالمشروع مأخوذ من الملفات التالية في النسخة الحالية،
+            لا من افتراضات عامة:
+          </p>
+          <ul class="source-list">
+            <li><code>backend/prisma/schema.prisma</code> — الـ 45 model والـ 31 enum والعلاقات والقيود والفهارس.</li>
+            <li><code>backend/package.json</code> و<code>backend/README.md</code> — التقنيات وscripts وفصل Prisma/Kysely.</li>
+            <li><code>backend/src/main.ts</code> و<code>backend/src/app.module.ts</code> — تشغيل API والحماية والموديولات.</li>
+            <li><code>backend/src/infrastructure/database/prisma.service.ts</code> و<code>database.module.ts</code> — دمج Prisma وKysely.</li>
+            <li><code>backend/src/modules/*</code> — الخدمات والـ controllers وقواعد الشحن والفوترة والأسطول.</li>
+            <li><code>backend/src/packages/context</code> و<code>authorization</code> و<code>transaction</code> — request context والصلاحيات والمعاملات.</li>
+            <li><code>mobile/lib</code> و<code>mobile/pubspec.yaml</code> — واجهة Flutter وحالتها الحالية.</li>
+            <li><code>docker-compose.yml</code> و<code>nginx/</code> — PostgreSQL/PostGIS وRedis وreverse proxy.</li>
+          </ul>
+          <div class="callout warning">
+            <strong>مصدر الحقيقة للـ database:</strong>
+            اعتمد <code>schema.prisma</code> و<code>prisma/migrations</code>.
+            ملف <code>backend/prisma/DDL.sql</code> أقدم وغير مطابق للحالة الحالية
+            (يعرض عدداً وحالات قديمة)، لذلك لا تحفظه ولا تشغّله فوق migrations.
+          </div>
+          <p class="muted" style="margin-top: 0.9rem">
+            للمفاهيم العامة فقط: راجع
+            <a href="https://www.prisma.io/docs/orm" target="_blank" rel="noreferrer">Prisma ORM official documentation</a>
+            و<a href="https://typeorm.io/docs/guides/active-record-data-mapper/" target="_blank" rel="noreferrer">TypeORM official guide</a>.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      أُنشئ هذا الدليل للدراسة من كود المشروع الحالي. افتحه في المتصفح، أو استخدم
+      طباعة المتصفح إلى PDF للمراجعة السريعة.
+    </footer>
+
+    <script>
+      (function () {
+        const input = document.getElementById("table-search");
+        const groups = Array.from(document.querySelectorAll(".table-group"));
+
+        if (!input) return;
+
+        input.addEventListener("input", function () {
+          const query = input.value.trim().toLocaleLowerCase("ar");
+
+          groups.forEach(function (group) {
+            const cards = Array.from(group.querySelectorAll(".table-card"));
+            let visible = 0;
+
+            cards.forEach(function (card) {
+              const source = (card.dataset.search + " " + card.textContent)
+                .toLocaleLowerCase("ar");
+              const match = !query || source.includes(query);
+              card.classList.toggle("is-hidden", !match);
+              if (match) visible += 1;
+            });
+
+            group.classList.toggle("is-hidden", visible === 0);
+            if (query && visible > 0) group.open = true;
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>دفتر منصة الشحن</title>
+<style>
+:root{
+  --ground:#F1F4F1; --surface:#FBFCFA; --surface-2:#E8EEEA; --surface-3:#DFE7E1;
+  --ink:#111A17; --ink-2:#4C5D56; --ink-3:#78877F;
+  --line:#D2DAD4; --line-2:#BDC8C0;
+  --accent:#0D6A5A; --accent-soft:#DBEDE6;
+  --rust:#A03E0E; --rust-soft:#F6E3D7;
+  --amber:#7F5900; --amber-soft:#F3E9CD;
+  --blue:#1A5788; --blue-soft:#DCE9F3;
+  --violet:#5A3E8E; --violet-soft:#E7E0F3;
+  --shadow:0 1px 2px rgba(17,26,23,.05), 0 8px 24px -16px rgba(17,26,23,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0C1210; --surface:#131B18; --surface-2:#1A2420; --surface-3:#212D28;
+    --ink:#E3EBE7; --ink-2:#94A69E; --ink-3:#6C7E76;
+    --line:#243029; --line-2:#33413A;
+    --accent:#46CCAD; --accent-soft:#153029;
+    --rust:#E88C5C; --rust-soft:#31201A;
+    --amber:#D4AA4C; --amber-soft:#2C2617;
+    --blue:#6EAFDD; --blue-soft:#15252F;
+    --violet:#A98FDA; --violet-soft:#221D33;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0C1210; --surface:#131B18; --surface-2:#1A2420; --surface-3:#212D28;
+  --ink:#E3EBE7; --ink-2:#94A69E; --ink-3:#6C7E76;
+  --line:#243029; --line-2:#33413A;
+  --accent:#46CCAD; --accent-soft:#153029;
+  --rust:#E88C5C; --rust-soft:#31201A;
+  --amber:#D4AA4C; --amber-soft:#2C2617;
+  --blue:#6EAFDD; --blue-soft:#15252F;
+  --violet:#A98FDA; --violet-soft:#221D33;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -16px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:1.5rem}
+@media (prefers-reduced-motion: reduce){html{scroll-behavior:auto} *{animation:none!important;transition:none!important}}
+
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Segoe UI","Noto Sans Arabic","Dubai","Tajawal",Tahoma,"Helvetica Neue",sans-serif;
+  font-size:16px; line-height:1.85; -webkit-font-smoothing:antialiased;
+}
+.mono,code,kbd,pre,.ep-path,.tag,.chip{
+  font-family:"Cascadia Mono","JetBrains Mono","Fira Code",Consolas,"SF Mono",ui-monospace,monospace;
+  font-variant-ligatures:none;
+}
+
+/* ---------- shell ---------- */
+.shell{display:grid;grid-template-columns:272px minmax(0,1fr);gap:0;max-width:1360px;margin:0 auto;}
+.rail{
+  position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+  border-inline-start:1px solid var(--line); background:var(--surface);
+  padding:1.75rem 1.25rem 3rem;
+}
+.rail::-webkit-scrollbar{width:8px}
+.rail::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:4px}
+.main{padding:2.5rem 3rem 6rem; min-width:0;}
+@media (max-width:1080px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{position:static;height:auto;border-inline-start:none;border-bottom:1px solid var(--line);padding:1.25rem}
+  .main{padding:1.75rem 1.25rem 4rem}
+}
+
+/* ---------- rail nav ---------- */
+.rail-brand{display:flex;flex-direction:column;gap:.15rem;padding-bottom:1rem;margin-bottom:1rem;border-bottom:1px solid var(--line)}
+.rail-brand b{font-size:1.02rem;font-weight:700;letter-spacing:-.01em}
+.rail-brand span{font-size:.74rem;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase}
+.rail nav{display:flex;flex-direction:column;gap:.1rem}
+.rail nav a{
+  display:flex;align-items:baseline;gap:.55rem;
+  text-decoration:none;color:var(--ink-2);font-size:.875rem;line-height:1.5;
+  padding:.4rem .6rem;border-radius:5px;transition:background .12s,color .12s;
+}
+.rail nav a .n{
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:.7rem;color:var(--ink-3);min-width:1.35rem;font-variant-numeric:tabular-nums;
+}
+.rail nav a:hover{background:var(--surface-2);color:var(--ink)}
+.rail nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.rail nav a.on .n{color:var(--accent)}
+.rail nav a:focus-visible,a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{
+  outline:2px solid var(--accent);outline-offset:2px;border-radius:4px;
+}
+
+/* ---------- masthead ---------- */
+.masthead{border-bottom:2px solid var(--ink);padding-bottom:1.5rem;margin-bottom:2.5rem}
+.eyebrow{
+  font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);
+  font-weight:700;margin-bottom:.6rem;
+}
+.masthead h1{
+  font-size:clamp(1.9rem,4.2vw,2.9rem);font-weight:800;line-height:1.25;
+  letter-spacing:-.02em;text-wrap:balance;margin-bottom:.7rem;
+}
+.masthead p{color:var(--ink-2);max-width:64ch;font-size:1.02rem}
+.stats{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.4rem}
+.stat{
+  background:var(--surface);border:1px solid var(--line);border-radius:6px;
+  padding:.5rem .8rem;display:flex;flex-direction:column;line-height:1.3;
+}
+.stat b{font-size:1.15rem;font-weight:700;font-variant-numeric:tabular-nums;
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace}
+.stat span{font-size:.72rem;color:var(--ink-3)}
+
+/* ---------- sections ---------- */
+section{margin-bottom:3.75rem;scroll-margin-top:1.5rem}
+h2{
+  font-size:1.45rem;font-weight:750;letter-spacing:-.015em;line-height:1.35;
+  padding-bottom:.55rem;border-bottom:1px solid var(--line);margin-bottom:1.4rem;
+  display:flex;align-items:baseline;gap:.7rem;text-wrap:balance;
+}
+h2 .n{
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:.82rem;color:var(--accent);font-weight:700;
+  background:var(--accent-soft);padding:.15rem .5rem;border-radius:4px;
+}
+h3{font-size:1.08rem;font-weight:700;margin:1.9rem 0 .7rem;letter-spacing:-.01em;text-wrap:balance}
+h4{font-size:.95rem;font-weight:700;margin:1.2rem 0 .5rem;color:var(--ink-2)}
+p{margin-bottom:.9rem;max-width:74ch}
+ul,ol{margin:0 0 1rem 0;padding-inline-start:1.35rem;max-width:74ch}
+li{margin-bottom:.4rem}
+li::marker{color:var(--ink-3)}
+strong{font-weight:700}
+a{color:var(--accent)}
+hr{border:none;border-top:1px dashed var(--line-2);margin:2rem 0}
+
+code:not(pre code){
+  background:var(--surface-2);border:1px solid var(--line);border-radius:4px;
+  padding:.06em .36em;font-size:.855em;color:var(--ink);
+  overflow-wrap:anywhere;
+}
+pre{
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:1rem 1.1rem;overflow-x:auto;direction:ltr;text-align:left;
+  font-size:.815rem;line-height:1.7;margin-bottom:1.1rem;box-shadow:var(--shadow);
+}
+pre code{background:none;border:none;padding:0;white-space:pre;color:var(--ink-2)}
+pre .k{color:var(--accent);font-weight:600}
+pre .c{color:var(--ink-3);font-style:italic}
+pre .s{color:var(--rust)}
+
+/* ---------- callouts ---------- */
+.note{
+  border-inline-start:3px solid var(--accent);background:var(--accent-soft);
+  padding:.85rem 1rem;border-radius:0 6px 6px 0;margin:1.1rem 0;font-size:.93rem;
+}
+.note.warn{border-color:var(--rust);background:var(--rust-soft)}
+.note.tip{border-color:var(--blue);background:var(--blue-soft)}
+.note b{display:block;margin-bottom:.2rem;font-size:.82rem;letter-spacing:.03em}
+
+/* ---------- tables ---------- */
+.tw{overflow-x:auto;margin-bottom:1.3rem;border:1px solid var(--line);border-radius:7px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.87rem;min-width:520px}
+th{
+  text-align:start;font-weight:700;font-size:.74rem;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--ink-3);padding:.65rem .85rem;background:var(--surface-2);
+  border-bottom:1px solid var(--line);white-space:nowrap;
+}
+td{padding:.6rem .85rem;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.6}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--surface-2)}
+td.mono,th.mono{font-size:.8rem}
+
+/* ---------- chips ---------- */
+.chip{
+  display:inline-block;font-size:.685rem;font-weight:700;letter-spacing:.04em;
+  padding:.14rem .44rem;border-radius:4px;white-space:nowrap;line-height:1.6;
+  border:1px solid transparent;
+}
+.m-GET{background:var(--blue-soft);color:var(--blue);border-color:var(--blue)}
+.m-POST{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.m-PATCH,.m-PUT{background:var(--amber-soft);color:var(--amber);border-color:var(--amber)}
+.m-DELETE{background:var(--rust-soft);color:var(--rust);border-color:var(--rust)}
+.r{background:var(--surface-2);color:var(--ink-2);border-color:var(--line-2);
+   display:inline-block;font-size:.66rem;font-weight:600;padding:.1rem .38rem;
+   border-radius:4px;margin-inline-end:.2rem;white-space:nowrap;line-height:1.7;
+   font-family:"Cascadia Mono",Consolas,ui-monospace,monospace}
+.r.pub{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.ep-path{font-size:.815rem;color:var(--ink);word-break:break-all}
+
+/* ---------- state machine ---------- */
+.sm{
+  display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;
+  background:var(--surface);border:1px solid var(--line);border-radius:7px;
+  padding:.9rem 1rem;margin-bottom:.9rem;
+}
+.st{
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:.72rem;font-weight:700;padding:.22rem .5rem;border-radius:4px;
+  background:var(--surface-2);border:1px solid var(--line-2);color:var(--ink-2);white-space:nowrap;
+}
+.st.go{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.st.mid{background:var(--blue-soft);color:var(--blue);border-color:var(--blue)}
+.st.hold{background:var(--amber-soft);color:var(--amber);border-color:var(--amber)}
+.st.end{background:var(--rust-soft);color:var(--rust);border-color:var(--rust)}
+.ar{color:var(--ink-3);font-size:.9rem;font-weight:700}
+.sm-label{font-size:.75rem;color:var(--ink-3);width:100%;margin-bottom:.15rem;
+  letter-spacing:.05em;text-transform:uppercase;font-weight:700}
+
+/* ---------- flow steps ---------- */
+.flow{display:flex;flex-direction:column;gap:0;margin:1.1rem 0;counter-reset:fs}
+.fs{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:.9rem;
+  padding:.85rem 0;border-bottom:1px dashed var(--line);
+}
+.fs>div{min-width:0}
+.fs:last-child{border-bottom:none}
+.fs::before{
+  counter-increment:fs;content:counter(fs,decimal-leading-zero);
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:.72rem;font-weight:700;color:var(--accent);
+  background:var(--accent-soft);border-radius:4px;
+  width:1.9rem;height:1.5rem;display:grid;place-items:center;margin-top:.15rem;
+}
+.fs b{display:block;font-size:.94rem;margin-bottom:.15rem}
+.fs p{font-size:.885rem;color:var(--ink-2);margin:0;max-width:70ch}
+.fs .src{font-size:.74rem;color:var(--ink-3);
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;display:block;margin-top:.2rem;
+  overflow-wrap:anywhere}
+
+/* ---------- glossary ---------- */
+.gl{display:grid;gap:0;border:1px solid var(--line);border-radius:7px;
+    background:var(--surface);overflow:hidden}
+.gi{display:grid;grid-template-columns:200px minmax(0,1fr);gap:1rem;padding:.8rem 1rem;
+    border-bottom:1px solid var(--line)}
+.gi dt,.gi dd{min-width:0;overflow-wrap:anywhere}
+.gi:last-child{border-bottom:none}
+.gi:hover{background:var(--surface-2)}
+.gi dt{font-weight:700;font-size:.9rem}
+.gi dt em{display:block;font-style:normal;font-size:.74rem;color:var(--ink-3);font-weight:600;
+  font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;letter-spacing:-.01em}
+.gi dd{font-size:.895rem;color:var(--ink-2);margin:0}
+@media (max-width:640px){.gi{grid-template-columns:1fr;gap:.25rem}}
+
+/* ---------- cards ---------- */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:.85rem;margin:1.1rem 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:.95rem 1.05rem}
+.card h4{margin:0 0 .35rem;font-size:.92rem;color:var(--ink)}
+.card p{font-size:.855rem;color:var(--ink-2);margin:0;max-width:none;overflow-wrap:anywhere}
+.lyr p,.note,.qa .ans{overflow-wrap:anywhere}
+.card .tag{font-size:.7rem;color:var(--ink-3);display:block;margin-bottom:.35rem}
+
+/* ---------- layer stack ---------- */
+.stack{display:flex;flex-direction:column;gap:.4rem;margin:1.2rem 0}
+.lyr{border:1px solid var(--line);border-radius:7px;padding:.8rem 1rem;background:var(--surface);
+     border-inline-start:4px solid var(--ink-3)}
+.lyr:nth-child(1){border-inline-start-color:var(--blue)}
+.lyr:nth-child(2){border-inline-start-color:var(--accent)}
+.lyr:nth-child(3){border-inline-start-color:var(--violet)}
+.lyr:nth-child(4){border-inline-start-color:var(--amber)}
+.lyr b{font-size:.93rem;display:block}
+.lyr .en{font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  font-size:.72rem;color:var(--ink-3);letter-spacing:-.01em}
+.lyr p{font-size:.865rem;color:var(--ink-2);margin:.3rem 0 0;max-width:none}
+
+/* ---------- endpoint search ---------- */
+.toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:1rem}
+.search{
+  flex:1;min-width:220px;background:var(--surface);border:1px solid var(--line-2);
+  border-radius:6px;padding:.5rem .8rem;font-size:.9rem;color:var(--ink);
+  font-family:inherit;
+}
+.search::placeholder{color:var(--ink-3)}
+.count{font-size:.8rem;color:var(--ink-3);font-variant-numeric:tabular-nums}
+tr.hide{display:none}
+
+/* ---------- Q&A ---------- */
+.qa{border:1px solid var(--line);border-radius:7px;background:var(--surface);
+    margin-bottom:.6rem;overflow:hidden}
+.qa summary{
+  cursor:pointer;padding:.85rem 1rem;font-weight:650;font-size:.95rem;
+  display:flex;gap:.7rem;align-items:baseline;list-style:none;
+}
+.qa summary::-webkit-details-marker{display:none}
+.qa summary::before{
+  content:"؟";font-family:"Cascadia Mono",Consolas,ui-monospace,monospace;
+  color:var(--accent);background:var(--accent-soft);border-radius:4px;
+  width:1.5rem;height:1.5rem;display:grid;place-items:center;flex:none;
+  font-size:.85rem;font-weight:700;
+}
+.qa summary:hover{background:var(--surface-2)}
+.qa[open] summary{border-bottom:1px solid var(--line);background:var(--surface-2)}
+.qa .ans{padding:1rem 1rem 1.1rem 1rem;font-size:.905rem;color:var(--ink-2)}
+.qa .ans p{max-width:72ch}
+.qa .ans p:last-child,.qa .ans ul:last-child{margin-bottom:0}
+.qa .ans strong{color:var(--ink)}
+.qcat{
+  font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;
+  color:var(--ink-3);margin:2rem 0 .7rem;display:flex;align-items:center;gap:.7rem;
+}
+.qcat::after{content:"";flex:1;height:1px;background:var(--line)}
+
+/* ---------- footer ---------- */
+footer{border-top:2px solid var(--ink);margin-top:4rem;padding-top:1.3rem;
+       font-size:.83rem;color:var(--ink-3)}
+footer p{max-width:none}
+
+/* ---------- theme toggle ---------- */
+.tt{
+  position:fixed;bottom:1.1rem;left:1.1rem;z-index:50;
+  background:var(--surface);border:1px solid var(--line-2);color:var(--ink-2);
+  border-radius:999px;padding:.5rem .9rem;font-size:.78rem;cursor:pointer;
+  font-family:inherit;box-shadow:var(--shadow);
+}
+.tt:hover{color:var(--ink);border-color:var(--accent)}
+@media print{.rail,.tt,.toolbar{display:none}.shell{grid-template-columns:1fr}
+  .qa{break-inside:avoid} details{open:true}}
+</style>
+</head>
+<body>
+
+<button class="tt" id="tt" type="button">تبديل الوضع</button>
+
+<div class="shell">
+
+<aside class="rail">
+  <div class="rail-brand">
+    <b>دفتر منصة الشحن</b>
+    <span>Backend Study Guide</span>
+  </div>
+  <nav id="toc">
+    <a href="#s1"><span class="n">01</span> نظرة عامة على المشروع</a>
+    <a href="#s2"><span class="n">02</span> قاموس المصطلحات</a>
+    <a href="#s3"><span class="n">03</span> التقنيات المستخدمة</a>
+    <a href="#s4"><span class="n">04</span> المعمارية العامة</a>
+    <a href="#s5"><span class="n">05</span> الطبقات داخل الموديول</a>
+    <a href="#s6"><span class="n">06</span> الحزم الداخلية packages</a>
+    <a href="#s7"><span class="n">07</span> المصادقة والتفويض</a>
+    <a href="#s8"><span class="n">08</span> قاعدة البيانات</a>
+    <a href="#s9"><span class="n">09</span> آلات الحالة</a>
+    <a href="#s10"><span class="n">10</span> تدفقات العمل الأساسية</a>
+    <a href="#s11"><span class="n">11</span> خريطة الـ Endpoints</a>
+    <a href="#s12"><span class="n">12</span> الكاش والمعاملات والأداء</a>
+    <a href="#s13"><span class="n">13</span> الأخطاء وشكل الاستجابة</a>
+    <a href="#s14"><span class="n">14</span> النشر والتشغيل</a>
+    <a href="#s15"><span class="n">15</span> أسئلة المقابلة</a>
+  </nav>
+</aside>
+
+<main class="main">
+
+<header class="masthead">
+  <div class="eyebrow">تقرير دراسي كامل · Backend</div>
+  <h1>منصة إدارة شحن متعددة المستأجرين</h1>
+  <p>
+    دراسة تفصيلية للـ Backend: البنية، الطبقات، الموديولات، نقاط النهاية، قواعد العمل،
+    وآلات الحالة — مع قسم مخصّص لأسئلة المقابلة وأجوبتها.
+    كل ما في هذه الصفحة مستخرَج من الكود الفعلي للمشروع، لا من افتراضات.
+  </p>
+  <div class="stats">
+    <div class="stat"><b>22</b><span>موديول أعمال</span></div>
+    <div class="stat"><b>25</b><span>Controller</span></div>
+    <div class="stat"><b>139</b><span>Endpoint</span></div>
+    <div class="stat"><b>45</b><span>جدول في قاعدة البيانات</span></div>
+    <div class="stat"><b>31</b><span>Enum</span></div>
+    <div class="stat"><b>9</b><span>حزمة داخلية</span></div>
+  </div>
+</header>
+
+<!-- ══════════════ 01 ══════════════ -->
+<section id="s1">
+<h2><span class="n">01</span> نظرة عامة على المشروع</h2>
+
+<p>
+  المشروع منصّة <strong>SaaS لوجستية</strong> تُشغّل أكثر من شركة شحن على نفس النسخة من التطبيق
+  ونفس قاعدة البيانات، مع عزل صارم لبيانات كل شركة عن الأخرى. هذا هو معنى
+  <strong>Multi-Tenant</strong>: كل شركة شحن هي <code>tenant</code> (مستأجر)، ولها فروعها
+  ومستودعاتها وموظفوها وسياراتها وأسعارها وإعداداتها الخاصة.
+</p>
+
+<h3>الجهات الخمس التي تستخدم النظام</h3>
+<div class="cards">
+  <div class="card">
+    <span class="tag">PLATFORM_OWNER</span>
+    <h4>مالك المنصة</h4>
+    <p>يدير الشركات نفسها: إنشاء tenant، تعليقه، تفعيله، وإسناد خطط الاشتراك له. لا يملك بيانات شحن.</p>
+  </div>
+  <div class="card">
+    <span class="tag">TENANT_ADMIN</span>
+    <h4>مالك الشركة</h4>
+    <p>يدير شركة واحدة: الفروع، المناطق، الموظفين، الأدوار، مصفوفة الأسعار، وإعدادات الشركة.</p>
+  </div>
+  <div class="card">
+    <span class="tag">EMPLOYEE</span>
+    <h4>الموظف</h4>
+    <p>يعمل في فرع أو مستودع محدّد. يُنشئ الشحنات، يستلم الطرود، يسلّمها، ويحصّل الفواتير.</p>
+  </div>
+  <div class="card">
+    <span class="tag">DRIVER</span>
+    <h4>السائق</h4>
+    <p>موظف مع سيارة مُسنَدة. ينقل الطرود بين الفروع (line-haul): يبدأ الرحلة، يحمّل، ويُنزل.</p>
+  </div>
+  <div class="card">
+    <span class="tag">CUSTOMER</span>
+    <h4>العميل</h4>
+    <p>حساب عام على مستوى المنصة لا يتبع لشركة. يطلب عروض أسعار من عدة شركات ويختار واحدًا.</p>
+  </div>
+</div>
+
+<h3>القصة التجارية باختصار</h3>
+<p>
+  عميل يريد إرسال طرد من دمشق إلى حلب. لا يعرف أسماء الفروع ولا مناطق التسعير لأي شركة،
+  فيرسل <strong>طلب شحن</strong> يحوي موقع الانطلاق والوصول والوزن والأبعاد المتوقعة.
+  النظام يبحث تلقائيًا عن كل الشركات التي تغطي هاتين المنطقتين، يحسب سعرًا لكل مسار ممكن،
+  ويعيد للعميل مجموعة <strong>عروض أسعار</strong>. يختار العميل عرضًا، توافق الشركة،
+  ثم يتحوّل الطلب إلى <strong>شحنة فعلية</strong> بطرود لكلٍّ منها رقم تتبّع وملصق PDF وفاتورة.
+  بعدها يتحرّك الطرد عبر الفروع في <strong>رحلات</strong> ومعه <strong>بيان حمولة</strong>،
+  حتى يصل لفرع الوجهة ويُسلَّم مع <strong>إثبات تسليم</strong>.
+</p>
+
+<div class="note tip">
+  <b>ملاحظة مهمة للمقابلة</b>
+  النظام <strong>لا يوصّل إلى باب المنزل</strong>. الطرد ينتقل بين وحدات تنظيمية (فروع/مستودعات)
+  والعميل يستلمه من فرع الوجهة. هذا يفسّر لماذا الطرد يحمل <code>current_org_unit_id</code>
+  و<code>destination_org_unit_id</code> ولا يحمل عنوانًا نهائيًا، ولماذا حالة
+  <code>READY_FOR_COLLECTION</code> (جاهز للاستلام) موجودة بدل «خرج للتوصيل».
+</div>
+</section>
+
+<!-- ══════════════ 02 ══════════════ -->
+<section id="s2">
+<h2><span class="n">02</span> قاموس المصطلحات</h2>
+<p>كل مصطلح ستُسأل عنه — مصطلحات المجال أولًا، ثم المصطلحات التقنية.</p>
+
+<h3>مصطلحات المجال اللوجستي</h3>
+<dl class="gl">
+  <div class="gi"><dt>مستأجر <em>Tenant</em></dt><dd>شركة الشحن. الوحدة العليا للعزل: كل جدول تشغيلي تقريبًا يحمل <code>tenant_id</code>.</dd></div>
+  <div class="gi"><dt>وحدة تنظيمية <em>Organization Unit</em></dt><dd>أي موقع فيزيائي للشركة. أنواعها: <code>REGION</code>، <code>HUB</code>، <code>WAREHOUSE</code>، <code>BRANCH</code>، <code>LOCKER</code>. مُخزَّنة كشجرة بعمود <code>tree_path</code> من نوع <code>ltree</code>.</dd></div>
+  <div class="gi"><dt>منطقة الشركة <em>Tenant Zone</em></dt><dd>تجميع تسعيري تعرّفه الشركة نفسها. كل فرع ينتمي لمنطقة، والسعر يُحدَّد بين منطقة ومنطقة لا بين فرع وفرع.</dd></div>
+  <div class="gi"><dt>موقع عالمي <em>Global Location</em></dt><dd>شجرة جغرافية مشتركة بين كل الشركات: دولة ← محافظة ← مدينة ← حي ← منطقة. العميل يختار منها، لا من فروع الشركات.</dd></div>
+  <div class="gi"><dt>خريطة التغطية <em>org_unit_location_mapping</em></dt><dd>الجسر بين الفرع والموقع العالمي: «هذا الفرع يغطّي هذه المنطقة». نوع التغطية: استلام، تسليم، أو كلاهما.</dd></div>
+  <div class="gi"><dt>طلب شحن <em>Shipment Request</em></dt><dd>نيّة العميل قبل وجود شحنة. لا يحمل فرعًا ولا سعرًا عند إنشائه — فقط موقعين ووزنًا وأبعادًا متوقعة.</dd></div>
+  <div class="gi"><dt>عرض سعر <em>Quotation</em></dt><dd>سعر مقترح من شركة لمسار محدّد (فرع مصدر ← فرع وجهة) لطلب شحن. تلقائي أو يدوي.</dd></div>
+  <div class="gi"><dt>لقطة التسعير <em>Pricing Snapshot</em></dt><dd>حقل <code>JSON</code> داخل العرض يحفظ كل الأرقام التي دخلت في الحساب لحظة إنشائه، حتى لو تغيّرت الأسعار لاحقًا.</dd></div>
+  <div class="gi"><dt>شحنة <em>Customer Shipment</em></dt><dd>العقد الفعلي: مرسِل، مستقبِل، فرع مصدر، فرع وجهة، ومجموعة طرود. تُنشأ داخل شركة واحدة.</dd></div>
+  <div class="gi"><dt>طرد <em>Parcel</em></dt><dd>القطعة الواحدة داخل الشحنة. تحمل رقم تتبّع فريد عالميًا، وزنًا، أبعادًا، حالة، وحالة سلامة.</dd></div>
+  <div class="gi"><dt>الوزن الحجمي <em>Volumetric Weight</em></dt><dd><code>(طول × عرض × ارتفاع) ÷ divisor</code>. الـ divisor إعداد لكل شركة، افتراضيًا 5000.</dd></div>
+  <div class="gi"><dt>الوزن القابل للتسعير <em>Chargeable Weight</em></dt><dd><code>MAX(الوزن الفعلي, الوزن الحجمي)</code>. طرد كبير وخفيف يُحاسَب على حجمه لا على وزنه.</dd></div>
+  <div class="gi"><dt>رحلة <em>Trip</em></dt><dd>حركة نقل من فرع إلى فرع بسائق وسيارة. لا يمكن أن تنطلق فارغة.</dd></div>
+  <div class="gi"><dt>بيان حمولة <em>Transport Manifest</em></dt><dd>قائمة الطرود المسافرة على رحلة معيّنة. الطرد يدخلها كـ <code>manifest_item</code> بحالته الخاصة.</dd></div>
+  <div class="gi"><dt>النقل بين الفروع <em>Line-haul</em></dt><dd>نقل الطرود بالجملة بين وحدات تنظيمية — لا تسليم للعميل النهائي. هذا كل ما يفعله السائق.</dd></div>
+  <div class="gi"><dt>حركة طرد <em>Parcel Movement</em></dt><dd>سجل غير قابل للتعديل (append-only) لكل تغيّر حالة. يحفظ نسخة من اسم الفرع وإحداثياته واسم الموظف وقت الحدث.</dd></div>
+  <div class="gi"><dt>إثبات تسليم <em>Proof of Delivery — POD</em></dt><dd>سجل استلام الطرد: اسم المستلم، توقيع، صور، إحداثيات، وتحقّق OTP. واحد لكل طرد فقط.</dd></div>
+  <div class="gi"><dt>مسؤولية الدفع <em>Payment Responsibility</em></dt><dd><code>SENDER</code> أو <code>RECEIVER</code>. إذا كانت على المستقبِل، تُحصَّل الفاتورة لحظة التسليم.</dd></div>
+  <div class="gi"><dt>رسوم المناولة <em>Handling Fee</em></dt><dd>رسم إضافي حسب طبيعة الطرد: قابل للكسر، خطر، سريع التلف، حسّاس للحرارة.</dd></div>
+  <div class="gi"><dt>خطة اشتراك <em>Subscription Plan</em></dt><dd>حدود ما تستطيع الشركة إنشاءه: عدد الفروع، المستودعات، الموظفين، السيارات، المناطق، والشحنات الشهرية.</dd></div>
+  <div class="gi"><dt>لقطة الخطة <em>Snapshot</em></dt><dd>حدود الخطة تُنسَخ داخل <code>tenant_subscription</code> عند الاشتراك، فتغيير الخطة لاحقًا لا يغيّر حدود المشتركين الحاليين.</dd></div>
+</dl>
+
+<h3>مصطلحات معمارية وتقنية</h3>
+<dl class="gl">
+  <div class="gi"><dt>مونوليث معياري <em>Modular Monolith</em></dt><dd>تطبيق واحد يُنشر كوحدة واحدة، لكنه مقسّم داخليًا إلى موديولات بحدود صارمة كأنها خدمات منفصلة.</dd></div>
+  <div class="gi"><dt>DDD</dt><dd>Domain-Driven Design: تصميم الكود حول قدرات العمل ولغته، لا حول جداول قاعدة البيانات.</dd></div>
+  <div class="gi"><dt>Aggregate</dt><dd>كائن يملك دورة حياته ويحرس قواعده بنفسه. مثال: <code>Parcel</code> يرفض أي انتقال حالة غير مسموح.</dd></div>
+  <div class="gi"><dt>Aggregate Root</dt><dd>الكائن الوحيد الذي يُدخَل منه للمجموعة. <code>TransportManifest</code> هو الجذر و<code>ManifestItem</code> لا يُوصَل إليه إلا عبره.</dd></div>
+  <div class="gi"><dt>Facade</dt><dd>الواجهة الوحيدة المسموح بها للتواصل بين موديولين. ممنوع استدعاء repository أو service موديول آخر مباشرة.</dd></div>
+  <div class="gi"><dt>CQRS</dt><dd>فصل الكتابة عن القراءة. هنا مُطبَّق كفصل خدمات ومستودعات: <code>CommandService</code> مع Prisma للكتابة، و<code>QueryService</code> مع Kysely للقراءة.</dd></div>
+  <div class="gi"><dt>Optimistic Locking</dt><dd>عمود <code>version</code> في الصف. التحديث يشترط أن تكون النسخة كما قُرئت؛ إن سبقك أحد فشل التحديث بدل أن يدهس تعديله.</dd></div>
+  <div class="gi"><dt>Principal</dt><dd>هوية المستخدم المُجمّعة لهذا الطلب: نوعه، الشركة، الملف الشخصي، الفروع والمستودعات مع صلاحياتها.</dd></div>
+  <div class="gi"><dt>AsyncLocalStorage <em>ALS</em></dt><dd>آلية Node لتخزين بيانات مرتبطة بسياق تنفيذ غير متزامن. تُستخدم هنا لحمل الـ Principal والـ transaction عبر الطلب دون تمريرهما كوسائط.</dd></div>
+  <div class="gi"><dt>CASL</dt><dd>مكتبة صلاحيات تسمح بتعريف قدرات مشروطة بحقول الكائن: «يستطيع الإلغاء إذا كان <code>tenantId</code> كذا و<code>status</code> ضمن هذه القائمة».</dd></div>
+  <div class="gi"><dt>Visibility Scope</dt><dd>قيود صفوف إجبارية تُبنى من هوية المستخدم وتُحقن في استعلامات القوائم. المستخدم يستطيع تضييقها لا توسيعها.</dd></div>
+  <div class="gi"><dt>ltree</dt><dd>امتداد PostgreSQL لتخزين المسارات الهرمية والاستعلام عنها بكفاءة — يُستخدم لشجرة الوحدات التنظيمية.</dd></div>
+  <div class="gi"><dt>PostGIS</dt><dd>امتداد PostgreSQL للبيانات الجغرافية. أعمدة <code>geometry</code> هنا مع فهارس <code>GiST</code>.</dd></div>
+  <div class="gi"><dt>UUIDv7</dt><dd>معرّف فريد مرتّب زمنيًا. أفضل من UUIDv4 لأنه لا يشتّت فهرس قاعدة البيانات عند الإدراج.</dd></div>
+  <div class="gi"><dt>Kysely</dt><dd>باني استعلامات SQL آمن نوعيًا. يُستخدم لجانب القراءة، وأنواعه مولّدة تلقائيًا من مخطط Prisma.</dd></div>
+  <div class="gi"><dt>Interceptor</dt><dd>طبقة تلفّ الاستجابة قبل خروجها. هنا تُغلّف كل رد بـ <code>{ success, data }</code>.</dd></div>
+  <div class="gi"><dt>Guard</dt><dd>يقرّر السماح بالوصول للـ route قبل تنفيذها. هنا: <code>GlobalAuthGuard</code> ثم <code>RolesGuard</code>.</dd></div>
+</dl>
+</section>
+
+<!-- ══════════════ 03 ══════════════ -->
+<section id="s3">
+<h2><span class="n">03</span> التقنيات المستخدمة</h2>
+
+<div class="tw"><table>
+<thead><tr><th>التقنية</th><th>الإصدار</th><th>لماذا هي هنا</th></tr></thead>
+<tbody>
+<tr><td class="mono">NestJS</td><td class="mono">11</td><td>إطار العمل. اختير للـ DI وللـ Decorators التي بُني عليها نظام الصلاحيات والمعاملات.</td></tr>
+<tr><td class="mono">TypeScript</td><td class="mono">5.7</td><td>لغة المشروع، مع <code>reflect-metadata</code> لتشغيل الـ Decorators.</td></tr>
+<tr><td class="mono">PostgreSQL</td><td class="mono">16</td><td>قاعدة البيانات، مع امتدادَي <code>ltree</code> و<code>postgis</code>.</td></tr>
+<tr><td class="mono">Prisma</td><td class="mono">7.8</td><td>ORM لجانب الكتابة وإدارة الـ migrations. يعمل عبر <code>@prisma/adapter-pg</code>.</td></tr>
+<tr><td class="mono">Kysely</td><td class="mono">0.28</td><td>باني استعلامات لجانب القراءة. أنواعه مولّدة من مخطط Prisma بـ <code>prisma-kysely</code>.</td></tr>
+<tr><td class="mono">Redis</td><td class="mono">7</td><td>الكاش عبر <code>ioredis</code>، وتخزين رموز OTP المؤقتة.</td></tr>
+<tr><td class="mono">CASL</td><td class="mono">7</td><td>محرّك القدرات المشروطة للتفويض على مستوى الكائن.</td></tr>
+<tr><td class="mono">Passport + JWT</td><td class="mono">—</td><td>المصادقة: Access token و Refresh token مع تدوير.</td></tr>
+<tr><td class="mono">bcrypt</td><td class="mono">6</td><td>تجزئة كلمات المرور، وتجزئة الـ refresh tokens المخزّنة.</td></tr>
+<tr><td class="mono">Playwright</td><td class="mono">1.62</td><td>يُشغَّل بلا واجهة لتحويل HTML الملصق إلى PDF.</td></tr>
+<tr><td class="mono">bwip-js + qrcode</td><td class="mono">—</td><td>توليد الباركود ورمز QR داخل ملصق الطرد.</td></tr>
+<tr><td class="mono">firebase-admin</td><td class="mono">14</td><td>إشعارات Push للسائقين والعملاء عبر FCM.</td></tr>
+<tr><td class="mono">nestjs-pino</td><td class="mono">4.6</td><td>تسجيل مُهيكل بصيغة JSON وبأداء عالٍ.</td></tr>
+<tr><td class="mono">helmet + throttler</td><td class="mono">—</td><td>رؤوس أمان HTTP، وتحديد معدّل الطلبات على تسجيل الدخول: 5 محاولات لكل دقيقة.</td></tr>
+<tr><td class="mono">Swagger</td><td class="mono">11</td><td>توثيق تفاعلي على <code>/api/docs</code>.</td></tr>
+<tr><td class="mono">opossum</td><td class="mono">10</td><td>Circuit Breaker للاستدعاءات الخارجية الهشّة.</td></tr>
+<tr><td class="mono">Docker Compose</td><td class="mono">—</td><td>تشغيل PostGIS و Redis والتطبيق، مع خدمة migration منفصلة.</td></tr>
+</tbody>
+</table></div>
+
+<div class="note">
+  <b>لماذا Prisma و Kysely معًا؟</b>
+  Prisma ممتاز للكتابة والـ migrations لكنه محدود في الاستعلامات المعقّدة: joins متعدّدة، شروط ديناميكية، وتجميع.
+  Kysely يعطي SQL كاملًا مع أمان الأنواع. الحلّ: Prisma للأمر، Kysely للاستعلام —
+  وهذا بالضبط تطبيق عملي لـ CQRS على مستوى المستودعات.
+</div>
+</section>
+
+<!-- ══════════════ 04 ══════════════ -->
+<section id="s4">
+<h2><span class="n">04</span> المعمارية العامة</h2>
+
+<p>
+  المشروع <strong>Modular Monolith</strong> يتبع DDD. القاعدة الحاكمة المكتوبة في
+  <code>AGENTS.md</code> هي: «تعقيد المعمارية يجب أن يوازي تعقيد العمل» —
+  فالموديولات البسيطة تبقى خفيفة، والمجالات الغنية وحدها تحصل على طبقات إضافية.
+</p>
+
+<h3>خريطة المجلدات على المستوى الأعلى</h3>
+<pre><code>src/
+├── main.ts                <span class="c">// نقطة الإقلاع: CORS, helmet, Swagger, Pipes</span>
+├── app.module.ts          <span class="c">// تركيب كل الموديولات</span>
+├── modules/               <span class="c">// موديولات الأعمال</span>
+├── packages/              <span class="c">// حزم بنية تحتية قابلة لإعادة الاستخدام</span>
+├── common/                <span class="c">// أدوات مشتركة: filters, interceptors, pagination</span>
+├── core/                  <span class="c">// عقود أساسية: Permission, ICacheProvider, resilience</span>
+├── infrastructure/        <span class="c">// database, cache, config, mail</span>
+├── authorization/         <span class="c">// تعريف ApplicationAbility الموحّد</span>
+└── health/                <span class="c">// فحص الصحة للـ Docker</span></code></pre>
+
+<h3>الفرق بين modules و packages</h3>
+<div class="cards">
+  <div class="card">
+    <span class="tag">src/modules</span>
+    <h4>موديولات الأعمال</h4>
+    <p>تعرف عن الشحن والفواتير والفروع، وتتحدّث لغة المجال. مثل <code>customer-shipment</code> و<code>billing</code> و<code>fleet</code>.</p>
+  </div>
+  <div class="card">
+    <span class="tag">src/packages</span>
+    <h4>حزم تقنية</h4>
+    <p>لا تعرف شيئًا عن الشحن، وقابلة للنسخ إلى مشروع آخر كما هي. مثل <code>transaction</code> و<code>storage</code> و<code>context</code>.</p>
+  </div>
+</div>
+
+<h3>الموديولات ومسؤولياتها</h3>
+<div class="tw"><table>
+<thead><tr><th>الموديول</th><th>المسؤولية</th><th>موديولات فرعية</th></tr></thead>
+<tbody>
+<tr><td class="mono">auth</td><td>تسجيل الدخول، التوكنات، اختيار الملف الشخصي</td><td>—</td></tr>
+<tr><td class="mono">user</td><td>الهوية الخام: البريد، كلمة المرور، الملفات المرتبطة</td><td>—</td></tr>
+<tr><td class="mono">tenant</td><td>الشركات، إعداداتها الثلاثة، والاشتراكات</td><td>—</td></tr>
+<tr><td class="mono">subscription-plan</td><td>خطط الاشتراك وحدودها</td><td>—</td></tr>
+<tr><td class="mono">organization</td><td>البنية المكانية للشركة</td><td class="mono">organization_unit · tenant_zone</td></tr>
+<tr><td class="mono">global-location</td><td>الشجرة الجغرافية المشتركة بين كل الشركات</td><td>—</td></tr>
+<tr><td class="mono">employee</td><td>الموظفون، تعييناتهم، وبناء الـ Principal</td><td>—</td></tr>
+<tr><td class="mono">employee2</td><td>نسخة أحدث وأبسط من إدارة الموظفين</td><td>—</td></tr>
+<tr><td class="mono">customer</td><td>حسابات العملاء، التسجيل بـ OTP، إعادة تعيين كلمة المرور</td><td>—</td></tr>
+<tr><td class="mono">authorization</td><td>الأدوار والصلاحيات داخل الشركة</td><td>—</td></tr>
+<tr><td class="mono">shipment-request</td><td>الطلب والتسعير والعروض</td><td class="mono">request · quotation · pricing</td></tr>
+<tr><td class="mono">customer-shipment</td><td>الشحنة والطرود وإثبات التسليم</td><td class="mono">shipment · parcel · proof-of-delivery</td></tr>
+<tr><td class="mono">fleet</td><td>الأسطول والنقل بين الفروع</td><td class="mono">vehicle · trip · transport_manifest</td></tr>
+<tr><td class="mono">billing</td><td>الفواتير والدفعات ومهمة تعليم المتأخرات</td><td class="mono">invoice · payment</td></tr>
+<tr><td class="mono">tracking</td><td>سجل حركات الطرود، إضافة فقط</td><td>—</td></tr>
+<tr><td class="mono">notification</td><td>تسجيل توكنات الأجهزة وإرسال الإشعارات</td><td>—</td></tr>
+<tr><td class="mono">profile</td><td>بيانات المستخدم الحالي الموحّدة</td><td>—</td></tr>
+</tbody>
+</table></div>
+
+<h3>قواعد الاعتماد — أهم ما ستُسأل عنه</h3>
+<div class="note warn">
+  <b>القاعدة الحديدية</b>
+  التواصل بين موديولين يحدث <strong>حصرًا عبر Facade</strong>.
+  ممنوع منعًا باتًا على موديول أن يستدعي <code>Repository</code> أو <code>Service</code> أو <code>Entity</code>
+  تابعًا لموديول آخر.
+</div>
+<ul>
+  <li><strong>داخل الموديول الواحد:</strong> الخدمات تتكلّم مع بعضها ومع المستودعات مباشرة، بلا واجهات ولا DI tokens إلا عند وجود مبرّر حقيقي.</li>
+  <li><strong>بين الموديولات:</strong> Facade فقط. والـ Facade لا يتكلّم إلا مع خدمة موديوله، والخدمة وحدها تملك المنطق وتتكلّم مع المستودع.</li>
+  <li><strong>عقد الـ Facade يملكه الموديول المستهلِك</strong>، والموديول المزوِّد ينفّذه. هذا يمنع المزوِّد من فرض شكل بياناته على الجميع.</li>
+</ul>
+
+<pre><code><span class="c">// ✅ صحيح — من ShipmentCommandService</span>
+<span class="k">await</span> this.billingFacade.createInvoiceForShipment({ ... });
+<span class="k">await</span> this.organizationFacade.validateOrganizationUnitsExist(tenantId, ids);
+
+<span class="c">// ❌ خاطئ — تجاوز الحدود</span>
+<span class="k">await</span> this.invoiceRepository.create({ ... });</code></pre>
+
+<h3>حالة استثنائية مقصودة: ShipmentStatusRecalculator</h3>
+<p>
+  حالة الشحنة تُشتَق من حالات طرودها. لكن <code>ShipmentCommandService</code> يُنشئ الطرود،
+  و<code>ParcelCommandService</code> يحتاج أن يُعيد حساب حالة الشحنة عند كل حركة —
+  وربطهما ببعضهما ينتج <strong>دورة اعتماد</strong>. الحل: خدمة ثالثة ضيّقة اسمها
+  <code>ShipmentStatusRecalculator</code> لا تعتمد إلا على المستودعات، فيستطيع الطرفان استخدامها.
+</p>
+<div class="note tip">
+  <b>سؤال متوقّع</b>
+  «كيف تعاملت مع الاعتماد الدائري؟» — الجواب هنا خدمة وسيطة تعتمد على المستودعات فقط،
+  لا <code>forwardRef</code>. استُخدم <code>forwardRef</code> في مكان واحد فقط
+  بين <code>ShipmentRequest</code> و<code>Quotation</code>، وهي علاقة متبادلة حقيقية.
+</div>
+</section>
+
+<!-- ══════════════ 05 ══════════════ -->
+<section id="s5">
+<h2><span class="n">05</span> الطبقات داخل الموديول</h2>
+
+<p>
+  لا يوجد هيكل مجلدات إجباري. الموديول يأخذ من الطبقات ما يحتاجه فعلًا.
+  الموديولات الغنية بالقواعد مثل <code>customer-shipment</code> و<code>fleet</code> و<code>billing</code>
+  تستخدم الطبقات الأربع، بينما يبقى <code>subscription-plan</code> مسطّحًا لأنه CRUD بسيط.
+</p>
+
+<div class="stack">
+  <div class="lyr">
+    <b>العرض <span class="en">presentation/</span></b>
+    <p>الـ Controllers فقط. رفيعة عمدًا: تستقبل الطلب، تتحقّق من الدور بـ <code>@Roles</code>،
+    وتمرّر للخدمة. لا تحوي أي منطق عمل.</p>
+  </div>
+  <div class="lyr">
+    <b>التطبيق <span class="en">application/</span></b>
+    <p>الـ Services بنوعيها Command و Query، مع الـ DTOs والـ Mappers. تنسّق الخطوات:
+    تتحقّق، تجمع البيانات، تفتح المعاملة، وتستدعي الـ Facades.</p>
+  </div>
+  <div class="lyr">
+    <b>المجال <span class="en">domain/</span></b>
+    <p>الـ Entities والـ Enums والاستثناءات وسياسات التفويض. هنا <em>تُتَّخذ</em> القرارات:
+    هل هذا الانتقال مسموح؟ هل يمكن إلغاء هذه الرحلة؟</p>
+  </div>
+  <div class="lyr">
+    <b>البنية التحتية <span class="en">infrastructure/</span></b>
+    <p>الـ Repositories فقط. Prisma للكتابة، Kysely للقراءة. لا قرارات عمل هنا،
+    فقط ترجمة بين الكائن والصف.</p>
+  </div>
+</div>
+
+<h3>نمط الخدمتين: Command و Query</h3>
+<p>
+  كل موديول غنيّ يقسم خدماته إلى <code>XCommandService</code> و<code>XQueryService</code>،
+  ومستودعاته إلى <code>XCommandRepository</code> بـ Prisma و<code>XQueryRepository</code> بـ Kysely.
+  هذا ليس CQRS كاملًا بـ Event Sourcing — لا يوجد bus ولا قاعدة قراءة منفصلة —
+  بل فصل مسؤوليات على مستوى الكود.
+</p>
+
+<h3>قاعدة findById مقابل findDetailsById</h3>
+<p>
+  قاعدة مكتوبة في <code>Ro.md</code>: عند جلب كائن يحتاج بيانات من عدة جداول، تُكتب دالتان.
+</p>
+<ul>
+  <li><code>findById</code> — تجلب من الجدول الأساسي فقط. <strong>هنا يجري التحقّق من الوصول</strong>، وتبقى خفيفة لأن خدمات أخرى تستدعيها.</li>
+  <li><code>findDetailsById</code> — يستدعيها الـ Controller. تبني على الأولى ثم تجمّع بقية البيانات.</li>
+</ul>
+
+<h3>مثال حقيقي: ترتيب الطبقات في إنشاء شحنة</h3>
+<pre><code><span class="c">// presentation — رفيع</span>
+@Post()
+@Roles(RoleType.EMPLOYEE)
+createShipment(@Body() dto: CreateShipmentDto) {
+  <span class="k">return</span> this.commandService.createShipment(dto);
+}
+
+<span class="c">// application — تنسيق وتحقّق ثم معاملة قصيرة</span>
+@Authorize({ policy: Policy(ShipmentPolicy, ShipmentAction.Create), ... })
+@CacheEvict({ keyPrefix: ..., allEntries: <span class="k">true</span> })
+<span class="k">async</span> createShipment(dto) {
+  <span class="c">// العمل الثقيل قبل المعاملة: تحقّق، توليد ملصقات، رفع PDF</span>
+  <span class="k">const</span> prepared = <span class="k">await</span> this.prepareParcels(...);
+  <span class="k">return</span> this.persistShipment(...);  <span class="c">// ← هذه وحدها Transactional</span>
+}
+
+<span class="c">// domain — القرار</span>
+transitionTo(target: ParcelStatus) {
+  <span class="k">if</span> (!ALLOWED_TRANSITIONS[this._currentStatus].includes(target))
+    <span class="k">throw new</span> ConflictException(...);
+}</code></pre>
+
+<div class="note">
+  <b>لماذا العمل الثقيل خارج المعاملة؟</b>
+  توليد ملصق الطرد يشغّل متصفّح Playwright ويرفع ملفًا للتخزين، وقد يستغرق ثوانٍ.
+  لو كان داخل المعاملة لبقي اتصال قاعدة البيانات محجوزًا طوال هذا الوقت.
+  القاعدة: <strong>اقرأ وتحقّق أولًا، ثم افتح المعاملة قبل الكتابة مباشرة، وأبقِها أقصر ما يمكن.</strong>
+</div>
+</section>
+
+<!-- ══════════════ 06 ══════════════ -->
+<section id="s6">
+<h2><span class="n">06</span> الحزم الداخلية packages</h2>
+
+<p>تسع حزم تقنية لا تعرف شيئًا عن الشحن. هذه هي «البنية التحتية المنزلية» للمشروع.</p>
+
+<div class="tw"><table>
+<thead><tr><th>الحزمة</th><th>ما تقدّمه</th></tr></thead>
+<tbody>
+<tr><td class="mono">context</td><td>الـ <code>Principal</code> وسياق الطلب فوق <code>AsyncLocalStorage</code>.</td></tr>
+<tr><td class="mono">authorization</td><td>محرّك السياسات: <code>@Authorize</code>، تعبيرات <code>any/all/not</code>، و<code>VisibilityScope</code>.</td></tr>
+<tr><td class="mono">authorization-casl</td><td>اكتشاف مساهمي القدرات وبناء <code>Ability</code> لكل مستخدم.</td></tr>
+<tr><td class="mono">transaction</td><td><code>@Transactional()</code> بلا تمرير يدوي لعميل المعاملة.</td></tr>
+<tr><td class="mono">storage</td><td>تجريد التخزين: يحفظ <code>storage_key</code> وليس رابطًا. مزوّد محلي حاليًا.</td></tr>
+<tr><td class="mono">label-generator</td><td>يبني HTML ملصق الطرد مع باركود و QR.</td></tr>
+<tr><td class="mono">pdf-generator</td><td>يحوّل HTML إلى PDF عبر Playwright.</td></tr>
+<tr><td class="mono">firebase-notifications</td><td>غلاف حول FCM لإرسال الإشعارات.</td></tr>
+</tbody>
+</table></div>
+
+<h3>packages/context — الـ Principal</h3>
+<p>
+  عند كل طلب يُنشئ <code>ContextMiddleware</code> سياقًا جديدًا داخل <code>AsyncLocalStorage</code>
+  يحمل <code>requestId</code> و<code>correlationId</code>. لاحقًا يملأ الـ Guard حقل
+  <code>principal</code> داخل نفس السياق. النتيجة: أي خدمة في أي عمق تستطيع سؤال
+  <code>RequestContextService</code> عن هوية المستخدم دون أن يمرّرها أحد كوسيط.
+</p>
+<pre><code><span class="k">interface</span> Principal {
+  subject:    { id: string; type: SubjectType };
+  tenantId?:  string;
+  profileId?: string;   <span class="c">// employeeId أو customer_profile.id</span>
+  phone?:     string;   <span class="c">// للعميل — أساس رؤية شحناته</span>
+  vehicleId?: string;   <span class="c">// للسائق</span>
+  branches:   ScopeAccess[];    <span class="c">// كل فرع مع دوره وصلاحياته</span>
+  warehouses: ScopeAccess[];
+}</code></pre>
+
+<div class="note tip">
+  <b>الفكرة الجوهرية</b>
+  الـ Principal ليس نسخة من الـ JWT. الـ JWT يحمل معرّفات فقط؛ أما الفروع والمستودعات
+  والصلاحيات فتُجلب من قاعدة البيانات عند كل طلب عبر <code>EmployeeFacade</code>.
+  هذا يعني أن سحب صلاحية من موظف يسري <strong>فورًا</strong> ولا ينتظر انتهاء توكنه.
+</div>
+
+<h3>packages/transaction — كيف يعمل @Transactional</h3>
+<p>
+  المشكلة الكلاسيكية: لتشارك عدة مستودعات نفس المعاملة عليك تمرير <code>tx</code> يدويًا
+  عبر كل استدعاء. الحلّ هنا ثلاث قطع.
+</p>
+<div class="flow">
+  <div class="fs"><div><b>TransactionContext</b>
+    <p><code>AsyncLocalStorage</code> يحمل عميل المعاملة النشط. تفصيل داخلي لا يُستورد خارج الحزمة.</p>
+    <span class="src">packages/transaction/context/transaction.context.ts</span></div></div>
+  <div class="fs"><div><b>TransactionalPrismaService</b>
+    <p>تحقنه المستودعات بدل <code>PrismaService</code>. خاصية <code>.client</code> تعيد عميل المعاملة إن وُجد، وإلا العميل العادي.</p>
+    <span class="src">packages/transaction/services/transactional-prisma.service.ts</span></div></div>
+  <div class="fs"><div><b>@Transactional()</b>
+    <p>يفتح معاملة تفاعلية ويشغّل الدالة داخل السياق. إن كانت هناك معاملة نشطة أصلًا فإنه <strong>يعيد استخدامها</strong> ولا يفتح ثانية.</p>
+    <span class="src">packages/transaction/decorators/transactional.decorator.ts</span></div></div>
+</div>
+<pre><code><span class="c">// لا شيء يُمرَّر يدويًا — المستودعات تلتقط المعاملة تلقائيًا</span>
+@Transactional()
+<span class="k">async</span> persistShipment(...) {
+  <span class="k">await</span> this.commandRepository.create(...);       <span class="c">// نفس tx</span>
+  <span class="k">await</span> this.parcelCommandRepository.create(...); <span class="c">// نفس tx</span>
+  <span class="k">await</span> this.billingFacade.createInvoiceForShipment(...); <span class="c">// نفس tx حتى عبر Facade</span>
+}</code></pre>
+
+<h3>packages/storage — مفتاح لا رابط</h3>
+<p>
+  كل ملف مرفوع (ملصق طرد، توقيع، صورة إثبات، شعار شركة) يُخزَّن ويُعاد منه
+  <code>storage_key</code> فقط. الرابط يُشتَق عند الحاجة. السبب: لو انتقلنا من التخزين المحلي
+  إلى S3 لاحقًا فلن نحتاج تعديل صفٍّ واحد في قاعدة البيانات.
+</p>
+</section>
+
+<!-- ══════════════ 07 ══════════════ -->
+<section id="s7">
+<h2><span class="n">07</span> المصادقة والتفويض</h2>
+
+<p>هذا أعقد جزء في المشروع وأكثر ما ستُسأل عنه. الفصل واضح ومقصود:</p>
+<div class="cards">
+  <div class="card"><h4>Authentication — المصادقة</h4><p>من أنت؟ مسؤولية <code>auth</code>: كلمة المرور، التوكنات، الجلسات.</p></div>
+  <div class="card"><h4>Authorization — التفويض</h4><p>ماذا يحقّ لك؟ ثلاث طبقات متتالية: الدور، ثم السياسة، ثم نطاق الرؤية.</p></div>
+</div>
+
+<h3>تسجيل الدخول: مشكلة الملفات المتعدّدة</h3>
+<p>
+  نفس البريد الإلكتروني قد يكون <strong>عميلًا</strong> على المنصة و<strong>موظفًا</strong> في شركة
+  و<strong>مالكًا</strong> لشركة أخرى في آنٍ واحد. لذلك لا يُصدر تسجيل الدخول توكنًا مباشرة دائمًا.
+</p>
+<div class="flow">
+  <div class="fs"><div><b>POST /auth/login</b>
+    <p>يتحقّق من كلمة المرور بـ bcrypt، ثم يجمع كل الملفات النشطة لهذا المستخدم.</p></div></div>
+  <div class="fs"><div><b>ملف واحد فقط</b>
+    <p>يُصدر <code>accessToken</code> و<code>refreshToken</code> مباشرة.</p></div></div>
+  <div class="fs"><div><b>عدة ملفات</b>
+    <p>يعيد <code>status: "REQUIRE_PROFILE_SELECTION"</code> مع <code>sessionToken</code> مؤقّت وقائمة الملفات.
+    الـ <code>sessionToken</code> <strong>لا يفتح أي مسار آخر</strong> — الـ Guard يرفضه صراحةً.</p></div></div>
+  <div class="fs"><div><b>POST /auth/select-profile</b>
+    <p>يتحقّق أن الملف المطلوب يخصّ فعلًا هذا المستخدم وأنه نشط، ثم يصدر التوكنات النهائية.</p></div></div>
+  <div class="fs"><div><b>اختصار للتطبيقات</b>
+    <p>إرسال <code>type</code> ضمن جسم الطلب يتخطّى خطوة الاختيار. تطبيق السائق يرسل <code>type: "DRIVER"</code> دائمًا.</p></div></div>
+</div>
+
+<h3>WEB مقابل MOBILE</h3>
+<p>
+  رأس <code>client-type</code> يقرّر طريقة تسليم التوكن:
+</p>
+<ul>
+  <li><strong>WEB</strong> — التوكنات في <code>httpOnly</code> cookies. الـ refresh مقيّد بمسار <code>/auth/refresh</code> وحده، فلا يُرسَل مع كل طلب.</li>
+  <li><strong>MOBILE</strong> — التوكنات في جسم الاستجابة، والتطبيق يخزّنها بنفسه.</li>
+</ul>
+<p>الـ <code>JwtStrategy</code> يقرأ التوكن من رأس <code>Authorization</code> أولًا، ويعود إلى الـ cookie إن لم يجده.</p>
+
+<h3>تدوير الـ Refresh Token واكتشاف السرقة</h3>
+<p>
+  الـ refresh token يُخزَّن <strong>مجزّأً بـ bcrypt</strong> في جدول <code>user_session</code>.
+  عند طلب تجديد:
+</p>
+<ol>
+  <li>يُتحقَّق من توقيع التوكن.</li>
+  <li>تُجلب الجلسة ويُقارن التوكن بالنسخة المجزّأة.</li>
+  <li><strong>إن فشلت المقارنة رغم صحة التوقيع</strong> → هذا توكن قديم أُعيد استخدامه، فتُحذف الجلسة كاملة فورًا.</li>
+  <li>إن نجحت → تُحذف الجلسة القديمة وتُصدر توكنات جديدة بجلسة جديدة (تدوير).</li>
+</ol>
+<div class="note warn">
+  <b>هذه نقطة قوية في المقابلة</b>
+  السلوك في الخطوة 3 هو <em>refresh token reuse detection</em>. لو سُرق توكن واستُخدم بعد أن دوّره
+  المستخدم الأصلي، يُكتشف الأمر وتُقتل الجلسة بدل أن يبقى المهاجم بداخلها.
+</div>
+
+<h3>الطبقات الثلاث للتفويض</h3>
+
+<h4>الطبقة الأولى: الدور — RolesGuard</h4>
+<p>
+  فلتر خشن على مستوى الـ route. الديكوريتر <code>@Roles(...)</code> ذكيّ: يجمع
+  <code>SetMetadata</code> و<code>UseGuards(RolesGuard)</code> معًا، فلا يمكن أن تنسى تركيب الحارس.
+</p>
+<pre><code>@Post()
+@Roles(RoleType.EMPLOYEE)   <span class="c">// الموظف فقط ينشئ شحنة</span>
+createShipment(...) { ... }</code></pre>
+
+<h4>الطبقة الثانية: السياسة — @Authorize + CASL</h4>
+<p>
+  توضع على <strong>دالة الخدمة</strong> لا على الـ Controller، لأن القرار قد يحتاج جلب الكائن من
+  قاعدة البيانات. الديكوريتر يستخرج الحمولة من وسائط الدالة، يمرّرها للسياسة، والسياسة تبني
+  <code>Ability</code> من الـ Principal وتسأل CASL.
+</p>
+<pre><code>@Authorize({
+  policy: Policy(ShipmentPolicy, ShipmentAction.Cancel),
+  payloadResolver: (shipmentId: string) =&gt; ({ shipmentId }),
+})
+<span class="k">async</span> cancelShipment(shipmentId: string) { ... }</code></pre>
+<p>
+  وداخل <code>ShipmentAbility</code> تُعرَّف القدرات مشروطة بحقول الكائن. لاحظ الدقّة:
+</p>
+<pre><code><span class="k">if</span> (perms.includes(Permission.CANCEL_SHIPMENT)) {
+  builder.can(ShipmentAction.Cancel, ShipmentSubject, {
+    tenantId:         principal.tenantId,
+    originOrgUnitId:  orgUnit.id,
+    status: { $in: [ShipmentStatus.PENDING, ShipmentStatus.PROCESSING] },
+  });
+}</code></pre>
+<p>
+  أي أن الموظف يستطيع الإلغاء فقط: داخل شركته، وللشحنات الصادرة من فرعه هو،
+  وفقط ما دامت لم تُشحن بعد. ثلاثة شروط في تعريف واحد.
+</p>
+
+<h4>الطبقة الثالثة: نطاق الرؤية — VisibilityScope</h4>
+<p>
+  الطبقتان السابقتان تحرسان كائنًا واحدًا. أما القوائم فتحتاج تصفية على مستوى الصفوف،
+  وهذا عمل <code>VisibilityScopeBuilder</code>. القيود التي يعيدها <strong>إجبارية</strong>:
+  الفلتر القادم من المستخدم يستطيع تضييقها لكن لا يستطيع توسيعها أبدًا.
+</p>
+<div class="tw"><table>
+<thead><tr><th>نوع المستخدم</th><th>ما يراه من الشحنات</th></tr></thead>
+<tbody>
+<tr><td><span class="r">PLATFORM_OWNER</span></td><td>كل شيء — بلا قيود</td></tr>
+<tr><td><span class="r">TENANT_ADMIN</span></td><td><code>tenant_id = شركته</code></td></tr>
+<tr><td><span class="r">EMPLOYEE</span></td><td><code>tenant_id</code> + الشحنات المرتبطة بفروعه ومستودعاته فقط</td></tr>
+<tr><td><span class="r">CUSTOMER</span></td><td>الشحنات التي رقم هاتفه فيها مرسِلًا أو مستقبِلًا</td></tr>
+</tbody>
+</table></div>
+<div class="note">
+  <b>لماذا الهاتف وليس معرّف العميل؟</b>
+  معظم المرسِلين يدخلون الفرع ويشحنون بلا حساب أصلًا. الشحنة لا تحمل <code>customer_id</code>،
+  بل تحمل اسم وهاتف المرسِل والمستقبِل. لذلك ربط الرؤية بالهاتف هو الطريقة الوحيدة
+  التي تجعل عميلًا مسجّلًا يرى شحنة أُنشئت له قبل أن يسجّل.
+</div>
+
+<h3>سلسلة التنفيذ الكاملة لطلب محمي</h3>
+<div class="flow">
+  <div class="fs"><div><b>ContextMiddleware</b><p>ينشئ سياق الطلب داخل ALS مع <code>requestId</code>.</p></div></div>
+  <div class="fs"><div><b>GlobalAuthGuard</b><p>مسجَّل كـ <code>APP_GUARD</code> فيعمل على كل شيء. يتخطّى المسارات المعلّمة بـ <code>@Public</code>، يتحقّق من الـ JWT، ثم <strong>يبني الـ Principal</strong> حسب نوع المستخدم.</p></div></div>
+  <div class="fs"><div><b>RolesGuard</b><p>يقارن <code>principal.subject.type</code> بالأدوار المطلوبة على الـ route.</p></div></div>
+  <div class="fs"><div><b>ValidationPipe</b><p>تحقّق من الـ DTO مع <code>whitelist: true</code> — أي حقل غير معرّف يُحذف، و<code>transform: true</code> لتحويل الأنواع.</p></div></div>
+  <div class="fs"><div><b>@Authorize</b><p>داخل الخدمة: سياسة CASL على الكائن المحدّد.</p></div></div>
+  <div class="fs"><div><b>@Transactional</b><p>تفتح المعاملة قبل الكتابة مباشرة.</p></div></div>
+  <div class="fs"><div><b>TransformInterceptor</b><p>يغلّف الناتج بـ <code>{ success: true, data }</code>، ويمرّر <code>StreamableFile</code> كما هو.</p></div></div>
+</div>
+
+<h3>بناء الـ Principal لكل نوع مستخدم</h3>
+<div class="tw"><table>
+<thead><tr><th>النوع</th><th>مصدر الشركة</th><th>ما يُجلب إضافيًا</th></tr></thead>
+<tbody>
+<tr><td><span class="r">PLATFORM_OWNER</span></td><td>رأس <code>x-tenant-id</code></td><td>لا شيء — بلا فروع</td></tr>
+<tr><td><span class="r">TENANT_ADMIN</span></td><td>من التوكن</td><td>لا شيء — صلاحية كاملة داخل شركته</td></tr>
+<tr><td><span class="r">EMPLOYEE</span></td><td>من التوكن</td><td><code>EmployeeFacade</code> يجلب الفروع والمستودعات مع أدوارها وصلاحياتها</td></tr>
+<tr><td><span class="r">DRIVER</span></td><td>من التوكن</td><td><code>vehicleId</code> من التوكن</td></tr>
+<tr><td><span class="r">CUSTOMER</span></td><td>لا يوجد</td><td><code>CustomerFacade</code> يجلب رقم الهاتف</td></tr>
+</tbody>
+</table></div>
+<div class="note tip">
+  <b>لماذا DRIVER ليس نوعًا منفصلًا في قاعدة البيانات؟</b>
+  السائق هو <strong>موظف لديه تعيين سيارة نشط</strong>. لا يوجد جدول <code>driver</code>؛
+  الدور مُشتَقّ من وجود صفّ في <code>vehicle_assignment</code>. هذا يمنع ازدواج بيانات الموظف.
+</div>
+</section>
+
+<!-- ══════════════ 08 ══════════════ -->
+<section id="s8">
+<h2><span class="n">08</span> قاعدة البيانات</h2>
+
+<p>
+  خمسة وأربعون جدولًا وواحد وثلاثون <code>enum</code> في PostgreSQL 16.
+  المفاتيح كلها <code>uuid(7)</code> — مرتّبة زمنيًا فلا تشتّت الفهارس عند الإدراج.
+</p>
+
+<h3>الجداول حسب المجال</h3>
+<div class="tw"><table>
+<thead><tr><th>المجال</th><th>الجداول</th></tr></thead>
+<tbody>
+<tr><td><b>الهوية</b></td><td class="mono">users · user_session · user_device_token · platform_admin · tenant_owner · customer_profile · customer_address · customer_tenant</td></tr>
+<tr><td><b>الشركات</b></td><td class="mono">tenant · tenant_delivery_settings · tenant_operational_settings · tenant_pricing_settings · subscription_plan · tenant_subscription · tenant_subscription_history</td></tr>
+<tr><td><b>البنية المكانية</b></td><td class="mono">organization_unit · tenant_zone · global_location · org_unit_location_mapping</td></tr>
+<tr><td><b>الموظفون والصلاحيات</b></td><td class="mono">employee · employee_assignment · role · permission · role_permission · assignment_role</td></tr>
+<tr><td><b>الطلب والتسعير</b></td><td class="mono">shipment_request · quotation · zone_pricing_matrix · handling_fee_rule</td></tr>
+<tr><td><b>الشحن</b></td><td class="mono">customer_shipment · parcel · parcel_movement · proof_of_delivery</td></tr>
+<tr><td><b>الأسطول</b></td><td class="mono">vehicle · vehicle_assignment · trip · transport_manifest · manifest_item</td></tr>
+<tr><td><b>المالية</b></td><td class="mono">invoice · invoice_counter · payment</td></tr>
+<tr><td><b>مساند</b></td><td class="mono">notification · support_ticket · support_ticket_message · audit_log</td></tr>
+</tbody>
+</table></div>
+
+<h3>سلسلة الصلاحيات — أربعة جداول للوصول لصلاحية واحدة</h3>
+<pre><code>employee
+   └─ employee_assignment   <span class="c">// الموظف مُعيَّن في وحدة تنظيمية</span>
+        └─ assignment_role   <span class="c">// وله دور في هذا التعيين تحديدًا</span>
+             └─ role
+                  └─ role_permission
+                       └─ permission</code></pre>
+<div class="note">
+  <b>لماذا هذا التعقيد؟</b>
+  لأن الدور <strong>مرتبط بالتعيين لا بالموظف</strong>. الموظف نفسه قد يكون
+  «مدير فرع» في فرع دمشق و«موظف استلام» في فرع المزّة. لو ربطنا الدور بالموظف
+  لاستحال التعبير عن ذلك. لذلك يحمل الـ Principal مصفوفة <code>branches</code>
+  كل عنصر فيها فرع مع دوره وصلاحياته المستقلّة.
+</div>
+
+<h3>ثلاث مجموعات إعدادات لكل شركة</h3>
+<div class="tw"><table>
+<thead><tr><th>الجدول</th><th>يتحكّم بـ</th><th>أمثلة</th></tr></thead>
+<tbody>
+<tr><td class="mono">tenant_delivery_settings</td><td>متطلّبات إثبات التسليم</td><td><code>require_otp</code>، <code>require_signature</code>، <code>require_proof_photo</code>، <code>allow_representative</code></td></tr>
+<tr><td class="mono">tenant_operational_settings</td><td>قواعد التشغيل</td><td><code>tracking_prefix</code>، <code>require_sender_national_id</code>، <code>quotation_validity_hours</code>، <code>allow_shipment_reopen</code></td></tr>
+<tr><td class="mono">tenant_pricing_settings</td><td>حساب السعر</td><td><code>volumetric_divisor</code> (افتراضيًا 5000)، <code>default_currency</code></td></tr>
+</tbody>
+</table></div>
+<p>
+  هذه الإعدادات ليست زينة — الكود يقرأها فعليًا. فـ <code>ProofOfDeliveryCommandService</code>
+  يرفض التسليم بلا توقيع إن كانت <code>require_signature</code> مفعّلة،
+  و<code>ShipmentCommandService</code> يرفض الشحنة بلا رقم وطني للمرسِل إن طلبت الشركة ذلك.
+</p>
+
+<h3>الاستفادة من امتدادات PostgreSQL</h3>
+<div class="cards">
+  <div class="card">
+    <span class="tag">ltree</span>
+    <h4>شجرة الوحدات التنظيمية</h4>
+    <p>عمود <code>tree_path</code> في <code>organization_unit</code> يخزّن المسار الهرمي كاملًا، فيصبح استعلام «كل ما تحت هذا المركز» عملية فهرس واحدة بدل استعلام تعاودي.</p>
+  </div>
+  <div class="card">
+    <span class="tag">postgis</span>
+    <h4>مواقع جغرافية</h4>
+    <p>أعمدة <code>geometry</code> في <code>organization_unit</code> و<code>global_location</code> و<code>customer_address</code> مع فهارس <code>GiST</code> للبحث المكاني.</p>
+  </div>
+</div>
+
+<h3>القفل التفاؤلي — Optimistic Locking</h3>
+<p>
+  الجداول التي قد تُحدَّث من مكانين في اللحظة نفسها تحمل عمود <code>version</code>:
+  <code>parcel</code>، <code>customer_shipment</code>، <code>invoice</code>.
+  التحديث يشترط تطابق النسخة، وإن لم تتطابق يفشل الأمر بدل أن يدهس تعديل الآخر.
+</p>
+<pre><code><span class="c">-- موظّفان يقبضان على نفس الفاتورة في نفس اللحظة</span>
+UPDATE invoice
+   SET status = ..., version = version + 1
+ WHERE id = ? AND version = ?;   <span class="c">-- ← الشرط الحاسم</span>
+<span class="c">-- الثاني لا يجد صفًّا مطابقًا، فيُطلب منه الإعادة بدل ضياع دفعة</span></code></pre>
+
+<h3>ترقيم الفواتير — لماذا يختلف عن رقم التتبّع</h3>
+<div class="tw"><table>
+<thead><tr><th></th><th>رقم التتبّع</th><th>رقم الفاتورة</th></tr></thead>
+<tbody>
+<tr><td><b>الشكل</b></td><td class="mono">SHP-1754...-A3F9</td><td class="mono">DAM-INV-2026-00001</td></tr>
+<tr><td><b>الأساس</b></td><td>زمن + عشوائي</td><td>عدّاد متسلسل لكل شركة لكل سنة</td></tr>
+<tr><td><b>المطلوب منه</b></td><td>التفرّد فقط</td><td>تسلسل محاسبي بلا فجوات</td></tr>
+<tr><td><b>الآلية</b></td><td>توليد وإعادة محاولة حتى 5 مرات</td><td><code>INSERT ... ON CONFLICT DO UPDATE</code> ذرّي على <code>invoice_counter</code></td></tr>
+</tbody>
+</table></div>
+<div class="note tip">
+  <b>تفصيلة تُظهر عمق التفكير</b>
+  عدّاد الفاتورة يعمل <strong>داخل نفس معاملة إنشاء الفاتورة</strong>. فإن فشل الإدراج
+  يعود الرقم مع الـ rollback ولا تنشأ فجوة في التسلسل — وهذا ما يتوقّعه المحاسبون بالضبط.
+</div>
+</section>
+
+<!-- ══════════════ 09 ══════════════ -->
+<section id="s9">
+<h2><span class="n">09</span> آلات الحالة</h2>
+
+<p>
+  كل انتقال حالة في هذا النظام يقرّره <strong>الكيان في طبقة المجال</strong>، لا الخدمة ولا الـ Controller.
+  الانتقال غير المسموح يرمي <code>ConflictException</code>. هذه الجداول مأخوذة حرفيًا من الكيانات.
+</p>
+
+<h3>الطرد — ParcelStatus</h3>
+<div class="sm">
+  <span class="sm-label">المسار الطبيعي</span>
+  <span class="st hold">PROCESSING</span><span class="ar">←</span>
+  <span class="st mid">READY_FOR_DISPATCH</span><span class="ar">←</span>
+  <span class="st mid">IN_TRANSIT</span><span class="ar">←</span>
+  <span class="st mid">ARRIVED_AT_UNIT</span><span class="ar">←</span>
+  <span class="st go">READY_FOR_COLLECTION</span><span class="ar">←</span>
+  <span class="st go">COLLECTED</span>
+</div>
+<div class="tw"><table>
+<thead><tr><th>من</th><th>إلى</th></tr></thead>
+<tbody>
+<tr><td class="mono">PROCESSING</td><td class="mono">READY_FOR_DISPATCH · RETURNED</td></tr>
+<tr><td class="mono">READY_FOR_DISPATCH</td><td class="mono">IN_TRANSIT</td></tr>
+<tr><td class="mono">IN_TRANSIT</td><td class="mono">ARRIVED_AT_UNIT</td></tr>
+<tr><td class="mono">ARRIVED_AT_UNIT</td><td class="mono">PROCESSING · READY_FOR_COLLECTION</td></tr>
+<tr><td class="mono">READY_FOR_COLLECTION</td><td class="mono">COLLECTED</td></tr>
+<tr><td class="mono">COLLECTED · RETURNED · CANCELLED</td><td>نهائية — لا انتقال</td></tr>
+</tbody>
+</table></div>
+<div class="note">
+  <b>الحلقة الذكية</b>
+  عند وصول الطرد لوحدة، دالة <code>receive()</code> تقرّر: إن كانت هذه وحدة الوجهة النهائية
+  ينتقل إلى <code>READY_FOR_COLLECTION</code>، وإلا يعود إلى <code>PROCESSING</code> ليُشحن مجدّدًا.
+  هذا ما يجعل الشبكة تدعم مسارات متعدّدة القفزات (دمشق ← مركز حمص ← حلب) بحالة واحدة.
+</div>
+<p>
+  <strong>حالة السلامة مستقلّة تمامًا:</strong> <code>ParcelCondition</code>
+  (<code>NORMAL</code>، <code>DAMAGED</code>، <code>OPENED</code>، <code>LOST</code>، <code>DESTROYED</code>)
+  لا تؤثّر على دورة الحياة — الطرد المتضرّر يواصل طريقه، لكن الضرر مسجّل.
+</p>
+
+<h3>الشحنة — ShipmentStatus</h3>
+<p>
+  لا تُحدَّث يدويًا في المسار الطبيعي، بل <strong>تُشتَقّ من حالات طرودها</strong>
+  عبر <code>ShipmentStatusRecalculator</code> بعد كل حركة طرد.
+  الاستثناء الوحيد الصريح: <code>cancel()</code>، وهو مرفوض بعد الشحن.
+</p>
+<div class="sm">
+  <span class="st hold">PENDING</span><span class="ar">←</span>
+  <span class="st hold">PROCESSING</span><span class="ar">←</span>
+  <span class="st mid">READY_FOR_DISPATCH</span><span class="ar">←</span>
+  <span class="st mid">IN_TRANSIT</span><span class="ar">←</span>
+  <span class="st mid">READY_FOR_COLLECTION</span><span class="ar">←</span>
+  <span class="st go">DELIVERED</span>
+  <span class="ar">·</span><span class="st end">CANCELLED</span><span class="st end">RETURNED</span>
+</div>
+
+<h3>الفاتورة — InvoiceStatus</h3>
+<div class="tw"><table>
+<thead><tr><th>من</th><th>إلى</th></tr></thead>
+<tbody>
+<tr><td class="mono">UNPAID</td><td class="mono">PARTIALLY_PAID · PAID · OVERDUE · CANCELLED</td></tr>
+<tr><td class="mono">PARTIALLY_PAID</td><td class="mono">PAID · OVERDUE · CANCELLED</td></tr>
+<tr><td class="mono">OVERDUE</td><td class="mono">PARTIALLY_PAID · PAID · CANCELLED</td></tr>
+<tr><td class="mono">PAID · CANCELLED</td><td>نهائية</td></tr>
+</tbody>
+</table></div>
+<p>
+  الحالة لا تُضبط يدويًا بل تُشتَقّ من مجموع المدفوع عبر <code>applyPaidTotal()</code>،
+  مع تقريب الطرفين لخانتين عشريتين قبل المقارنة حتى لا تُقرأ دفعة تسدّد الفاتورة بالضبط
+  على أنها ناقصة بأجزاء من المليون. ولاحظ أن <code>OVERDUE</code> ليست نهاية —
+  الفاتورة المتأخّرة ما تزال مستحقّة والدفع هو تمامًا ما ينبغي أن يحدث لها.
+</p>
+
+<h3>الرحلة — TripStatus</h3>
+<div class="sm">
+  <span class="st hold">SCHEDULED</span><span class="ar">←</span>
+  <span class="st mid">IN_PROGRESS</span><span class="ar">←</span>
+  <span class="st go">COMPLETED</span>
+  <span class="ar">·</span>
+  <span class="st hold">SCHEDULED</span><span class="ar">←</span><span class="st end">CANCELLED</span>
+</div>
+<ul>
+  <li><code>start()</code> تشترط <strong>وجود بيان حمولة واحد على الأقل</strong> — الرحلة لا تنطلق فارغة. العدّ تجلبه الخدمة والقرار يتّخذه الكيان.</li>
+  <li><code>cancel()</code> ممكنة من <code>SCHEDULED</code> فقط — بعد الانطلاق لا إلغاء.</li>
+  <li>المسار والسائق والسيارة قابلة للتعديل ما دامت الرحلة <code>SCHEDULED</code> فقط.</li>
+  <li>المصدر والوجهة يجب أن يختلفا، وإلا <code>InvalidTripRouteException</code>.</li>
+</ul>
+
+<h3>بيان الحمولة — ManifestStatus</h3>
+<div class="sm">
+  <span class="st hold">PENDING</span><span class="ar">←</span>
+  <span class="st mid">IN_TRANSIT</span><span class="ar">←</span>
+  <span class="st go">COMPLETED</span>
+</div>
+<p>
+  إضافة الطرود وحذفها مسموحان في <code>PENDING</code> فقط. وعند انطلاق الرحلة
+  تنتقل <strong>كل</strong> بياناتها إلى <code>IN_TRANSIT</code> في نفس المعاملة،
+  فيستحيل أن ترحل رحلة وتترك بيانًا مفتوحًا للتحميل.
+</p>
+<p>
+  وعنصر البيان له حالته: <code>PENDING_LOAD</code> ← <code>LOADED</code> ← <code>UNLOADED</code>،
+  مع <code>MISSING</code> للطرد المفقود عند الجرد.
+</p>
+
+<h3>طلب الشحن وعرض السعر</h3>
+<div class="sm">
+  <span class="sm-label">RequestStatus</span>
+  <span class="st hold">PENDING</span><span class="ar">←</span>
+  <span class="st mid">CUSTOMER_APPROVED</span><span class="ar">←</span>
+  <span class="st mid">COMPANY_ACCEPTED</span><span class="ar">←</span>
+  <span class="st go">CONVERTED</span>
+  <span class="ar">·</span>
+  <span class="st end">REJECTED</span><span class="st end">CANCELLED</span><span class="st end">EXPIRED</span>
+</div>
+<div class="sm">
+  <span class="sm-label">QuotationStatus</span>
+  <span class="st hold">PENDING</span>
+  <span class="st hold">WAITING_PRICING_REQUEST</span>
+  <span class="st hold">WAITING_PRICING</span>
+  <span class="st go">APPROVED</span>
+  <span class="st end">REJECTED</span><span class="st end">EXPIRED</span><span class="st end">WITHDRAWN</span>
+</div>
+<p>
+  الحالتان <code>WAITING_PRICING_REQUEST</code> و<code>WAITING_PRICING</code> هما مسار التسعير اليدوي:
+  الأولى تعني «الشركة تغطّي المسار لكن لا يمكن حساب السعر آليًا»، والثانية تعني
+  «العميل طلب سعرًا والموظف لم يُدخله بعد».
+</p>
+</section>
+
+<!-- ══════════════ 10 ══════════════ -->
+<section id="s10">
+<h2><span class="n">10</span> تدفقات العمل الأساسية</h2>
+
+<p>ستة تدفقات تشرح المشروع كله. إذا فهمتها فهمت النظام.</p>
+
+<h3>التدفّق الأول: من طلب العميل إلى عروض الأسعار</h3>
+<p>هذا أذكى جزء في النظام وأكثر ما يستحقّ الشرح في المقابلة.</p>
+<div class="flow">
+  <div class="fs"><div><b>العميل يُنشئ الطلب</b>
+    <p>يرسل موقعًا عالميًا للانطلاق وآخر للوصول، مع الوزن والأبعاد المتوقّعة. لا يذكر أي فرع ولا شركة —
+    وقد يحدّد <code>target_tenant_id</code> إن أراد شركة بعينها.</p>
+    <span class="src">POST /shipment-requests</span></div></div>
+  <div class="fs"><div><b>التحقّق من المدخلات</b>
+    <p>إن حُدّدت شركة يُتحقَّق أنها نشطة، ويُتحقَّق أن الموقعين موجودان عبر <code>GlobalLocationFacade</code>.</p></div></div>
+  <div class="fs"><div><b>موديول التنظيم يحلّ المسارات</b>
+    <p><code>resolveRoutesForLocations</code> يبحث في <code>org_unit_location_mapping</code> عن كل فرع يغطّي موقع الانطلاق،
+    وكل فرع يغطّي موقع الوصول، ثم يجمّع النتائج <strong>حسب الشركة</strong> ويستبعد أي شركة تنقصها إحدى الجهتين.</p></div></div>
+  <div class="fs"><div><b>توليد كل التوليفات الممكنة</b>
+    <p>لكل شركة يُضرب كل فرع انطلاق بكل فرع وصول، وتُستخرج منطقة كل فرع.
+    النتيجة قائمة أزواج مناطق. تُزال التكرارات <strong>قبل</strong> الاستعلام.</p></div></div>
+  <div class="fs"><div><b>جلب الأسعار والإعدادات دفعةً واحدة</b>
+    <p>استعلام واحد يجلب كل مصفوفات التسعير المطابقة، واستعلام واحد يجلب إعدادات التسعير لكل الشركات المرشّحة —
+    وليس استعلامًا لكل مسار. هذا تفادٍ صريح لمشكلة N+1.</p></div></div>
+  <div class="fs"><div><b>حساب السعر لكل مسار</b>
+    <p>الوزن الحجمي، ثم الوزن القابل للتسعير، ثم الوزن الزائد فوق الوزن الأساسي، ثم:
+    <code>السعر الأساسي + (الزائد × سعر الكيلو) + رسوم إضافية</code>.</p></div></div>
+  <div class="fs"><div><b>ثلاث نتائج ممكنة لكل مسار</b>
+    <p><strong>لا مصفوفة تسعير</strong> → يُتخطّى المسار كليًا، أي أن الشركة لا تدعمه.
+    <strong>مصفوفة موجودة لكن الإعدادات ناقصة</strong> → عرض يدوي بحالة <code>WAITING_PRICING_REQUEST</code>.
+    <strong>كل شيء متوفّر</strong> → عرض تلقائي بحالة <code>PENDING</code> مع <code>pricing_snapshot</code> كامل.</p></div></div>
+  <div class="fs"><div><b>الحفظ في معاملة واحدة قصيرة</b>
+    <p>يُولَّد معرّف الطلب <strong>مسبقًا</strong> في الذاكرة حتى تُبنى العروض قبل فتح المعاملة،
+    ثم يُحفظ الطلب وكل عروضه معًا — إما الكل أو لا شيء.</p></div></div>
+</div>
+<div class="note tip">
+  <b>لماذا تُبنى العروض في الذاكرة أولًا؟</b>
+  توليد العروض يستدعي عدة موديولات ويجري حسابات. لو كان كله داخل المعاملة لطالت المعاملة بلا داعٍ.
+  توليد الـ UUID مسبقًا هو الحيلة التي سمحت بفصل الحساب عن الكتابة.
+</div>
+
+<h3>التدفّق الثاني: من العرض إلى الشحنة</h3>
+<div class="flow">
+  <div class="fs"><div><b>العميل يوافق على عرض</b>
+    <p>الطلب ينتقل إلى <code>CUSTOMER_APPROVED</code> ويُثبَّت <code>approved_quotation_id</code>.</p>
+    <span class="src">POST /quotations/:id/approve</span></div></div>
+  <div class="fs"><div><b>أو يطلب تسعيرًا يدويًا</b>
+    <p>العرض ينتقل إلى <code>WAITING_PRICING</code>، ثم يُدخل الموظف السعر عبر <code>submit-price</code>.</p>
+    <span class="src">POST /quotations/:id/request-price → /submit-price</span></div></div>
+  <div class="fs"><div><b>الشركة تقبل</b>
+    <p>الطلب ينتقل إلى <code>COMPANY_ACCEPTED</code>.</p>
+    <span class="src">POST /shipment-requests/:id/company-accept</span></div></div>
+  <div class="fs"><div><b>الموظف يُنشئ الشحنة</b>
+    <p>مع تمرير <code>shipmentRequestId</code>، فيُحوَّل الطلب إلى <code>CONVERTED</code> ضمن نفس معاملة إنشاء الشحنة.</p>
+    <span class="src">POST /shipments</span></div></div>
+</div>
+
+<h3>التدفّق الثالث: إنشاء شحنة بطرودها</h3>
+<p>مثال نموذجي على «العمل الثقيل خارج المعاملة».</p>
+<div class="flow">
+  <div class="fs"><div><b>تحقّقات ما قبل الكتابة</b>
+    <p>المصدر لا يساوي الوجهة، الوحدتان موجودتان وتتبعان هذه الشركة، والرقم الوطني للمرسِل موجود إن اشترطته الشركة.</p></div></div>
+  <div class="fs"><div><b>قراءة إعدادات الشركة</b>
+    <p>الـ <code>volumetric_divisor</code> و<code>tracking_prefix</code>.</p></div></div>
+  <div class="fs"><div><b>تجهيز كل طرد</b>
+    <p>توليد رقم تتبّع فريد بصيغة <code>PREFIX-timestamp-RANDOM</code> مع فحص التفرّد وإعادة المحاولة حتى خمس مرات،
+    ثم حساب الوزن الحجمي، ثم توليد ملصق HTML وتحويله إلى PDF ورفعه للتخزين.</p></div></div>
+  <div class="fs"><div><b>حساب الوزن الإجمالي القابل للتسعير</b>
+    <p>مجموع <code>MAX(الوزن الفعلي, الوزن الحجمي)</code> لكل الطرود.</p></div></div>
+  <div class="fs"><div><b>المعاملة تُفتح الآن فقط</b>
+    <p>صفّ الشحنة، ثم كل الطرود، ثم <strong>الفاتورة عبر BillingFacade</strong>، ثم تحويل الطلب إن وُجد،
+    ثم إطلاق حدث <code>CREATED</code> — كلها ذرّيًا.</p></div></div>
+</div>
+<div class="note warn">
+  <b>قرار تصميمي يستحقّ الذكر</b>
+  فشل توليد الملصق <strong>لا يُفشل الشحنة</strong> — يُسجَّل تحذير ويُحفظ الطرد بلا مفتاح ملصق،
+  ويمكن توليده لاحقًا. أما فشل الفاتورة <strong>فيُفشل كل شيء</strong>، لأن شحنة بلا فاتورة
+  ليست حالة يُسمح بوجودها. هذا تمييز واعٍ بين ما هو ضروري وما هو مساعد.
+</div>
+
+<h3>التدفّق الرابع: النقل بين الفروع</h3>
+<div class="flow">
+  <div class="fs"><div><b>الموظف يُنشئ رحلة</b>
+    <p>سائق + سيارة + فرع مصدر + فرع وجهة. تُتحقَّق السيارة أنها قابلة للتشغيل، ويُشعَر السائق عبر FCM.</p>
+    <span class="src">POST /trips</span></div></div>
+  <div class="fs"><div><b>إنشاء بيان حمولة للرحلة</b>
+    <p>مسموح فقط ما دامت الرحلة لم تنطلق.</p>
+    <span class="src">POST /manifests</span></div></div>
+  <div class="fs"><div><b>إضافة الطرود للبيان</b>
+    <p>يُتحقَّق أن البيان ما يزال <code>PENDING</code>، وأن الطرد ليس مضافًا مسبقًا،
+    <strong>وأنه ليس على بيان نشط آخر</strong> — فلا يسافر طرد في رحلتين.</p>
+    <span class="src">POST /manifests/:id/items</span></div></div>
+  <div class="fs"><div><b>التحميل</b>
+    <p>عناصر البيان تنتقل إلى <code>LOADED</code>، وتُحدَّث حالة الطرد إلى <code>IN_TRANSIT</code>.</p>
+    <span class="src">PATCH /manifests/:id/items/:itemId</span></div></div>
+  <div class="fs"><div><b>انطلاق الرحلة</b>
+    <p>الكيان يرفض الانطلاق بلا بيان. وفي نفس المعاملة تنتقل كل البيانات إلى <code>IN_TRANSIT</code>.</p>
+    <span class="src">POST /trips/:id/start</span></div></div>
+  <div class="fs"><div><b>الوصول والتفريغ</b>
+    <p>العناصر تنتقل إلى <code>UNLOADED</code>، والطرد إلى <code>ARRIVED_AT_UNIT</code> مع تحديث موقعه الحالي.</p></div></div>
+  <div class="fs"><div><b>الإغلاق</b>
+    <p>البيان ثم الرحلة ينتقلان إلى <code>COMPLETED</code>.</p>
+    <span class="src">POST /manifests/:id/complete · POST /trips/:id/complete</span></div></div>
+</div>
+
+<h3>التدفّق الخامس: استلام طرد وتحديث حالته</h3>
+<p>
+  الدالة الخاصة <code>_applyAndPersistUpdate</code> هي قلب حركة الطرود، وتفعل خمسة أشياء
+  <strong>في معاملة واحدة</strong>:
+</p>
+<ol>
+  <li>يقرّر الكيان صحّة الانتقال ويطبّقه.</li>
+  <li>يُحدَّث صفّ الطرد تحت القفل التفاؤلي.</li>
+  <li>تُجلب بيانات الوحدة (اسم، نوع، إحداثيات) وتُلحق حركة في <code>parcel_movement</code>.</li>
+  <li>تُعاد اشتقاق حالة الشحنة المالكة.</li>
+  <li>يُفرَّغ الكاش المرتبط بالطرد والشحنة.</li>
+</ol>
+<div class="note">
+  <b>لماذا تُنتظَر كتابة الحركة داخل المعاملة؟</b>
+  لأن إطلاقها ونسيانها <em>fire-and-forget</em> قد يترك حركة مسجّلة لحالة تراجعت لاحقًا،
+  فيصبح سجلّ التتبّع كاذبًا. تعليق مكتوب صراحةً في الكود يشرح هذا القرار.
+</div>
+<p>
+  ولاحظ أن الحركة تحفظ <strong>لقطة</strong> من اسم الفرع ونوعه وإحداثياته واسم الموظف،
+  لا مجرّد معرّفات. السبب: لو أُعيدت تسمية الفرع بعد سنة، يجب أن يبقى سجلّ التتبّع
+  معبّرًا عمّا كان صحيحًا لحظة الحدث.
+</p>
+
+<h3>التدفّق السادس: إثبات التسليم والتحصيل</h3>
+<div class="flow">
+  <div class="fs"><div><b>حلّ رقم التتبّع إلى الكيان</b>
+    <p>يُجلب الطرد بنسخته لأجل القفل التفاؤلي، ويُرفض إن كان له إثبات تسليم مسبق.</p></div></div>
+  <div class="fs"><div><b>التحقّق من قابلية الاستلام</b>
+    <p><code>assertCollectable()</code> يشترط <code>READY_FOR_COLLECTION</code> أو <code>COLLECTED</code>.</p></div></div>
+  <div class="fs"><div><b>فرض متطلّبات الشركة</b>
+    <p>توقيع، صورة هوية، صورة طرد — كلٌّ حسب <code>tenant_delivery_settings</code>. الملفات تُرفع ويُحفظ مفتاحها فقط.</p></div></div>
+  <div class="fs"><div><b>حالتان مختلفتان</b>
+    <p>إن كان الطرد مستلَمًا أصلًا فهذا <strong>استكمال أوراق متأخّر</strong>: يُسجَّل الإثبات ولا تُحرَّك الحالة.
+    وإلا ينتقل إلى <code>COLLECTED</code> مع حركة <code>POD_COMPLETED</code> وإعادة اشتقاق حالة الشحنة.</p></div></div>
+  <div class="fs"><div><b>التحصيل عند الباب</b>
+    <p>إن رافقت الطلبَ دفعةٌ، تُسجَّل عبر <code>BillingFacade</code> في نفس المعاملة —
+    فتُحفظ ورقة التسليم والنقود معًا أو لا تُحفظ أي منهما.</p></div></div>
+</div>
+
+<h3>مهمة مجدولة واحدة</h3>
+<p>
+  <code>OverdueInvoicesJob</code> تعمل يوميًا الساعة الواحدة ليلًا وتنقل الفواتير غير المدفوعة
+  التي تجاوزت تاريخ استحقاقها إلى <code>OVERDUE</code>. الأخطاء تُلتقط ولا تُسقط العملية،
+  لأن التشغيل التالي يعيد المحاولة ولا شيء يعتمد على نجاحها.
+</p>
+</section>
+
+<!-- ══════════════ 11 ══════════════ -->
+<section id="s11">
+<h2><span class="n">11</span> خريطة الـ Endpoints</h2>
+
+<p>
+  كل نقاط النهاية مستخرجة من الـ Controllers. عمود «الأدوار» يعرض ما يفرضه
+  <code>@Roles</code>؛ و<span class="r pub">PUBLIC</span> تعني <code>@Public</code> أي بلا مصادقة.
+  ما عدا ذلك يتطلّب توكنًا صالحًا افتراضيًا لأن <code>GlobalAuthGuard</code> مسجَّل عالميًا.
+</p>
+
+<div class="toolbar">
+  <input class="search" id="epq" type="search" placeholder="ابحث عن مسار أو دور أو موديول…" aria-label="بحث في نقاط النهاية">
+  <span class="count" id="epc"></span>
+</div>
+
+<div class="tw"><table id="eptbl">
+<thead><tr><th>الموديول</th><th>الطريقة</th><th>المسار</th><th>الأدوار</th><th>الوصف</th></tr></thead>
+<tbody>
+
+<tr><td>Auth</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/auth/login</td><td><span class="r pub">PUBLIC</span></td><td>تسجيل الدخول — محدود بـ 5 محاولات/دقيقة</td></tr>
+<tr><td>Auth</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/auth/select-profile</td><td><span class="r">sessionToken</span></td><td>اختيار الملف الشخصي عند تعدّدها</td></tr>
+<tr><td>Auth</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/auth/refresh</td><td><span class="r pub">PUBLIC</span></td><td>تجديد التوكنات مع تدوير</td></tr>
+<tr><td>Auth</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/auth/logout</td><td><span class="r">any</span></td><td>حذف الجلسة ومسح الكوكيز</td></tr>
+
+<tr><td>Users</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/users/register</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>إنشاء هوية مستخدم جديدة</td></tr>
+<tr><td>Profile</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/me</td><td><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>بيانات المستخدم الحالي الموحّدة</td></tr>
+
+<tr><td>Customer</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/customer/register</td><td><span class="r pub">PUBLIC</span></td><td>تسجيل عميل — الخطوة 1: طلب OTP</td></tr>
+<tr><td>Customer</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/customer/verify-otp</td><td><span class="r pub">PUBLIC</span></td><td>تأكيد الرمز وإنشاء الحساب فعليًا</td></tr>
+<tr><td>Customer</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/customer/resend-otp</td><td><span class="r pub">PUBLIC</span></td><td>إعادة إرسال رمز نشط</td></tr>
+<tr><td>Customer</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/customer/forgot-password</td><td><span class="r pub">PUBLIC</span></td><td>طلب رمز لإعادة تعيين كلمة المرور</td></tr>
+<tr><td>Customer</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/customer/reset-password</td><td><span class="r pub">PUBLIC</span></td><td>إعادة التعيين بالرمز</td></tr>
+<tr><td>Customer</td><td><span class="chip m-PUT">PUT</span></td><td class="ep-path">/customer/change-password</td><td><span class="r">CUSTOMER</span></td><td>تغيير كلمة المرور للمسجَّل</td></tr>
+<tr><td>Customer</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/customer/profile</td><td><span class="r">CUSTOMER</span></td><td>ملف العميل الحالي</td></tr>
+<tr><td>Customer</td><td><span class="chip m-PUT">PUT</span></td><td class="ep-path">/customer/profile/image</td><td><span class="r">CUSTOMER</span></td><td>رفع صورة الملف الشخصي</td></tr>
+<tr><td>Customer</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/customer/profile-image/:id</td><td><span class="r pub">PUBLIC</span></td><td>بثّ صورة الملف الشخصي</td></tr>
+
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants</td><td><span class="r">PLATFORM_OWNER</span></td><td>إنشاء شركة شحن</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenants</td><td><span class="r">PLATFORM_OWNER</span></td><td>قائمة الشركات</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenants/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>تفاصيل شركة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/tenants/:id</td><td><span class="r">PLATFORM_OWNER</span></td><td>تعديل بيانات الشركة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/suspend</td><td><span class="r">PLATFORM_OWNER</span></td><td>تعليق شركة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/activate</td><td><span class="r">PLATFORM_OWNER</span></td><td>إعادة تفعيل شركة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenants/:id/subscriptions/active</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>الاشتراك النشط</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenants/:id/subscriptions/history</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>سجل الاشتراكات</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/subscriptions/assign</td><td><span class="r">PLATFORM_OWNER</span></td><td>إسناد خطة — تُنسخ حدودها كلقطة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/subscriptions/renew</td><td><span class="r">PLATFORM_OWNER</span></td><td>تجديد أو ترقية</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/subscriptions/suspend</td><td><span class="r">PLATFORM_OWNER</span></td><td>تعليق الاشتراك</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/subscriptions/resume</td><td><span class="r">PLATFORM_OWNER</span></td><td>استئناف الاشتراك</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/subscriptions/cancel</td><td><span class="r">PLATFORM_OWNER</span></td><td>إلغاء الاشتراك</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenants/:id/settings</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>كل الإعدادات الثلاثة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/tenants/:id/settings/delivery</td><td><span class="r">TENANT_ADMIN</span></td><td>متطلّبات إثبات التسليم</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/tenants/:id/settings/operational</td><td><span class="r">TENANT_ADMIN</span></td><td>قواعد التشغيل</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/tenants/:id/settings/pricing</td><td><span class="r">TENANT_ADMIN</span></td><td>معامل الوزن الحجمي والعملة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenants/:id/logo</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>رفع شعار الشركة</td></tr>
+<tr><td>Tenants</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenants/:id/logo</td><td><span class="r">any</span></td><td>جلب الشعار</td></tr>
+
+<tr><td>Plans</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/subscription-plans</td><td><span class="r">PLATFORM_OWNER</span></td><td>إنشاء خطة اشتراك</td></tr>
+<tr><td>Plans</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/subscription-plans</td><td><span class="r">PLATFORM_OWNER</span></td><td>قائمة الخطط</td></tr>
+<tr><td>Plans</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/subscription-plans/:id</td><td><span class="r">PLATFORM_OWNER</span></td><td>تفاصيل خطة</td></tr>
+<tr><td>Plans</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/subscription-plans/:id</td><td><span class="r">PLATFORM_OWNER</span></td><td>تعديل خطة</td></tr>
+<tr><td>Plans</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/subscription-plans/:id/activate</td><td><span class="r">PLATFORM_OWNER</span></td><td>تفعيل خطة</td></tr>
+<tr><td>Plans</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/subscription-plans/:id/deactivate</td><td><span class="r">PLATFORM_OWNER</span></td><td>تعطيل خطة</td></tr>
+
+<tr><td>Org Units</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/organization-units</td><td><span class="r">TENANT_ADMIN</span></td><td>إنشاء فرع أو مستودع — يفحص حدود الاشتراك</td></tr>
+<tr><td>Org Units</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/organization-units</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>قائمة الوحدات</td></tr>
+<tr><td>Org Units</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/organization-units/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>تفاصيل وحدة</td></tr>
+<tr><td>Org Units</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/organization-units/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>تعديل وحدة</td></tr>
+<tr><td>Org Units</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/organization-units/:id/locations</td><td><span class="r">TENANT_ADMIN</span></td><td>ربط الوحدة بمواقع التغطية</td></tr>
+
+<tr><td>Zones</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/tenant-zones</td><td><span class="r">TENANT_ADMIN</span></td><td>إنشاء منطقة تسعير</td></tr>
+<tr><td>Zones</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenant-zones</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>قائمة المناطق</td></tr>
+<tr><td>Zones</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/tenant-zones/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>تفاصيل منطقة</td></tr>
+<tr><td>Zones</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/tenant-zones/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>تعديل منطقة</td></tr>
+
+<tr><td>Locations</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/global-locations</td><td><span class="r">PLATFORM_OWNER</span></td><td>إضافة موقع للشجرة الجغرافية</td></tr>
+<tr><td>Locations</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/global-locations</td><td><span class="r">any</span></td><td>قائمة بترقيم cursor</td></tr>
+<tr><td>Locations</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/global-locations/:id</td><td><span class="r">any</span></td><td>تفاصيل موقع</td></tr>
+<tr><td>Locations</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/global-locations/:id</td><td><span class="r">PLATFORM_OWNER</span></td><td>تعديل موقع</td></tr>
+<tr><td>Locations</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/global-locations/:id</td><td><span class="r">PLATFORM_OWNER</span></td><td>حذف موقع</td></tr>
+
+<tr><td>Employees</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employees</td><td><span class="r">TENANT_ADMIN</span></td><td>إنشاء موظف</td></tr>
+<tr><td>Employees</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/employees</td><td><span class="r">TENANT_ADMIN</span></td><td>قائمة الموظفين</td></tr>
+<tr><td>Employees</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/employees/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>تفاصيل مع التعيينات والأدوار</td></tr>
+<tr><td>Employees</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/employees/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>تعديل بيانات موظف</td></tr>
+<tr><td>Employees</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employees/:id/activate</td><td><span class="r">TENANT_ADMIN</span></td><td>إعادة تنشيط</td></tr>
+<tr><td>Employees</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employees/:id/deactivate</td><td><span class="r">TENANT_ADMIN</span></td><td>إلغاء تنشيط</td></tr>
+<tr><td>Employees</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employees/:id/assignments</td><td><span class="r">TENANT_ADMIN</span></td><td>تعيين الموظف في وحدة تنظيمية</td></tr>
+<tr><td>Employees</td><td><span class="chip m-PUT">PUT</span></td><td class="ep-path">/employees/:id/assignments/:assignmentId/roles</td><td><span class="r">TENANT_ADMIN</span></td><td>استبدال أدوار التعيين</td></tr>
+<tr><td>Employees</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/employees/:id/assignments/:assignmentId</td><td><span class="r">TENANT_ADMIN</span></td><td>إزالة تعيين</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/employee2/me</td><td><span class="r">EMPLOYEE</span><span class="r">TENANT_ADMIN</span></td><td>بيانات الموظف الحالي من التوكن</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employee2</td><td><span class="r">TENANT_ADMIN</span></td><td>إنشاء موظف — النسخة الأحدث</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/employee2</td><td><span class="r">TENANT_ADMIN</span><span class="r">PLATFORM_OWNER</span></td><td>قائمة مع بحث وترقيم</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/employee2/:id</td><td><span class="r">TENANT_ADMIN</span><span class="r">PLATFORM_OWNER</span></td><td>موظف بالمعرّف</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-PUT">PUT</span></td><td class="ep-path">/employee2/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>تحديث موظف</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/employee2/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>حذف موظف</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employee2/:id/assignments</td><td><span class="r">TENANT_ADMIN</span></td><td>تعيين في وحدات مع الصلاحيات</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/employee2/:id/assignments/:assignmentId</td><td><span class="r">TENANT_ADMIN</span></td><td>إزالة تعيين</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employee2/:id/activate</td><td><span class="r">TENANT_ADMIN</span></td><td>تنشيط</td></tr>
+<tr><td>Employee2</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/employee2/:id/deactivate</td><td><span class="r">TENANT_ADMIN</span></td><td>إلغاء تنشيط</td></tr>
+
+<tr><td>Roles</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/roles</td><td><span class="r">TENANT_ADMIN</span></td><td>إنشاء دور داخل الشركة</td></tr>
+<tr><td>Roles</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/roles</td><td><span class="r">TENANT_ADMIN</span></td><td>قائمة الأدوار</td></tr>
+<tr><td>Roles</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/roles/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>دور مع صلاحياته</td></tr>
+<tr><td>Roles</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/roles/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>تعديل دور</td></tr>
+<tr><td>Roles</td><td><span class="chip m-PUT">PUT</span></td><td class="ep-path">/roles/:id/permissions</td><td><span class="r">TENANT_ADMIN</span></td><td>استبدال صلاحيات الدور بالكامل</td></tr>
+<tr><td>Roles</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/roles/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>حذف دور</td></tr>
+<tr><td>Permissions</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/permissions</td><td><span class="r">TENANT_ADMIN</span><span class="r">PLATFORM_OWNER</span></td><td>كتالوج الصلاحيات المتاحة</td></tr>
+<tr><td>Permissions</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/permissions/:id</td><td><span class="r">TENANT_ADMIN</span><span class="r">PLATFORM_OWNER</span></td><td>تفاصيل صلاحية</td></tr>
+
+<tr><td>Pricing</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/zone-pricing</td><td><span class="r">TENANT_ADMIN</span></td><td>إضافة سعر بين منطقتين لمستوى خدمة</td></tr>
+<tr><td>Pricing</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/zone-pricing</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>مصفوفة التسعير</td></tr>
+<tr><td>Pricing</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/zone-pricing/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span></td><td>سطر تسعير</td></tr>
+<tr><td>Pricing</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/zone-pricing/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>تعديل سعر</td></tr>
+<tr><td>Pricing</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/zone-pricing/:id</td><td><span class="r">TENANT_ADMIN</span></td><td>حذف سعر</td></tr>
+
+<tr><td>Requests</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/shipment-requests</td><td><span class="r">CUSTOMER</span></td><td>إنشاء طلب — يولّد العروض تلقائيًا</td></tr>
+<tr><td>Requests</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/shipment-requests</td><td><span class="r">CUSTOMER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">PLATFORM_OWNER</span></td><td>قائمة الطلبات ضمن نطاق الرؤية</td></tr>
+<tr><td>Requests</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/shipment-requests/:id</td><td><span class="r">CUSTOMER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">PLATFORM_OWNER</span></td><td>تفاصيل طلب</td></tr>
+<tr><td>Requests</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/shipment-requests/:id/company-accept</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>قبول الشركة للطلب</td></tr>
+<tr><td>Requests</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/shipment-requests/:id/company-reject</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>رفض الشركة</td></tr>
+<tr><td>Requests</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/shipment-requests/:id/cancel</td><td><span class="r">CUSTOMER</span></td><td>إلغاء العميل لطلبه</td></tr>
+
+<tr><td>Quotations</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/quotations</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>قائمة العروض</td></tr>
+<tr><td>Quotations</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/quotations/:id</td><td><span class="r">CUSTOMER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">PLATFORM_OWNER</span></td><td>تفاصيل عرض</td></tr>
+<tr><td>Quotations</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/quotations/:id/approve</td><td><span class="r">CUSTOMER</span></td><td>موافقة العميل على العرض</td></tr>
+<tr><td>Quotations</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/quotations/:id/request-price</td><td><span class="r">CUSTOMER</span></td><td>طلب تسعير يدوي</td></tr>
+<tr><td>Quotations</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/quotations/:id/submit-price</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إدخال السعر يدويًا</td></tr>
+
+<tr><td>Shipments</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/shipments</td><td><span class="r">EMPLOYEE</span></td><td>إنشاء شحنة بكل طرودها وفاتورتها</td></tr>
+<tr><td>Shipments</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/shipments</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">CUSTOMER</span></td><td>قائمة ضمن نطاق الرؤية</td></tr>
+<tr><td>Shipments</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/shipments/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">CUSTOMER</span></td><td>شحنة مع كل طرودها</td></tr>
+<tr><td>Shipments</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/shipments/:id/cancel</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إلغاء قبل الشحن — يلغي الفاتورة معه</td></tr>
+
+<tr><td>Parcels</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/shipments/:shipmentId/parcels</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">CUSTOMER</span></td><td>طرود شحنة واحدة</td></tr>
+<tr><td>Parcels</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/parcels</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">CUSTOMER</span></td><td>قائمة عامة ضمن نطاق الرؤية</td></tr>
+<tr><td>Parcels</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/parcels/track/:trackingNumber</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">CUSTOMER</span></td><td>تتبّع برقم التتبّع — يتطلّب مصادقة</td></tr>
+<tr><td>Parcels</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/parcels/:trackingNumber/status</td><td><span class="r">EMPLOYEE</span></td><td>تحديث حالة أو حالة سلامة</td></tr>
+<tr><td>Parcels</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/parcels/:trackingNumber/receive</td><td><span class="r">EMPLOYEE</span></td><td>استلام في الوحدة — يقرّر الوجهة تلقائيًا</td></tr>
+<tr><td>Parcels</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/parcels/:trackingNumber/dispatch</td><td><span class="r">EMPLOYEE</span></td><td>تعليم كجاهز للإرسال</td></tr>
+<tr><td>POD</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/parcels/:trackingNumber/proof-of-delivery</td><td><span class="r">EMPLOYEE</span></td><td>تسجيل التسليم مع الصور والتحصيل</td></tr>
+<tr><td>POD</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/parcels/:trackingNumber/proof-of-delivery</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">CUSTOMER</span></td><td>جلب إثبات التسليم</td></tr>
+<tr><td>POD</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/parcels/:trackingNumber/proof-of-delivery/photos/:photoType</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">CUSTOMER</span></td><td>بثّ صورة محدّدة من الإثبات</td></tr>
+
+<tr><td>Vehicles</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/vehicles</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إضافة سيارة</td></tr>
+<tr><td>Vehicles</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/vehicles</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>قائمة السيارات</td></tr>
+<tr><td>Vehicles</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/vehicles/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>تفاصيل سيارة</td></tr>
+<tr><td>Vehicles</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/vehicles/:id</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>تعديل سيارة</td></tr>
+<tr><td>Vehicles</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/vehicles/:id/assignments</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إسناد سائق — هنا يصبح الموظف سائقًا</td></tr>
+<tr><td>Vehicles</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/vehicles/:id/assignments</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>قائمة إسنادات السائقين</td></tr>
+<tr><td>Vehicles</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/vehicles/:id/assignments/:assignmentId</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إنهاء إسناد نشط</td></tr>
+
+<tr><td>Trips</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/trips</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إنشاء رحلة — يُشعَر السائق</td></tr>
+<tr><td>Trips</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/trips</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>قائمة الرحلات</td></tr>
+<tr><td>Trips</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/trips/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>تفاصيل رحلة</td></tr>
+<tr><td>Trips</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/trips/:id</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>تعديل قبل الانطلاق فقط</td></tr>
+<tr><td>Trips</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/trips/:id/start</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>الانطلاق — يشترط بيان حمولة واحدًا على الأقل</td></tr>
+<tr><td>Trips</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/trips/:id/complete</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>إنهاء الرحلة</td></tr>
+<tr><td>Trips</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/trips/:id/cancel</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إلغاء قبل الانطلاق فقط</td></tr>
+
+<tr><td>Manifests</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/manifests</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إنشاء بيان لرحلة لم تنطلق</td></tr>
+<tr><td>Manifests</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/manifests</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>قائمة البيانات</td></tr>
+<tr><td>Manifests</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/manifests/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>بيان مع كل طروده</td></tr>
+<tr><td>Manifests</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/manifests/:id/items</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>عناصر البيان</td></tr>
+<tr><td>Manifests</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/manifests/:id/items</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إضافة طرد — يرفض المكرّر أو المرتبط ببيان نشط</td></tr>
+<tr><td>Manifests</td><td><span class="chip m-PATCH">PATCH</span></td><td class="ep-path">/manifests/:id/items/:itemId</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>تعليم محمّل أو مفرّغ أو مفقود</td></tr>
+<tr><td>Manifests</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/manifests/:id/items/:itemId</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>إزالة طرد من بيان قيد التحميل</td></tr>
+<tr><td>Manifests</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/manifests/:id/complete</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span><span class="r">DRIVER</span></td><td>إغلاق بيان قيد النقل</td></tr>
+
+<tr><td>Invoices</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/invoices</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>قائمة الفواتير</td></tr>
+<tr><td>Invoices</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/invoices/:id</td><td><span class="r">PLATFORM_OWNER</span><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>فاتورة مع سجل دفعاتها</td></tr>
+<tr><td>Invoices</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/invoices/:id/payments</td><td><span class="r">TENANT_ADMIN</span><span class="r">EMPLOYEE</span></td><td>تسجيل دفعة — تُعاد اشتقاق الحالة</td></tr>
+
+<tr><td>Notifications</td><td><span class="chip m-POST">POST</span></td><td class="ep-path">/notifications/tokens</td><td><span class="r">EMPLOYEE</span><span class="r">DRIVER</span><span class="r">CUSTOMER</span><span class="r">TENANT_ADMIN</span></td><td>تسجيل FCM token للجهاز</td></tr>
+<tr><td>Notifications</td><td><span class="chip m-DELETE">DELETE</span></td><td class="ep-path">/notifications/tokens</td><td><span class="r">EMPLOYEE</span><span class="r">DRIVER</span><span class="r">CUSTOMER</span><span class="r">TENANT_ADMIN</span></td><td>حذف التوكن عند الخروج</td></tr>
+
+<tr><td>System</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/health</td><td><span class="r pub">PUBLIC</span></td><td>فحص الصحة — يستخدمه Docker</td></tr>
+<tr><td>System</td><td><span class="chip m-GET">GET</span></td><td class="ep-path">/api/docs</td><td><span class="r pub">PUBLIC</span></td><td>واجهة Swagger التفاعلية</td></tr>
+
+</tbody>
+</table></div>
+</section>
+
+<!-- ══════════════ 12 ══════════════ -->
+<section id="s12">
+<h2><span class="n">12</span> الكاش والمعاملات والأداء</h2>
+
+<h3>الكاش عبر الـ Decorators</h3>
+<p>
+  الكاش على Redis، ويُدار بديكوريتيرَين بدل استدعاءات يدوية متناثرة في الخدمات.
+</p>
+<div class="tw"><table>
+<thead><tr><th>الديكوريتر</th><th>العمل</th></tr></thead>
+<tbody>
+<tr><td class="mono">@Cacheable</td><td>يخزّن ناتج الدالة تحت مفتاح مبنيّ من الوسائط.</td></tr>
+<tr><td class="mono">@CacheEvict</td><td>يمسح مفتاحًا محدّدًا، أو كل ما يبدأ ببادئة عند <code>allEntries: true</code>. يقبل مصفوفة لعدّة عمليات مسح.</td></tr>
+</tbody>
+</table></div>
+<pre><code>@CacheEvict([
+  { keyPrefix: CACHE.LIST, allEntries: <span class="k">true</span> },
+  { keyPrefix: CACHE.DETAILS, keyBuilder: (id) =&gt; [CACHE.DETAILS, id] },
+])
+<span class="k">async</span> cancelShipment(shipmentId: string) { ... }</code></pre>
+<p>
+  وعندما لا تكفي وسائط الدالة لبناء المفتاح — مثل دالة تستقبل رقم تتبّع بينما المفتاح مبنيّ
+  على معرّف الطرد — تُحقن <code>ICacheFacade</code> ويُستدعى <code>evict</code> يدويًا بعد الكتابة.
+</p>
+<div class="note">
+  <b>لماذا InMemory في الاختبارات؟</b>
+  <code>CacheModule.registerAsync</code> يفحص <code>NODE_ENV === 'test'</code> ويستبدل Redis بمزوّد
+  في الذاكرة، فتعمل الاختبارات بلا بنية تحتية خارجية.
+</div>
+
+<h3>قواعد المعاملات — ملخّص للمقابلة</h3>
+<ol>
+  <li>التحقّقات والقراءات <strong>قبل</strong> فتح المعاملة.</li>
+  <li>المعاملة تُفتح قبل الكتابة مباشرة وتبقى أقصر ما يمكن.</li>
+  <li>الأفضل دالة تنسيق تجمع البيانات، ثم دالة خاصّة مُعلَّمة بـ <code>@Transactional</code> تكتب فقط.</li>
+  <li>التداخل آمن: الاستدعاء المتداخل يعيد استخدام المعاملة النشطة ولا يفتح ثانية.</li>
+  <li>المعاملة تعبر حدود الـ Facade، فيمكن لموديول أن يكتب داخل معاملة موديول آخر.</li>
+</ol>
+
+<h3>ما يفعله المشروع لتجنّب مشاكل الأداء</h3>
+<div class="cards">
+  <div class="card"><h4>تفادي N+1</h4><p>في توليد العروض تُزال أزواج المناطق المكرّرة، ثم استعلام واحد للأسعار وآخر لإعدادات كل الشركات دفعةً.</p></div>
+  <div class="card"><h4>ترقيم cursor</h4><p>مطبَّق إلى جانب الترقيم بالإزاحة. لا يتدهور مع عمق الصفحات ولا يتخطّى صفوفًا عند الإدراج المتزامن.</p></div>
+  <div class="card"><h4>UUIDv7</h4><p>مرتّب زمنيًا فلا يشتّت الفهرس عند الإدراج، بخلاف UUIDv4.</p></div>
+  <div class="card"><h4>Kysely للقراءة</h4><p>تحكّم كامل بالـ SQL بدل استعلامات ORM المولّدة والثقيلة.</p></div>
+  <div class="card"><h4>فهارس مقصودة</h4><p>على <code>tenant_id</code> وثنائيات مثل <code>(tenant_id, status)</code> و<code>(parcel_id, created_at)</code>، وفهارس GiST للأعمدة الجغرافية.</p></div>
+  <div class="card"><h4>Circuit Breaker</h4><p>حزمة <code>opossum</code> عبر <code>@UseCircuitBreaker</code> للاستدعاءات الخارجية.</p></div>
+</div>
+</section>
+
+<!-- ══════════════ 13 ══════════════ -->
+<section id="s13">
+<h2><span class="n">13</span> الأخطاء وشكل الاستجابة</h2>
+
+<h3>الغلاف الموحّد</h3>
+<p>كل استجابة ناجحة تمرّ عبر <code>TransformInterceptor</code>:</p>
+<pre><code>{ "success": true, "data": { ... } }</code></pre>
+<p>
+  مع استثناءين مقصودين: إن كان الناتج <code>StreamableFile</code> يُمرَّر كما هو ليبثّه الإطار
+  (الصور وملفات PDF)، وإن كان يحوي مفتاح <code>data</code> أصلًا يُدمَج بدل أن يُلفّ مرتين.
+</p>
+
+<h3>الفلتر العام للأخطاء</h3>
+<p>
+  <code>GlobalExceptionFilter</code> يلتقط كل شيء ويصنّفه، مع تسجيل يحوي
+  <code>requestId</code> والمسار والفاعل ونوع الخطأ:
+</p>
+<div class="tw"><table>
+<thead><tr><th>نوع الاستثناء</th><th>المعالجة</th></tr></thead>
+<tbody>
+<tr><td class="mono">ApiError</td><td>خطأ مخصّص بنوع ورسالة وتفاصيل — يُسجَّل كتحذير</td></tr>
+<tr><td class="mono">HttpException</td><td>يُستخرج منه الرمز والرسالة. أخطاء التحقّق تبقى مصفوفة ولا تُترجَم لأنها دقيقة</td></tr>
+<tr><td class="mono">Prisma errors</td><td>تُترجَم إلى رموز HTTP مفهومة بدل تسريب تفاصيل قاعدة البيانات</td></tr>
+<tr><td class="mono">أي شيء آخر</td><td><code>500</code> برسالة عامة — يُسجَّل كخطأ كامل مع الأثر</td></tr>
+</tbody>
+</table></div>
+<p>
+  الرسائل الموجّهة للمستخدم بالعربية، ويميّز الفلتر بين
+  <code>logger.warn</code> لأخطاء العميل و<code>logger.error</code> لأخطاء الخادم — تمييز مهم للمراقبة.
+</p>
+
+<h3>الاستثناءات التي يرميها المجال</h3>
+<ul>
+  <li><code>ConflictException</code> — انتقال حالة غير مسموح، أو إثبات تسليم مكرّر، أو فشل القفل التفاؤلي.</li>
+  <li><code>BadRequestException</code> — بيانات غير صالحة، أو مصدر يساوي وجهة، أو تجاوز حدود الاشتراك.</li>
+  <li><code>AccessDeniedException</code> — رفض من سياسة CASL.</li>
+  <li>استثناءات مسمّاة في الأسطول: <code>TripCannotStartWithoutManifestException</code>، <code>ManifestNotModifiableException</code>، <code>VehicleNotOperableException</code> وغيرها — تعبّر عن قاعدة العمل باسمها.</li>
+</ul>
+<div class="note tip">
+  <b>ملاحظة تُظهر النضج</b>
+  استثناء باسم <code>TripCannotStartWithoutManifestException</code> أوضح بكثير من
+  <code>BadRequestException("invalid")</code>. الاسم نفسه يوثّق القاعدة، ويسهّل اختبارها،
+  ويسمح بترجمة رسالة مخصّصة لها في الواجهة.
+</div>
+</section>
+
+<!-- ══════════════ 14 ══════════════ -->
+<section id="s14">
+<h2><span class="n">14</span> النشر والتشغيل</h2>
+
+<h3>التشغيل محليًا</h3>
+<pre><code>cp .env.example .env
+docker compose up -d          <span class="c"># PostGIS + Redis</span>
+npx prisma generate
+npx prisma migrate dev
+npm run start:dev</code></pre>
+
+<h3>الإنتاج</h3>
+<p>
+  Ubuntu مع Docker Compose ونجينكس أمامه لإنهاء الـ SSL. أربع خدمات:
+  <code>postgres</code> بصورة PostGIS، <code>redis</code>، <code>backend</code>،
+  و<code>migration</code> التي تعمل تحت profile منفصل.
+</p>
+<pre><code>git pull
+docker compose -f docker-compose.production.yml build
+docker compose -f docker-compose.production.yml run --rm migration
+docker compose -f docker-compose.production.yml up -d backend</code></pre>
+
+<div class="note warn">
+  <b>قواعد إنتاج مكتوبة صراحةً</b>
+  لا تُشغَّل <code>prisma migrate dev</code> في الإنتاج أبدًا — فقط <code>migrate deploy</code>.
+  والـ backend وخدمة الـ migration <strong>تتشاركان نفس الصورة</strong> فيستحيل أن تعمل الهجرة
+  بنسخة كود مختلفة عن التطبيق. والهجرات تُشغَّل دائمًا قبل إعادة تشغيل الـ backend.
+  وسكربت <code>db:reset</code> يفحص <code>NODE_ENV</code> ويرفض العمل في الإنتاج.
+</div>
+
+<h3>الصحة والمراقبة</h3>
+<ul>
+  <li><code>GET /health</code> يستخدمه فحص Docker كل 30 ثانية، وPostgres وRedis لهما فحصهما.</li>
+  <li><code>app.enableShutdownHooks()</code> يضمن إغلاقًا نظيفًا للاتصالات.</li>
+  <li>التسجيل بـ Pino بصيغة JSON — جاهز للتجميع في أي منصّة تحليل سجلّات.</li>
+  <li>الحجوم الثابتة: <code>postgres_data</code>، <code>redis_data</code>، <code>uploads_data</code>.</li>
+</ul>
+</section>
+
+<!-- ══════════════ 15 ══════════════ -->
+<section id="s15">
+<h2><span class="n">15</span> أسئلة المقابلة</h2>
+
+<p>
+  الأسئلة مغلقة عمدًا لتتمكّن من اختبار نفسك. اضغط على السؤال لرؤية الجواب،
+  أو افتح الكل دفعةً واحدة.
+</p>
+<div class="toolbar">
+  <button class="search" id="qall" type="button" style="flex:0 0 auto;cursor:pointer;font-weight:600">افتح كل الأجوبة</button>
+  <span class="count" id="qc"></span>
+</div>
+
+<div class="qcat">أولًا · المعمارية العامة</div>
+
+<details class="qa"><summary>احكِ لي عن المشروع في دقيقتين.</summary><div class="ans">
+<p>منصّة SaaS لوجستية متعدّدة المستأجرين. تشغّل عدة شركات شحن على نفس النسخة ونفس قاعدة البيانات مع عزل صارم لبياناتها.</p>
+<p>خمس جهات تستخدمه: مالك المنصة، مالك الشركة، الموظف، السائق، والعميل. المسار الأساسي أن العميل يرسل طلب شحن بموقعين ووزن دون معرفة فروع أي شركة، فيحلّ النظام تلقائيًا كل المسارات الممكنة عبر كل الشركات المغطّية، يحسب سعرًا لكل مسار، ويعيد له مجموعة عروض. يختار عرضًا، توافق الشركة، فيتحوّل الطلب إلى شحنة بطرود لكلٍّ رقم تتبّع وملصق PDF وفاتورة. بعدها يتحرّك الطرد بين الفروع في رحلات ومعه بيان حمولة حتى يصل ويُسلَّم مع إثبات تسليم.</p>
+<p>تقنيًا: NestJS مونوليث معياري يتبع DDD، PostgreSQL مع ltree وPostGIS، Prisma للكتابة وKysely للقراءة، Redis للكاش، وCASL للتفويض على مستوى الكائن.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا Modular Monolith وليس Microservices؟</summary><div class="ans">
+<p>لأن الميكروسيرفس تحلّ مشكلة <strong>تنظيمية</strong> قبل أن تكون تقنية: فرق مستقلّة تنشر باستقلال. هذه المشكلة غير موجودة هنا، بينما ثمنها موجود بالكامل: معاملات موزّعة، اتّساق نهائي، تتبّع موزّع، وتعقيد نشر.</p>
+<p>والأهم أن معظم عمليات هذا النظام <strong>ذرّية بطبيعتها</strong>. إنشاء شحنة يكتب صفّ الشحنة والطرود والفاتورة معًا. في مونوليث هذه معاملة واحدة؛ في ميكروسيرفس تحتاج Saga مع عمليات تعويض — تعقيد هائل لمشكلة غير قائمة.</p>
+<p>لكن الحدود مرسومة أصلًا: كل موديول معزول ويتواصل عبر Facade فقط. لو احتاج موديول أن يصبح خدمة مستقلّة يومًا، الحدّ موجود ولن نبدأ من الصفر.</p>
+</div></details>
+
+<details class="qa"><summary>ما قاعدة التواصل بين الموديولات؟ ولماذا؟</summary><div class="ans">
+<p>التواصل حصرًا عبر <strong>Facade</strong>. ممنوع استدعاء repository أو service أو entity تابع لموديول آخر.</p>
+<p>السبب أن الاستدعاء المباشر يكسر الحدّ فعليًا حتى لو بقي المجلد منفصلًا. لو استدعى موديول الفوترة مستودع الشحنات مباشرة لأصبح مرتبطًا ببنية جداولها، ولصار أي تعديل داخلي في الشحنات كسرًا للفوترة.</p>
+<p>وهناك تفصيلة أدقّ: <strong>عقد الـ Facade يملكه الموديول المستهلِك والمزوِّد ينفّذه</strong>. هذا يمنع المزوِّد من فرض شكل بياناته الداخلي على الجميع، ويجعل العقد معبّرًا عمّا يحتاجه المستهلك لا عمّا يملكه المزوّد.</p>
+</div></details>
+
+<details class="qa"><summary>واجهتك دورة اعتماد بين موديولين. كيف حللتها؟</summary><div class="ans">
+<p>الحالة الحقيقية: حالة الشحنة تُشتَقّ من حالات طرودها. خدمة الشحنة تُنشئ الطرود، وخدمة الطرد تحتاج إعادة حساب حالة الشحنة عند كل حركة. ربطهما مباشرة = دورة.</p>
+<p>الحلّ لم يكن <code>forwardRef</code>، بل استخراج <strong>خدمة ثالثة ضيّقة</strong>: <code>ShipmentStatusRecalculator</code> لا تعتمد إلا على المستودعات، فيستطيع الطرفان استخدامها بلا دورة.</p>
+<p>هذا أفضل من <code>forwardRef</code> لأنه يعالج السبب لا العَرَض: كانت هناك مسؤولية ثالثة مخبّأة داخل خدمتين، فأصبحت صريحة. استُخدم <code>forwardRef</code> في مكان واحد فقط بين طلب الشحن وعرض السعر، وهي علاقة متبادلة حقيقية.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا لم تستخدم CQRS كاملًا بـ Command Bus؟</summary><div class="ans">
+<p>لأن CQRS الكامل يحلّ مشاكل غير قائمة هنا: نماذج قراءة وكتابة مختلفة جوهريًا، أو حمل قراءة يفوق الكتابة بمراتب فيستحقّ قاعدة قراءة منفصلة.</p>
+<p>ما احتجناه فعلًا هو <strong>فصل المسؤوليات وأداة الاستعلام المناسبة</strong>، فحصلنا عليهما بلا bus: <code>CommandService</code> مع Prisma للكتابة، <code>QueryService</code> مع Kysely للقراءة. نفس الفائدة العملية بلا طبقة تجريد إضافية.</p>
+<p>القاعدة الحاكمة في المشروع صريحة: لا يُدخَل نمط معماري إلا إذا حلّ مشكلة قائمة اليوم وقلّل التعقيد بدل أن يزيده.</p>
+</div></details>
+
+<details class="qa"><summary>ما الفرق بين مجلد modules ومجلد packages؟</summary><div class="ans">
+<p><code>modules</code> تعرف عن الشحن والفواتير والفروع وتتحدّث لغة المجال. <code>packages</code> لا تعرف شيئًا عن الشحن أبدًا — <code>transaction</code> و<code>storage</code> و<code>context</code> يمكن نسخها إلى مشروع مختلف تمامًا وتعمل كما هي.</p>
+<p>الفائدة العملية أن الفصل يمنع تسرّب منطق العمل إلى البنية التحتية. لو وجدت نفسك تكتب كلمة «طرد» داخل <code>packages</code> فأنت في المكان الخطأ.</p>
+</div></details>
+
+<div class="qcat">ثانيًا · DDD والطبقات</div>
+
+<details class="qa"><summary>ما الـ Aggregate؟ وأعطني مثالًا من مشروعك.</summary><div class="ans">
+<p>كائن يملك دورة حياته ويحرس قواعده بنفسه، ولا يُغيَّر إلا من خلاله.</p>
+<p>المثال الأوضح <code>Parcel</code>: يحمل خريطة <code>ALLOWED_TRANSITIONS</code> ويرفض أي انتقال غير مسموح برمي <code>ConflictException</code>. لا الخدمة ولا الـ Controller يقرّران — الكيان يقرّر.</p>
+<p>ومثال أفضل على الجذر <code>TransportManifest</code>: يملك عناصره، ولا يُصل إلى <code>ManifestItem</code> إلا عبره، وهو من يقرّر متى تُقفل القائمة عن التعديل عبر <code>assertItemsModifiable()</code>.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا قواعد الانتقال في الكيان وليست في الخدمة؟</summary><div class="ans">
+<p>ثلاثة أسباب عملية:</p>
+<ul>
+<li><strong>نقطة واحدة للحقيقة.</strong> لو كانت في الخدمة لتكرّرت في كل مسار يعدّل الحالة، وكفى أن ينسى مسار واحد التحقّق لتفسد البيانات. الآن كل المسارات — الموظف، السائق عبر الأسطول، إثبات التسليم — تمرّ بنفس الحارس.</li>
+<li><strong>قابلية الاختبار.</strong> اختبار القاعدة لا يحتاج قاعدة بيانات ولا Nest، فقط إنشاء الكيان واستدعاء الدالة.</li>
+<li><strong>التوثيق.</strong> قراءة <code>parcel.entity.ts</code> تعطيك دورة حياة الطرد كاملة في ملف واحد.</li>
+</ul>
+</div></details>
+
+<details class="qa"><summary>ما الـ Facade؟ وكيف يختلف عن استدعاء الخدمة مباشرة؟</summary><div class="ans">
+<p>الـ Facade واجهة عامة رفيعة للموديول: هي كل ما يراه الخارج. تكشف عمليات محدودة ومقصودة، وتخفي كل ما عداها.</p>
+<p>الفرق عن استدعاء الخدمة مباشرة أن الخدمة قد تحوي عشرين دالة معظمها للاستخدام الداخلي. لو كشفناها كلها لاعتمد الخارج على تفاصيل داخلية وأصبح تعديلها مستحيلًا.</p>
+<p>والقاعدة في المشروع: الـ Facade لا يتكلّم إلا مع خدمة موديوله، ولا يحوي منطقًا. مجرّد تفويض. مثال: <code>BillingFacade.createInvoiceForShipment()</code> تخفي كل تعقيد توليد الرقم وحساب المجموع.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا فصلت findById عن findDetailsById؟</summary><div class="ans">
+<p>لأن لهما مستهلكَين مختلفين ومسؤوليتين مختلفتين.</p>
+<p><code>findById</code> تجلب من الجدول الأساسي فقط، و<strong>فيها يجري التحقّق من الوصول</strong>. تستدعيها خدمات أخرى داخليًا، فوجب أن تبقى خفيفة — لو كانت تجمع خمسة جداول لدفع كل استدعاء داخلي ثمن بيانات لا يحتاجها.</p>
+<p><code>findDetailsById</code> يستدعيها الـ Controller وحده. تبني على الأولى ثم تجمّع البقية.</p>
+<p>النتيجة: نقطة تحقّق واحدة من الوصول، مع أداء داخلي غير متضرّر.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا الـ Controllers رفيعة إلى هذا الحدّ؟</summary><div class="ans">
+<p>لأن الـ Controller قناة نقل وليس مكان قرار. مسؤوليته: استقبال الطلب، التحقّق من الدور، تمرير الـ DTO، إعادة الناتج.</p>
+<p>والدليل العملي أن الـ <code>@Authorize</code> موضوع على <strong>دالة الخدمة</strong> لا على الـ Controller. السبب أن قرار التفويض قد يحتاج جلب الكائن من قاعدة البيانات، وهذا عمل لا يخصّ طبقة العرض. الفائدة الجانبية أن استدعاء الخدمة من مسار آخر — مهمة مجدولة مثلًا — يبقى محميًا بنفس السياسة.</p>
+</div></details>
+
+<div class="qcat">ثالثًا · تعدّد المستأجرين والعزل</div>
+
+<details class="qa"><summary>كيف تضمن ألّا ترى شركة بيانات شركة أخرى؟</summary><div class="ans">
+<p>على أربع طبقات متتالية:</p>
+<ol>
+<li><strong>المخطّط:</strong> كل جدول تشغيلي يحمل <code>tenant_id</code> مع <code>onDelete: Cascade</code>، وفهارس عليه.</li>
+<li><strong>الـ Principal:</strong> يُبنى من التوكن عند كل طلب ويحمل <code>tenantId</code>. الخدمات تأخذه من السياق ولا تقبله من العميل أبدًا.</li>
+<li><strong>نطاق الرؤية:</strong> استعلامات القوائم تحقن قيدًا إجباريًا على <code>tenant_id</code>. المستخدم يستطيع تضييقه لا توسيعه.</li>
+<li><strong>سياسات CASL:</strong> على الكائن المفرد، تُقارن <code>tenantId</code> الكائن بـ <code>tenantId</code> الـ Principal.</li>
+</ol>
+<p>الطبقة الأهم هي الثانية: <code>tenantId</code> لا يأتي أبدًا من جسم الطلب أو من رأس يتحكّم به المستخدم. الاستثناء الوحيد رأس <code>x-tenant-id</code> لمالك المنصة، وهو أصلًا مخوّل برؤية الجميع.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا قاعدة بيانات واحدة مشتركة وليس قاعدة لكل شركة؟</summary><div class="ans">
+<p>لأن الكلفة التشغيلية لقاعدة لكل شركة عالية جدًا: كل هجرة تُشغَّل مئات المرّات، والاتصالات تتضاعف، وأي تقرير عابر للشركات يصبح مستحيلًا.</p>
+<p>وهنا سبب خاص بالمجال: <strong>العميل عابر للشركات بطبيعته</strong>. حساب واحد يطلب عروضًا من عدة شركات ويقارنها. مع قاعدة لكل شركة كان هذا سيتطلّب توزيع استعلام على كل القواعد.</p>
+<p>الثمن أن العزل صار مسؤولية التطبيق لا البنية التحتية، ولذلك بُني على أربع طبقات لا واحدة. لو صار عميل ضخم يطلب عزلًا فيزيائيًا، الترحيل ممكن لأن كل شيء موسوم بـ <code>tenant_id</code>.</p>
+</div></details>
+
+<details class="qa"><summary>ما دور جدول customer_tenant؟</summary><div class="ans">
+<p>هو حلقة الوصل بين العميل العام والشركة. العميل ليس تابعًا لشركة، لكن حين يتعامل مع شركة لأول مرة يُسجَّل هذا التفاعل مع <code>first_interaction_at</code>.</p>
+<p>الفائدة أن الشركة تستطيع رؤية «عملائها» دون أن تملكهم، وأن العميل يحتفظ بحساب واحد عبر كل الشركات.</p>
+</div></details>
+
+<details class="qa"><summary>كيف يعمل نظام حدود الاشتراك؟</summary><div class="ans">
+<p>الخطة تعرّف الحدود: أقصى عدد فروع، مستودعات، موظفين، سيارات، مناطق، وشحنات شهرية.</p>
+<p>والمهم أن الحدود <strong>تُنسَخ كلقطة</strong> داخل <code>tenant_subscription</code> عند الاشتراك، في أعمدة <code>snapshot_*</code>. فتعديل الخطة لاحقًا لا يغيّر حدود المشتركين الحاليين — وهذا ما تتوقّعه أي علاقة تعاقدية.</p>
+<p>والفحص يجري عند الإنشاء: <code>OrganizationUnitCommandService.create</code> يقارن العدد الحالي بالحدّ ويرفض التجاوز. القيمة <code>-1</code> تعني بلا حدّ.</p>
+</div></details>
+
+<div class="qcat">رابعًا · المصادقة والتفويض</div>
+
+<details class="qa"><summary>اشرح تدفّق تسجيل الدخول كاملًا.</summary><div class="ans">
+<p>يُتحقَّق من كلمة المرور بـ bcrypt، ثم تُجمع الملفات النشطة لهذا المستخدم.</p>
+<p><strong>ملف واحد</strong> → تُصدر التوكنات مباشرة.<br>
+<strong>عدة ملفات</strong> → يعود <code>REQUIRE_PROFILE_SELECTION</code> مع <code>sessionToken</code> مؤقّت وقائمة الملفات، ثم يستدعي العميل <code>/auth/select-profile</code>.<br>
+<strong>اختصار</strong> → إرسال <code>type</code> ضمن الطلب يتخطّى الخطوة كاملة، وهذا ما يفعله تطبيق السائق.</p>
+<p>ونقطة أمنية مهمة: الـ <code>sessionToken</code> يحمل <code>isSessionToken: true</code>، والـ Guard يرفضه على أي مسار غير <code>select-profile</code>. فلا يمكن استخدام توكن نصف مُصادَق للوصول لأي شيء.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا يحتاج مستخدم واحد عدة ملفات شخصية أصلًا؟</summary><div class="ans">
+<p>لأن الأدوار في هذا المجال ليست حصرية. نفس الشخص قد يكون عميلًا على المنصة، وموظفًا في شركة، ومالكًا لشركة أخرى.</p>
+<p>البديل السيّئ أن نجبره على ثلاثة حسابات بثلاثة بُرُد إلكترونية. البديل الأسوأ أن ندمج كل صلاحياته في توكن واحد — عندها يرى الموظف بيانات شركته وهو يتصفّح كعميل، وهذا خرق للعزل.</p>
+<p>الحلّ الصحيح: هوية واحدة، وجلسة تخصّ ملفًا واحدًا محدّدًا. الـ Principal يعبّر عن <strong>من أنت الآن</strong> لا عن كل ما يمكن أن تكونه.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا لا تضع الصلاحيات داخل الـ JWT؟</summary><div class="ans">
+<p>لأن التوكن <strong>لا يمكن سحبه</strong>. لو حملت صلاحياته وسحبتَ منه صلاحية، تبقى فعّالة حتى انتهاء صلاحية التوكن — قد تكون ساعات.</p>
+<p>لذلك يحمل التوكن معرّفات فقط: من أنت، أي شركة، أي ملف. والفروع والأدوار والصلاحيات تُجلب من قاعدة البيانات عند كل طلب عبر <code>EmployeeFacade</code> وتُبنى في الـ Principal. النتيجة أن أي تعديل صلاحية يسري فورًا.</p>
+<p>الثمن استعلام إضافي لكل طلب لموظف — مقبول جدًا، وقابل للتحسين بالكاش، وهناك بالفعل <code>PermissionCacheService</code> مهيّأ لذلك.</p>
+</div></details>
+
+<details class="qa"><summary>ما الفرق بين RolesGuard و@Authorize و VisibilityScope؟</summary><div class="ans">
+<p>ثلاث طبقات لثلاثة أسئلة مختلفة:</p>
+<ul>
+<li><strong>RolesGuard</strong> — «هل نوعك مسموح له بهذا المسار أصلًا؟» فلتر خشن على مستوى الـ route، بلا استعلامات.</li>
+<li><strong>@Authorize مع CASL</strong> — «هل تستطيع فعل هذا بهذا الكائن تحديدًا؟» يجلب الكائن ويقارن حقوله بقدرات المستخدم. مثال: الإلغاء مسموح فقط للشحنات الصادرة من فرعك والتي لم تُشحن بعد.</li>
+<li><strong>VisibilityScope</strong> — «أي صفوف يحقّ لك رؤيتها؟» للقوائم، حيث لا يوجد كائن واحد لفحصه فتُحقن قيود إجبارية في الاستعلام.</li>
+</ul>
+<p>لا يمكن الاستغناء عن أيّها: الأولى لا تكفي لأن كل الموظفين نوع واحد، والثانية لا تصلح للقوائم لأنها ستجلب كل الصفوف ثم تفلترها في الذاكرة.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا CASL وليس فحص صلاحيات بسيط؟</summary><div class="ans">
+<p>لأن الصلاحيات هنا <strong>مشروطة بحقول الكائن</strong>، لا مجرّد امتلاك اسم صلاحية.</p>
+<p>«يستطيع الإلغاء» غير كافية. القاعدة الحقيقية: يستطيع الإلغاء <em>داخل شركته</em>، <em>وللشحنات الصادرة من فرعه هو</em>، <em>وفقط ما دامت PENDING أو PROCESSING</em>. كتابة ذلك يدويًا تعني شروطًا متناثرة في كل خدمة.</p>
+<p>CASL يجعلها تعريفًا واحدًا معلنًا في مكان واحد:</p>
+<pre><code>builder.can(Cancel, ShipmentSubject, {
+  tenantId, originOrgUnitId: orgUnit.id,
+  status: { $in: [PENDING, PROCESSING] },
+});</code></pre>
+<p>وفوق ذلك، نمط المساهمين (<code>@CaslContributor</code>) يجعل كل موديول يعرّف قدراته داخل حدوده، ويكتشفها النظام تلقائيًا عند الإقلاع — فلا يوجد ملف صلاحيات مركزي ضخم يعرف كل شيء عن كل الموديولات.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا يرى العميل شحناته عبر رقم الهاتف لا عبر معرّفه؟</summary><div class="ans">
+<p>لأن معظم المرسِلين لا يملكون حسابًا أصلًا — يدخلون الفرع ويشحنون. لذلك الشحنة لا تحمل <code>customer_id</code>، بل تحمل اسم وهاتف المرسِل والمستقبِل منسوخَين وقت الإنشاء.</p>
+<p>ولو اشترطنا حسابًا مسجّلًا لأصبحت الحالة الأكثر شيوعًا غير قابلة للتسجيل. وربط الرؤية بالهاتف يعطي فائدة إضافية: عميل يسجّل اليوم يرى فورًا شحنات أُرسلت له قبل تسجيله.</p>
+<p>الثمن أن تغيير الهاتف يغيّر ما يراه، وأن الاعتماد على الهاتف يتطلّب التحقّق منه — وهو نقاش صحيح يمكن طرحه في المقابلة كنقطة تحسين.</p>
+</div></details>
+
+<details class="qa"><summary>كيف يعمل تدوير الـ Refresh Token؟ وماذا يحدث عند السرقة؟</summary><div class="ans">
+<p>الـ refresh token يُخزَّن <strong>مجزّأً بـ bcrypt</strong> في <code>user_session</code> — لا يُخزَّن نصًّا صريحًا أبدًا.</p>
+<p>عند التجديد: يُتحقَّق من التوقيع، تُجلب الجلسة، ويُقارن التوكن بالنسخة المجزّأة. إن نجح تُحذف الجلسة القديمة وتُصدر توكنات جديدة بجلسة جديدة.</p>
+<p>والحالة المهمة: <strong>توقيع صحيح لكن المقارنة فشلت</strong>. هذا يعني توكنًا قديمًا أُعيد استخدامه بعد أن دُوِّر — وهي بصمة السرقة. الاستجابة حذف الجلسة كاملة فورًا، فيُطرَد المهاجم والمستخدم معًا ويُعاد تسجيل الدخول. هذا ما يُعرف بـ <em>refresh token reuse detection</em>.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا Cookies للويب و JSON للموبايل؟</summary><div class="ans">
+<p>لأن نموذج التهديد مختلف. في المتصفّح الخطر الأكبر XSS: أي سكربت يستطيع قراءة <code>localStorage</code>. الحلّ كوكيز <code>httpOnly</code> لا يصل إليها JavaScript إطلاقًا.</p>
+<p>في تطبيقات الموبايل لا يوجد XSS بهذا المعنى، والتخزين الآمن للنظام متاح، والتعامل مع الكوكيز أصعب.</p>
+<p>وتفصيلة إضافية: كوكي الـ refresh مقيّد بمسار <code>/auth/refresh</code> وحده، فلا يُرسَل مع كل طلب ويقلّ تعرّضه. رأس <code>client-type</code> هو ما يحدّد السلوك.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا DRIVER ليس نوعًا مستقلًا في قاعدة البيانات؟</summary><div class="ans">
+<p>لأن السائق <strong>موظف لديه تعيين سيارة نشط</strong>، لا كيان مختلف. لا يوجد جدول <code>driver</code>؛ الدور مُشتَقّ من وجود صفّ في <code>vehicle_assignment</code>.</p>
+<p>لو أنشأنا جدولًا مستقلًا لتكرّرت بيانات الموظف، ولاحتجنا مزامنة بينهما، ولأصبح سؤال «ماذا يحدث حين يصبح السائق موظف استلام؟» بلا جواب نظيف.</p>
+<p>عمليًا: التوكن يحمل <code>vehicleId</code>، والتطبيق يسجّل الدخول بـ <code>type: "DRIVER"</code> ليتخطّى اختيار الملف.</p>
+</div></details>
+
+<div class="qcat">خامسًا · قاعدة البيانات والأداء</div>
+
+<details class="qa"><summary>لماذا Prisma و Kysely معًا؟ أليس هذا تكرارًا؟</summary><div class="ans">
+<p>ليس تكرارًا بل توزيع أدوار. Prisma ممتاز للكتابة وللـ migrations وأمان الأنواع، لكنه محدود في الاستعلامات المعقّدة: joins متعدّدة، شروط ديناميكية، تجميع، ونوافذ.</p>
+<p>Kysely باني SQL آمن نوعيًا يعطي تحكّمًا كاملًا. وأنواعه <strong>مولّدة تلقائيًا من نفس مخطّط Prisma</strong> عبر <code>prisma-kysely</code>، فلا يوجد مصدرا حقيقة — المخطّط واحد، والأدوات اثنتان.</p>
+<p>النتيجة: Prisma في <code>CommandRepository</code>، Kysely في <code>QueryRepository</code>. وهذا تطبيق عملي لـ CQRS على مستوى المستودعات.</p>
+</div></details>
+
+<details class="qa"><summary>ما القفل التفاؤلي؟ ولماذا احتجته؟</summary><div class="ans">
+<p>عمود <code>version</code> في الصف. التحديث يشترط أن تكون النسخة كما قُرئت، ويزيدها بواحد. إن سبقك أحد فلن يجد استعلامك صفًّا مطابقًا فيفشل بدل أن يدهس تعديله.</p>
+<p>الحالة الواقعية التي فرضته: موظّفان يقبضان على نفس الفاتورة من صندوقين في نفس اللحظة. بلا قفل، كلاهما يقرأ «غير مدفوعة»، وكلاهما يكتب، فتضيع دفعة كاملة.</p>
+<p>مطبَّق على <code>parcel</code> و<code>customer_shipment</code> و<code>invoice</code> — أي الجداول التي تُحدَّث من عدة مسارات متزامنة.</p>
+<p>ولماذا تفاؤلي لا تشاؤمي؟ لأن التصادم نادر فعلًا. القفل التشاؤمي يدفع ثمن الحجز في كل عملية ليحمي من حالة نادرة.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا UUIDv7 وليس UUIDv4 أو auto-increment؟</summary><div class="ans">
+<p><strong>مقابل auto-increment:</strong> المعرّف المتسلسل يسرّب معلومات — منافس يعرف كم شحنة أنشأتَ. وهو مشكلة في نظام موزّع أو عند دمج بيانات.</p>
+<p><strong>مقابل UUIDv4:</strong> العشوائي الكامل كارثة على فهرس B-tree، لأن كل إدراج يذهب لمكان عشوائي فيسبّب انقسام صفحات وتشتّتًا.</p>
+<p>UUIDv7 يجمع الأفضل: مرتّب زمنيًا فالإدراجات متجاورة كالمتسلسل، وعشوائي كفاية فلا يسرّب عددًا ولا يمكن تخمينه.</p>
+<p>وفائدة عملية ظهرت في الكود: يمكن توليد المعرّف <strong>في الذاكرة قبل الكتابة</strong>، وهذا ما سمح ببناء طلب الشحن وكل عروضه قبل فتح المعاملة.</p>
+</div></details>
+
+<details class="qa"><summary>كيف تجنّبت مشكلة N+1؟</summary><div class="ans">
+<p>أوضح مثال في توليد عروض الأسعار. الطريقة الساذجة: لكل توليفة فرع مصدر × فرع وجهة، استعلام للسعر واستعلام للإعدادات. مع خمس شركات وأربعة فروع لكل جهة يصبح ذلك ثمانين استعلامًا.</p>
+<p>ما فُعل فعليًا:</p>
+<ol>
+<li>تُبنى كل التوليفات في الذاكرة أولًا.</li>
+<li>تُزال أزواج المناطق المكرّرة قبل الاستعلام.</li>
+<li><strong>استعلام واحد</strong> يجلب كل مصفوفات التسعير، والنتيجة تُوضع في <code>Map</code> بمفتاح <code>tenant:origin:dest</code>.</li>
+<li><strong>استعلام واحد</strong> يجلب إعدادات كل الشركات المرشّحة دفعةً.</li>
+<li>حلقة الحساب لا تلمس قاعدة البيانات إطلاقًا — تقرأ من الـ Map.</li>
+</ol>
+<p>استعلامان ثابتان بدل عشرات تنمو مع البيانات.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا ltree لشجرة الوحدات التنظيمية؟</summary><div class="ans">
+<p>لأن السؤال المتكرّر هو «أعطني كل ما تحت هذا المركز». مع <code>parent_id</code> وحده يتطلّب ذلك استعلامًا تعاوديًا يتدهور مع العمق.</p>
+<p><code>ltree</code> امتداد PostgreSQL يخزّن المسار الهرمي كاملًا في عمود واحد ويدعم فهارس عليه، فيصبح السؤال عملية فهرس واحدة.</p>
+<p>وبالمثل PostGIS للأعمدة الجغرافية مع فهارس GiST. الفكرة العامة: <strong>استخدام قدرات قاعدة البيانات بدل إعادة بنائها في التطبيق</strong>.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا رقم الفاتورة متسلسل بينما رقم التتبّع عشوائي؟</summary><div class="ans">
+<p>لأن لكلٍّ متطلّبًا مختلفًا.</p>
+<p><strong>رقم التتبّع</strong> يحتاج التفرّد فقط. صيغته <code>PREFIX-timestamp-RANDOM</code> مع فحص التفرّد وإعادة محاولة حتى خمس مرّات — والعشوائية مقصودة حتى لا يخمّن أحد أرقام شحنات غيره.</p>
+<p><strong>رقم الفاتورة</strong> مرجع محاسبي، والمحاسبة تتوقّع تسلسلًا غير منقطع لكل شركة لكل سنة. صيغته <code>DAM-INV-2026-00001</code>.</p>
+<p>والآلية أنيقة: <code>INSERT ... ON CONFLICT DO UPDATE</code> ذرّي على <code>invoice_counter</code>، فطلبان متزامنان يتسلسلان بالمفتاح الأساسي ولا يقرآن نفس الرقم. والأهم أنه <strong>يعمل داخل نفس معاملة الفاتورة</strong>، فإن فشل الإدراج يعود الرقم مع الـ rollback ولا تنشأ فجوة.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا تحفظ لقطة من اسم الفرع داخل سجل الحركة؟ أليس هذا تكرارًا؟</summary><div class="ans">
+<p>هو تكرار متعمّد، وهذا هو الصواب هنا.</p>
+<p><code>parcel_movement</code> سجلّ تاريخي. لو حفظنا <code>organization_unit_id</code> فقط وأُعيدت تسمية الفرع بعد سنة، لأصبح عرض التتبّع القديم يظهر الاسم الجديد — أي أنه يكذب على القارئ.</p>
+<p>لذلك تُحفظ نسخة من اسم الفرع ونوعه وإحداثياته واسم الموظف <strong>كما كانت لحظة الحدث</strong>. نفس المبدأ في الفاتورة: تحفظ اسم وهاتف الطرفين منسوخَين، فلا يستطيع تعديل ملف شخصي أن يغيّر ما تقوله فاتورة صادرة.</p>
+<p>القاعدة العامة: <strong>السجلّات التاريخية تنسخ، والبيانات الحيّة تشير.</strong></p>
+</div></details>
+
+<details class="qa"><summary>ما الفرق بين ترقيم offset وترقيم cursor؟ ولماذا كلاهما موجود؟</summary><div class="ans">
+<p><strong>offset</strong> بسيط ويسمح بالقفز لصفحة رقم كذا، لكن <code>OFFSET 10000</code> يجبر قاعدة البيانات على المرور بعشرة آلاف صف ورميها. ومشكلته الأخطر أن إدراج صفّ جديد أثناء التصفّح يزيح كل شيء فتتكرّر عناصر أو تُتخطّى.</p>
+<p><strong>cursor</strong> يقول «أعطني ما بعد هذا العنصر»، فأداؤه ثابت مهما بلغ العمق، ولا يتأثّر بالإدراج المتزامن.</p>
+<p>وجودهما معًا مقصود: الجداول الإدارية تحتاج القفز بين الصفحات، والقوائم اللانهائية في تطبيقات الموبايل تحتاج cursor.</p>
+</div></details>
+
+<div class="qcat">سادسًا · NestJS تقنيًا</div>
+
+<details class="qa"><summary>كيف يعمل @Transactional() لديك؟</summary><div class="ans">
+<p>ثلاث قطع:</p>
+<ol>
+<li><strong>TransactionContext</strong> — <code>AsyncLocalStorage</code> يحمل عميل المعاملة النشط.</li>
+<li><strong>TransactionalPrismaService</strong> — تحقنه المستودعات بدل <code>PrismaService</code>. خاصيّة <code>.client</code> تعيد عميل المعاملة إن وُجد، وإلا العميل العادي.</li>
+<li><strong>الديكوريتر</strong> — يفحص أولًا وجود معاملة نشطة؛ إن وُجدت <strong>يعيد استخدامها</strong>، وإلا يفتح واحدة ويشغّل الدالة داخل السياق.</li>
+</ol>
+<p>الفائدة أن لا شيء يُمرَّر يدويًا. المستودعات لا تعرف أنها داخل معاملة، والدوال المتداخلة تنضمّ تلقائيًا — حتى عبر حدود الـ Facade.</p>
+<p>البديل التقليدي تمرير <code>tx</code> كوسيط عبر كل استدعاء، وهو يلوّث كل التواقيع ويكسر الحدود.</p>
+</div></details>
+
+<details class="qa"><summary>ما AsyncLocalStorage؟ ولماذا هو مناسب هنا؟</summary><div class="ans">
+<p>آلية في Node لتخزين بيانات مرتبطة بسياق تنفيذ غير متزامن. تبدأ سياقًا، وكل ما يعمل داخله — مهما تعمّق عبر <code>await</code> — يستطيع قراءته.</p>
+<p>الحاجة إليه هنا في مكانين: <strong>الـ Principal</strong> و<strong>عميل المعاملة</strong>. كلاهما يخصّ الطلب الواحد ويحتاجه كود على عمق خمس أو ست طبقات.</p>
+<p>البديل تمريرهما كوسيط في كل دالة، فيتلوّث كل توقيع ببيانات لا علاقة لها بالمنطق. البديل الأسوأ متغيّر عام — وهو خطأ فادح في خادم يعالج طلبات متزامنة، لأن طلبًا سيقرأ سياق طلب آخر. ALS يحلّها لأنه يعطي عزلًا حقيقيًا لكل سلسلة تنفيذ.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا @Roles يستخدم applyDecorators؟</summary><div class="ans">
+<p>لأنه يجمع شيئين معًا: <code>SetMetadata(ROLES_KEY, roles)</code> و<code>UseGuards(RolesGuard)</code>.</p>
+<p>لو فُصلا لوجب كتابة سطرين على كل مسار، وكفى أن ينسى مطوّر واحد سطر <code>UseGuards</code> لتصبح النقطة مكشوفة تمامًا — والأسوأ أنها تبدو محميّة في الكود.</p>
+<p>الدمج يجعل <strong>الاستخدام الصحيح هو الوحيد الممكن</strong>. هذا مبدأ عام جيّد في تصميم الواجهات: اجعل الخطأ صعبًا بالبناء لا بالتوثيق.</p>
+</div></details>
+
+<details class="qa"><summary>ما الفرق بين Guard و Interceptor و Pipe و Filter؟</summary><div class="ans">
+<ul>
+<li><strong>Guard</strong> — قبل المعالج: هل يُسمح بالمرور؟ يعيد قيمة منطقية أو يرمي. مثال: <code>GlobalAuthGuard</code>، <code>RolesGuard</code>.</li>
+<li><strong>Pipe</strong> — يحوّل ويتحقّق من المدخلات. مثال: <code>ValidationPipe</code> عالميًا و<code>ParseUUIDPipe</code> على المعاملات.</li>
+<li><strong>Interceptor</strong> — يلفّ التنفيذ من الطرفين، فيستطيع تعديل الاستجابة. مثال: <code>TransformInterceptor</code>.</li>
+<li><strong>Filter</strong> — يلتقط الاستثناءات ويحوّلها إلى استجابة. مثال: <code>GlobalExceptionFilter</code>.</li>
+</ul>
+<p>الترتيب: Middleware ← Guard ← Interceptor (قبل) ← Pipe ← المعالج ← Interceptor (بعد) ← Filter عند الخطأ.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا ValidationPipe بـ whitelist: true؟</summary><div class="ans">
+<p>لأنه يحذف أي حقل غير معرّف في الـ DTO. بدونه يستطيع مهاجم إرسال حقول إضافية قد تصل لقاعدة البيانات في عملية <code>create</code> — وهي ثغرة <em>mass assignment</em> الكلاسيكية.</p>
+<p>مثال ملموس: إرسال <code>tenantId</code> ضمن جسم إنشاء شحنة. مع <code>whitelist</code> يُحذف بصمت، والقيمة الوحيدة المعتمدة هي التي من الـ Principal.</p>
+<p>و<code>transform: true</code> يحوّل الأنواع تلقائيًا — معاملات المسار تصل كنصوص دائمًا، وهذا ما يحوّلها إلى أرقام وتواريخ حسب تعريف الـ DTO.</p>
+</div></details>
+
+<details class="qa"><summary>كيف اكتشف النظام مساهمي CASL تلقائيًا؟</summary><div class="ans">
+<p>عبر <code>DiscoveryService</code> من <code>@nestjs/core</code>. عند <code>onApplicationBootstrap</code> يمرّ <code>CaslContributorDiscovery</code> على كل مزوّدي التطبيق، ويفحص من يحمل ميتاداتا <code>@CaslContributor</code> ويملك دالة <code>contribute</code>، ويجمعهم في قائمة.</p>
+<p>ثم عند بناء قدرات مستخدم، يُستدعى كل مساهم ليضيف قواعده إلى نفس الـ builder.</p>
+<p>الفائدة المعمارية أن كل موديول يعرّف قدراته <strong>داخل حدوده</strong>، ولا يوجد ملف مركزي يعرف كل شيء عن كل الموديولات. إضافة موديول جديد لا تتطلّب تعديل أي ملف صلاحيات — يُكتشف وحده.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا GlobalAuthGuard يستخدم ModuleRef بدل الحقن العادي؟</summary><div class="ans">
+<p>لتفادي اعتماد دائري. الحارس يحتاج <code>EmployeeFacade</code> و<code>CustomerFacade</code> لبناء الـ Principal، لكن موديول الموظفين نفسه يعتمد على البنية التحتية للمصادقة.</p>
+<p>الحقن العادي في المُنشئ يُنشئ الدورة عند الإقلاع. <code>moduleRef.get(EmployeeFacade, { strict: false })</code> يؤجّل الحلّ إلى <strong>وقت التنفيذ</strong> بدل وقت الإنشاء، فتُكسر الدورة.</p>
+<p>هذه أداة صحيحة لهذه الحالة تحديدًا — البنية التحتية العابرة التي تحتاج موديولات أعمال. لا ينبغي أن تصبح عادة داخل الخدمات العادية لأنها تخفي الاعتمادات.</p>
+</div></details>
+
+<div class="qcat">سابعًا · أسئلة نقدية ومفتوحة</div>
+
+<details class="qa"><summary>ما أصعب مشكلة واجهتك؟</summary><div class="ans">
+<p>حلّ المسارات في تسعير طلب الشحن. العميل لا يعرف شيئًا عن فروع الشركات، والنظام يجب أن يجد كل الشركات القادرة على التنفيذ ويسعّر لكل منها.</p>
+<p>الصعوبة على مستويين. <strong>معماريًا:</strong> من يملك أي قرار؟ الحلّ أن موديول التنظيم يجد الفروع ويحلّ مناطقها ويجمّعها حسب الشركة، ولا يحسب سعرًا أبدًا ولا يتّخذ قرارًا تجاريًا. وموديول التسعير يأخذ النتيجة ويحسب. فصل نظيف: من ينفّذ مقابل بكم.</p>
+<p><strong>أدائيًا:</strong> عدد التوليفات ينفجر (شركات × فروع مصدر × فروع وجهة). الحلّ إزالة التكرارات أولًا، ثم استعلامان دفعيّان فقط، ثم حساب في الذاكرة بلا لمس قاعدة البيانات.</p>
+</div></details>
+
+<details class="qa"><summary>ماذا كنت ستفعل بشكل مختلف لو بدأت الآن؟</summary><div class="ans">
+<p>ثلاثة أشياء أعرفها فعلًا:</p>
+<ul>
+<li><strong>موديول <code>employee2</code>.</strong> هناك نسختان من إدارة الموظفين تعملان جنبًا إلى جنب. كان ينبغي إكمال الترحيل وحذف القديمة بدل ترك الاثنتين — دَين تقني واضح.</li>
+<li><strong>الأحداث مقابل الاستدعاء المباشر.</strong> إنشاء الفاتورة يجري داخل معاملة إنشاء الشحنة، وهذا قرار صحيح لأن شحنة بلا فاتورة حالة غير مقبولة. لكن الإشعارات مثلًا كان يمكن نقلها بالكامل إلى أحداث خارج المعاملة.</li>
+<li><strong>تغطية الاختبارات.</strong> الكيانات والقواعد الحرجة مغطّاة، لكن التغطية غير متجانسة عبر الموديولات.</li>
+</ul>
+<p>وأمر رابع كنت سأبقيه كما هو: قاعدة الـ Facade. هي أكثر قرار وفّر وقتًا لاحقًا.</p>
+</div></details>
+
+<details class="qa"><summary>ما نقاط الضعف التي تعرفها في التصميم الحالي؟</summary><div class="ans">
+<ul>
+<li><strong>الـ Principal يُبنى بكل طلب</strong> للموظف، أي استعلام إضافي دائم. مقصود لأن سحب الصلاحية يجب أن يسري فورًا، لكنه يستحقّ كاشًا قصير العمر مع إبطال عند تغيير الصلاحيات.</li>
+<li><strong>مسح الكاش بالجملة.</strong> كثير من العمليات تستخدم <code>allEntries: true</code> فتمسح قوائم كاملة. آمن لكنه يهدر كاشًا صالحًا.</li>
+<li><strong>لا توجد استراتيجية أرشفة</strong> لـ <code>parcel_movement</code>، وهو الجدول الأسرع نموًا في النظام.</li>
+<li><strong>التخزين محلي</strong> حاليًا. التجريد موجود ونحفظ <code>storage_key</code> لا رابطًا، فالانتقال إلى S3 لا يتطلّب تعديل قاعدة البيانات — لكن التنفيذ لم يُكتب بعد.</li>
+<li><strong>الاعتماد على رقم الهاتف</strong> في رؤية العميل لشحناته يفترض التحقّق من الهاتف.</li>
+</ul>
+<p>ذكر هذه النقاط في المقابلة نقطة قوة لا ضعف: تُظهر أنك تعرف حدود ما بنيت.</p>
+</div></details>
+
+<details class="qa"><summary>كيف تختبر هذا النظام؟</summary><div class="ans">
+<p>الأولوية للقواعد لا للـ CRUD:</p>
+<ul>
+<li><strong>الكيانات</strong> — أسهل وأعلى قيمة. آلات الحالة تُختبر بلا قاعدة بيانات ولا Nest: أنشئ الكيان، استدعِ الانتقال، تحقّق من الرفض. مغطّاة فعلًا لـ <code>Invoice</code> و<code>Parcel</code> و<code>Trip</code>.</li>
+<li><strong>الحسابات</strong> — الوزن الحجمي، الوزن القابل للتسعير، مجموع الفاتورة، توليد رقم الفاتورة. دوال نقية.</li>
+<li><strong>البنية التحتية</strong> — ديكوريترات الكاش والمعاملات مغطّاة باختبارات وحدة.</li>
+<li><strong>التكامل</strong> — التدفّقات الحرجة كاملة: طلب شحن ← عروض ← شحنة ← فاتورة.</li>
+<li><strong>التفويض</strong> — مهمّ ومهمَل غالبًا: أن يفشل موظف من فرع آخر في إلغاء شحنة ليست من فرعه.</li>
+</ul>
+<p>والـ CRUD الروتيني يمكن تأجيله — هذا مكتوب صراحةً كسياسة في المشروع.</p>
+</div></details>
+
+<details class="qa"><summary>كيف تتعامل مع مليون طرد شهريًا؟</summary><div class="ans">
+<p>أوّلًا القياس قبل التخمين — لكن نقاط الضغط المتوقّعة معروفة:</p>
+<ul>
+<li><strong><code>parcel_movement</code></strong> هو الجدول الأسرع نموًا. الحلّ تقسيم بالتاريخ (partitioning) وأرشفة القديم.</li>
+<li><strong>القراءة</strong> تُوجَّه إلى نسخ قراءة. الفصل قائم أصلًا في الكود عبر <code>QueryRepository</code>، فتوجيهها لا يتطلّب إعادة هيكلة.</li>
+<li><strong>توليد ملصقات PDF</strong> يشغّل متصفّحًا — أثقل عملية في النظام. ينبغي نقله إلى طابور خلفي بدل تنفيذه داخل الطلب.</li>
+<li><strong>الكاش</strong> ينتقل من مسح بالجملة إلى إبطال دقيق.</li>
+<li><strong>الفهارس</strong> تُراجَع مع أنماط الاستعلام الفعلية.</li>
+</ul>
+<p>والملاحظة الأهم: لا شيء ممّا سبق يتطلّب تفكيك المونوليث. تفكيكه ليس حلًّا لمشكلة أداء بل لمشكلة تنظيمية.</p>
+</div></details>
+
+<details class="qa"><summary>لو طلبت منك إضافة ميزة «إرجاع الشحنة»، كيف تنفّذها؟</summary><div class="ans">
+<p>سؤال شائع لاختبار فهمك للنظام لا لحفظه. الإجابة تتبع الطبقات:</p>
+<ol>
+<li><strong>المجال أولًا.</strong> <code>ParcelStatus.RETURNED</code> موجود لكن مساره محدود: من <code>PROCESSING</code> فقط. السؤال الأول: من أي حالات يُسمح بالإرجاع؟ وهذا يُحسم في <code>ALLOWED_TRANSITIONS</code>.</li>
+<li><strong>الصلاحية.</strong> <code>Permission.RETURN_SHIPMENT</code> موجودة أصلًا، وقدرة CASL معرّفة للشحنات <code>IN_TRANSIT</code>. أضيف نظيرتها على مستوى الطرد.</li>
+<li><strong>الإعدادات.</strong> <code>allow_return_after_collection</code> موجود في إعدادات التشغيل — أقرأه لا أفترضه.</li>
+<li><strong>الأثر المالي.</strong> ماذا يحدث للفاتورة؟ إن كانت مدفوعة فهذا استرداد لا إلغاء — ومسار الاسترداد غير موجود اليوم، فهذه أكبر قطعة عمل في الميزة.</li>
+<li><strong>التتبّع.</strong> <code>ActionType.RETURN_COMPLETED</code> موجود، فتُلحق الحركة كالمعتاد وتُعاد اشتقاق حالة الشحنة.</li>
+</ol>
+<p>الجميل أن معظم البنية موجودة — وهذا بحدّ ذاته دليل على أن النمذجة الأصلية كانت صحيحة.</p>
+</div></details>
+
+<details class="qa"><summary>لماذا تنشأ الفاتورة داخل معاملة الشحنة وليس كحدث لاحق؟</summary><div class="ans">
+<p>لأن شحنة موجودة بلا فاتورة <strong>ليست حالة يُسمح بوجودها</strong>. لو أُنشئت الفاتورة بحدث غير متزامن وفشل الحدث، لبقيت شحنة غير مفوترة في النظام بصمت.</p>
+<p>هذا هو المعيار الذي أستخدمه: هل الحالة الوسيطة مقبولة؟ إن كانت غير مقبولة فهي جزء من نفس المعاملة.</p>
+<p>وبالمقارنة، توليد الملصق <strong>خارج</strong> المعاملة وفشله لا يُفشل الشحنة — لأن طردًا بلا ملصق حالة مقبولة تمامًا ويمكن إصلاحها لاحقًا. والإشعارات كذلك: فشل إشعار السائق لا يجوز أن يمنع إنشاء الرحلة.</p>
+<p>التمييز بين <em>الضروري</em> و<em>المساعد</em> هو جوهر السؤال.</p>
+</div></details>
+
+<details class="qa"><summary>ماذا تعلّمت من هذا المشروع؟</summary><div class="ans">
+<p>ثلاثة أشياء:</p>
+<p><strong>أن المعمارية أداة لا هدف.</strong> القاعدة الحاكمة كانت: لا تُدخِل نمطًا إلا إذا حلّ مشكلة قائمة اليوم. لذلك لا يوجد Event Sourcing ولا Command Bus ولا Specification Pattern — لأن أيًّا منها لم يكن يحلّ شيئًا هنا. بينما وُجد القفل التفاؤلي وسياسات CASL لأن مشكلتيهما كانتا حقيقيتين.</p>
+<p><strong>أن الحدود أهم من الطبقات.</strong> عدد المجلدات لا يعني شيئًا؛ ما يعني هو ألّا يستطيع موديول الوصول لداخليات موديول آخر. قاعدة الـ Facade أعطت قيمة أكبر من كل تقسيمات المجلدات مجتمعة.</p>
+<p><strong>أن وضع القرار في المكان الصحيح يوفّر وقتًا هائلًا.</strong> حين تعيش قاعدة انتقال الحالة داخل الكيان، تصبح صحيحة في كل مسار تلقائيًا — بما فيها مسارات لم تكن موجودة يوم كتبتها.</p>
+</div></details>
+
+</section>
+
+<footer>
+  <p>
+    <strong>دفتر منصة الشحن</strong> — تقرير دراسي مُستخرَج من الكود الفعلي للـ Backend:
+    <code>schema.prisma</code>، الـ Controllers، كيانات المجال، وسياسات التفويض.
+  </p>
+  <p style="margin-top:.5rem">
+    ملف واحد يعمل بلا إنترنت — يكفي فتحه في أي متصفّح.
+  </p>
+</footer>
+
+</main>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---------- theme toggle ---------- */
+  var root = document.documentElement;
+  var tt = document.getElementById("tt");
+  try {
+    var saved = localStorage.getItem("sg-theme");
+    if (saved === "dark" || saved === "light") root.setAttribute("data-theme", saved);
+  } catch (e) {}
+
+  tt.addEventListener("click", function () {
+    var current = root.getAttribute("data-theme");
+    if (!current) {
+      var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      current = prefersDark ? "dark" : "light";
+    }
+    var next = current === "dark" ? "light" : "dark";
+    root.setAttribute("data-theme", next);
+    try { localStorage.setItem("sg-theme", next); } catch (e) {}
+  });
+
+  /* ---------- endpoint filter ---------- */
+  var q = document.getElementById("epq");
+  var tbl = document.getElementById("eptbl");
+  var counter = document.getElementById("epc");
+  var rows = tbl ? Array.prototype.slice.call(tbl.tBodies[0].rows) : [];
+  var total = rows.length;
+
+  function updateCount(shown) {
+    counter.textContent = shown === total
+      ? total + " نقطة نهاية"
+      : shown + " من " + total;
+  }
+
+  if (q) {
+    updateCount(total);
+    q.addEventListener("input", function () {
+      var term = q.value.trim().toLowerCase();
+      var shown = 0;
+      for (var i = 0; i < rows.length; i++) {
+        var hit = !term || rows[i].textContent.toLowerCase().indexOf(term) !== -1;
+        rows[i].classList.toggle("hide", !hit);
+        if (hit) shown++;
+      }
+      updateCount(shown);
+    });
+  }
+
+  /* ---------- Q&A expand all ---------- */
+  var qall = document.getElementById("qall");
+  var qc = document.getElementById("qc");
+  var details = Array.prototype.slice.call(document.querySelectorAll("details.qa"));
+  if (qc) qc.textContent = details.length + " سؤالًا";
+
+  if (qall) {
+    qall.addEventListener("click", function () {
+      var anyClosed = details.some(function (d) { return !d.open; });
+      details.forEach(function (d) { d.open = anyClosed; });
+      qall.textContent = anyClosed ? "أغلق كل الأجوبة" : "افتح كل الأجوبة";
+    });
+  }
+
+  /* ---------- scroll-spy TOC ---------- */
+  var links = Array.prototype.slice.call(document.querySelectorAll("#toc a"));
+  var map = {};
+  links.forEach(function (a) { map[a.getAttribute("href").slice(1)] = a; });
+
+  var sections = Array.prototype.slice.call(document.querySelectorAll("section[id]"));
+
+  if ("IntersectionObserver" in window) {
+    var visible = {};
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { visible[en.target.id] = en.isIntersecting; });
+
+      var activeId = null;
+      for (var i = 0; i < sections.length; i++) {
+        if (visible[sections[i].id]) { activeId = sections[i].id; break; }
+      }
+      if (!activeId) return;
+
+      links.forEach(function (a) { a.classList.remove("on"); });
+      if (map[activeId]) map[activeId].classList.add("on");
+    }, { rootMargin: "-10% 0px -70% 0px", threshold: 0 });
+
+    sections.forEach(function (s) { observer.observe(s); });
+  }
+})();
+</script>
+
+</body>
+</html>
