@@ -40,15 +40,13 @@ export class PrismaService
     }
 
     // 2. إعداد الاتصال باستخدام Driver Adapter (الطريقة الإجبارية في Prisma 7)
-    const pool = new Pool({ connectionString: dbUrl });
+    const poolMax = Number(configService.get('DATABASE_POOL_MAX') ?? 40);
+    const pool = new Pool({ connectionString: dbUrl, max: poolMax });
     const adapter = new PrismaPg(pool);
 
     super({
       adapter, // التمرير السحري للمُهايئ هنا
-      log:
-        process.env.NODE_ENV === 'development'
-          ? ['query', 'error', 'warn']
-          : ['error'],
+      log: ['error'],
     });
 
     // دمج Kysely مع محرك Prisma

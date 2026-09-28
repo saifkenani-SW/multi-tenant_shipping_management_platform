@@ -25,6 +25,7 @@ import { AppConfigModule } from '../config/app-config.module';
           dialect: new PostgresDialect({
             pool: new Pool({
               connectionString: configService.get<string>('DATABASE_URL'),
+              max: Number(configService.get('DATABASE_POOL_MAX') ?? 40),
             }),
           }),
         });
