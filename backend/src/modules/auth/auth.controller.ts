@@ -214,31 +214,48 @@ export class AuthController {
   }
 
   private setCookies(
-    res: Response,
+    res: any,
     accessToken: string,
     refreshToken?: string,
   ) {
     // ثابتة دائمًا: secure + sameSite=none، ضرورية لأن الفرونت (localhost)
     // والباك (saifkenani.me عبر HTTPS) على origins مختلفة
-    const baseCookieOptions: CookieOptions = {
+    const baseCookieOptions: any = {
       httpOnly: true,
       secure: true,
       sameSite: 'none',
     };
-    res.cookie('access_token', accessToken, {
+
+    const setCookie = (name: string, value: string, options: any) => {
+      if (typeof res.setCookie === 'function') {
+        res.setCookie(name, value, options);
+      } else if (typeof res.cookie === 'function') {
+        res.cookie(name, value, options);
+      }
+    };
+
+    const clearCookie = (name: string, options: any) => {
+      if (typeof res.clearCookie === 'function') {
+        res.clearCookie(name, options);
+      } else if (typeof res.setCookie === 'function') {
+        res.setCookie(name, '', { ...options, maxAge: 0, expires: new Date(0) });
+      }
+    };
+
+    setCookie('access_token', accessToken, {
       ...baseCookieOptions,
       maxAge: 15 * 60 * 1000, // 15 دقيقة
       path: '/',
     });
 
     if (refreshToken) {
-      res.cookie('refresh_token', refreshToken, {
+      setCookie('refresh_token', refreshToken, {
         ...baseCookieOptions,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 أيام
         path: '/auth/refresh',
       });
     } else {
-      res.clearCookie('refresh_token', {
+      clearCookie('refresh_token', {
         ...baseCookieOptions,
         path: '/auth/refresh',
       });

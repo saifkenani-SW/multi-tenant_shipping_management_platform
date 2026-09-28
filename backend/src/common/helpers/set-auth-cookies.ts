@@ -1,11 +1,17 @@
-import type { Response } from 'express';
-
 export function setAuthCookies(
-  res: Response,
+  res: any,
   accessToken: string,
   refreshToken: string,
 ): void {
-  res.cookie('access_token', accessToken, {
+  const setCookie = (name: string, value: string, options: any) => {
+    if (typeof res.setCookie === 'function') {
+      res.setCookie(name, value, options);
+    } else if (typeof res.cookie === 'function') {
+      res.cookie(name, value, options);
+    }
+  };
+
+  setCookie('access_token', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
@@ -13,7 +19,7 @@ export function setAuthCookies(
     path: '/',
   });
 
-  res.cookie('refresh_token', refreshToken, {
+  setCookie('refresh_token', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
@@ -21,3 +27,4 @@ export function setAuthCookies(
     path: '/auth/refresh',
   });
 }
+
