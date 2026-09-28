@@ -1,0 +1,74 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu:
+      memory:
+      disk:
+      filesystem:
+      network:
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  batch:
+    send_batch_size: 1024
+    timeout: 5s
+
+  resource:
+    attributes:
+      - key: deployment.environment.name
+        action: upsert
+        value: ${env:OTEL_DEPLOYMENT_ENVIRONMENT}
+
+  # حذف headers الحساسة قبل التصدير
+  attributes/security:
+    actions:
+      - key: http.request.header.authorization
+        action: delete
+      - key: http.request.header.cookie
+        action: delete
+      - key: http.request.header.set-cookie
+        action: delete
+
+exporters:
+  otlp:
+    endpoint: ${env:OTEL_BACKEND_ENDPOINT}
+    tls:
+      insecure: ${env:OTEL_BACKEND_INSECURE}
+    headers:
+      Authorization: ${env:OTEL_BACKEND_AUTH}
+    sending_queue:
+      enabled: true
+    retry_on_failure:
+      enabled: true
+
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    send_timestamps: true
+    metric_expiration: 180s
+
+  debug:
+    verbosity: basic
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, resource, attributes/security, batch]
+      exporters: [otlp]
+
+    metrics:
+      receivers: [otlp, hostmetrics]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus]

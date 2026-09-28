@@ -9,6 +9,7 @@ import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { ApiError } from '../errors/api.error';
+import { trace, SpanStatusCode } from '@opentelemetry/api';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -204,9 +205,34 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       };
     }
 
-    // تعيين الـ Header بشكل آمن الآن
-    response.setHeader('X-Request-Id', String(requestId));
-    response.status(status).json(responseBody);
+    // تعيين الـ Header وإرسال الاستجابة بشكل متوافق مع Fastify و Express
+    if (typeof response.setHeader === 'function') {
+      response.setHeader('X-Request-Id', String(requestId));
+    } else if (typeof response.header === 'function') {
+      response.header('X-Request-Id', String(requestId));
+    }
+
+    // تسجيل الاستثناء في OpenTelemetry Trace للأخطاء الداخلية
+    try {
+      const activeSpan = trace.getActiveSpan();
+      if (activeSpan && status >= 500) {
+        activeSpan.recordException(exception);
+        activeSpan.setStatus({
+          code: SpanStatusCode.ERROR,
+          message: typeof message === 'string' ? message : 'Internal Server Error',
+        });
+        activeSpan.setAttribute('error.type', exception?.name || errorType);
+        activeSpan.setAttribute('error.message', typeof message === 'string' ? message : 'Internal Server Error');
+      }
+    } catch {
+      // safe fallback
+    }
+
+    if (typeof response.json === 'function') {
+      response.status(status).json(responseBody);
+    } else if (typeof response.send === 'function') {
+      response.status(status).send(responseBody);
+    }
   }
 
   private translateHttpError(status: number, message: any): string | null {
