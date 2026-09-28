@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../infrastructure/database/prisma.service';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'node:crypto';
 import { LoginDto } from './dtos/login.dto';
 import { RefreshTokenDto } from './dtos/refresh-token.dto';
 import { SelectProfileDto } from './dtos/select-profile.dto';
@@ -13,6 +14,8 @@ import { UserProfileInfo } from '../user/application/services/user.query.service
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -67,7 +70,13 @@ export class AuthService {
       }
 
       // Handle FCM Subscription
-      await this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken, [requestedProfile]);
+      if (loginDto.fcmToken) {
+        setImmediate(() => {
+          this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken!, [requestedProfile]).catch(
+            (err) => this.logger.warn(`FCM background sync failed: ${err.message}`),
+          );
+        });
+      }
 
       const tokens = await this.generateTokens(
         identity.userId,
@@ -92,7 +101,13 @@ export class AuthService {
       const profile = activeProfiles[0];
       
       // Handle FCM Subscription
-      await this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken, [profile]);
+      if (loginDto.fcmToken) {
+        setImmediate(() => {
+          this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken!, [profile]).catch(
+            (err) => this.logger.warn(`FCM background sync failed: ${err.message}`),
+          );
+        });
+      }
       const tokens = await this.generateTokens(
         identity.userId,
         profile.type,
@@ -121,7 +136,13 @@ export class AuthService {
     );
 
     // Handle FCM Subscription for all active profiles
-    await this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken, activeProfiles);
+    if (loginDto.fcmToken) {
+      setImmediate(() => {
+        this.handleFcmTokenSubscription(identity.userId, loginDto.fcmToken!, activeProfiles).catch(
+          (err) => this.logger.warn(`FCM background sync failed: ${err.message}`),
+        );
+      });
+    }
 
     const profilesForClient = activeProfiles.map((p) => ({
       type: p.type,
@@ -205,10 +226,25 @@ export class AuthService {
       throw new UnauthorizedException('Invalid session');
     }
 
-    const isTokenValid = await bcrypt.compare(
-      dto.refreshToken,
-      session.hashed_refresh_token,
-    );
+    let isTokenValid = false;
+    if (session.hashed_refresh_token.startsWith('$2')) {
+      // Legacy session hashed with bcrypt
+      isTokenValid = await bcrypt.compare(
+        dto.refreshToken,
+        session.hashed_refresh_token,
+      );
+    } else {
+      // Modern session hashed with SHA-256 (constant-time comparison)
+      const incomingHash = crypto
+        .createHash('sha256')
+        .update(dto.refreshToken)
+        .digest('hex');
+      const incomingBuffer = Buffer.from(incomingHash, 'utf8');
+      const storedBuffer = Buffer.from(session.hashed_refresh_token, 'utf8');
+      isTokenValid =
+        incomingBuffer.length === storedBuffer.length &&
+        crypto.timingSafeEqual(incomingBuffer, storedBuffer);
+    }
 
     if (!isTokenValid) {
       // ⚠️ أمنياً: تم اكتشاف محاولة استخدام توكن قديم أو مزيف لجلسة صحيحة
@@ -264,7 +300,10 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    const hashedRefreshToken = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
@@ -293,12 +332,6 @@ export class AuthService {
 
     // 1. Register token
     await this.notificationFacade.registerToken(userId, fcmToken);
-
-    // 2. Send welcome notification
-    await this.notificationFacade.notifyUser(userId, {
-      title: 'مرحباً بك',
-      body: 'مرحباً بك في المنصة',
-    });
 
     const topicsToSubscribe = new Set<string>();
 

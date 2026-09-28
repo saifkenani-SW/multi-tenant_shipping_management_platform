@@ -66,7 +66,7 @@ export class UserQueryRepository {
     const user = await this.db
       .selectFrom('users')
       .selectAll()
-      .where('email', 'ilike', email)
+      .where('email', '=', email)
       .executeTakeFirst();
 
     if (!user) return null;

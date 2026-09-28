@@ -75,9 +75,11 @@ export class NotificationFacade {
     topics: string[],
   ): Promise<void> {
     try {
-      for (const topic of topics) {
-        await this.notificationService.subscribeTokenToTopic([fcmToken], topic);
-      }
+      await Promise.allSettled(
+        topics.map((topic) =>
+          this.notificationService.subscribeTokenToTopic([fcmToken], topic),
+        ),
+      );
     } catch (error) {
       this.logger.warn(
         `Failed to subscribe token to topics: ${(error as Error).message}`,

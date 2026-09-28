@@ -47,11 +47,11 @@ export class LoginDto {
   @IsOptional()
   tenantId?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'eY5...zT9',
     description: 'The FCM device token for push notifications',
   })
   @IsString()
-  @IsNotEmpty()
-  fcmToken!: string;
+  @IsOptional()
+  fcmToken?: string;
 }
