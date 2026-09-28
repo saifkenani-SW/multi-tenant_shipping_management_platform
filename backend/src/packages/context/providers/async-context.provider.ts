@@ -6,8 +6,8 @@ import { RequestContext } from '../interfaces/request-context.interface';
 export class AsyncContextProvider {
   private readonly storage = new AsyncLocalStorage<RequestContext>();
 
-  run(context: RequestContext, callback: () => void): void {
-    this.storage.run(context, callback);
+  run<R>(context: RequestContext, callback: () => R): R {
+    return this.storage.run(context, callback);
   }
 
   get(): RequestContext | undefined {
