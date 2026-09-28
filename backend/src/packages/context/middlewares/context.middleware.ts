@@ -18,7 +18,6 @@ export class ContextMiddleware implements NestMiddleware {
       correlationId: req.headers['x-correlation-id']?.toString(),
     };
 
-    console.log('MIDDLEWARE =>', requestId);
     this.provider.run(context, next);
   }
 }

@@ -17,6 +17,22 @@ type BaseCacheableOptions = {
    * يستخدم مع استراتيجية SINGLE فقط.
    */
   keyBuilder?: (...args: unknown[]) => readonly unknown[];
+
+  /**
+   * تخزين نتيجة الدالة في طبقة الـ Request Cache (AsyncLocalStorage).
+   *
+   * عند التفعيل، يتحقق الـ Decorator من وجود القيمة في ذاكرة الـ Request
+   * قبل الوصول إلى Redis أو قاعدة البيانات.
+   *
+   * مفيد جداً عندما تُستدعى نفس الدالة أكثر من مرة
+   * في نفس الـ HTTP Request (مثل جلب Policy ثم Service).
+   *
+   * يتم التجاهل هادئاً إذا لم يكن هناك سياق Request نشط
+   * (بيئة اختبار، Background Jobs...).
+   *
+   * @default true
+   */
+  requestCache?: boolean;
 };
 
 type SingleCacheOptions = {
